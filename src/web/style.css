@@ -179,3 +179,8 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .endbig { font-size: 34px; font-weight: 800; margin-bottom: 20px; }
 .endscreen.won .endbig { color: var(--accent); }
 .endscreen.lost .endbig { color: var(--enemy); }
+
+/* 아바타 이미지 */
+.avt { width: 26px; height: 26px; border-radius: 5px; object-fit: cover; vertical-align: middle; margin-right: 5px; border: 1px solid var(--line); }
+.avt.sm { width: 20px; height: 20px; border-radius: 4px; }
+.avem { font-size: 15px; }

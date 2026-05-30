@@ -9,6 +9,13 @@ import { STATUS_DEFS } from "../data/statuses.ts";
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const r1 = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
 
+/** 아바타: 이미지 경로면 <img>, 이모지면 그대로 (저작권 안전 폴백) */
+export function avatarHtml(av: string | undefined, cls = "avt"): string {
+  if (!av) return "";
+  if (av.startsWith("/") || /\.(png|jpe?g|webp|gif|avif)$/i.test(av)) return `<img class="${cls}" src="${av}" alt="" onerror="this.style.display='none'">`;
+  return `<span class="avem">${av}</span> `;
+}
+
 // 스킬 설명 — 데이터에서 사람 가독 텍스트 생성 (정보 비대칭 해소)
 function skillDesc(sk: Skill): string {
   const range =
@@ -118,7 +125,7 @@ function unitCard(u: UnitView, isCurrent: boolean, damaged: boolean, tgt: TgtCtx
 
   return `<div class="${cls}" data-uid="${u.uid}" ${dataTgt}>
     ${hitBadge}
-    <div class="cardtop"><span class="nm">${u.avatar ? u.avatar + " " : ""}${esc(u.name)}</span>${formationBadge(u)}</div>
+    <div class="cardtop"><span class="nm">${avatarHtml(u.avatar)}${esc(u.name)}</span>${formationBadge(u)}</div>
     <div class="hpbar"><div class="hp" style="width:${hpPct}%"></div>${preview}${u.shield > 0 ? `<div class="sh">🛡${u.shield}</div>` : ""}</div>
     <div class="hptext">HP ${u.hp}/${u.hpMax}${lossText}</div>
     <div class="chips">${statusChips(u)}</div>

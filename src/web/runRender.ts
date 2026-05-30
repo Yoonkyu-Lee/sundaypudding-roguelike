@@ -1,5 +1,6 @@
 // 런 화면 렌더 (맵/보상/결과). 전투 화면은 render.ts(renderApp)가 담당.
 import type { NodeType, RunView } from "../core/run.ts";
+import { avatarHtml } from "./render.ts";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 
@@ -32,7 +33,7 @@ function partyPanel(view: RunView): string {
       const pct = Math.max(0, (m.hp / m.maxHp) * 100);
       const cls = m.alive ? "" : " dead";
       return `<div class="pmember${cls}">
-        <span class="pname">${m.avatar ? m.avatar + " " : ""}${esc(m.name)}</span>
+        <span class="pname">${avatarHtml(m.avatar, "avt sm")}${esc(m.name)}</span>
         <div class="phpbar"><div class="php" style="width:${pct}%"></div></div>
         <span class="phptext">${m.hp}/${m.maxHp}</span>
       </div>`;
