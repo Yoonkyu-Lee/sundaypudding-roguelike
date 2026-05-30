@@ -3,7 +3,7 @@
 import * as readline from "node:readline/promises";
 import { stdin, stdout, argv, exit } from "node:process";
 import { createBattle, getLegalActions, step } from "../core/engine.ts";
-import { renderAscii } from "../core/observation.ts";
+import { renderAscii } from "./ascii.ts";
 import { chooseAction } from "../core/ai.ts";
 import { DEMO_ENCOUNTER } from "../data/encounters.ts";
 import type { GameEvent, GameState } from "../core/types.ts";

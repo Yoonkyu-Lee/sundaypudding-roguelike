@@ -19,6 +19,29 @@ export interface Encounter {
   enemyFormation?: FormationLayout;
 }
 
+// 노드 타입별 적 구성표 (7장). 디자이너 편집 영역 — 엔진은 키로 조회만(run/run.ts).
+// 키는 NodeType 문자열("battle"|"elite"|"boss"). data는 core/run을 import하지 않으므로 string 키.
+export const NODE_ROSTERS: Record<string, Placement[]> = {
+  // 잡몹 (일반전투/기본값)
+  battle: [
+    { charId: "thug", pos: { row: 1, col: 0 } },
+    { charId: "thug", pos: { row: 2, col: 0 } },
+    { charId: "thug2", pos: { row: 0, col: 0 } },
+  ],
+  elite: [
+    { charId: "thug2", pos: { row: 1, col: 0 } },
+    { charId: "thug", pos: { row: 2, col: 0 } },
+    { charId: "jung", pos: { row: 1, col: 2 } }, // 좌익 정진영
+  ],
+  // 좌익(조선공산당) 진영 — 보스전 적 진형 보너스 활성(6.3)
+  boss: [
+    { charId: "shim", pos: { row: 1, col: 0 } }, // 탱커(도발)
+    { charId: "chunho", pos: { row: 2, col: 0 } }, // 암살자
+    { charId: "jung", pos: { row: 1, col: 2 } }, // 딜러
+    { charId: "doctor", pos: { row: 2, col: 2 } }, // 힐러
+  ],
+};
+
 export const DEMO_ENCOUNTER: Encounter = {
   id: "demo",
   name: "데모 조우",

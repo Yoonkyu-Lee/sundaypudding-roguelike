@@ -1,0 +1,5 @@
+// 런 공개 API 배럴. 소비자(web/cli/test)는 여기(또는 core/run.ts 파사드)에서만 import.
+export type { NodeType, RunNode } from "./map.ts";
+export type { RunPhase, RewardOption, RunState, NodeStatus, RunView } from "./types.ts";
+export { createRun, enterNode, resolveBattleEnd, chooseReward } from "./run.ts";
+export { getRunView } from "./view.ts";
