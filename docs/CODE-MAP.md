@@ -12,10 +12,11 @@ src/
   core/   ← 순수·결정론 게임 로직. 렌더링/IO 의존 0. (GAME-DESIGN 8.1)
   data/   ← 데이터 주도 콘텐츠. 엔진은 이걸 "해석"만. (8.6)
   cli/    ← 터미널 드라이버(사람용 IO). core를 소비.
-  [☐ web/]   ← (미구현) 웹 렌더러. 같은 core 상태를 그림 (8.5)
+  web/    ← 웹 렌더러(사람용 뷰). 같은 core 상태를 구독 + 이벤트 로그 재생 (8.5)
 ```
 
 규칙: **core는 절대 console/DOM/readline을 직접 만지지 않는다.** IO는 cli/·web/에서만.
+타입 레벨 강제: `tsconfig.json`(코어/CLI, DOM lib 없음) vs `tsconfig.web.json`(웹, DOM lib).
 
 ## 파일별 책임
 
@@ -33,6 +34,10 @@ src/
 | `src/data/encounters.ts` | data | 전투 배치(+보스/포메이션 override) | `DEMO_ENCOUNTER` · `Encounter` |
 | `src/data/formations.ts` | data | 포메이션 열보너스 배치(총량보존, 6장) | `STANDARD_FORMATION` |
 | `src/cli/play.ts` | cli | 대화형/`--demo` 터미널 드라이버 | (엔트리) |
+| `src/web/main.ts` | web | 웹 엔트리·게임 루프(아군=클릭, 적=AI 자동) | (엔트리) |
+| `src/web/render.ts` | web | DOM 렌더(그리드·유닛카드·턴바·로그) + `formatEvent` | `renderApp` · `formatEvent` |
+| `src/web/style.css` | web | 다크 테마 스타일 | — |
+| `index.html` · `vite.config.ts` | web | Vite 진입/설정 (`npm run dev`) | — |
 
 ## 기능 → 위치 색인 (engine.ts 내부)
 
@@ -60,4 +65,4 @@ src/
 | 메타/본산/기억회랑 (5장) | 신규 `core/meta.ts` (전투 위 레이어) |
 | 남은 상태이상(공포·관통·불사·재생) | `data/statuses.ts` 정의 + `engine.ts` 프리미티브 |
 | **적 전용 AI/패턴** | `core/ai.ts` (현재는 아군과 공유 정책) |
-| 웹 렌더러 | 신규 `src/web/` (core 상태 구독, 이벤트 로그 재생) |
+| 웹 렌더러 고도화(스프라이트/애니메이션) | `src/web/` (현재 v1: DOM 카드 + 피격 플래시 + 로그 재생) |

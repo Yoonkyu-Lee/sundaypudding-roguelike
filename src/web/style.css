@@ -1,0 +1,80 @@
+:root {
+  --bg: #14161c;
+  --panel: #1d2029;
+  --panel2: #252a36;
+  --line: #333a48;
+  --txt: #e6e9ef;
+  --dim: #8b93a7;
+  --ally: #5aa9e6;
+  --enemy: #e6685a;
+  --hp: #4ade80;
+  --shield: #38bdf8;
+  --green: #34d399;
+  --accent: #f5c451;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--txt);
+  font: 14px/1.5 "Segoe UI", system-ui, sans-serif;
+}
+#app { max-width: 1000px; margin: 0 auto; padding: 16px; }
+
+header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+header h1 { font-size: 20px; margin: 0; }
+.meta { color: var(--dim); font-size: 13px; }
+.meta input { width: 70px; background: var(--panel2); color: var(--txt); border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; }
+.meta button, .act { cursor: pointer; }
+#newb { background: var(--accent); color: #1a1a1a; border: 0; border-radius: 6px; padding: 4px 10px; font-weight: 600; }
+
+/* 턴 서열 바 */
+.turnbar { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0; padding: 8px; background: var(--panel); border-radius: 10px; }
+.tchip { background: var(--panel2); border: 1px solid var(--line); border-radius: 16px; padding: 4px 12px; font-size: 13px; white-space: nowrap; }
+.tchip em { color: var(--dim); font-style: normal; font-size: 11px; }
+.tchip.cur { outline: 2px solid var(--accent); color: #fff; }
+/* 끼어들기: 초록 하이라이트 + 더 넓고 튀어나옴 (2.11 연출) */
+.tchip.interrupt { background: var(--green); color: #0c2a1c; font-weight: 700; padding: 6px 16px; transform: translateY(-3px); box-shadow: 0 3px 10px rgba(52,211,153,.4); }
+
+/* 전장 */
+.arena { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.side h2 { font-size: 14px; color: var(--dim); margin: 6px 2px; }
+.board { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); gap: 5px; background: var(--panel); padding: 8px; border-radius: 10px; }
+.cell { min-height: 78px; border: 1px dashed var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.cell .empty { color: #3a4150; font-size: 10px; }
+
+.card { width: 100%; height: 100%; padding: 5px 6px; border-radius: 8px; background: var(--panel2); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 3px; }
+.card.ally { border-left: 3px solid var(--ally); }
+.card.enemy { border-left: 3px solid var(--enemy); }
+.card.current { outline: 2px solid var(--accent); }
+.cardtop { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
+.nm { font-weight: 600; font-size: 13px; }
+.fb { font-size: 10px; padding: 1px 4px; border-radius: 5px; background: #2f3647; margin-left: 2px; }
+.fb.atk { color: #ffb4a2; } .fb.def { color: #9bd1ff; }
+
+.hpbar { position: relative; height: 9px; background: #11141b; border-radius: 5px; overflow: hidden; }
+.hpbar .hp { height: 100%; background: var(--hp); transition: width .35s ease; }
+.hpbar .sh { position: absolute; right: 2px; top: -1px; font-size: 9px; color: var(--shield); }
+.hptext { font-size: 11px; color: var(--dim); }
+.chips { display: flex; gap: 4px; flex-wrap: wrap; min-height: 14px; }
+.chip { font-size: 13px; position: relative; }
+.chip sup { color: var(--accent); font-size: 9px; }
+.chip sub { color: var(--shield); font-size: 9px; }
+
+/* 피격 플래시 (이벤트 로그 기반) */
+.flash { animation: flash .45s ease; }
+@keyframes flash { 0% { background: #5a2424; } 100% { background: var(--panel2); } }
+
+/* 행동 패널 */
+.actions { margin: 14px 0; padding: 12px; background: var(--panel); border-radius: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.prompt { width: 100%; color: var(--accent); font-weight: 600; }
+.act { background: var(--panel2); color: var(--txt); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font-size: 13px; }
+.act:hover { border-color: var(--ally); background: #2b3142; }
+.act em { color: var(--dim); font-style: normal; font-size: 11px; margin-left: 4px; }
+.enemyturn { color: var(--enemy); }
+.result { font-size: 18px; font-weight: 700; }
+
+/* 로그 */
+.logpanel { background: var(--panel); border-radius: 10px; padding: 10px 12px; }
+.loginner { max-height: 200px; overflow-y: auto; font: 12px/1.6 ui-monospace, "Cascadia Code", monospace; color: var(--dim); }
+.loginner b { color: var(--txt); }

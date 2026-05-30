@@ -8,12 +8,15 @@
 
 ## 실행
 ```bash
-npm run demo          # 자동플레이 1판 (양측 AI), seed 42
-npm run play          # 대화형: 아군=당신, 적=AI
+npm run dev           # 웹 렌더러 (브라우저로 관전·플레이) → http://localhost:5173
+npm run demo          # 터미널 자동플레이 1판 (양측 AI), seed 42
+npm run play          # 터미널 대화형: 아군=당신, 적=AI
 node src/cli/play.ts --demo --seed 7    # 시드 지정
-npm test              # 결정론 + 기능 단위 테스트 (9개)
-npm run typecheck     # tsc --noEmit (devDeps 설치 후)
+npm test              # 결정론 + 기능 단위 테스트 (11개)
+npm run typecheck     # 코어 + 웹 타입체크 (devDeps 설치 후)
 ```
+
+> 웹은 `npm install` 후 `npm run dev` → 브라우저에서 localhost:5173. 코어는 무수정으로 브라우저 구동(Vite).
 
 > 외부 런타임 의존성 0. `typescript`/`@types/node`는 타입체크 전용 devDependency.
 
@@ -34,6 +37,10 @@ src/
     encounters.ts 전투 배치
   cli/
     play.ts      터미널 드라이버 (사람용). AI는 core를 직접 import해 플레이
+  web/         ← 웹 렌더러 (Vite, npm run dev). 같은 core 구독 + 이벤트 로그 재생
+    main.ts      게임 루프 (아군=클릭, 적=AI)
+    render.ts    DOM 렌더 + formatEvent
+    style.css
 ```
 
 **AI/모니터링 인터페이스 (8.2):** 스크린샷이 아니라 `buildObservation(state)`(matrix/JSON) +
@@ -47,5 +54,5 @@ src/
 - 승패 판정 / 시드 결정론 / 이벤트 로그
 
 ## 아직 (다음 슬라이스)
-본산·메타·기억회랑 / 런 노드맵·보상화면 / 포메이션 열보너스 / 공포·관통·불사·재생 /
-웹 렌더러·그래픽 / 밸런싱. (GAME-DESIGN.md 부록 B 참조)
+본산·메타·기억회랑 / 런 노드맵·보상화면 / 공포·관통·불사·재생 / 적 전용 AI /
+웹 렌더러 고도화(스프라이트·애니메이션) / 밸런싱. (GAME-DESIGN.md 부록 B 참조)
