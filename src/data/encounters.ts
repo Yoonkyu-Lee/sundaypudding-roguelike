@@ -1,5 +1,5 @@
 // 전투 구성(배치) 데이터. 아군/적 그리드 좌표 배치. (2.1)
-import type { Pos } from "../core/types.ts";
+import type { FormationLayout, Pos } from "../core/types.ts";
 
 export interface Placement {
   charId: string;
@@ -11,6 +11,12 @@ export interface Encounter {
   name: string;
   allies: Placement[];
   enemies: Placement[];
+  /** 보스전 여부. 적 진형 보너스는 보스전에만 적용(6.3) */
+  boss?: boolean;
+  /** 아군 열보너스 배치 override. 없으면 표준(6.3) */
+  allyFormation?: FormationLayout;
+  /** 보스 기믹용 적 열보너스 배치(6.3) */
+  enemyFormation?: FormationLayout;
 }
 
 export const DEMO_ENCOUNTER: Encounter = {

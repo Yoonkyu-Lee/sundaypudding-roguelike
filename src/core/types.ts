@@ -60,6 +60,20 @@ export type SkillEffect =
 
 export type SkillTarget = "enemy" | "ally" | "self";
 
+// ── 포메이션 (6장) ─────────────────────────────────────────────────────────
+
+/** 열 보너스 종류. 합연산(3.7 준수). */
+export type FormationBonusKind = "attackPower" | "defensePower";
+
+/** 한 열이 제공하는 보너스 "총량"(그 열의 유닛들에게 분배 = 총량보존, 6.1) */
+export type ColumnBonus = Partial<Record<FormationBonusKind, number>>;
+
+/** 포메이션 배치 = 열별 보너스 총량. 인덱스 = 열(0~3). */
+export interface FormationLayout {
+  id: string;
+  columns: ColumnBonus[];
+}
+
 export interface Skill {
   id: string;
   name: string;
@@ -161,6 +175,8 @@ export interface GameState {
   current: QueueEntry | null; // 지금 행동할 차례
   phase: Phase;
   log: GameEvent[];
+  allyFormation: FormationLayout | null; // 아군 열보너스 (6.3: 일반전투=표준)
+  enemyFormation: FormationLayout | null; // 적 열보너스 (6.3: 보스전만, 아니면 null)
 }
 
 // ── 관측(Observation) — AI·모니터링 1급 인터페이스 (8.2) ────────────────────
@@ -177,6 +193,8 @@ export interface UnitView {
   alive: boolean;
   statuses: { id: string; icon: string; stacks: number; duration: number; nextChange: number }[];
   cooldowns: Record<string, number>;
+  /** 현재 위치에서 받는 포메이션 보너스(총량보존 적용 후 실제값, 6.1). 수치 투명성(0.2) */
+  formation: { attackPower: number; defensePower: number };
 }
 
 export interface LegalAction {

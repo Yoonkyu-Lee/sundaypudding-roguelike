@@ -1,7 +1,11 @@
 // 관측(Observation) 빌드 + ASCII 렌더. 사람 육안 = AI 입력 = 같은 진실. (8.2)
 import type { GameState, Observation, Unit, UnitView } from "./types.ts";
-import { getLegalActions } from "./engine.ts";
+import { getLegalActions, getFormationBonus } from "./engine.ts";
 import { STATUS_DEFS } from "../data/statuses.ts";
+
+function round1(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
+}
 
 function viewStatuses(u: Unit): UnitView["statuses"] {
   const byDef = new Map<string, { stacks: number; durs: number[] }>();
@@ -24,7 +28,7 @@ function viewStatuses(u: Unit): UnitView["statuses"] {
   return out;
 }
 
-function viewUnit(u: Unit): UnitView {
+function viewUnit(state: GameState, u: Unit): UnitView {
   return {
     uid: u.uid,
     side: u.side,
@@ -36,6 +40,10 @@ function viewUnit(u: Unit): UnitView {
     alive: u.alive,
     statuses: viewStatuses(u),
     cooldowns: { ...u.cooldowns },
+    formation: {
+      attackPower: getFormationBonus(state, u, "attackPower"),
+      defensePower: getFormationBonus(state, u, "defensePower"),
+    },
   };
 }
 
@@ -50,8 +58,8 @@ export function buildObservation(state: GameState): Observation {
         ? { uid: cur.uid, name: curUnit.name, side: curUnit.side, kind: cur.kind }
         : null,
     order: [...state.queue],
-    allies: state.units.filter((u) => u.side === "ally").map(viewUnit),
-    enemies: state.units.filter((u) => u.side === "enemy").map(viewUnit),
+    allies: state.units.filter((u) => u.side === "ally").map((u) => viewUnit(state, u)),
+    enemies: state.units.filter((u) => u.side === "enemy").map((u) => viewUnit(state, u)),
     legalActions: getLegalActions(state),
   };
 }
@@ -84,7 +92,9 @@ function sideGrid(title: string, units: UnitView[]): string[] {
   lines.push("");
   for (const u of units.filter((x) => x.alive)) {
     const sh = u.shield > 0 ? ` 🛡${u.shield}` : "";
-    lines.push(`  ${u.name}: HP ${u.hp}/${u.hpMax}${sh}${statusGlance(u)}`);
+    const fa = u.formation.attackPower > 0 ? ` ⚔+${round1(u.formation.attackPower)}` : "";
+    const fd = u.formation.defensePower > 0 ? ` 🛉+${round1(u.formation.defensePower)}` : "";
+    lines.push(`  ${u.name}(c${u.pos.col}): HP ${u.hp}/${u.hpMax}${sh}${fa}${fd}${statusGlance(u)}`);
   }
   return lines;
 }

@@ -6,6 +6,7 @@
 import { Rng } from "./rng.ts";
 import type {
   Action,
+  FormationBonusKind,
   GameEvent,
   GameState,
   LegalAction,
@@ -18,6 +19,7 @@ import type {
 import { CHARACTERS } from "../data/characters.ts";
 import { SKILLS } from "../data/skills.ts";
 import { STATUS_DEFS } from "../data/statuses.ts";
+import { STANDARD_FORMATION } from "../data/formations.ts";
 import type { Encounter, Placement } from "../data/encounters.ts";
 
 const ACTION_CONST = 10000; // 행동 서열 = ACTION_CONST / SPD (2.2)
@@ -92,9 +94,24 @@ export function createBattle(seed: number, enc: Encounter): GameState {
     current: null,
     phase: "inProgress",
     log: [],
+    // 아군=표준(또는 override), 적=보스전만 적용 (6.3)
+    allyFormation: enc.allyFormation ?? STANDARD_FORMATION,
+    enemyFormation: enc.boss ? (enc.enemyFormation ?? STANDARD_FORMATION) : null,
   };
   startRound(state);
   return state;
+}
+
+/** 포메이션 열보너스 — 총량보존(같은 열 유닛 수로 분배). (6.1) */
+export function getFormationBonus(state: GameState, unit: Unit, kind: FormationBonusKind): number {
+  const layout = unit.side === "ally" ? state.allyFormation : state.enemyFormation;
+  if (!layout) return 0;
+  const total = layout.columns[unit.pos.col]?.[kind] ?? 0;
+  if (total === 0) return 0;
+  const count = state.units.filter(
+    (u) => u.alive && u.side === unit.side && u.pos.col === unit.pos.col,
+  ).length;
+  return count > 0 ? total / count : 0; // 분수 허용(4/3 등), 최종 적용 시 반올림
 }
 
 // ── 라운드 & 서열 (2.2 라운드제) ───────────────────────────────────────────
@@ -319,20 +336,27 @@ function applyEffects(state: GameState, actor: Unit, skill: Skill, target: Unit,
   for (const eff of skill.effects) {
     switch (eff.kind) {
       case "damage": {
-        const final = computeDamage(actor, eff.amount, crit);
+        // 공격 스킬 위력 += 포메이션 attackPower (합연산, 6.1 → 3.7 순서)
+        const atk = getFormationBonus(state, actor, "attackPower");
+        const final = computeDamage(actor, eff.amount + atk, crit);
         dealRawDamage(state, target, final);
         break;
       }
       case "applyStatus":
         if (target.alive) applyStatusInstance(state, target, actor, eff.statusId, eff.stacks, eff.duration);
         break;
-      case "shield":
-        target.shield += eff.amount;
-        state.log.push({ t: "shieldGain", targetUid: target.uid, amount: eff.amount });
+      case "shield": {
+        // 방어 스킬 위력 += 포메이션 defensePower (합연산)
+        const def = getFormationBonus(state, actor, "defensePower");
+        const amt = Math.round(eff.amount + def);
+        target.shield += amt;
+        state.log.push({ t: "shieldGain", targetUid: target.uid, amount: amt });
         break;
+      }
       case "heal": {
+        const def = getFormationBonus(state, actor, "defensePower");
         const before = target.hp;
-        target.hp = Math.min(target.hpMax, target.hp + eff.amount);
+        target.hp = Math.min(target.hpMax, target.hp + Math.round(eff.amount + def));
         state.log.push({ t: "heal", targetUid: target.uid, amount: target.hp - before });
         break;
       }

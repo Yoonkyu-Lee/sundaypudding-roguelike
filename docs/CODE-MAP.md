@@ -30,7 +30,8 @@ src/
 | `src/data/statuses.ts` | data | 상태이상 정의(거동 데이터) | `STATUS_DEFS` |
 | `src/data/skills.ts` | data | 스킬(위치마스크·쿨타임·명중·효과) | `SKILLS` |
 | `src/data/characters.ts` | data | 캐릭터(고유 스탯 + learnset) | `CHARACTERS` |
-| `src/data/encounters.ts` | data | 전투 배치 | `DEMO_ENCOUNTER` · `Encounter` |
+| `src/data/encounters.ts` | data | 전투 배치(+보스/포메이션 override) | `DEMO_ENCOUNTER` · `Encounter` |
+| `src/data/formations.ts` | data | 포메이션 열보너스 배치(총량보존, 6장) | `STANDARD_FORMATION` |
 | `src/cli/play.ts` | cli | 대화형/`--demo` 터미널 드라이버 | (엔트리) |
 
 ## 기능 → 위치 색인 (engine.ts 내부)
@@ -47,6 +48,7 @@ src/
 | 스킬 효과 디스패치(데미지/상태/쉴드/힐/이동/끼어들기) (3.9) | `applyEffects` |
 | 동적 재배치 (6.4) | `moveUnit` |
 | 끼어들기 삽입 (2.11) | `applyEffects`의 `interruptSelf` 케이스 |
+| 포메이션 열보너스·총량보존 (6.1/6.3) | `getFormationBonus` + `applyEffects`(damage/shield/heal에 합연산) |
 | 승패 (7.3) | `checkWin` |
 | 행동 1회 처리(턴 진행) | `step` |
 
@@ -54,7 +56,6 @@ src/
 
 | 기능 | 예정 위치 |
 |---|---|
-| 포메이션 열보너스 (6장) | `data/` 배치 데이터 + `engine.ts` 보정 계산 |
 | 런 노드맵·보상화면 (7장) | 신규 `core/run.ts` + `data/` |
 | 메타/본산/기억회랑 (5장) | 신규 `core/meta.ts` (전투 위 레이어) |
 | 남은 상태이상(공포·관통·불사·재생) | `data/statuses.ts` 정의 + `engine.ts` 프리미티브 |
