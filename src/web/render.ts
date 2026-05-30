@@ -1,6 +1,6 @@
 // 웹 렌더러 (사람용 뷰). 코어 상태를 읽어 DOM으로. 2단계 상호작용: 스킬 선택 → 타겟팅.
 // 에셋 없이 텍스트·도형·선으로: 칸 하이라이트(2.4)·머리위 명중%(2.7)·눈금 화살표·HP 미리보기(0.2).
-import type { GameEvent, GameState, Observation, Unit, UnitView } from "../core/types.ts";
+import type { GameEvent, GameState, Observation, Skill, UnitView } from "../core/types.ts";
 import { buildObservation } from "../core/observation.ts";
 import { previewHpLoss } from "../core/engine.ts";
 import { SKILLS } from "../data/skills.ts";
@@ -8,6 +8,27 @@ import { STATUS_DEFS } from "../data/statuses.ts";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const r1 = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+
+// 스킬 설명 — 데이터에서 사람 가독 텍스트 생성 (정보 비대칭 해소)
+function skillDesc(sk: Skill): string {
+  const range =
+    sk.target !== "enemy" ? (sk.target === "self" ? "자신" : "아군") : sk.targetCells && sk.targetCells.length ? "근접" : "원거리";
+  const meta = [range, `쿨${sk.cooldown}`, sk.target === "enemy" ? `명중${sk.accuracy >= 0 ? "+" : ""}${sk.accuracy}` : sk.alwaysHit ? "필중" : ""]
+    .filter(Boolean)
+    .join(" · ");
+  const fx = sk.effects.map((e) => {
+    switch (e.kind) {
+      case "damage": return `피해 ${e.amount}`;
+      case "applyStatus": return `${STATUS_DEFS[e.statusId]?.name ?? e.statusId} ${e.stacks}스택(${e.duration}턴)`;
+      case "shield": return `쉴드 +${e.amount}`;
+      case "heal": return `회복 ${e.amount}`;
+      case "move": return e.deltaCol > 0 ? "뒤로 밀기" : "앞으로 끌기";
+      case "interruptSelf": return "끼어들기";
+      default: return "";
+    }
+  }).filter(Boolean);
+  return `${meta} | ${fx.join(", ")}`;
+}
 
 // ── UI 상태 / 핸들러 ──
 export interface Ui {
@@ -113,14 +134,20 @@ function grid(title: string, units: UnitView[], side: "ally" | "enemy", curUid: 
   return `<div class="side"><h2>${title}</h2><div class="board">${cells}</div></div>`;
 }
 
+// 동적 삽입형 타임라인: 완료(✓ 흐림) / 현재(▶ 포인터) / 예정 / 끼어들기(초록 삽입) / 사망(회색 취소선)
 function turnBar(obs: Observation, state: GameState): string {
   const chips = obs.order
-    .map((e) => {
-      const nm = state.units.find((u) => u.uid === e.uid)?.name ?? e.uid;
-      const cur = obs.current && e.uid === obs.current.uid ? " cur" : "";
-      return e.kind === "interrupt"
-        ? `<span class="tchip interrupt${cur}">⚡${esc(nm)}</span>`
-        : `<span class="tchip${cur}">${esc(nm)} <em>${e.spd}</em></span>`;
+    .map((e, i) => {
+      const u = state.units.find((x) => x.uid === e.uid);
+      const nm = u?.name ?? e.uid;
+      const dead = u ? !u.alive : false;
+      const done = i < obs.cursorIndex;
+      const cur = i === obs.cursorIndex;
+      const cls = ["tchip", e.kind === "interrupt" ? "interrupt" : "", cur ? "cur" : "", done ? "done" : "", dead ? "dead" : ""]
+        .join(" ").replace(/\s+/g, " ").trim();
+      const ptr = cur ? `<span class="turnptr">▶</span>` : "";
+      const label = e.kind === "interrupt" ? `⚡${esc(nm)}` : `${esc(nm)} <em>${e.spd}</em>`;
+      return `${ptr}<span class="${cls}">${done && !dead ? "✓" : ""}${label}</span>`;
     })
     .join("");
   return `<div class="turnbar">${chips || "<span class='tchip'>—</span>"}</div>`;
@@ -150,25 +177,28 @@ function actionPanel(obs: Observation, state: GameState, ui: Ui): string {
   if (ui.selectedSkillId) {
     const sk = SKILLS[ui.selectedSkillId];
     return `<div class="actions targeting">
-      <div class="prompt">🎯 「${esc(sk.name)}」 대상 선택 — 칸을 클릭</div>
+      <div class="prompt">🎯 「${esc(sk.name)}」 대상 선택 — 칸을 클릭 <span class="skdesc inline">${esc(skillDesc(sk))}</span></div>
       <button class="act cancel" id="cancelbtn">취소 (Esc)</button>
     </div>`;
   }
 
-  // 스킬 선택 모드: 활성 스킬 4개를 버튼으로 (쿨/사정권 상태 반영)
+  // 스킬 선택 모드: 활성 스킬 4개를 설명과 함께 (쿨/사정권 상태 반영)
   const btns = actor.activeSkillIds
     .map((id) => {
       const sk = SKILLS[id];
       if (!sk) return "";
       const cd = actor.cooldowns[id] ?? 0;
       const usable = group.has(id);
-      if (cd > 0) return `<button class="act sk disabled" disabled>${esc(sk.name)} <em>쿨 ${cd}</em></button>`;
-      if (!usable) return `<button class="act sk disabled" disabled>${esc(sk.name)} <em>사정권 없음</em></button>`;
-      const tag = sk.target === "self" ? "<em>자신</em>" : sk.target === "ally" ? "<em>아군</em>" : "";
-      return `<button class="act sk" data-skill="${id}">${esc(sk.name)} ${tag}</button>`;
+      const disabled = cd > 0 || !usable;
+      const reason = cd > 0 ? `쿨 ${cd}` : !usable ? "사정권 없음" : "";
+      const attrs = disabled ? "disabled" : `data-skill="${id}"`;
+      return `<button class="act sk ${disabled ? "disabled" : ""}" ${attrs} title="${esc(sk.name)} — ${esc(skillDesc(sk))}">
+        <span class="skname">${esc(sk.name)}${reason ? ` <em>${reason}</em>` : ""}</span>
+        <span class="skdesc">${esc(skillDesc(sk))}</span>
+      </button>`;
     })
     .join("");
-  return `<div class="actions"><div class="prompt">▶ ${esc(obs.current.name)}의 턴 — 스킬 선택</div>${btns}</div>`;
+  return `<div class="actions skillsel"><div class="prompt">▶ ${esc(obs.current.name)}의 턴 — 스킬 선택</div>${btns}</div>`;
 }
 
 // 캐스터→타겟 눈금 화살표 (SVG, 측정 기반)

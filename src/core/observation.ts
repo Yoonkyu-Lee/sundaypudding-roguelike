@@ -57,7 +57,8 @@ export function buildObservation(state: GameState): Observation {
       cur && curUnit
         ? { uid: cur.uid, name: curUnit.name, side: curUnit.side, kind: cur.kind }
         : null,
-    order: [...state.queue],
+    order: [...state.roundOrder],
+    cursorIndex: state.cursor,
     allies: state.units.filter((u) => u.side === "ally").map((u) => viewUnit(state, u)),
     enemies: state.units.filter((u) => u.side === "enemy").map((u) => viewUnit(state, u)),
     legalActions: getLegalActions(state),
@@ -104,19 +105,18 @@ export function renderAscii(state: GameState): string {
   const out: string[] = [];
   out.push(`══ ROUND ${obs.round} ══  [${obs.phase}]`);
 
-  // 행동 서열 바 — 끼어들기는 ⚡로 표시 (2.11)
+  // 행동 서열 타임라인 — 완료(✓)/현재(▶)/예정, 끼어들기 ⚡ (2.11)
   const orderStr = obs.order
-    .map((e) => {
+    .map((e, i) => {
       const u = state.units.find((x) => x.uid === e.uid);
       const nm = u ? u.name : e.uid;
-      return e.kind === "interrupt" ? `⚡{${nm}}` : `${nm}(${e.spd})`;
+      const cur = i === obs.cursorIndex ? "▶" : "";
+      const done = i < obs.cursorIndex ? "✓" : "";
+      const label = e.kind === "interrupt" ? `⚡${nm}` : `${nm}(${e.spd})`;
+      return `${cur}${done}${label}`;
     })
-    .join(" → ");
-  if (obs.current) {
-    const tag = obs.current.kind === "interrupt" ? " ⚡끼어들기" : "";
-    out.push(`▶ 현재: ${obs.current.name}${tag}`);
-  }
-  out.push(`서열(남음): ${orderStr || "—"}`);
+    .join(" ");
+  out.push(`서열: ${orderStr || "—"}`);
   out.push("");
 
   const allyLines = sideGrid("[ 아군 ]", obs.allies);

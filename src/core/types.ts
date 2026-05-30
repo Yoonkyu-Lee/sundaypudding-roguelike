@@ -181,8 +181,11 @@ export interface GameState {
   rng: Rng;
   round: number;
   units: Unit[];
-  queue: QueueEntry[]; // 이번 라운드 남은 서열
-  current: QueueEntry | null; // 지금 행동할 차례
+  /** 이번 라운드 전체 타임라인: 행동완료 + 현재 + 예정 + 끼어들기(동적 삽입). 라운드 끝까지 유지 (2.11) */
+  roundOrder: QueueEntry[];
+  /** 현재 행동 중인 인덱스 (roundOrder 기준). 이전=완료, 이후=예정 */
+  cursor: number;
+  current: QueueEntry | null; // 지금 행동할 차례 (= roundOrder[cursor])
   phase: Phase;
   log: GameEvent[];
   allyFormation: FormationLayout | null; // 아군 열보너스 (6.3: 일반전투=표준)
@@ -220,7 +223,8 @@ export interface Observation {
   round: number;
   phase: Phase;
   current: { uid: string; name: string; side: Side; kind: TurnKind } | null;
-  order: QueueEntry[];
+  order: QueueEntry[]; // = roundOrder (전체 타임라인)
+  cursorIndex: number; // 현재 칸 인덱스 (▶ 위치)
   allies: UnitView[];
   enemies: UnitView[];
   legalActions: LegalAction[];

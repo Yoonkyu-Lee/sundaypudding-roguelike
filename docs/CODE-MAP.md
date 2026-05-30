@@ -43,7 +43,7 @@ src/
 
 | 게임 기능 (GAME-DESIGN 참조) | 위치 |
 |---|---|
-| 라운드/SPD 주사위 서열 (2.2) | `startRound` / `advance` |
+| 라운드/SPD 주사위 서열 (2.2) | `startRound` / `advance` (전체 타임라인 `roundOrder` + `cursor`) |
 | 정규 턴 시작·종료 처리 (쿨타임 감소·DoT·지속시간 차감) | `onNormalTurnStart` / `onNormalTurnEnd` |
 | 합법 행동 열거, 사정권/쿨다운/빙결 반영 (8.2/2.10) | `getLegalActions` / `validTargets` / `isFrozen` |
 | 명중 판정 (2.7) | `computeHitChance` / `resolveSkill` |

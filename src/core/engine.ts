@@ -90,7 +90,8 @@ export function createBattle(seed: number, enc: Encounter): GameState {
     rng: new Rng(seed),
     round: 0,
     units,
-    queue: [],
+    roundOrder: [],
+    cursor: -1,
     current: null,
     phase: "inProgress",
     log: [],
@@ -143,22 +144,24 @@ function startRound(state: GameState): void {
     if (av !== bv) return av - bv;
     return a.uid < b.uid ? -1 : 1;
   });
-  state.queue = entries;
+  state.roundOrder = entries;
+  state.cursor = -1; // advance가 0으로 전진
   state.log.push({ t: "roundStart", round: state.round, order: [...entries] });
   advance(state);
 }
 
-/** 다음 차례로 진행. 큐가 비면 새 라운드. 죽은 유닛은 건너뜀. */
+/** 커서를 다음 칸으로 전진. 타임라인 끝이면 새 라운드. 죽은 유닛 칸은 건너뜀(타임라인엔 남음). */
 function advance(state: GameState): void {
   if (state.phase !== "inProgress") return;
   while (true) {
-    const next = state.queue.shift();
-    if (!next) {
+    state.cursor++;
+    if (state.cursor >= state.roundOrder.length) {
       startRound(state);
       return;
     }
+    const next = state.roundOrder[state.cursor];
     const u = unitById(state, next.uid);
-    if (!u.alive) continue; // 죽은 유닛 스킵
+    if (!u.alive) continue; // 죽은 유닛 스킵 (칸은 타임라인에 남아 회색 표시)
     state.current = next;
     state.log.push({ t: "turnStart", uid: u.uid, kind: next.kind });
     if (next.kind === "normal") onNormalTurnStart(state, u);
@@ -416,8 +419,8 @@ function applyEffects(state: GameState, actor: Unit, skill: Skill, target: Unit,
         break;
       }
       case "interruptSelf":
-        // 끼어들기: 서열 맨 앞에 삽입, 차감 무시 (2.11)
-        state.queue.unshift({ uid: actor.uid, kind: "interrupt", spd: 0 });
+        // 끼어들기: 현재 칸 바로 뒤에 동적 삽입 → 다음 차례로 행동, 차감 무시 (2.11)
+        state.roundOrder.splice(state.cursor + 1, 0, { uid: actor.uid, kind: "interrupt", spd: 0 });
         state.log.push({ t: "interrupt", uid: actor.uid });
         break;
     }

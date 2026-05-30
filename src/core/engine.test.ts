@@ -58,8 +58,10 @@ test("합법 행동: 시작 시 빈 배열이 아니고, 쿨다운/사정권을 
 
 // 명중 확률 100%면 rng.chance(100)는 항상 true → 결정론적 명중 보장 (dex 매우 낮게)
 function forceTurn(state: GameState, uid: string): void {
-  state.current = { uid, kind: "normal", spd: 5 };
-  state.queue = [];
+  const entry = { uid, kind: "normal" as const, spd: 5 };
+  state.roundOrder = [entry];
+  state.cursor = 0;
+  state.current = entry;
 }
 
 test("끼어들기: 연격 사용 시 서열에 interrupt 삽입, 쿨타임 미차감 (2.11)", () => {
