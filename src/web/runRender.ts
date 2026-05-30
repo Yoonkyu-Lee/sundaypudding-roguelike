@@ -65,11 +65,10 @@ function mapScreen(view: RunView, h: RunHandlers): string {
       .join("");
     rowsHtml += `<div class="maprow" data-layer="${layer}">${chips}</div>`;
   }
-  return `<div class="mapwrap">
-    <svg class="mapedges"></svg>
+  return `<div class="mapwrap honeycomb">
     ${rowsHtml}
   </div>
-  <div class="hint">선택 가능한(빛나는) 노드를 클릭해 전진하세요.</div>`;
+  <div class="hint">빛나는 육각 노드를 클릭해 전진하세요.</div>`;
 }
 
 function rewardScreen(view: RunView, h: RunHandlers): string {
@@ -111,27 +110,4 @@ export function renderRunScreen(app: HTMLElement, view: RunView, h: RunHandlers)
     b.addEventListener("click", () => h.onReward(b.dataset.reward!)),
   );
   app.querySelector("#restart")?.addEventListener("click", () => h.onRestart());
-
-  if (view.phase === "map") drawMapEdges(app, view);
-}
-
-// 노드 간선을 SVG 선으로 (측정 기반)
-function drawMapEdges(app: HTMLElement, view: RunView): void {
-  const svg = app.querySelector<SVGSVGElement>(".mapedges");
-  if (!svg) return;
-  const rectOf = (id: string) => app.querySelector<HTMLElement>(`.mnode[data-uid="${id}"]`)?.getBoundingClientRect();
-  let lines = "";
-  for (const n of view.nodes) {
-    const a = rectOf(n.id);
-    if (!a) continue;
-    for (const nx of n.next) {
-      const b = rectOf(nx);
-      if (!b) continue;
-      const x1 = a.left + a.width / 2, y1 = a.bottom;
-      const x2 = b.left + b.width / 2, y2 = b.top;
-      const reachableNext = view.nodes.find((m) => m.id === nx)?.status === "reachable";
-      lines += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="medge${reachableNext ? " hot" : ""}"/>`;
-    }
-  }
-  svg.innerHTML = lines;
 }

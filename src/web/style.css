@@ -148,24 +148,32 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .phptext { color: var(--dim); }
 .runlog { background: var(--panel); border-radius: 10px; padding: 10px 12px; font: 11px/1.6 ui-monospace, monospace; color: var(--dim); max-height: 200px; overflow-y: auto; }
 
-/* ── 맵 ── */
-.mapwrap { position: relative; background: var(--panel); border-radius: 10px; padding: 18px 12px; }
-.mapedges { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 0; }
-.medge { stroke: #3a4150; stroke-width: 2; }
-.medge.hot { stroke: var(--accent); stroke-width: 2.5; }
-.maprow { display: flex; justify-content: center; gap: 28px; margin: 14px 0; position: relative; z-index: 1; }
-.mnode { position: relative; z-index: 1; width: 88px; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 6px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); color: var(--txt); cursor: default; }
-.mico { font-size: 20px; }
+/* ── 맵 (육각형 벌집) ── */
+.mapwrap { background: var(--panel); border-radius: 10px; padding: 20px 12px; }
+/* 행: 가로 배치, 행끼리 위로 겹쳐 벌집 인터록 */
+.maprow { display: flex; justify-content: center; gap: 12px; margin-top: -16px; }
+.maprow:first-child { margin-top: 0; }
+.maprow:nth-of-type(even) { transform: translateX(50px); } /* 지그재그 오프셋 */
+
+/* 육각 노드: clip-path 헥사곤 (pointy-top). 테두리 대신 drop-shadow로 상태 표현 */
+.mnode {
+  width: 86px; height: 96px;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  background: var(--panel2); color: var(--txt); border: 0; cursor: default;
+}
+.mico { font-size: 22px; line-height: 1; }
 .mlabel { font-size: 11px; color: var(--dim); }
-.mdone { position: absolute; top: 3px; right: 6px; color: var(--green); font-size: 11px; }
-.mnode.locked { opacity: .32; }
-.mnode.visited { opacity: .55; border-color: var(--green); }
-.mnode.active { outline: 2px solid var(--accent); }
-.mnode.reachable { cursor: pointer; border-color: var(--accent); box-shadow: 0 0 12px rgba(255,209,102,.35); animation: nodepulse 1.2s ease-in-out infinite; }
-.mnode.reachable:hover { background: #2b3142; }
-@keyframes nodepulse { 50% { box-shadow: 0 0 18px rgba(255,209,102,.6); } }
-.mnode.boss .mico { filter: drop-shadow(0 0 4px var(--enemy)); }
-.hint { color: var(--dim); font-size: 12px; margin-top: 8px; text-align: center; }
+.mdone { color: var(--green); font-size: 12px; }
+.mnode.locked { opacity: .3; }
+.mnode.visited { opacity: .5; background: #1e2b22; }
+.mnode.active { background: #3a3320; filter: drop-shadow(0 0 6px var(--accent)); }
+.mnode.reachable { cursor: pointer; background: #2b2f3d; filter: drop-shadow(0 0 7px rgba(255,209,102,.6)); animation: hexpulse 1.2s ease-in-out infinite; }
+.mnode.reachable:hover { background: #343b4d; filter: drop-shadow(0 0 12px rgba(255,209,102,.9)); }
+@keyframes hexpulse { 50% { filter: drop-shadow(0 0 13px rgba(255,209,102,.95)); } }
+.mnode.boss { background: #3a2424; }
+.mnode.boss.reachable { filter: drop-shadow(0 0 8px var(--enemy)); }
+.hint { color: var(--dim); font-size: 12px; margin-top: 14px; text-align: center; }
 
 /* ── 보상 ── */
 .reward { text-align: center; }
