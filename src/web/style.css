@@ -19,7 +19,14 @@ body {
   color: var(--txt);
   font: 14px/1.5 "Segoe UI", system-ui, sans-serif;
 }
-#app { max-width: 1000px; margin: 0 auto; padding: 16px; }
+#app { max-width: 1500px; margin: 0 auto; padding: 16px; }
+
+/* 전투 화면: 전장(메인) + 로그(사이드) 2열 → 가로폭 활용 */
+.battlelayout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
+.battlemain { min-width: 0; }
+.battleside .logpanel { margin: 0; }
+.battleside .loginner { max-height: 72vh; }
+@media (max-width: 900px) { .battlelayout { grid-template-columns: 1fr; } }
 
 header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
 header h1 { font-size: 20px; margin: 0; color: var(--accent); }

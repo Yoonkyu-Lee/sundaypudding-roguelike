@@ -326,12 +326,18 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
       </div>
     </header>
     ${turnBar(obs, state, ghostNames)}
-    <div class="arena">
-      ${grid("아군", obs.allies, "ally", obs.current?.uid ?? null, ui.damaged, tgt)}
-      ${grid("적", obs.enemies, "enemy", obs.current?.uid ?? null, ui.damaged, tgt)}
+    <div class="battlelayout">
+      <div class="battlemain">
+        <div class="arena">
+          ${grid("아군", obs.allies, "ally", obs.current?.uid ?? null, ui.damaged, tgt)}
+          ${grid("적", obs.enemies, "enemy", obs.current?.uid ?? null, ui.damaged, tgt)}
+        </div>
+        ${actionPanel(obs, state, ui)}
+      </div>
+      <aside class="battleside">
+        <div class="logpanel"><div class="loginner">${logHtml}</div></div>
+      </aside>
     </div>
-    ${actionPanel(obs, state, ui)}
-    <div class="logpanel"><div class="loginner">${logHtml}</div></div>
   `;
 
   // 와이어링
