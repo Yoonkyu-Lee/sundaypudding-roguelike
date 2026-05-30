@@ -32,4 +32,33 @@ export const STATUS_DEFS: Record<StatusDefId, StatusDef> = {
     icon: "🥶",
     damageDealtMult: 0.5, // 주는 데미지 50%↓ (전역 곱연산 예외, 3.7)
   },
+  fear: {
+    id: "fear",
+    name: "공포",
+    icon: "😱",
+    shieldShred: true, // 쉴드 잠식 가속 (스택만큼), HP 효율 불변 (3.5)
+  },
+
+  // ── 특수효과 (출처 의존, 3.6) ──
+  pierce: {
+    id: "pierce",
+    name: "관통",
+    icon: "🗡️",
+    buff: true,
+    pierce: true, // 공격이 쉴드 무시
+  },
+  undying: {
+    id: "undying",
+    name: "불사",
+    icon: "✨",
+    buff: true,
+    undying: true, // 1턴 생존
+  },
+  regen: {
+    id: "regen",
+    name: "재생",
+    icon: "💚",
+    buff: true,
+    hot: { trigger: "turnEnd", healPerStack: 4 }, // 턴 종료 시 회복
+  },
 };

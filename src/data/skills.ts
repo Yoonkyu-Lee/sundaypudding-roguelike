@@ -98,6 +98,46 @@ export const SKILLS: Record<string, Skill> = {
     ],
   },
 
+  // ── 젤리(서포터): 특수효과 부여 ──
+  jaesaeng: {
+    id: "jaesaeng",
+    name: "재생술",
+    target: "ally",
+    cooldown: 2,
+    accuracy: 0,
+    alwaysHit: true,
+    effects: [{ kind: "applyStatus", statusId: "regen", stacks: 2, duration: 3 }],
+  },
+  gongpo: {
+    id: "gongpo",
+    name: "공포술",
+    target: "enemy",
+    cooldown: 3,
+    accuracy: 80,
+    effects: [
+      { kind: "damage", amount: 3 },
+      { kind: "applyStatus", statusId: "fear", stacks: 3, duration: 2 },
+    ],
+  },
+  gwantongbuyeo: {
+    id: "gwantongbuyeo",
+    name: "관통부여",
+    target: "ally",
+    cooldown: 3,
+    accuracy: 0,
+    alwaysHit: true,
+    effects: [{ kind: "applyStatus", statusId: "pierce", stacks: 1, duration: 2 }],
+  },
+  gaho: {
+    id: "gaho",
+    name: "가호",
+    target: "ally",
+    cooldown: 4,
+    accuracy: 0,
+    alwaysHit: true,
+    effects: [{ kind: "applyStatus", statusId: "undying", stacks: 1, duration: 1 }],
+  },
+
   // ── 적 ──
   jump: {
     id: "jump",

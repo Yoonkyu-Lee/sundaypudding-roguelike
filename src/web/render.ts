@@ -1,9 +1,10 @@
 // 웹 렌더러 (사람용 뷰). 코어 상태를 읽어 DOM으로. 2단계 상호작용: 스킬 선택 → 타겟팅.
 // 에셋 없이 텍스트·도형·선으로: 칸 하이라이트(2.4)·머리위 명중%(2.7)·눈금 화살표·HP 미리보기(0.2).
 import type { GameEvent, GameState, Observation, Unit, UnitView } from "../core/types.ts";
-import { buildObservation, } from "../core/observation.ts";
-import { previewDamage } from "../core/engine.ts";
+import { buildObservation } from "../core/observation.ts";
+import { previewHpLoss } from "../core/engine.ts";
 import { SKILLS } from "../data/skills.ts";
+import { STATUS_DEFS } from "../data/statuses.ts";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const r1 = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
@@ -52,13 +53,16 @@ interface TgtCtx {
   active: boolean;
   validHit: Map<string, number>; // uid → 명중%
   hoverUid: string | null;
-  previewDmg: number; // 비크리 예상 데미지
+  previewLoss: { hpLoss: number; shieldConsumed: number } | null; // 호버 대상 예상
   casterUid: string | null;
 }
 
 function statusChips(u: UnitView): string {
   return u.statuses
-    .map((s) => `<span class="chip" title="${s.id}">${s.icon}<sup>${s.stacks}</sup><sub>${s.duration}</sub></span>`)
+    .map((s) => {
+      const buff = STATUS_DEFS[s.id]?.buff ? " buff" : " debuff";
+      return `<span class="chip${buff}" title="${s.id}">${s.icon}<sup>${s.stacks}</sup><sub>${s.duration}</sub></span>`;
+    })
     .join("");
 }
 function formationBadge(u: UnitView): string {
@@ -72,16 +76,15 @@ function unitCard(u: UnitView, isCurrent: boolean, damaged: boolean, tgt: TgtCtx
   const hovering = targetable && tgt.hoverUid === u.uid;
   const hpPct = Math.max(0, (u.hp / u.hpMax) * 100);
 
-  // 호버 시 HP 깎일 양 미리보기 (쉴드 먼저 흡수, 0.2 투명성)
+  // 호버 시 HP 깎일 양 미리보기 (쉴드/관통/공포 반영, 0.2 투명성)
   let preview = "";
   let lossText = "";
-  if (hovering) {
-    const absorb = Math.min(u.shield, tgt.previewDmg);
-    const hpLoss = Math.max(0, Math.min(u.hp, tgt.previewDmg - absorb));
+  if (hovering && tgt.previewLoss) {
+    const { hpLoss, shieldConsumed } = tgt.previewLoss;
     const leftPct = ((u.hp - hpLoss) / u.hpMax) * 100;
     const widthPct = (hpLoss / u.hpMax) * 100;
     preview = `<div class="ploss" style="left:${leftPct}%;width:${widthPct}%"></div>`;
-    lossText = ` <span class="lossnum">−${hpLoss}</span>${absorb > 0 ? `<span class="absnum">(🛡−${absorb})</span>` : ""}`;
+    lossText = ` <span class="lossnum">−${hpLoss}</span>${shieldConsumed > 0 ? `<span class="absnum">(🛡−${shieldConsumed})</span>` : ""}`;
   }
 
   const cls = ["card", u.side, isCurrent ? "current" : "", damaged ? "flash" : "", targetable ? "tgt" : "", hovering ? "hovering" : ""].join(" ").replace(/\s+/g, " ").trim();
@@ -202,7 +205,7 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
   const obs = buildObservation(state);
 
   // 타겟팅 컨텍스트
-  const tgt: TgtCtx = { active: false, validHit: new Map(), hoverUid: ui.hoverTargetUid, previewDmg: 0, casterUid: obs.current?.uid ?? null };
+  const tgt: TgtCtx = { active: false, validHit: new Map(), hoverUid: ui.hoverTargetUid, previewLoss: null, casterUid: obs.current?.uid ?? null };
   if (ui.selectedSkillId && obs.current?.side === "ally") {
     tgt.active = true;
     for (const la of obs.legalActions) {
@@ -211,7 +214,10 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
       }
     }
     const actor = state.units.find((u) => u.uid === obs.current!.uid)!;
-    tgt.previewDmg = previewDamage(state, actor, SKILLS[ui.selectedSkillId]);
+    const hover = ui.hoverTargetUid ? state.units.find((u) => u.uid === ui.hoverTargetUid) : null;
+    if (hover && tgt.validHit.has(hover.uid)) {
+      tgt.previewLoss = previewHpLoss(state, actor, SKILLS[ui.selectedSkillId], hover);
+    }
   }
 
   const logHtml = state.log.slice(-40).map((e) => formatEvent(state, e)).filter(Boolean).join("<br>");

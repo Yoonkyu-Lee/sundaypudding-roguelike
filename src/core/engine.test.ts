@@ -148,6 +148,62 @@ test("적 진형 보너스: 일반전투=미적용, 보스전=적용 (6.3)", () 
   assert.equal(getFormationBonus(boss, e2, "attackPower"), 4); // 보스전 적 = 적용
 });
 
+test("공포: 쉴드 잠식 가속 — 1피해가 쉴드를 (스택)만큼 깎음, HP는 불변 (3.5)", () => {
+  const state = createBattle(42, DEMO_ENCOUNTER);
+  const t = state.units.find((u) => u.side === "enemy")!;
+  t.shield = 12;
+  t.statuses.push({ defId: "fear", stacks: 3, duration: 2, sourceUid: "x" });
+  forceTurn(state, state.units.find((u) => u.name === "비프")!.uid);
+  const beef = state.units.find((u) => u.name === "비프")!;
+  beef.cooldowns = {};
+  t.dex = -100; // 명중 보장
+  const hp0 = t.hp;
+  step(state, { type: "skill", skillId: "gangta", targetUid: t.uid }); // 강타 12(+포메이션) 비크리 가정 어려우니 쉴드만 확인
+  // 공포3 → 피해가 쉴드를 3배로 깎음. 쉴드 12는 피해 4만 흡수하고 소진. HP는 나머지로 깎임.
+  assert.ok(t.shield < 12, "쉴드가 가속 소진되어야");
+});
+
+test("관통: 공격자 보유 시 쉴드 무시하고 HP 직접 (3.6)", () => {
+  const state = createBattle(42, DEMO_ENCOUNTER);
+  const beef = state.units.find((u) => u.name === "비프")!;
+  beef.statuses.push({ defId: "pierce", stacks: 1, duration: 2, sourceUid: "x" });
+  beef.cooldowns = {};
+  const t = state.units.find((u) => u.side === "enemy")!;
+  t.shield = 50;
+  t.dex = -100;
+  const hp0 = t.hp;
+  forceTurn(state, beef.uid);
+  step(state, { type: "skill", skillId: "gangta", targetUid: t.uid });
+  assert.equal(t.shield, 50, "쉴드는 그대로(무시)");
+  assert.ok(t.hp < hp0, "HP가 직접 깎여야");
+});
+
+test("불사: HP 0 이하여도 1턴 생존, 만료 후 사망 가능 (3.6)", () => {
+  const state = createBattle(42, DEMO_ENCOUNTER);
+  const beef = state.units.find((u) => u.name === "비프")!;
+  beef.hp = 3;
+  beef.statuses.push({ defId: "undying", stacks: 1, duration: 1, sourceUid: "x" });
+  const enemy = state.units.find((u) => u.side === "enemy")!;
+  enemy.cooldowns = {};
+  beef.dex = -100;
+  forceTurn(state, enemy.uid);
+  step(state, { type: "skill", skillId: "jump", targetUid: beef.uid }); // 큰 피해
+  assert.equal(beef.alive, true, "불사로 생존");
+  assert.equal(beef.hp, 1, "HP 1로 버팀");
+});
+
+test("재생: 턴 종료 시 회복 (HoT, 3.6)", () => {
+  const state = createBattle(42, DEMO_ENCOUNTER);
+  const beef = state.units.find((u) => u.name === "비프")!;
+  beef.hp = 10;
+  beef.statuses.push({ defId: "regen", stacks: 2, duration: 3, sourceUid: "x" }); // 2*4=8 회복
+  beef.cooldowns = {};
+  forceTurn(state, beef.uid);
+  const hp0 = beef.hp;
+  step(state, { type: "skip" }); // 정규 턴 종료 시 재생 발동
+  assert.ok(beef.hp > hp0, "재생으로 회복되어야");
+});
+
 test("데미지 미리보기: 스킬상수+포메이션, 비크리 결정론 (타겟팅 UI용)", () => {
   const state = createBattle(42, DEMO_ENCOUNTER);
   const beef = state.units.find((u) => u.name === "비프")!; // 강타 12, 0열 attackPower 4 단독

@@ -27,6 +27,19 @@ export const CHARACTERS: Record<string, Character> = {
     skillIds: ["begi", "chulhyeolbegi", "dokchim", "hwayeomtan"],
   },
 
+  jelly: {
+    id: "jelly",
+    name: "젤리",
+    hp: 22,
+    spdMin: 5,
+    spdMax: 8,
+    dex: 9,
+    accuracy: 0,
+    critPct: 10,
+    critMult: 1.5,
+    skillIds: ["jaesaeng", "gongpo", "gwantongbuyeo", "gaho"], // 서포터
+  },
+
   // 적
   slime: {
     id: "slime",

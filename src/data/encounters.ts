@@ -25,6 +25,7 @@ export const DEMO_ENCOUNTER: Encounter = {
   allies: [
     { charId: "beef", pos: { row: 1, col: 0 } }, // 전방 탱
     { charId: "pudding", pos: { row: 2, col: 1 } }, // 한 칸 뒤 딜러
+    { charId: "jelly", pos: { row: 2, col: 2 } }, // 후방 서포터
   ],
   enemies: [
     { charId: "slime", pos: { row: 1, col: 0 } }, // 전방 (근접 사정권)

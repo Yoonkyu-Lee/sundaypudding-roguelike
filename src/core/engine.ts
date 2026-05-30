@@ -177,13 +177,13 @@ function onNormalTurnStart(state: GameState, u: Unit): void {
   for (const id of Object.keys(u.cooldowns)) {
     if (u.cooldowns[id] > 0) u.cooldowns[id]--;
   }
-  tickDot(state, u, "turnStart");
+  tickPeriodic(state, u, "turnStart");
   checkWin(state);
 }
 
 /** 정규 턴 종료: 화상(turnEnd) 발동 + 상태이상 지속시간 차감. 끼어들기는 호출 안 됨. (2.11) */
 function onNormalTurnEnd(state: GameState, u: Unit): void {
-  if (u.alive) tickDot(state, u, "turnEnd");
+  if (u.alive) tickPeriodic(state, u, "turnEnd");
   // 지속시간 차감(정규 턴 기준) — 출혈 포함 모든 상태 (2.11)
   for (const s of u.statuses) s.duration--;
   u.statuses = u.statuses.filter((s) => s.duration > 0 && s.stacks > 0);
@@ -191,17 +191,29 @@ function onNormalTurnEnd(state: GameState, u: Unit): void {
 
 // ── DoT 처리 (3.5) ──────────────────────────────────────────────────────────
 
-function tickDot(state: GameState, u: Unit, trigger: "turnStart" | "turnEnd" | "onAction"): void {
+function tickPeriodic(state: GameState, u: Unit, trigger: "turnStart" | "turnEnd" | "onAction"): void {
   if (!u.alive) return;
-  // 같은 트리거의 모든 상태이상을 defId별로 합산해 1회 적용
-  const byDef = new Map<string, number>();
+  // 같은 트리거의 DoT/HoT를 defId별 합산
+  const dmgByDef = new Map<string, number>();
+  const healByDef = new Map<string, number>();
   for (const s of u.statuses) {
     const def = STATUS_DEFS[s.defId];
     if (def.dot && def.dot.trigger === trigger) {
-      byDef.set(s.defId, (byDef.get(s.defId) ?? 0) + s.stacks * def.dot.dmgPerStack);
+      dmgByDef.set(s.defId, (dmgByDef.get(s.defId) ?? 0) + s.stacks * def.dot.dmgPerStack);
+    }
+    if (def.hot && def.hot.trigger === trigger) {
+      healByDef.set(s.defId, (healByDef.get(s.defId) ?? 0) + s.stacks * def.hot.healPerStack);
     }
   }
-  for (const [defId, dmg] of byDef) {
+  // 회복(재생) 먼저
+  for (const [, amt] of healByDef) {
+    if (amt <= 0) continue;
+    const before = u.hp;
+    u.hp = Math.min(u.hpMax, u.hp + amt);
+    state.log.push({ t: "heal", targetUid: u.uid, amount: u.hp - before });
+  }
+  // 지속 피해
+  for (const [defId, dmg] of dmgByDef) {
     if (dmg <= 0) continue;
     dealRawDamage(state, u, dmg);
     state.log.push({ t: "statusTick", targetUid: u.uid, statusId: defId, dmg });
@@ -268,25 +280,50 @@ export function getLegalActions(state: GameState): LegalAction[] {
 
 // ── 데미지/효과 적용 ────────────────────────────────────────────────────────
 
-/** 쉴드 → HP 순으로 피해 적용 (2.9). 보정 끝난 최종 수치 입력. */
-function dealRawDamage(state: GameState, target: Unit, finalAmount: number): void {
+/** 쉴드 → HP 순으로 피해 적용 (2.9). 공포(쉴드 잠식)·관통(쉴드 무시)·불사(생존) 반영. */
+function dealRawDamage(state: GameState, target: Unit, finalAmount: number, opts?: { ignoreShield?: boolean }): void {
   if (!target.alive || finalAmount <= 0) return;
-  const toShield = Math.min(target.shield, finalAmount);
-  target.shield -= toShield;
-  const toHp = finalAmount - toShield;
+  let remaining = finalAmount;
+  let toShield = 0;
+
+  if (!opts?.ignoreShield && target.shield > 0) {
+    // 공포: 들어온 피해 1이 쉴드를 (스택)만큼 깎음 → 쉴드 실효 체력 = shield/mult (3.5)
+    const fearN = totalStacks(target, "fear");
+    const mult = Math.max(1, fearN);
+    const absorbable = Math.floor(target.shield / mult); // 쉴드가 막을 수 있는 "피해량"
+    const absorbedDmg = Math.min(remaining, absorbable);
+    toShield = absorbedDmg * mult; // 실제 깎인 쉴드
+    target.shield -= toShield;
+    remaining -= absorbedDmg;
+  }
+
+  const toHp = remaining; // HP 깎는 효율은 불변 (관통이면 전부 여기로)
   target.hp = Math.max(0, target.hp - toHp);
-  state.log.push({
-    t: "damage",
-    targetUid: target.uid,
-    base: finalAmount,
-    final: finalAmount,
-    toShield,
-    toHp,
-  });
-  if (target.hp <= 0) {
+
+  // 불사: HP 0 이하면 1로 버팀 (3.6)
+  let saved = false;
+  if (target.hp <= 0 && hasStatus(target, "undying")) {
+    target.hp = 1;
+    saved = true;
+  }
+
+  state.log.push({ t: "damage", targetUid: target.uid, base: finalAmount, final: finalAmount, toShield, toHp });
+  if (target.hp <= 0 && !saved) {
     target.alive = false;
     state.log.push({ t: "death", uid: target.uid });
   }
+}
+
+/** 관통/쉴드 고려 HP 손실 미리보기. 타겟팅 UI용(0.2). */
+export function previewHpLoss(state: GameState, attacker: Unit, skill: Skill, target: Unit): { hpLoss: number; shieldConsumed: number } {
+  const dmg = previewDamage(state, attacker, skill);
+  if (hasStatus(attacker, "pierce")) {
+    return { hpLoss: Math.min(dmg, target.hp), shieldConsumed: 0 };
+  }
+  const mult = Math.max(1, totalStacks(target, "fear"));
+  const absorbable = Math.floor(target.shield / mult);
+  const absorbedDmg = Math.min(dmg, absorbable);
+  return { hpLoss: Math.min(target.hp, dmg - absorbedDmg), shieldConsumed: absorbedDmg * mult };
 }
 
 /** 데미지 계산: (스킬상수) × 전역배율(동상) × crit. (3.7 순서) */
@@ -351,7 +388,8 @@ function applyEffects(state: GameState, actor: Unit, skill: Skill, target: Unit,
         // 공격 스킬 위력 += 포메이션 attackPower (합연산, 6.1 → 3.7 순서)
         const atk = getFormationBonus(state, actor, "attackPower");
         const final = computeDamage(actor, eff.amount + atk, crit);
-        dealRawDamage(state, target, final);
+        // 관통: 공격자가 보유 시 쉴드 무시 (3.6)
+        dealRawDamage(state, target, final, { ignoreShield: hasStatus(actor, "pierce") });
         break;
       }
       case "applyStatus":
@@ -404,7 +442,7 @@ export function step(state: GameState, action: Action): GameState {
       throw new Error(`illegal action: ${action.skillId} (cooldown/frozen)`);
     }
     // 출혈: 행동 시 발동 (정규 + 끼어들기 모두, 2.11)
-    tickDot(state, actor, "onAction");
+    tickPeriodic(state, actor, "onAction");
     if (actor.alive) {
       // 쿨타임은 사용 즉시 설정(끼어들기에서도 설정됨; 단 '감소'만 끼어들기서 안 됨)
       actor.cooldowns[action.skillId] = skill.cooldown;

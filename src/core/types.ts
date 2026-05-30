@@ -31,12 +31,22 @@ export interface StatusDef {
   id: StatusDefId;
   name: string;
   icon: string;
+  /** 이로운 효과인가(버프). 표시 구분용. 기본 false=디버프 */
+  buff?: boolean;
   /** 지속 피해(DoT): 발동 시점 + 스택당 피해 */
   dot?: { trigger: StatusTrigger; dmgPerStack: number };
+  /** 지속 회복(HoT, 재생): 발동 시점 + 스택당 회복 (3.6) */
+  hot?: { trigger: StatusTrigger; healPerStack: number };
   /** 행동 봉쇄(빙결): 정규 턴 행동 불가 */
   actionDenial?: boolean;
   /** 주는 데미지 곱연산 배율(동상 0.5). 표준 전역효과만 곱연산 허용(3.7) */
   damageDealtMult?: number;
+  /** 쉴드 잠식 배율(공포): 들어온 피해 1이 쉴드를 (스택)만큼 깎음. HP 효율 불변 (3.5) */
+  shieldShred?: boolean;
+  /** 쉴드 무시(관통): 보유 시 그 유닛의 공격이 쉴드를 무시하고 HP 직접 (3.6) */
+  pierce?: boolean;
+  /** 사망 방지(불사): HP 0 이하로 안 죽음 (3.6) */
+  undying?: boolean;
 }
 
 /** 상태이상 인스턴스(원장 1건) — 출처/만료 보존 (3.1) */

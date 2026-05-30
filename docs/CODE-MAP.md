@@ -49,7 +49,9 @@ src/
 | 명중 판정 (2.7) | `computeHitChance` / `resolveSkill` |
 | 데미지 계산·치명타·곱연산 순서 (3.7) | `computeDamage` |
 | 쉴드→HP 피해 적용 (2.9) | `dealRawDamage` |
-| 상태이상 원장 부여/틱 (3.1/3.5) | `applyStatusInstance` / `tickDot` |
+| 상태이상 원장 부여/틱(DoT+HoT) (3.1/3.5) | `applyStatusInstance` / `tickPeriodic` |
+| 공포(쉴드잠식)·관통(쉴드무시)·불사(생존) (3.5/3.6) | `dealRawDamage` |
+| HP 손실 미리보기(관통/공포 반영) | `previewHpLoss` |
 | 스킬 효과 디스패치(데미지/상태/쉴드/힐/이동/끼어들기) (3.9) | `applyEffects` |
 | 동적 재배치 (6.4) | `moveUnit` |
 | 끼어들기 삽입 (2.11) | `applyEffects`의 `interruptSelf` 케이스 |
@@ -64,6 +66,5 @@ src/
 |---|---|
 | 런 노드맵·보상화면 (7장) | 신규 `core/run.ts` + `data/` |
 | 메타/본산/기억회랑 (5장) | 신규 `core/meta.ts` (전투 위 레이어) |
-| 남은 상태이상(공포·관통·불사·재생) | `data/statuses.ts` 정의 + `engine.ts` 프리미티브 |
 | **적 전용 AI/패턴** | `core/ai.ts` (현재는 아군과 공유 정책) |
 | 웹 렌더러 고도화(스프라이트/애니메이션) | `src/web/` (현재 v1: DOM 카드 + 피격 플래시 + 로그 재생) |

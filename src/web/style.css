@@ -104,3 +104,7 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .arrows .shaft { stroke: var(--accent); stroke-width: 2.5; }
 .arrows .tick { stroke: var(--accent); stroke-width: 2; opacity: .7; }
 .arrows .head { fill: var(--accent); }
+
+/* 버프/디버프 칩 구분 */
+.chip.buff { filter: drop-shadow(0 0 3px rgba(52,211,153,.7)); }
+.chip.debuff { filter: drop-shadow(0 0 3px rgba(230,104,90,.6)); }
