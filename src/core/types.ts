@@ -142,6 +142,17 @@ export interface Unit {
   cooldowns: Record<string, number>; // skillId → 잔여 쿨타임
   statuses: StatusInstance[]; // 상태이상 원장 (3.1)
   alive: boolean;
+  /** 런 보상으로 누적된 스킬별 데미지 보너스 (4.2: 데미지는 스킬 강화로만) */
+  skillDmgBonus: Record<string, number>;
+}
+
+/** 런 중 파티원 상태(전투 사이 유지: HP·성장). core/run.ts 에서 사용 */
+export interface PartyMemberState {
+  charId: string;
+  pos: Pos;
+  hp: number;
+  maxHp: number;
+  skillDmgBonus: Record<string, number>;
 }
 
 // ── 턴 서열 & 행동 (2.2, 2.11) ─────────────────────────────────────────────

@@ -8,7 +8,7 @@
   "scripts": {
     "play": "node src/cli/play.ts",
     "demo": "node src/cli/play.ts --demo --seed 42",
-    "test": "node --test src/core/engine.test.ts",
+    "test": "node --test src/core/engine.test.ts src/core/run.test.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.web.json",
     "dev": "vite",
     "build": "vite build",

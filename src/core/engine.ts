@@ -56,17 +56,23 @@ function totalStacks(unit: Unit, defId: string): number {
 
 // ── 전투 생성 ────────────────────────────────────────────────────────────────
 
-function makeUnit(p: Placement, side: "ally" | "enemy", idx: number): Unit {
+function makeUnit(
+  p: Placement,
+  side: "ally" | "enemy",
+  idx: number,
+  growth?: { hp?: number; maxHp?: number; skillDmgBonus?: Record<string, number> },
+): Unit {
   const c = CHARACTERS[p.charId];
   if (!c) throw new Error(`character not found: ${p.charId}`);
+  const maxHp = growth?.maxHp ?? c.hp;
   return {
     uid: `${side[0]}${idx}_${c.id}`,
     side,
     charId: c.id,
     name: c.name,
     pos: { ...p.pos },
-    hpMax: c.hp,
-    hp: c.hp,
+    hpMax: maxHp,
+    hp: growth?.hp ?? maxHp,
     shield: 0,
     spdMin: c.spdMin,
     spdMax: c.spdMax,
@@ -78,14 +84,22 @@ function makeUnit(p: Placement, side: "ally" | "enemy", idx: number): Unit {
     cooldowns: {},
     statuses: [],
     alive: true,
+    skillDmgBonus: { ...(growth?.skillDmgBonus ?? {}) },
   };
 }
 
-export function createBattle(seed: number, enc: Encounter): GameState {
-  const units: Unit[] = [
-    ...enc.allies.map((p, i) => makeUnit(p, "ally", i)),
-    ...enc.enemies.map((p, i) => makeUnit(p, "enemy", i)),
-  ];
+/** allyStates 주어지면 아군을 그 상태(런 성장)로 빌드, 아니면 encounter.allies 기본값. */
+export function createBattle(
+  seed: number,
+  enc: Encounter,
+  allyStates?: { charId: string; pos: Pos; hp: number; maxHp: number; skillDmgBonus: Record<string, number> }[],
+): GameState {
+  const allyUnits = allyStates
+    ? allyStates.map((m, i) =>
+        makeUnit({ charId: m.charId, pos: m.pos }, "ally", i, { hp: m.hp, maxHp: m.maxHp, skillDmgBonus: m.skillDmgBonus }),
+      )
+    : enc.allies.map((p, i) => makeUnit(p, "ally", i));
+  const units: Unit[] = [...allyUnits, ...enc.enemies.map((p, i) => makeUnit(p, "enemy", i))];
   const state: GameState = {
     rng: new Rng(seed),
     round: 0,
@@ -109,7 +123,8 @@ export function previewDamage(state: GameState, actor: Unit, skill: Skill): numb
   for (const eff of skill.effects) {
     if (eff.kind === "damage") {
       const atk = getFormationBonus(state, actor, "attackPower");
-      total += computeDamage(actor, eff.amount + atk, false);
+      const up = actor.skillDmgBonus[skill.id] ?? 0;
+      total += computeDamage(actor, eff.amount + atk + up, false);
     }
   }
   return total;
@@ -388,9 +403,10 @@ function applyEffects(state: GameState, actor: Unit, skill: Skill, target: Unit,
   for (const eff of skill.effects) {
     switch (eff.kind) {
       case "damage": {
-        // 공격 스킬 위력 += 포메이션 attackPower (합연산, 6.1 → 3.7 순서)
+        // 스킬상수 + 포메이션 attackPower + 런 강화보너스 (전부 합연산, 6.1 → 3.7 순서)
         const atk = getFormationBonus(state, actor, "attackPower");
-        const final = computeDamage(actor, eff.amount + atk, crit);
+        const up = actor.skillDmgBonus[skill.id] ?? 0;
+        const final = computeDamage(actor, eff.amount + atk + up, crit);
         // 관통: 공격자가 보유 시 쉴드 무시 (3.6)
         dealRawDamage(state, target, final, { ignoreShield: hasStatus(actor, "pierce") });
         break;

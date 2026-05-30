@@ -1,93 +1,135 @@
-// 웹 엔트리. 코어를 브라우저에서 구동 + 2단계 GUI(스킬 선택 → 타겟팅 → 실행).
-// 아군 = 사람(클릭), 적 = AI(자동). (8.5)
-import { createBattle, getLegalActions, step } from "../core/engine.ts";
+// 웹 엔트리 — 런 컨트롤러. 맵 ↔ 전투 ↔ 보상 ↔ 결과를 run.phase로 분기.
+// 전투는 render.ts(renderApp) 재사용, 맵/보상/결과는 runRender.ts. (7장)
+import { step } from "../core/engine.ts";
 import { chooseAction } from "../core/ai.ts";
-import { DEMO_ENCOUNTER } from "../data/encounters.ts";
-import { SKILLS } from "../data/skills.ts";
-import type { Action, GameState } from "../core/types.ts";
+import { createRun, enterNode, resolveBattleEnd, chooseReward, getRunView, type RunState } from "../core/run.ts";
+import type { Action } from "../core/types.ts";
 import { renderApp, type Handlers, type Ui } from "./render.ts";
+import { renderRunScreen, type RunHandlers } from "./runRender.ts";
 
 const app = document.getElementById("app")!;
 
-let state: GameState;
+const ROSTER = [
+  { charId: "beef", pos: { row: 1, col: 0 } },
+  { charId: "pudding", pos: { row: 2, col: 1 } },
+  { charId: "jelly", pos: { row: 2, col: 2 } },
+];
+
+let run: RunState;
+let seed = 42;
 let busy = false;
-const ui: Ui = { selectedSkillId: null, hoverTargetUid: null, damaged: new Set(), seed: 42 };
+const ui: Ui = { selectedSkillId: null, hoverTargetUid: null, damaged: new Set(), seed };
 
-function rerender(): void {
-  renderApp(app, state, ui, handlers);
-}
-
-function applyStep(action: Action): void {
-  const before = state.log.length;
-  step(state, action);
-  ui.damaged = new Set(state.log.slice(before).flatMap((e) => (e.t === "damage" ? [e.targetUid] : [])));
+function resetUi(): void {
   ui.selectedSkillId = null;
   ui.hoverTargetUid = null;
-  tick();
+  ui.damaged = new Set();
 }
 
-function tick(): void {
-  rerender();
-  if (state.phase !== "inProgress" || !state.current) return;
-  const actor = state.units.find((u) => u.uid === state.current!.uid)!;
+function render(): void {
+  if (run.phase === "battle" && run.battle) {
+    renderApp(app, run.battle, ui, battleHandlers);
+    driveBattle();
+  } else {
+    renderRunScreen(app, getRunView(run), runHandlers);
+  }
+}
+
+// ── 전투 진행 ──
+function driveBattle(): void {
+  const b = run.battle!;
+  if (b.phase !== "inProgress") {
+    // 전투 종료 — 결과를 잠깐 보여준 뒤 런으로 복귀
+    busy = true;
+    setTimeout(() => {
+      busy = false;
+      resolveBattleEnd(run);
+      resetUi();
+      render();
+    }, 1100);
+    return;
+  }
+  const actor = b.units.find((u) => u.uid === b.current!.uid)!;
   if (actor.side === "enemy") {
     busy = true;
     setTimeout(() => {
       busy = false;
-      applyStep(chooseAction(state));
-    }, 650);
+      battleStep(chooseAction(b));
+    }, 600);
   }
 }
 
-const handlers: Handlers = {
+function battleStep(action: Action): void {
+  const b = run.battle!;
+  const before = b.log.length;
+  step(b, action);
+  ui.damaged = new Set(b.log.slice(before).flatMap((e) => (e.t === "damage" ? [e.targetUid] : [])));
+  ui.selectedSkillId = null;
+  ui.hoverTargetUid = null;
+  render();
+}
+
+const battleHandlers: Handlers = {
   onSkill(skillId) {
-    if (busy || state.phase !== "inProgress") return;
-    const sk = SKILLS[skillId];
-    if (sk?.target === "self") {
-      // 자기 대상 스킬은 즉시 시전
-      applyStep({ type: "skill", skillId, targetUid: state.current!.uid });
-    } else {
-      ui.selectedSkillId = skillId;
-      ui.hoverTargetUid = null;
-      rerender();
-    }
+    if (busy || !run.battle || run.battle.phase !== "inProgress") return;
+    // 타겟팅 모드 진입 — self/ally 스킬은 자기/아군 칸이 하이라이트되어 클릭으로 시전
+    ui.selectedSkillId = skillId;
+    ui.hoverTargetUid = null;
+    render();
   },
   onTarget(uid) {
     if (busy || !ui.selectedSkillId) return;
-    applyStep({ type: "skill", skillId: ui.selectedSkillId, targetUid: uid });
+    battleStep({ type: "skill", skillId: ui.selectedSkillId, targetUid: uid });
   },
   onHover(uid) {
     if (ui.selectedSkillId && uid !== ui.hoverTargetUid) {
       ui.hoverTargetUid = uid;
-      rerender();
+      render();
     }
   },
   onCancel() {
     ui.selectedSkillId = null;
     ui.hoverTargetUid = null;
-    rerender();
+    render();
   },
   onSkip() {
-    if (busy) return;
-    applyStep({ type: "skip" });
+    if (!busy) battleStep({ type: "skip" });
   },
-  onNewBattle(s) {
-    newBattle(s);
+  onNewBattle() {
+    runHandlers.onRestart(); // 전투 화면의 '새 전투' = 런 재시작
   },
 };
 
-function newBattle(s: number): void {
-  ui.seed = Number.isFinite(s) ? s : 42;
-  state = createBattle(ui.seed, DEMO_ENCOUNTER);
-  ui.damaged = new Set();
-  ui.selectedSkillId = null;
-  ui.hoverTargetUid = null;
-  tick();
+// ── 런 핸들러 ──
+const runHandlers: RunHandlers = {
+  onNode(id) {
+    if (busy || run.phase !== "map") return;
+    enterNode(run, id);
+    resetUi();
+    render();
+  },
+  onReward(id) {
+    if (busy || run.phase !== "reward") return;
+    chooseReward(run, id);
+    render();
+  },
+  onRestart() {
+    seed += 1;
+    newRun(seed);
+  },
+};
+
+function newRun(s: number): void {
+  seed = s;
+  ui.seed = s;
+  run = createRun(s, ROSTER);
+  resetUi();
+  render();
 }
 
 // Esc로 타겟팅 취소
 window.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && ui.selectedSkillId) handlers.onCancel();
+  if (e.key === "Escape" && ui.selectedSkillId) battleHandlers.onCancel();
 });
 
-newBattle(42);
+newRun(42);

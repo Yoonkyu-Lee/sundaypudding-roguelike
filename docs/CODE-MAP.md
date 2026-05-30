@@ -9,7 +9,7 @@
 
 ```
 src/
-  core/   ← 순수·결정론 게임 로직. 렌더링/IO 의존 0. (GAME-DESIGN 8.1)
+  core/   ← 순수·결정론 게임 로직(전투 engine + 런 run). 렌더링/IO 의존 0. (GAME-DESIGN 8.1)
   data/   ← 데이터 주도 콘텐츠. 엔진은 이걸 "해석"만. (8.6)
   cli/    ← 터미널 드라이버(사람용 IO). core를 소비.
   web/    ← 웹 렌더러(사람용 뷰). 같은 core 상태를 구독 + 이벤트 로그 재생 (8.5)
@@ -24,7 +24,8 @@ src/
 |---|---|---|---|
 | `src/core/rng.ts` | core | 시드 PRNG. **모든 무작위의 유일한 출처**(결정론, 8.3) | `Rng` |
 | `src/core/types.ts` | core | **타입 스키마 = 명세서.** 모든 상태/행동/관측/이벤트 타입 | (모든 타입) |
-| `src/core/engine.ts` | core | 게임 로직 전부. 상태+행동→다음상태 | `createBattle` · `getLegalActions` · `step` · `computeHitChance` |
+| `src/core/engine.ts` | core | 전투 로직 전부. 상태+행동→다음상태 | `createBattle` · `getLegalActions` · `step` · `computeHitChance` |
+| `src/core/run.ts` | core | **런(7장)**: 분기 노드맵·노드해소·전투생성·보상·승패. 전투는 engine 재사용 | `createRun` · `enterNode` · `resolveBattleEnd` · `chooseReward` · `getRunView` |
 | `src/core/observation.ts` | core | 관측 빌드(JSON) + ASCII 보드 렌더 | `buildObservation` · `renderAscii` |
 | `src/core/ai.ts` | core | 결정론 휴리스틱 정책(데모/적 조종) | `chooseAction` |
 | `src/core/engine.test.ts` | core | 결정론·기능 단위 테스트 | — |
@@ -34,8 +35,9 @@ src/
 | `src/data/encounters.ts` | data | 전투 배치(+보스/포메이션 override) | `DEMO_ENCOUNTER` · `Encounter` |
 | `src/data/formations.ts` | data | 포메이션 열보너스 배치(총량보존, 6장) | `STANDARD_FORMATION` |
 | `src/cli/play.ts` | cli | 대화형/`--demo` 터미널 드라이버 | (엔트리) |
-| `src/web/main.ts` | web | 웹 엔트리·게임 루프(아군=클릭, 적=AI 자동) | (엔트리) |
-| `src/web/render.ts` | web | DOM 렌더 + **2단계 타겟팅 GUI**(칸 하이라이트·머리위 명중%·눈금 화살표·HP 미리보기) + `formatEvent` | `renderApp` · `formatEvent` |
+| `src/web/main.ts` | web | 웹 엔트리·**런 컨트롤러**(맵↔전투↔보상↔결과 분기) | (엔트리) |
+| `src/web/render.ts` | web | **전투** DOM 렌더 + 2단계 타겟팅 GUI(칸 하이라이트·머리위 명중%·눈금 화살표·HP 미리보기·끼어들기 예고) + `formatEvent` | `renderApp` · `formatEvent` |
+| `src/web/runRender.ts` | web | **맵/보상/결과** 화면 렌더 + 노드 간선 SVG | `renderRunScreen` |
 | `src/web/style.css` | web | 다크 테마 스타일 | — |
 | `index.html` · `vite.config.ts` | web | Vite 진입/설정 (`npm run dev`) | — |
 
@@ -65,7 +67,7 @@ src/
 
 | 기능 | 예정 위치 |
 |---|---|
-| 런 노드맵·보상화면 (7장) | 신규 `core/run.ts` + `data/` |
-| 메타/본산/기억회랑 (5장) | 신규 `core/meta.ts` (전투 위 레이어) |
+| 메타/본산/기억회랑 (5장) | 신규 `core/meta.ts` (런 위 레이어) |
+| 상점/인카운터 본구현 (현재 stub) | `core/run.ts` |
 | **적 전용 AI/패턴** | `core/ai.ts` (현재는 아군과 공유 정책) |
 | 웹 렌더러 고도화(스프라이트/애니메이션) | `src/web/` (현재 v1: DOM 카드 + 피격 플래시 + 로그 재생) |
