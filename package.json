@@ -1,0 +1,18 @@
+{
+  "name": "sunday-pudding-roguelike",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "육성형 로그라이크 자체 엔진 — 헤드리스 결정론 전투 코어 + CLI. 설계 SoT: docs/GAME-DESIGN.md",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "play": "node src/cli/play.ts",
+    "demo": "node src/cli/play.ts --demo --seed 42",
+    "test": "node --test src/core/engine.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  }
+}

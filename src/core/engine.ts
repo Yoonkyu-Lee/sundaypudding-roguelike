@@ -1,0 +1,408 @@
+// ─────────────────────────────────────────────────────────────────────────
+// 전투 코어 엔진 — 순수·결정론. 상태 + 행동 → 다음 상태. (8.1)
+// 렌더링 의존 0. 모든 무작위는 state.rng(시드)에서만. (8.3)
+// ─────────────────────────────────────────────────────────────────────────
+
+import { Rng } from "./rng.ts";
+import type {
+  Action,
+  GameEvent,
+  GameState,
+  LegalAction,
+  Pos,
+  QueueEntry,
+  Skill,
+  StatusInstance,
+  Unit,
+} from "./types.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { SKILLS } from "../data/skills.ts";
+import { STATUS_DEFS } from "../data/statuses.ts";
+import type { Encounter, Placement } from "../data/encounters.ts";
+
+const ACTION_CONST = 10000; // 행동 서열 = ACTION_CONST / SPD (2.2)
+
+// ── 헬퍼 ────────────────────────────────────────────────────────────────────
+
+function clamp(n: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, n));
+}
+
+function samePos(a: Pos, b: Pos): boolean {
+  return a.row === b.row && a.col === b.col;
+}
+
+function unitById(state: GameState, uid: string): Unit {
+  const u = state.units.find((x) => x.uid === uid);
+  if (!u) throw new Error(`unit not found: ${uid}`);
+  return u;
+}
+
+function aliveUnits(state: GameState, side?: "ally" | "enemy"): Unit[] {
+  return state.units.filter((u) => u.alive && (side ? u.side === side : true));
+}
+
+function hasStatus(unit: Unit, defId: string): boolean {
+  return unit.statuses.some((s) => s.defId === defId && s.stacks > 0);
+}
+
+function totalStacks(unit: Unit, defId: string): number {
+  return unit.statuses
+    .filter((s) => s.defId === defId)
+    .reduce((sum, s) => sum + s.stacks, 0);
+}
+
+// ── 전투 생성 ────────────────────────────────────────────────────────────────
+
+function makeUnit(p: Placement, side: "ally" | "enemy", idx: number): Unit {
+  const c = CHARACTERS[p.charId];
+  if (!c) throw new Error(`character not found: ${p.charId}`);
+  return {
+    uid: `${side[0]}${idx}_${c.id}`,
+    side,
+    charId: c.id,
+    name: c.name,
+    pos: { ...p.pos },
+    hpMax: c.hp,
+    hp: c.hp,
+    shield: 0,
+    spdMin: c.spdMin,
+    spdMax: c.spdMax,
+    dex: c.dex,
+    accuracy: c.accuracy,
+    critPct: c.critPct,
+    critMult: c.critMult,
+    activeSkillIds: c.skillIds.slice(0, 4), // 전투 활성 최대 4 (2.3)
+    cooldowns: {},
+    statuses: [],
+    alive: true,
+  };
+}
+
+export function createBattle(seed: number, enc: Encounter): GameState {
+  const units: Unit[] = [
+    ...enc.allies.map((p, i) => makeUnit(p, "ally", i)),
+    ...enc.enemies.map((p, i) => makeUnit(p, "enemy", i)),
+  ];
+  const state: GameState = {
+    rng: new Rng(seed),
+    round: 0,
+    units,
+    queue: [],
+    current: null,
+    phase: "inProgress",
+    log: [],
+  };
+  startRound(state);
+  return state;
+}
+
+// ── 라운드 & 서열 (2.2 라운드제) ───────────────────────────────────────────
+
+function startRound(state: GameState): void {
+  state.round++;
+  const entries: QueueEntry[] = aliveUnits(state).map((u) => ({
+    uid: u.uid,
+    kind: "normal" as const,
+    spd: state.rng.int(u.spdMin, u.spdMax), // 라운드마다 SPD 주사위 (2.2)
+  }));
+  // 행동 서열 = ACTION_CONST / SPD 오름차순 → SPD 높을수록 먼저.
+  // 동점은 uid로 결정론적 정렬.
+  entries.sort((a, b) => {
+    const av = ACTION_CONST / a.spd;
+    const bv = ACTION_CONST / b.spd;
+    if (av !== bv) return av - bv;
+    return a.uid < b.uid ? -1 : 1;
+  });
+  state.queue = entries;
+  state.log.push({ t: "roundStart", round: state.round, order: [...entries] });
+  advance(state);
+}
+
+/** 다음 차례로 진행. 큐가 비면 새 라운드. 죽은 유닛은 건너뜀. */
+function advance(state: GameState): void {
+  if (state.phase !== "inProgress") return;
+  while (true) {
+    const next = state.queue.shift();
+    if (!next) {
+      startRound(state);
+      return;
+    }
+    const u = unitById(state, next.uid);
+    if (!u.alive) continue; // 죽은 유닛 스킵
+    state.current = next;
+    state.log.push({ t: "turnStart", uid: u.uid, kind: next.kind });
+    if (next.kind === "normal") onNormalTurnStart(state, u);
+    // 턴 시작 효과로 죽었으면 다음으로
+    if (!u.alive) {
+      state.current = null;
+      if (checkWin(state)) return;
+      continue;
+    }
+    return;
+  }
+}
+
+/** 정규 턴 시작: 쿨타임 감소 + 중독(turnStart) 발동. 끼어들기는 호출 안 됨. (2.10/2.11) */
+function onNormalTurnStart(state: GameState, u: Unit): void {
+  for (const id of Object.keys(u.cooldowns)) {
+    if (u.cooldowns[id] > 0) u.cooldowns[id]--;
+  }
+  tickDot(state, u, "turnStart");
+  checkWin(state);
+}
+
+/** 정규 턴 종료: 화상(turnEnd) 발동 + 상태이상 지속시간 차감. 끼어들기는 호출 안 됨. (2.11) */
+function onNormalTurnEnd(state: GameState, u: Unit): void {
+  if (u.alive) tickDot(state, u, "turnEnd");
+  // 지속시간 차감(정규 턴 기준) — 출혈 포함 모든 상태 (2.11)
+  for (const s of u.statuses) s.duration--;
+  u.statuses = u.statuses.filter((s) => s.duration > 0 && s.stacks > 0);
+}
+
+// ── DoT 처리 (3.5) ──────────────────────────────────────────────────────────
+
+function tickDot(state: GameState, u: Unit, trigger: "turnStart" | "turnEnd" | "onAction"): void {
+  if (!u.alive) return;
+  // 같은 트리거의 모든 상태이상을 defId별로 합산해 1회 적용
+  const byDef = new Map<string, number>();
+  for (const s of u.statuses) {
+    const def = STATUS_DEFS[s.defId];
+    if (def.dot && def.dot.trigger === trigger) {
+      byDef.set(s.defId, (byDef.get(s.defId) ?? 0) + s.stacks * def.dot.dmgPerStack);
+    }
+  }
+  for (const [defId, dmg] of byDef) {
+    if (dmg <= 0) continue;
+    dealRawDamage(state, u, dmg);
+    state.log.push({ t: "statusTick", targetUid: u.uid, statusId: defId, dmg });
+    if (!u.alive) break;
+  }
+}
+
+// ── 합법 행동 (8.2) ──────────────────────────────────────────────────────────
+
+function isFrozen(u: Unit): boolean {
+  return u.statuses.some((s) => STATUS_DEFS[s.defId].actionDenial && s.stacks > 0);
+}
+
+function validTargets(state: GameState, actor: Unit, skill: Skill): Unit[] {
+  if (skill.target === "self") return [actor];
+  const side = skill.target === "enemy" ? (actor.side === "ally" ? "enemy" : "ally") : actor.side;
+  let cands = aliveUnits(state, side);
+  if (skill.targetCells && skill.targetCells.length > 0) {
+    cands = cands.filter((c) => skill.targetCells!.some((cell) => samePos(cell, c.pos)));
+  }
+  return cands;
+}
+
+export function computeHitChance(actor: Unit, skill: Skill, target: Unit): number {
+  if (skill.alwaysHit || skill.target !== "enemy") return 100;
+  return clamp(Math.round(actor.accuracy + skill.accuracy - target.dex), 0, 100);
+}
+
+export function getLegalActions(state: GameState): LegalAction[] {
+  if (state.phase !== "inProgress" || !state.current) return [];
+  const actor = unitById(state, state.current.uid);
+
+  if (isFrozen(actor)) {
+    return [{ action: { type: "skip" }, label: "스킵 (빙결)" }];
+  }
+
+  const out: LegalAction[] = [];
+  for (const skillId of actor.activeSkillIds) {
+    const skill = SKILLS[skillId];
+    if (!skill) continue;
+    if ((actor.cooldowns[skillId] ?? 0) > 0) continue; // 쿨다운 중 (2.10)
+    if (skill.usableFrom && skill.usableFrom.length > 0) {
+      if (!skill.usableFrom.some((c) => samePos(c, actor.pos))) continue;
+    }
+    const targets = validTargets(state, actor, skill);
+    if (targets.length === 0) continue; // 사정권에 대상 없음 → 사용 불가
+    for (const tgt of targets) {
+      out.push({
+        action: { type: "skill", skillId, targetUid: tgt.uid },
+        label: `${skill.name} → ${tgt.name}`,
+        skillName: skill.name,
+        targetUid: tgt.uid,
+        hitChance: computeHitChance(actor, skill, tgt),
+      });
+    }
+  }
+
+  // 쓸 수 있는 기술이 하나도 없으면 효과 없는 스킵 (2.10)
+  if (out.length === 0) {
+    return [{ action: { type: "skip" }, label: "스킵 (쓸 수 있는 기술 없음)" }];
+  }
+  return out;
+}
+
+// ── 데미지/효과 적용 ────────────────────────────────────────────────────────
+
+/** 쉴드 → HP 순으로 피해 적용 (2.9). 보정 끝난 최종 수치 입력. */
+function dealRawDamage(state: GameState, target: Unit, finalAmount: number): void {
+  if (!target.alive || finalAmount <= 0) return;
+  const toShield = Math.min(target.shield, finalAmount);
+  target.shield -= toShield;
+  const toHp = finalAmount - toShield;
+  target.hp = Math.max(0, target.hp - toHp);
+  state.log.push({
+    t: "damage",
+    targetUid: target.uid,
+    base: finalAmount,
+    final: finalAmount,
+    toShield,
+    toHp,
+  });
+  if (target.hp <= 0) {
+    target.alive = false;
+    state.log.push({ t: "death", uid: target.uid });
+  }
+}
+
+/** 데미지 계산: (스킬상수) × 전역배율(동상) × crit. (3.7 순서) */
+function computeDamage(actor: Unit, base: number, crit: boolean): number {
+  let dmg = base;
+  if (hasStatus(actor, "frost")) dmg *= STATUS_DEFS["frost"].damageDealtMult ?? 1; // 곱연산(전역)
+  if (crit) dmg *= actor.critMult;
+  return Math.round(dmg);
+}
+
+function applyStatusInstance(
+  state: GameState,
+  target: Unit,
+  source: Unit,
+  defId: string,
+  stacks: number,
+  duration: number,
+): void {
+  const inst: StatusInstance = { defId, stacks, duration, sourceUid: source.uid };
+  target.statuses.push(inst); // 인스턴스 합치지 않고 추가 (3.1 원장)
+  state.log.push({ t: "statusApplied", targetUid: target.uid, statusId: defId, stacks, duration });
+}
+
+function moveUnit(state: GameState, u: Unit, deltaCol: number): void {
+  const newCol = clamp(u.pos.col + deltaCol, 0, 3);
+  if (newCol === u.pos.col) return;
+  const dest: Pos = { row: u.pos.row, col: newCol };
+  // 목적지에 살아있는 같은 편 유닛 있으면 이동 취소(막힘)
+  const blocked = state.units.some((o) => o.alive && o.side === u.side && o !== u && samePos(o.pos, dest));
+  if (blocked) return;
+  const from = { ...u.pos };
+  u.pos = dest;
+  state.log.push({ t: "move", uid: u.uid, from, to: { ...dest } });
+}
+
+function resolveSkill(state: GameState, actor: Unit, skill: Skill, targetUid?: string): void {
+  state.log.push({ t: "skillUsed", uid: actor.uid, skillId: skill.id, targetUid });
+
+  const primaryTarget =
+    skill.target === "self" ? actor : targetUid ? unitById(state, targetUid) : actor;
+
+  // 적 대상 스킬: 명중 판정 (2.7)
+  if (skill.target === "enemy") {
+    const chance = computeHitChance(actor, skill, primaryTarget);
+    if (!skill.alwaysHit && !state.rng.chance(chance)) {
+      state.log.push({ t: "miss", uid: actor.uid, targetUid: primaryTarget.uid, chance });
+      return;
+    }
+    const crit = state.rng.chance(actor.critPct);
+    state.log.push({ t: "hit", uid: actor.uid, targetUid: primaryTarget.uid, chance, crit });
+    applyEffects(state, actor, skill, primaryTarget, crit);
+  } else {
+    // self/ally: 명중 판정 없음
+    applyEffects(state, actor, skill, primaryTarget, false);
+  }
+}
+
+function applyEffects(state: GameState, actor: Unit, skill: Skill, target: Unit, crit: boolean): void {
+  for (const eff of skill.effects) {
+    switch (eff.kind) {
+      case "damage": {
+        const final = computeDamage(actor, eff.amount, crit);
+        dealRawDamage(state, target, final);
+        break;
+      }
+      case "applyStatus":
+        if (target.alive) applyStatusInstance(state, target, actor, eff.statusId, eff.stacks, eff.duration);
+        break;
+      case "shield":
+        target.shield += eff.amount;
+        state.log.push({ t: "shieldGain", targetUid: target.uid, amount: eff.amount });
+        break;
+      case "heal": {
+        const before = target.hp;
+        target.hp = Math.min(target.hpMax, target.hp + eff.amount);
+        state.log.push({ t: "heal", targetUid: target.uid, amount: target.hp - before });
+        break;
+      }
+      case "move": {
+        const who = eff.who === "self" ? actor : target;
+        if (who.alive) moveUnit(state, who, eff.deltaCol);
+        break;
+      }
+      case "interruptSelf":
+        // 끼어들기: 서열 맨 앞에 삽입, 차감 무시 (2.11)
+        state.queue.unshift({ uid: actor.uid, kind: "interrupt", spd: 0 });
+        state.log.push({ t: "interrupt", uid: actor.uid });
+        break;
+    }
+  }
+}
+
+// ── 스텝(행동 1회 처리) ──────────────────────────────────────────────────────
+
+export function step(state: GameState, action: Action): GameState {
+  if (state.phase !== "inProgress" || !state.current) return state;
+  const entry = state.current;
+  const actor = unitById(state, entry.uid);
+
+  if (action.type === "skip") {
+    const reason = isFrozen(actor) ? "frozen" : "noUsableSkill";
+    state.log.push({ t: "skip", uid: actor.uid, reason });
+  } else {
+    const skill = SKILLS[action.skillId];
+    if (!skill) throw new Error(`unknown skill: ${action.skillId}`);
+    // 합법성 최소 검증
+    if ((actor.cooldowns[action.skillId] ?? 0) > 0 || isFrozen(actor)) {
+      throw new Error(`illegal action: ${action.skillId} (cooldown/frozen)`);
+    }
+    // 출혈: 행동 시 발동 (정규 + 끼어들기 모두, 2.11)
+    tickDot(state, actor, "onAction");
+    if (actor.alive) {
+      // 쿨타임은 사용 즉시 설정(끼어들기에서도 설정됨; 단 '감소'만 끼어들기서 안 됨)
+      actor.cooldowns[action.skillId] = skill.cooldown;
+      resolveSkill(state, actor, skill, action.targetUid);
+    }
+  }
+
+  // 턴 종료 처리 — 정규 턴만 (끼어들기는 차감/주기효과 없음, 2.11)
+  if (entry.kind === "normal" && actor.alive) onNormalTurnEnd(state, actor);
+
+  state.current = null;
+  if (checkWin(state)) return state;
+  advance(state);
+  return state;
+}
+
+// ── 승패 (7.3) ───────────────────────────────────────────────────────────────
+
+function checkWin(state: GameState): boolean {
+  if (state.phase !== "inProgress") return true;
+  const alliesAlive = aliveUnits(state, "ally").length;
+  const enemiesAlive = aliveUnits(state, "enemy").length;
+  if (enemiesAlive === 0) {
+    state.phase = "allyWin";
+    state.log.push({ t: "battleEnd", phase: "allyWin" });
+    return true;
+  }
+  if (alliesAlive === 0) {
+    state.phase = "enemyWin";
+    state.log.push({ t: "battleEnd", phase: "enemyWin" });
+    return true;
+  }
+  return false;
+}
+
+// 내부 헬퍼 export (관측/AI에서 사용)
+export { unitById, totalStacks, isFrozen };
