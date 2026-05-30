@@ -32,7 +32,7 @@ function partyPanel(view: RunView): string {
       const pct = Math.max(0, (m.hp / m.maxHp) * 100);
       const cls = m.alive ? "" : " dead";
       return `<div class="pmember${cls}">
-        <span class="pname">${esc(m.name)}</span>
+        <span class="pname">${m.avatar ? m.avatar + " " : ""}${esc(m.name)}</span>
         <div class="phpbar"><div class="php" style="width:${pct}%"></div></div>
         <span class="phptext">${m.hp}/${m.maxHp}</span>
       </div>`;

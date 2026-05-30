@@ -65,4 +65,20 @@ export const CHARACTERS: Record<string, Character> = {
     critMult: 1.5,
     skillIds: ["bingyeol", "jump"],
   },
+
+  // ══ 우익(대한민청) — 플레이어 파티 ══
+  kim: { id: "kim", name: "김두한", avatar: "🥊", hp: 46, spdMin: 4, spdMax: 7, dex: 8, accuracy: 0, critPct: 25, critMult: 1.6, skillIds: ["kim_punch", "kim_kick", "kim_oyabun", "kim_4dollar"] },
+  shanghai: { id: "shanghai", name: "상하이 조", avatar: "🔫", hp: 28, spdMin: 6, spdMax: 9, dex: 12, accuracy: 5, critPct: 15, critMult: 1.5, skillIds: ["sh_pistol", "sh_leg", "sh_grenade", "sh_ult"] },
+  shin: { id: "shin", name: "신영균", avatar: "🪓", hp: 50, spdMin: 3, spdMax: 6, dex: 6, accuracy: 0, critPct: 10, critMult: 1.5, skillIds: ["shin_axe", "shin_charge", "shin_awaken", "shin_ult"] },
+  cho: { id: "cho", name: "조병옥", avatar: "🎖️", hp: 34, spdMin: 5, spdMax: 8, dex: 9, accuracy: 0, critPct: 5, critMult: 1.5, skillIds: ["cho_warn", "cho_martial", "cho_police", "cho_ult"] },
+
+  // ══ 좌익(조선공산당) — 적(엘리트/보스) ══
+  jung: { id: "jung", name: "정진영", avatar: "🎩", hp: 32, spdMin: 6, spdMax: 9, dex: 11, accuracy: 0, critPct: 15, critMult: 1.5, skillIds: ["jung_shot", "jung_retreat", "jung_charge", "jung_ult"] },
+  chunho: { id: "chunho", name: "김천호", avatar: "🗡️", hp: 26, spdMin: 7, spdMax: 10, dex: 14, accuracy: 0, critPct: 25, critMult: 1.6, skillIds: ["chunho_stab", "chunho_shadow", "chunho_dagger", "chunho_ult"] },
+  shim: { id: "shim", name: "심영", avatar: "🚩", hp: 48, spdMin: 3, spdMax: 6, dex: 5, accuracy: 0, critPct: 5, critMult: 1.5, skillIds: ["shim_speech", "shim_mother", "shim_flag", "shim_ult"] },
+  doctor: { id: "doctor", name: "의사양반", avatar: "🩺", hp: 30, spdMin: 5, spdMax: 8, dex: 8, accuracy: 0, critPct: 5, critMult: 1.5, skillIds: ["doc_tap", "doc_heal", "doc_cleanse", "doc_ult"] },
+
+  // ══ 잡몹 ══
+  thug: { id: "thug", name: "깡패", avatar: "🧢", hp: 14, spdMin: 3, spdMax: 6, dex: 6, accuracy: 0, critPct: 5, critMult: 1.5, skillIds: ["thug_punch", "thug_kick"] },
+  thug2: { id: "thug2", name: "각목 깡패", avatar: "🪵", hp: 18, spdMin: 2, spdMax: 5, dex: 5, accuracy: 0, critPct: 5, critMult: 1.5, skillIds: ["thug_club", "thug_throw"] },
 };

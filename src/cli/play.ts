@@ -39,6 +39,8 @@ function fmt(state: GameState, e: GameEvent): string | null {
       return `    ${nmeOf(state, e.targetUid)} ${e.statusId} 지속피해 ${e.dmg}`;
     case "statusApplied":
       return `    ☢ ${nmeOf(state, e.targetUid)}에 ${e.statusId} ${e.stacks}스택(${e.duration}턴)`;
+    case "cleanse":
+      return `    ✨ ${nmeOf(state, e.targetUid)} 정화`;
     case "shieldGain":
       return `    🛡 ${nmeOf(state, e.targetUid)} 쉴드 +${e.amount}`;
     case "heal":

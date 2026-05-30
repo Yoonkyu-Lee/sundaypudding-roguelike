@@ -61,6 +61,7 @@ export function formatEvent(state: GameState, e: GameEvent): string | null {
     case "damage": return `&nbsp;&nbsp;💢 ${nm(e.targetUid)} 피해 ${e.final} (쉴드 ${e.toShield}/HP ${e.toHp})`;
     case "statusTick": return `&nbsp;&nbsp;${nm(e.targetUid)} ${e.statusId} 지속피해 ${e.dmg}`;
     case "statusApplied": return `&nbsp;&nbsp;☢ ${nm(e.targetUid)} ${e.statusId} ${e.stacks}스택(${e.duration}턴)`;
+    case "cleanse": return `&nbsp;&nbsp;✨ ${nm(e.targetUid)} 정화`;
     case "shieldGain": return `&nbsp;&nbsp;🛡 ${nm(e.targetUid)} 쉴드 +${e.amount}`;
     case "heal": return `&nbsp;&nbsp;➕ ${nm(e.targetUid)} 회복 ${e.amount}`;
     case "move": return `&nbsp;&nbsp;↔ ${nm(e.uid)} 이동 (c${e.from.col}→c${e.to.col})`;
@@ -117,7 +118,7 @@ function unitCard(u: UnitView, isCurrent: boolean, damaged: boolean, tgt: TgtCtx
 
   return `<div class="${cls}" data-uid="${u.uid}" ${dataTgt}>
     ${hitBadge}
-    <div class="cardtop"><span class="nm">${esc(u.name)}</span>${formationBadge(u)}</div>
+    <div class="cardtop"><span class="nm">${u.avatar ? u.avatar + " " : ""}${esc(u.name)}</span>${formationBadge(u)}</div>
     <div class="hpbar"><div class="hp" style="width:${hpPct}%"></div>${preview}${u.shield > 0 ? `<div class="sh">🛡${u.shield}</div>` : ""}</div>
     <div class="hptext">HP ${u.hp}/${u.hpMax}${lossText}</div>
     <div class="chips">${statusChips(u)}</div>

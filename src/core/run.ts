@@ -94,21 +94,23 @@ function enemiesFor(type: NodeType): Placement[] {
   switch (type) {
     case "elite":
       return [
-        { charId: "slime", pos: { row: 1, col: 0 } },
-        { charId: "slime", pos: { row: 2, col: 0 } },
-        { charId: "frostspirit", pos: { row: 1, col: 2 } },
+        { charId: "thug2", pos: { row: 1, col: 0 } },
+        { charId: "thug", pos: { row: 2, col: 0 } },
+        { charId: "jung", pos: { row: 1, col: 2 } }, // 좌익 정진영
       ];
     case "boss":
+      // 좌익(조선공산당) 진영 — 보스전 적 진형 보너스 활성(6.3)
       return [
-        { charId: "frostspirit", pos: { row: 1, col: 1 } },
-        { charId: "slime", pos: { row: 0, col: 0 } },
-        { charId: "slime", pos: { row: 1, col: 0 } },
-        { charId: "slime", pos: { row: 2, col: 0 } },
+        { charId: "shim", pos: { row: 1, col: 0 } }, // 탱커(도발)
+        { charId: "chunho", pos: { row: 2, col: 0 } }, // 암살자
+        { charId: "jung", pos: { row: 1, col: 2 } }, // 딜러
+        { charId: "doctor", pos: { row: 2, col: 2 } }, // 힐러
       ];
-    default: // battle
+    default: // battle (잡몹)
       return [
-        { charId: "slime", pos: { row: 1, col: 0 } },
-        { charId: "slime", pos: { row: 2, col: 0 } },
+        { charId: "thug", pos: { row: 1, col: 0 } },
+        { charId: "thug", pos: { row: 2, col: 0 } },
+        { charId: "thug2", pos: { row: 0, col: 0 } },
       ];
   }
 }
@@ -284,7 +286,7 @@ export interface RunView {
   phase: RunPhase;
   rows: number;
   nodes: { id: string; layer: number; col: number; type: NodeType; next: string[]; status: NodeStatus }[];
-  party: { name: string; charId: string; hp: number; maxHp: number; alive: boolean }[];
+  party: { name: string; charId: string; avatar?: string; hp: number; maxHp: number; alive: boolean }[];
   rewards: RewardOption[] | null;
   log: string[];
 }
@@ -300,7 +302,7 @@ export function getRunView(run: RunState): RunView {
       else if (run.reachable.includes(n.id)) status = "reachable";
       return { id: n.id, layer: n.layer, col: n.col, type: n.type, next: n.next, status };
     }),
-    party: run.party.map((m) => ({ name: CHARACTERS[m.charId].name, charId: m.charId, hp: m.hp, maxHp: m.maxHp, alive: m.hp > 0 })),
+    party: run.party.map((m) => ({ name: CHARACTERS[m.charId].name, charId: m.charId, avatar: CHARACTERS[m.charId].avatar, hp: m.hp, maxHp: m.maxHp, alive: m.hp > 0 })),
     rewards: run.rewards,
     log: run.log.slice(-12),
   };

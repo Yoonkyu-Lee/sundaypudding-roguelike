@@ -68,4 +68,13 @@ export const STATUS_DEFS: Record<StatusDefId, StatusDef> = {
     buff: true,
     grantsInterrupt: true, // 정규 턴 행동 시 끼어들기 (끼어들기 출처가 스킬이 아닌 예: 버프)
   },
+
+  // ── 공격/치명 보정 (3.6 공위증류) ──
+  might: { id: "might", name: "투지", icon: "💪", buff: true, dmgDealtFlat: 6 }, // 공격력↑(공위증)
+  weaken: { id: "weaken", name: "약화", icon: "📉", dmgDealtFlat: -5 }, // 공격력↓
+  edge: { id: "edge", name: "예리", icon: "🎯", buff: true, critPctAdd: 30, critMultAdd: 0.5 }, // 치명↑
+  ambush: { id: "ambush", name: "은신", icon: "🥷", buff: true, critPctAdd: 100 }, // 다음 공격 무조건 치명
+  invincible: { id: "invincible", name: "무적", icon: "💠", buff: true, invincible: true }, // 모든 피해 0
+  taunt: { id: "taunt", name: "도발", icon: "📣", taunt: true }, // 적 공격 집중 유도(AI 참조)
+  paralyze: { id: "paralyze", name: "마비", icon: "💫", spdDown: 3 }, // 속도↓ → 서열 밀림 (3.5)
 };

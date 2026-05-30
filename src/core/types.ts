@@ -49,6 +49,18 @@ export interface StatusDef {
   undying?: boolean;
   /** 보유 유닛이 정규 턴에 행동하면 끼어들기 발생 (신속 등 버프). 끼어들기 출처가 스킬에 국한되지 않음 (2.11) */
   grantsInterrupt?: boolean;
+  /** 주는 데미지 합연산 보정(공위증=+, 약화=-). (3.6/3.7) */
+  dmgDealtFlat?: number;
+  /** 치명타 확률 가산(%) */
+  critPctAdd?: number;
+  /** 치명타 배수 가산 */
+  critMultAdd?: number;
+  /** 무적: 모든 피해 0 (백병원 등) */
+  invincible?: boolean;
+  /** 도발: 보유 유닛(아군)에게 적 공격이 집중됨 (AI가 참조) */
+  taunt?: boolean;
+  /** SPD 감소(마비/둔화): 라운드 서열에서 뒤로 밀림 (3.5) */
+  spdDown?: number;
 }
 
 /** 상태이상 인스턴스(원장 1건) — 출처/만료 보존 (3.1) */
@@ -65,9 +77,14 @@ export interface StatusInstance {
 export type SkillEffect =
   | { kind: "damage"; amount: number } // 스킬 상수 데미지 (2.5)
   | { kind: "applyStatus"; statusId: StatusDefId; stacks: number; duration: number }
+  | { kind: "applyStatusSelf"; statusId: StatusDefId; stacks: number; duration: number } // 대상과 별개로 시전자에게
   | { kind: "shield"; amount: number } // 쉴드(덤 HP) 부여 (2.9)
   | { kind: "heal"; amount: number }
+  | { kind: "cleanse" } // 디버프 정화 (대상의 비버프 상태 제거)
   | { kind: "move"; who: "target" | "self"; deltaCol: number }; // 동적 재배치 (6.4)
+
+/** 타겟 범위: single=단일 / allEnemies·allAllies=광역(유효 칸 전체) */
+export type SkillTargetMode = "single" | "allEnemies" | "allAllies";
 
 export type SkillTarget = "enemy" | "ally" | "self";
 
@@ -103,6 +120,8 @@ export interface Skill {
   grantsInterrupt?: number;
   /** 끼어들기 주체: "self"=시전자 본인 / "target"=대상 아군(서포트). 기본 self (2.11) */
   grantsInterruptTo?: "self" | "target";
+  /** 타겟 범위(기본 single). 광역이면 유효 칸 전체에 적용 */
+  targetMode?: SkillTargetMode;
   effects: SkillEffect[];
 }
 
@@ -112,6 +131,8 @@ export interface Skill {
 export interface Character {
   id: string;
   name: string;
+  /** 프로필(아바타). 이모지 또는 이미지 경로. 저작권 안전한 플레이스홀더 → 후일 교체 */
+  avatar?: string;
   hp: number;
   spdMin: number; // SPD 범위 (2.2)
   spdMax: number;
@@ -185,6 +206,7 @@ export type GameEvent =
   | { t: "shieldGain"; targetUid: string; amount: number }
   | { t: "statusApplied"; targetUid: string; statusId: string; stacks: number; duration: number }
   | { t: "statusTick"; targetUid: string; statusId: string; dmg: number }
+  | { t: "cleanse"; targetUid: string }
   | { t: "move"; uid: string; from: Pos; to: Pos }
   | { t: "interrupt"; uid: string } // 끼어들기 삽입
   | { t: "skip"; uid: string; reason: "noUsableSkill" | "frozen" | "chosen" }
@@ -215,6 +237,7 @@ export interface UnitView {
   uid: string;
   side: Side;
   name: string;
+  avatar?: string;
   pos: Pos;
   hp: number;
   hpMax: number;

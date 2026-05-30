@@ -10,9 +10,10 @@ import { renderRunScreen, type RunHandlers } from "./runRender.ts";
 const app = document.getElementById("app")!;
 
 const ROSTER = [
-  { charId: "beef", pos: { row: 1, col: 0 } },
-  { charId: "pudding", pos: { row: 2, col: 1 } },
-  { charId: "jelly", pos: { row: 2, col: 2 } },
+  { charId: "kim", pos: { row: 1, col: 0 } }, // 김두한 전방
+  { charId: "shin", pos: { row: 2, col: 0 } }, // 신영균 전방
+  { charId: "shanghai", pos: { row: 1, col: 2 } }, // 상하이 조 후방
+  { charId: "cho", pos: { row: 2, col: 2 } }, // 조병옥 후방
 ];
 
 let run: RunState;

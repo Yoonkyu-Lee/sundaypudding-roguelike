@@ -2,6 +2,7 @@
 import type { GameState, Observation, Unit, UnitView } from "./types.ts";
 import { getLegalActions, getFormationBonus } from "./engine.ts";
 import { STATUS_DEFS } from "../data/statuses.ts";
+import { CHARACTERS } from "../data/characters.ts";
 
 function round1(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(1);
@@ -33,6 +34,7 @@ function viewUnit(state: GameState, u: Unit): UnitView {
     uid: u.uid,
     side: u.side,
     name: u.name,
+    avatar: CHARACTERS[u.charId]?.avatar,
     pos: { ...u.pos },
     hp: u.hp,
     hpMax: u.hpMax,

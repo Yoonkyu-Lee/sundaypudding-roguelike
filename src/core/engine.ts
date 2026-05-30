@@ -54,6 +54,25 @@ function totalStacks(unit: Unit, defId: string): number {
     .reduce((sum, s) => sum + s.stacks, 0);
 }
 
+/** 상태이상 정의의 수치 필드를 스택 가중 합산 (dmgDealtFlat/critPctAdd/critMultAdd) */
+function statusNumSum(unit: Unit, key: "dmgDealtFlat" | "critPctAdd" | "critMultAdd" | "spdDown"): number {
+  let sum = 0;
+  for (const s of unit.statuses) {
+    const v = STATUS_DEFS[s.defId][key];
+    if (typeof v === "number") sum += v * s.stacks;
+  }
+  return sum;
+}
+
+/** 불린 플래그 상태 보유 여부 (invincible/taunt 등) */
+function statusFlag(unit: Unit, key: "invincible" | "taunt"): boolean {
+  return unit.statuses.some((s) => STATUS_DEFS[s.defId][key] && s.stacks > 0);
+}
+
+function critPctOf(unit: Unit): number {
+  return unit.critPct + statusNumSum(unit, "critPctAdd");
+}
+
 // ── 전투 생성 ────────────────────────────────────────────────────────────────
 
 function makeUnit(
@@ -149,7 +168,8 @@ function startRound(state: GameState): void {
   const entries: QueueEntry[] = aliveUnits(state).map((u) => ({
     uid: u.uid,
     kind: "normal" as const,
-    spd: state.rng.int(u.spdMin, u.spdMax), // 라운드마다 SPD 주사위 (2.2)
+    // 라운드마다 SPD 주사위 (2.2) − 마비/둔화(spdDown)로 뒤로 밀림 (3.5)
+    spd: Math.max(1, state.rng.int(u.spdMin, u.spdMax) - statusNumSum(u, "spdDown")),
   }));
   // 행동 서열 = ACTION_CONST / SPD 오름차순 → SPD 높을수록 먼저.
   // 동점은 uid로 결정론적 정렬.
@@ -301,6 +321,11 @@ export function getLegalActions(state: GameState): LegalAction[] {
 /** 쉴드 → HP 순으로 피해 적용 (2.9). 공포(쉴드 잠식)·관통(쉴드 무시)·불사(생존) 반영. */
 function dealRawDamage(state: GameState, target: Unit, finalAmount: number, opts?: { ignoreShield?: boolean }): void {
   if (!target.alive || finalAmount <= 0) return;
+  // 무적: 모든 피해 0 (백병원 등)
+  if (statusFlag(target, "invincible")) {
+    state.log.push({ t: "damage", targetUid: target.uid, base: finalAmount, final: 0, toShield: 0, toHp: 0 });
+    return;
+  }
   let remaining = finalAmount;
   let toShield = 0;
 
@@ -344,12 +369,12 @@ export function previewHpLoss(state: GameState, attacker: Unit, skill: Skill, ta
   return { hpLoss: Math.min(target.hp, dmg - absorbedDmg), shieldConsumed: absorbedDmg * mult };
 }
 
-/** 데미지 계산: (스킬상수) × 전역배율(동상) × crit. (3.7 순서) */
+/** 데미지 계산: (스킬상수 + 합연산보정[공위증/약화]) × 전역배율(동상) × crit. (3.7 순서) */
 function computeDamage(actor: Unit, base: number, crit: boolean): number {
-  let dmg = base;
+  let dmg = base + statusNumSum(actor, "dmgDealtFlat"); // 공위증(+)/약화(-) 합연산
   if (hasStatus(actor, "frost")) dmg *= STATUS_DEFS["frost"].damageDealtMult ?? 1; // 곱연산(전역)
-  if (crit) dmg *= actor.critMult;
-  return Math.round(dmg);
+  if (crit) dmg *= actor.critMult + statusNumSum(actor, "critMultAdd");
+  return Math.max(0, Math.round(dmg));
 }
 
 function applyStatusInstance(
@@ -380,42 +405,64 @@ function moveUnit(state: GameState, u: Unit, deltaCol: number): void {
 function resolveSkill(state: GameState, actor: Unit, skill: Skill, targetUid?: string): void {
   state.log.push({ t: "skillUsed", uid: actor.uid, skillId: skill.id, targetUid });
 
-  const primaryTarget =
-    skill.target === "self" ? actor : targetUid ? unitById(state, targetUid) : actor;
+  // 시전자 자기 효과 1회 (광역 중복 방지)
+  applySelfEffects(state, actor, skill);
 
-  // 적 대상 스킬: 명중 판정 (2.7)
-  if (skill.target === "enemy") {
-    const chance = computeHitChance(actor, skill, primaryTarget);
-    if (!skill.alwaysHit && !state.rng.chance(chance)) {
-      state.log.push({ t: "miss", uid: actor.uid, targetUid: primaryTarget.uid, chance });
-      return;
+  // 타겟 목록 결정 (광역이면 유효 칸 전체)
+  let targets: Unit[];
+  if (skill.target === "self") targets = [actor];
+  else if (skill.targetMode === "allEnemies" || skill.targetMode === "allAllies") targets = validTargets(state, actor, skill);
+  else targets = [targetUid ? unitById(state, targetUid) : actor];
+
+  for (const tgt of targets) {
+    if (!tgt.alive) continue;
+    if (skill.target === "enemy") {
+      const chance = computeHitChance(actor, skill, tgt);
+      if (!skill.alwaysHit && !state.rng.chance(chance)) {
+        state.log.push({ t: "miss", uid: actor.uid, targetUid: tgt.uid, chance });
+        continue;
+      }
+      const crit = state.rng.chance(critPctOf(actor));
+      state.log.push({ t: "hit", uid: actor.uid, targetUid: tgt.uid, chance, crit });
+      applyTargetEffects(state, actor, skill, tgt, crit);
+    } else {
+      applyTargetEffects(state, actor, skill, tgt, false); // self/ally: 명중 판정 없음
     }
-    const crit = state.rng.chance(actor.critPct);
-    state.log.push({ t: "hit", uid: actor.uid, targetUid: primaryTarget.uid, chance, crit });
-    applyEffects(state, actor, skill, primaryTarget, crit);
-  } else {
-    // self/ally: 명중 판정 없음
-    applyEffects(state, actor, skill, primaryTarget, false);
   }
 }
 
-function applyEffects(state: GameState, actor: Unit, skill: Skill, target: Unit, crit: boolean): void {
+/** 시전자 자신에게 1회만 적용되는 효과 (광역 중복 방지): applyStatusSelf, move(self). */
+function applySelfEffects(state: GameState, actor: Unit, skill: Skill): void {
+  for (const eff of skill.effects) {
+    if (eff.kind === "applyStatusSelf" && actor.alive) {
+      applyStatusInstance(state, actor, actor, eff.statusId, eff.stacks, eff.duration);
+    } else if (eff.kind === "move" && eff.who === "self" && actor.alive) {
+      moveUnit(state, actor, eff.deltaCol);
+    }
+  }
+}
+
+/** 대상별 효과 (광역이면 타겟마다 호출). self 전용 효과는 건너뜀(applySelfEffects가 처리). */
+function applyTargetEffects(state: GameState, actor: Unit, skill: Skill, target: Unit, crit: boolean): void {
   for (const eff of skill.effects) {
     switch (eff.kind) {
       case "damage": {
-        // 스킬상수 + 포메이션 attackPower + 런 강화보너스 (전부 합연산, 6.1 → 3.7 순서)
         const atk = getFormationBonus(state, actor, "attackPower");
         const up = actor.skillDmgBonus[skill.id] ?? 0;
         const final = computeDamage(actor, eff.amount + atk + up, crit);
-        // 관통: 공격자가 보유 시 쉴드 무시 (3.6)
         dealRawDamage(state, target, final, { ignoreShield: hasStatus(actor, "pierce") });
         break;
       }
       case "applyStatus":
         if (target.alive) applyStatusInstance(state, target, actor, eff.statusId, eff.stacks, eff.duration);
         break;
+      case "cleanse": {
+        const before = target.statuses.length;
+        target.statuses = target.statuses.filter((s) => STATUS_DEFS[s.defId].buff);
+        if (target.statuses.length !== before) state.log.push({ t: "cleanse", targetUid: target.uid });
+        break;
+      }
       case "shield": {
-        // 방어 스킬 위력 += 포메이션 defensePower (합연산)
         const def = getFormationBonus(state, actor, "defensePower");
         const amt = Math.round(eff.amount + def);
         target.shield += amt;
@@ -429,11 +476,10 @@ function applyEffects(state: GameState, actor: Unit, skill: Skill, target: Unit,
         state.log.push({ t: "heal", targetUid: target.uid, amount: target.hp - before });
         break;
       }
-      case "move": {
-        const who = eff.who === "self" ? actor : target;
-        if (who.alive) moveUnit(state, who, eff.deltaCol);
+      case "move":
+        if (eff.who === "target" && target.alive) moveUnit(state, target, eff.deltaCol);
         break;
-      }
+      // applyStatusSelf, move(self) → applySelfEffects에서 1회 처리
     }
   }
 }
