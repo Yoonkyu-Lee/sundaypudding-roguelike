@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createBattle, getLegalActions, step, computeHitChance, getFormationBonus, previewDamage } from "./engine.ts";
+import { createBattle, getLegalActions, step, computeHitChance, getFormationBonus, previewDamage, computeAreaCells } from "./engine.ts";
 import { chooseAction } from "./ai.ts";
 import { DEMO_ENCOUNTER } from "../data/encounters.ts";
 import type { Encounter } from "../data/encounters.ts";
@@ -238,6 +238,37 @@ test("데미지 미리보기: 스킬상수+포메이션, 비크리 결정론 (�
   const beef = state.units.find((u) => u.name === "비프")!; // 강타 12, 0열 attackPower 4 단독
   // 강타 단독 데미지 = 12 + 4(포메이션) = 16
   assert.equal(previewDamage(state, beef, SKILLS["gangta"]), 16);
+});
+
+test("면적 모양: computeAreaCells (single/row/col/square/cross/all + 클램프)", () => {
+  assert.equal(computeAreaCells({ row: 1, col: 1 }, { kind: "single" }, 4, 4).length, 1);
+  assert.equal(computeAreaCells({ row: 1, col: 1 }, { kind: "row" }, 4, 4).length, 4);
+  assert.equal(computeAreaCells({ row: 1, col: 1 }, { kind: "col" }, 4, 4).length, 4);
+  assert.equal(computeAreaCells({ row: 1, col: 1 }, { kind: "square", radius: 1 }, 4, 4).length, 9);
+  assert.equal(computeAreaCells({ row: 0, col: 0 }, { kind: "square", radius: 1 }, 4, 4).length, 4); // 모서리 클램프
+  assert.equal(computeAreaCells({ row: 1, col: 1 }, { kind: "cross", radius: 1 }, 4, 4).length, 5);
+  assert.equal(computeAreaCells({ row: 0, col: 0 }, { kind: "all" }, 4, 4).length, 16);
+});
+
+test("면적 row: 같은 행의 적 다수를 한 번에 타격", () => {
+  const enc = {
+    id: "t", name: "t",
+    allies: [{ charId: "cho", pos: { row: 1, col: 0 } }],
+    enemies: [{ charId: "slime", pos: { row: 1, col: 0 } }, { charId: "slime", pos: { row: 1, col: 2 } }, { charId: "slime", pos: { row: 3, col: 0 } }],
+  };
+  const state = createBattle(1, enc);
+  const cho = state.units.find((u) => u.name === "조병옥")!;
+  cho.cooldowns = {};
+  const e0 = state.units.find((u) => u.side === "enemy" && u.pos.row === 1 && u.pos.col === 0)!;
+  const e2 = state.units.find((u) => u.side === "enemy" && u.pos.row === 1 && u.pos.col === 2)!;
+  const e3 = state.units.find((u) => u.side === "enemy" && u.pos.row === 3)!;
+  for (const e of [e0, e2, e3]) e.dex = -100;
+  const hp = (u: typeof e0) => u.hp;
+  const [h0, h2, h3] = [hp(e0), hp(e2), hp(e3)];
+  forceTurn(state, cho.uid);
+  step(state, { type: "skill", skillId: "cho_police", targetUid: e0.uid }); // row 면적
+  assert.ok(e0.hp < h0 && e2.hp < h2, "같은 행(1) 둘 다 타격");
+  assert.equal(e3.hp, h3, "다른 행(3)은 무사");
 });
 
 test("데미지는 쉴드부터 깎고 그다음 HP (2.9)", () => {

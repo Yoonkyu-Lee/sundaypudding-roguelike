@@ -283,7 +283,8 @@
 9. **사망 방지** (불사, 1턴)
 10. **주는 데미지 합연산 보정** (투지/공위증+ · 약화−), **치명 보정**(예리·은신: critPct/critMult)
 11. **무적**(모든 피해 0) · **도발**(적 공격 집중, AI 참조) · **마비**(spdDown→서열 밀림, 3.5)
-12. **정화**(cleanse) · **시전자 자기효과**(applyStatusSelf, 광역 중복 방지) · **광역**(targetMode allEnemies/allAllies)
+12. **정화**(cleanse) · **시전자 자기효과**(applyStatusSelf, 광역 중복 방지)
+13. **면적(AoE) 모양**: `area` = single/row/col/square(radius)/cross(radius)/all. **앵커(선택 대상) 기준**으로 영향 칸 결정, 풋프린트 내 같은 진영 유닛에 적용. 웹은 타겟팅 시 **바닥에 영향 칸 하이라이트**(2.4 확장). (향후: 자유 인접 N칸 선택)
 
 ---
 

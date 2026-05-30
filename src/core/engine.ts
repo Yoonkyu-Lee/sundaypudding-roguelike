@@ -6,6 +6,7 @@
 import { Rng } from "./rng.ts";
 import type {
   Action,
+  AreaShape,
   FormationBonusKind,
   GameEvent,
   GameState,
@@ -275,6 +276,61 @@ function validTargets(state: GameState, actor: Unit, skill: Skill): Unit[] {
   return cands;
 }
 
+/** 진영 그리드 크기(유닛 배치 기준, 최소 4×4) */
+function sideDims(state: GameState, side: "ally" | "enemy"): { rows: number; cols: number } {
+  let rows = 4;
+  let cols = 4;
+  for (const u of state.units) {
+    if (u.side !== side) continue;
+    rows = Math.max(rows, u.pos.row + 1);
+    cols = Math.max(cols, u.pos.col + 1);
+  }
+  return { rows, cols };
+}
+
+/** 면적 모양 → 앵커 기준 영향 칸 목록. 엔진(효과 적용)과 웹(바닥 하이라이트)이 공유. */
+export function computeAreaCells(anchor: Pos, area: AreaShape | undefined, rows: number, cols: number): Pos[] {
+  const a = area ?? { kind: "single" as const };
+  const cells: Pos[] = [];
+  const push = (r: number, c: number) => {
+    if (r >= 0 && r < rows && c >= 0 && c < cols) cells.push({ row: r, col: c });
+  };
+  switch (a.kind) {
+    case "single": push(anchor.row, anchor.col); break;
+    case "row": for (let c = 0; c < cols; c++) push(anchor.row, c); break;
+    case "col": for (let r = 0; r < rows; r++) push(r, anchor.col); break;
+    case "square": {
+      const rad = a.radius ?? 1;
+      for (let dr = -rad; dr <= rad; dr++) for (let dc = -rad; dc <= rad; dc++) push(anchor.row + dr, anchor.col + dc);
+      break;
+    }
+    case "cross": {
+      const rad = a.radius ?? 1;
+      push(anchor.row, anchor.col);
+      for (let d = 1; d <= rad; d++) {
+        push(anchor.row + d, anchor.col); push(anchor.row - d, anchor.col);
+        push(anchor.row, anchor.col + d); push(anchor.row, anchor.col - d);
+      }
+      break;
+    }
+    case "all": for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) push(r, c); break;
+  }
+  return cells;
+}
+
+/** 면적 스킬의 영향 유닛 (앵커=대상 위치). single/all 외 모양은 풋프린트 내 같은 진영 유닛 */
+function areaTargets(state: GameState, actor: Unit, skill: Skill, anchor: Unit | null): Unit[] {
+  const side = skill.target === "enemy" ? (actor.side === "ally" ? "enemy" : "ally") : actor.side;
+  const area = skill.area;
+  if (skill.target === "self") return [actor];
+  if (!area || area.kind === "single") return [anchor ?? actor];
+  if (area.kind === "all") return validTargets(state, actor, skill); // 마스크 존중
+  const a = (anchor ?? actor).pos;
+  const dims = sideDims(state, side);
+  const cells = computeAreaCells(a, area, dims.rows, dims.cols);
+  return state.units.filter((u) => u.alive && u.side === side && cells.some((c) => c.row === u.pos.row && c.col === u.pos.col));
+}
+
 export function computeHitChance(actor: Unit, skill: Skill, target: Unit): number {
   if (skill.alwaysHit || skill.target !== "enemy") return 100;
   return clamp(Math.round(actor.accuracy + skill.accuracy - target.dex), 0, 100);
@@ -408,11 +464,9 @@ function resolveSkill(state: GameState, actor: Unit, skill: Skill, targetUid?: s
   // 시전자 자기 효과 1회 (광역 중복 방지)
   applySelfEffects(state, actor, skill);
 
-  // 타겟 목록 결정 (광역이면 유효 칸 전체)
-  let targets: Unit[];
-  if (skill.target === "self") targets = [actor];
-  else if (skill.targetMode === "allEnemies" || skill.targetMode === "allAllies") targets = validTargets(state, actor, skill);
-  else targets = [targetUid ? unitById(state, targetUid) : actor];
+  // 타겟 목록 결정 — 면적 모양 기반 (앵커 = 선택 대상)
+  const anchor = skill.target !== "self" && targetUid ? unitById(state, targetUid) : null;
+  const targets = areaTargets(state, actor, skill, anchor);
 
   for (const tgt of targets) {
     if (!tgt.alive) continue;

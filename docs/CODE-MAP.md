@@ -58,7 +58,8 @@ src/
 | 동적 재배치 (6.4) | `moveUnit` |
 | 끼어들기 주체 예측(스킬+버프+특성, self/대상) (2.11) | `predictInterruptSubjects` (실행·미리보기 공유) |
 | 끼어들기 동적 삽입 (2.11) | `insertInterrupts` (step에서 정규 턴만 호출) |
-| 포메이션 열보너스·총량보존 (6.1/6.3) | `getFormationBonus` + `applyEffects`(damage/shield/heal에 합연산) |
+| 포메이션 열보너스·총량보존 (6.1/6.3) | `getFormationBonus` + 효과 적용 합연산 |
+| 면적(AoE) 모양 → 영향 칸/유닛 (앵커 기준) | `computeAreaCells` + `areaTargets` (웹 바닥 하이라이트도 `computeAreaCells` 공유) |
 | 데미지 미리보기(비크리 결정론, 타겟팅 UI용) | `previewDamage` |
 | 승패 (7.3) | `checkWin` |
 | 행동 1회 처리(턴 진행) | `step` |

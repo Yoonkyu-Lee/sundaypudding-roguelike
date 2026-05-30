@@ -83,8 +83,13 @@ export type SkillEffect =
   | { kind: "cleanse" } // 디버프 정화 (대상의 비버프 상태 제거)
   | { kind: "move"; who: "target" | "self"; deltaCol: number }; // 동적 재배치 (6.4)
 
-/** 타겟 범위: single=단일 / allEnemies·allAllies=광역(유효 칸 전체) */
-export type SkillTargetMode = "single" | "allEnemies" | "allAllies";
+/**
+ * 면적(풋프린트) 모양 — 선택한 앵커 칸 기준으로 영향 칸을 정의. 바닥에 표시(2.4 확장).
+ * single=앵커만 / row=앵커 행 전체 / col=앵커 열 전체 / square=앵커 중심 (2·radius+1)² /
+ * cross=앵커+직교 인접(radius) / all=대상 진영 전체.
+ * (향후: 자유 인접 N칸 선택 등 인터랙티브 패턴)
+ */
+export type AreaShape = { kind: "single" | "row" | "col" | "square" | "cross" | "all"; radius?: number };
 
 export type SkillTarget = "enemy" | "ally" | "self";
 
@@ -120,8 +125,8 @@ export interface Skill {
   grantsInterrupt?: number;
   /** 끼어들기 주체: "self"=시전자 본인 / "target"=대상 아군(서포트). 기본 self (2.11) */
   grantsInterruptTo?: "self" | "target";
-  /** 타겟 범위(기본 single). 광역이면 유효 칸 전체에 적용 */
-  targetMode?: SkillTargetMode;
+  /** 면적 모양(기본 single). 앵커(선택 대상) 기준으로 영향 칸 결정 (바닥에 표시) */
+  area?: AreaShape;
   effects: SkillEffect[];
 }
 

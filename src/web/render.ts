@@ -2,7 +2,7 @@
 // 에셋 없이 텍스트·도형·선으로: 칸 하이라이트(2.4)·머리위 명중%(2.7)·눈금 화살표·HP 미리보기(0.2).
 import type { GameEvent, GameState, Observation, Skill, UnitView } from "../core/types.ts";
 import { buildObservation } from "../core/observation.ts";
-import { previewHpLoss, predictInterruptSubjects } from "../core/engine.ts";
+import { previewHpLoss, predictInterruptSubjects, computeAreaCells } from "../core/engine.ts";
 import { SKILLS } from "../data/skills.ts";
 import { STATUS_DEFS } from "../data/statuses.ts";
 
@@ -87,6 +87,8 @@ interface TgtCtx {
   hoverUid: string | null;
   previewLoss: { hpLoss: number; shieldConsumed: number } | null; // 호버 대상 예상
   casterUid: string | null;
+  areaSide: "ally" | "enemy" | null; // 면적이 적용되는 진영
+  areaSet: Set<string>; // 영향 칸 키 "row,col" (바닥 하이라이트)
 }
 
 function statusChips(u: UnitView): string {
@@ -138,7 +140,8 @@ function grid(title: string, units: UnitView[], side: "ally" | "enemy", curUid: 
     for (let col = 0; col < 4; col++) {
       const u = units.find((x) => x.alive && x.pos.row === row && x.pos.col === col);
       const cellTargetable = u && tgt.active && tgt.validHit.has(u.uid);
-      const cls = `cell${cellTargetable ? " targetable" : ""}`;
+      const inArea = tgt.active && tgt.areaSide === side && tgt.areaSet.has(`${row},${col}`);
+      const cls = `cell${cellTargetable ? " targetable" : ""}${inArea ? " inarea" : ""}`;
       cells += `<div class="${cls}">${u ? unitCard(u, u.uid === curUid, damaged.has(u.uid), tgt) : `<span class="empty">c${col}r${row}</span>`}</div>`;
     }
   }
@@ -253,9 +256,10 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
   const obs = buildObservation(state);
 
   // 타겟팅 컨텍스트
-  const tgt: TgtCtx = { active: false, validHit: new Map(), hoverUid: ui.hoverTargetUid, previewLoss: null, casterUid: obs.current?.uid ?? null };
+  const tgt: TgtCtx = { active: false, validHit: new Map(), hoverUid: ui.hoverTargetUid, previewLoss: null, casterUid: obs.current?.uid ?? null, areaSide: null, areaSet: new Set() };
   if (ui.selectedSkillId && obs.current?.side === "ally") {
     tgt.active = true;
+    const skill = SKILLS[ui.selectedSkillId];
     for (const la of obs.legalActions) {
       if (la.action.type === "skill" && la.action.skillId === ui.selectedSkillId && la.targetUid) {
         tgt.validHit.set(la.targetUid, la.hitChance ?? 100);
@@ -264,7 +268,17 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
     const actor = state.units.find((u) => u.uid === obs.current!.uid)!;
     const hover = ui.hoverTargetUid ? state.units.find((u) => u.uid === ui.hoverTargetUid) : null;
     if (hover && tgt.validHit.has(hover.uid)) {
-      tgt.previewLoss = previewHpLoss(state, actor, SKILLS[ui.selectedSkillId], hover);
+      tgt.previewLoss = previewHpLoss(state, actor, skill, hover);
+    }
+    // 면적 풋프린트 → 바닥 하이라이트 (앵커=호버 대상)
+    tgt.areaSide = skill.target === "enemy" ? "enemy" : skill.target === "ally" ? "ally" : null;
+    if (tgt.areaSide && skill.area) {
+      const sideUnits = tgt.areaSide === "enemy" ? obs.enemies : obs.allies;
+      let rows = 4;
+      let cols = 4;
+      for (const u of sideUnits.filter((x) => x.alive)) { rows = Math.max(rows, u.pos.row + 1); cols = Math.max(cols, u.pos.col + 1); }
+      const anchor = skill.area.kind === "all" ? { row: 0, col: 0 } : hover?.pos;
+      if (anchor) for (const c of computeAreaCells(anchor, skill.area, rows, cols)) tgt.areaSet.add(`${c.row},${c.col}`);
     }
   }
 
