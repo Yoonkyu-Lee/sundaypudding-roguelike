@@ -5,6 +5,7 @@ import { buildObservation } from "../core/observation.ts";
 import { previewHpLoss, predictInterruptSubjects, computeAreaCells } from "../core/engine.ts";
 import { SKILLS } from "../data/skills.ts";
 import { STATUS_DEFS } from "../data/statuses.ts";
+import { devOn, geomOf, wirePanel } from "./devlayout.ts";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const r1 = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
@@ -62,6 +63,7 @@ export interface Handlers {
   onCancel: () => void;
   onSkip: () => void;
   onNewBattle: (seed: number) => void;
+  onToggleDev: () => void;
 }
 
 // ── 이벤트 → 사람 가독 한 줄 (8.5) ──
@@ -324,29 +326,45 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
 
   const logHtml = state.log.slice(-40).map((e) => formatEvent(state, e)).filter(Boolean).join("<br>");
 
-  app.innerHTML = `
-    <svg class="arrows"></svg>
-    <header>
+  // 패널 콘텐츠 (배치 모드와 무관하게 동일)
+  const curUid = obs.current?.uid ?? null;
+  const pTurnbar = turnBar(obs, state, ghostNames);
+  const pAlly = grid("아군", obs.allies, "ally", curUid, ui.damaged, tgt);
+  const pEnemy = grid("적", obs.enemies, "enemy", curUid, ui.damaged, tgt);
+  const pActions = actionPanel(obs, state, ui);
+  const pLog = `<div class="logpanel"><div class="loginner">${logHtml}</div></div>`;
+  const header = `<header>
       <h1>🍮 Sunday Pudding Roguelike</h1>
       <div class="meta">ROUND ${obs.round} · ${obs.phase} · seed
         <input id="seed" type="number" value="${ui.seed}" /> <button id="newb">새 전투</button>
+        <button id="devbtn" title="레이아웃 모드 (백틱 \`)">🛠</button>
       </div>
-    </header>
-    ${turnBar(obs, state, ghostNames)}
-    <div class="battlelayout" id="battlelayout" style="grid-template-columns: 1fr 7px ${getSideW()}px">
-      <div class="battlemain">
-        <div class="arena">
-          ${grid("아군", obs.allies, "ally", obs.current?.uid ?? null, ui.damaged, tgt)}
-          ${grid("적", obs.enemies, "enemy", obs.current?.uid ?? null, ui.damaged, tgt)}
-        </div>
-        ${actionPanel(obs, state, ui)}
-      </div>
-      <div class="gutter" id="gutter" title="드래그해서 폭 조절"></div>
-      <aside class="battleside">
-        <div class="logpanel"><div class="loginner">${logHtml}</div></div>
-      </aside>
-    </div>
-  `;
+    </header>`;
+
+  if (devOn()) {
+    const dp = (pid: string, title: string, inner: string) => {
+      const g = geomOf(pid);
+      return `<section class="devpanel" data-pid="${pid}" style="left:${g.x}px;top:${g.y}px;width:${g.w}px;height:${g.h}px">
+        <div class="dphead">${title}</div><div class="dpbody">${inner}</div></section>`;
+    };
+    app.innerHTML = `<svg class="arrows"></svg>${header}
+      <div class="devbar">🛠 레이아웃 모드 — 헤더 드래그=이동 · 모서리=크기 · <b>\`</b>끄기 · <b>R</b>리셋 · <b>E</b>내보내기(클립보드)</div>
+      <div id="workspace">
+        ${dp("turnbar", "서열", pTurnbar)}
+        ${dp("ally", "아군", pAlly)}
+        ${dp("enemy", "적", pEnemy)}
+        ${dp("actions", "행동", pActions)}
+        ${dp("log", "로그", pLog)}
+      </div>`;
+  } else {
+    app.innerHTML = `<svg class="arrows"></svg>${header}
+      ${pTurnbar}
+      <div class="battlelayout" id="battlelayout" style="grid-template-columns: 1fr 7px ${getSideW()}px">
+        <div class="battlemain"><div class="arena">${pAlly}${pEnemy}</div>${pActions}</div>
+        <div class="gutter" id="gutter" title="드래그해서 폭 조절"></div>
+        <aside class="battleside">${pLog}</aside>
+      </div>`;
+  }
 
   // 와이어링
   app.querySelectorAll<HTMLButtonElement>("button.sk[data-skill]").forEach((b) =>
@@ -364,6 +382,8 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
     const v = app.querySelector<HTMLInputElement>("#seed");
     h.onNewBattle(Number(v?.value ?? ui.seed));
   });
+  app.querySelector("#devbtn")?.addEventListener("click", () => h.onToggleDev());
+  if (devOn()) app.querySelectorAll<HTMLElement>(".devpanel").forEach((el) => wirePanel(el, el.dataset.pid!));
 
   // 드래그 스플리터 — 전장/로그 폭 수동 조절 (저장)
   const gutter = app.querySelector<HTMLElement>("#gutter");

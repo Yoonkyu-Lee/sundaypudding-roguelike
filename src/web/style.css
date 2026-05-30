@@ -225,3 +225,14 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 /* 드래그 스플리터 (전장 ↔ 로그 폭 수동 조절) */
 .gutter { cursor: col-resize; background: var(--line); border-radius: 3px; align-self: stretch; transition: background .15s; }
 .gutter:hover { background: var(--accent); }
+
+/* ── 개발 레이아웃 모드 (패널 자유 배치) ── */
+#devbtn { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 3px 7px; margin-left: 4px; }
+.devbar { background: #2b2f3d; color: var(--accent); padding: 6px 12px; border-radius: 8px; margin: 8px 0; font-size: 12px; }
+.devbar b { background: #11141b; padding: 0 5px; border-radius: 4px; color: var(--txt); }
+#workspace { position: relative; min-height: 78vh; }
+.devpanel { position: absolute; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; resize: both; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 16px rgba(0,0,0,.45); }
+.dphead { cursor: move; background: #2b2f3d; color: var(--dim); font-size: 11px; padding: 3px 8px; user-select: none; flex: 0 0 auto; }
+.dpbody { flex: 1 1 auto; overflow: auto; padding: 6px; }
+.devpanel .loginner { max-height: none; }
+.devpanel .actions, .devpanel .turnbar { margin: 0; }
