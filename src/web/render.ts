@@ -308,8 +308,10 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
       const hu = unitAt(ui.hoverCell);
       if (hu && tgt.validHit.has(hu.uid)) tgt.previewLoss = previewHpLoss(state, actor, skill, hu);
     }
-    // 끼어들기 예고 (앵커 유닛 기준)
-    const anchorUnit = ui.hoverCell ? state.units.find((u) => u.alive && u.pos.row === ui.hoverCell!.row && u.pos.col === ui.hoverCell!.col) : undefined;
+    // 끼어들기 예고 (앵커 유닛 기준 — 대상 진영 필터)
+    const anchorUnit = ui.hoverCell
+      ? state.units.find((u) => u.alive && u.side === side && u.pos.row === ui.hoverCell!.row && u.pos.col === ui.hoverCell!.col)
+      : undefined;
     ghostNames = predictInterruptSubjects(state, actor, skill, anchorUnit?.uid).map((uid) => state.units.find((u) => u.uid === uid)?.name ?? uid);
   }
 
@@ -352,9 +354,11 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
   const lp = app.querySelector<HTMLElement>(".loginner");
   if (lp) lp.scrollTop = lp.scrollHeight;
 
-  // 화살표: 타겟팅 + 호버 칸에 유닛이 있으면 그 유닛으로
+  // 화살표: 타겟팅 + 호버 칸의 "대상 진영" 유닛으로 (아군/적 그리드가 좌표를 공유하므로 side 필터 필수)
   if (tgt.active && tgt.casterUid && ui.hoverCell) {
-    const hu = state.units.find((u) => u.alive && u.pos.row === ui.hoverCell!.row && u.pos.col === ui.hoverCell!.col);
+    const hu = state.units.find(
+      (u) => u.alive && u.side === tgt.areaSide && u.pos.row === ui.hoverCell!.row && u.pos.col === ui.hoverCell!.col,
+    );
     if (hu) drawArrow(app, tgt.casterUid, hu.uid);
   }
 }
