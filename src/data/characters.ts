@@ -37,7 +37,7 @@ export const CHARACTERS: Record<string, Character> = {
     accuracy: 0,
     critPct: 10,
     critMult: 1.5,
-    skillIds: ["jaesaeng", "gongpo", "gwantongbuyeo", "gaho"], // 서포터
+    skillIds: ["jaesaeng", "gasok", "gongpo", "gwantongbuyeo", "gaho"], // 서포터 (활성 4 + gaho 보유)
   },
 
   // 적

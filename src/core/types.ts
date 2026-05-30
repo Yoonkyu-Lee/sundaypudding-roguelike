@@ -47,6 +47,8 @@ export interface StatusDef {
   pierce?: boolean;
   /** 사망 방지(불사): HP 0 이하로 안 죽음 (3.6) */
   undying?: boolean;
+  /** 보유 유닛이 정규 턴에 행동하면 끼어들기 발생 (신속 등 버프). 끼어들기 출처가 스킬에 국한되지 않음 (2.11) */
+  grantsInterrupt?: boolean;
 }
 
 /** 상태이상 인스턴스(원장 1건) — 출처/만료 보존 (3.1) */
@@ -65,8 +67,7 @@ export type SkillEffect =
   | { kind: "applyStatus"; statusId: StatusDefId; stacks: number; duration: number }
   | { kind: "shield"; amount: number } // 쉴드(덤 HP) 부여 (2.9)
   | { kind: "heal"; amount: number }
-  | { kind: "move"; who: "target" | "self"; deltaCol: number } // 동적 재배치 (6.4)
-  | { kind: "interruptSelf" }; // 끼어들기 1회 부여 (2.11)
+  | { kind: "move"; who: "target" | "self"; deltaCol: number }; // 동적 재배치 (6.4)
 
 export type SkillTarget = "enemy" | "ally" | "self";
 
@@ -98,6 +99,8 @@ export interface Skill {
   usableFrom?: Pos[];
   /** 타겟 가능 칸 마스크 (대상 그리드). 비어있으면 점유된 아무 칸 (2.4) */
   targetCells?: Pos[];
+  /** 이 스킬 사용 시 부여하는 끼어들기 횟수 (2.11). 끼어들기 출처의 하나일 뿐 — 버프 등 다른 출처도 있음 */
+  grantsInterrupt?: number;
   effects: SkillEffect[];
 }
 

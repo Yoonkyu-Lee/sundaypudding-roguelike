@@ -2,7 +2,7 @@
 // 에셋 없이 텍스트·도형·선으로: 칸 하이라이트(2.4)·머리위 명중%(2.7)·눈금 화살표·HP 미리보기(0.2).
 import type { GameEvent, GameState, Observation, Skill, UnitView } from "../core/types.ts";
 import { buildObservation } from "../core/observation.ts";
-import { previewHpLoss } from "../core/engine.ts";
+import { previewHpLoss, countInterruptsFor } from "../core/engine.ts";
 import { SKILLS } from "../data/skills.ts";
 import { STATUS_DEFS } from "../data/statuses.ts";
 
@@ -23,10 +23,10 @@ function skillDesc(sk: Skill): string {
       case "shield": return `쉴드 +${e.amount}`;
       case "heal": return `회복 ${e.amount}`;
       case "move": return e.deltaCol > 0 ? "뒤로 밀기" : "앞으로 끌기";
-      case "interruptSelf": return "끼어들기";
       default: return "";
     }
   }).filter(Boolean);
+  if (sk.grantsInterrupt) fx.push(`끼어들기${sk.grantsInterrupt > 1 ? ` ×${sk.grantsInterrupt}` : ""}`);
   return `${meta} | ${fx.join(", ")}`;
 }
 
@@ -135,22 +135,28 @@ function grid(title: string, units: UnitView[], side: "ally" | "enemy", curUid: 
 }
 
 // 동적 삽입형 타임라인: 완료(✓ 흐림) / 현재(▶ 포인터) / 예정 / 끼어들기(초록 삽입) / 사망(회색 취소선)
-function turnBar(obs: Observation, state: GameState): string {
-  const chips = obs.order
-    .map((e, i) => {
-      const u = state.units.find((x) => x.uid === e.uid);
-      const nm = u?.name ?? e.uid;
-      const dead = u ? !u.alive : false;
-      const done = i < obs.cursorIndex;
-      const cur = i === obs.cursorIndex;
-      const cls = ["tchip", e.kind === "interrupt" ? "interrupt" : "", cur ? "cur" : "", done ? "done" : "", dead ? "dead" : ""]
-        .join(" ").replace(/\s+/g, " ").trim();
-      const ptr = cur ? `<span class="turnptr">▶</span>` : "";
-      const label = e.kind === "interrupt" ? `⚡${esc(nm)}` : `${esc(nm)} <em>${e.spd}</em>`;
-      return `${ptr}<span class="${cls}">${done && !dead ? "✓" : ""}${label}</span>`;
-    })
-    .join("");
-  return `<div class="turnbar">${chips || "<span class='tchip'>—</span>"}</div>`;
+// previewInterrupts > 0 이면 현재 칸 뒤에 "끼어들기 예고" 유령 칸(밖→안 슬라이드+깜빡)을 삽입.
+function turnBar(obs: Observation, state: GameState, previewInterrupts: number): string {
+  const parts: string[] = [];
+  obs.order.forEach((e, i) => {
+    const u = state.units.find((x) => x.uid === e.uid);
+    const nm = u?.name ?? e.uid;
+    const dead = u ? !u.alive : false;
+    const done = i < obs.cursorIndex;
+    const cur = i === obs.cursorIndex;
+    const cls = ["tchip", e.kind === "interrupt" ? "interrupt" : "", cur ? "cur" : "", done ? "done" : "", dead ? "dead" : ""]
+      .join(" ").replace(/\s+/g, " ").trim();
+    const ptr = cur ? `<span class="turnptr">▶</span>` : "";
+    const label = e.kind === "interrupt" ? `⚡${esc(nm)}` : `${esc(nm)} <em>${e.spd}</em>`;
+    parts.push(`${ptr}<span class="${cls}">${done && !dead ? "✓" : ""}${label}</span>`);
+    // 끼어들기 예고: 현재 칸 바로 뒤
+    if (cur && previewInterrupts > 0) {
+      for (let k = 0; k < previewInterrupts; k++) {
+        parts.push(`<span class="tchip interrupt ghost" title="확정 시 여기에 끼어들기 삽입">⚡예고</span>`);
+      }
+    }
+  });
+  return `<div class="turnbar">${parts.join("") || "<span class='tchip'>—</span>"}</div>`;
 }
 
 // 행동 패널: 스킬 선택 모드 vs 타겟팅 모드
@@ -250,6 +256,13 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
     }
   }
 
+  // 끼어들기 예고: 타겟팅 중인 행동이 발생시킬 끼어들기 수 (스킬+버프 등 모든 출처)
+  let previewInterrupts = 0;
+  if (ui.selectedSkillId && obs.current?.side === "ally") {
+    const actor = state.units.find((u) => u.uid === obs.current!.uid)!;
+    previewInterrupts = countInterruptsFor(state, actor, SKILLS[ui.selectedSkillId]);
+  }
+
   const logHtml = state.log.slice(-40).map((e) => formatEvent(state, e)).filter(Boolean).join("<br>");
 
   app.innerHTML = `
@@ -260,7 +273,7 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
         <input id="seed" type="number" value="${ui.seed}" /> <button id="newb">새 전투</button>
       </div>
     </header>
-    ${turnBar(obs, state)}
+    ${turnBar(obs, state, previewInterrupts)}
     <div class="arena">
       ${grid("아군", obs.allies, "ally", obs.current?.uid ?? null, ui.damaged, tgt)}
       ${grid("적", obs.enemies, "enemy", obs.current?.uid ?? null, ui.damaged, tgt)}

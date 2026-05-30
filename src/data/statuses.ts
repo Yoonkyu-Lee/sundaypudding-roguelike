@@ -61,4 +61,11 @@ export const STATUS_DEFS: Record<StatusDefId, StatusDef> = {
     buff: true,
     hot: { trigger: "turnEnd", healPerStack: 4 }, // 턴 종료 시 회복
   },
+  haste: {
+    id: "haste",
+    name: "신속",
+    icon: "💨",
+    buff: true,
+    grantsInterrupt: true, // 정규 턴 행동 시 끼어들기 (끼어들기 출처가 스킬이 아닌 예: 버프)
+  },
 };

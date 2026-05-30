@@ -37,10 +37,8 @@ export const SKILLS: Record<string, Skill> = {
     cooldown: 4,
     accuracy: 90,
     targetCells: FRONT2,
-    effects: [
-      { kind: "damage", amount: 8 },
-      { kind: "interruptSelf" }, // 끼어들기 1회 (2.11)
-    ],
+    grantsInterrupt: 1, // 끼어들기 1회 (스킬 출처, 2.11)
+    effects: [{ kind: "damage", amount: 8 }],
   },
   suho: {
     id: "suho",
@@ -136,6 +134,16 @@ export const SKILLS: Record<string, Skill> = {
     accuracy: 0,
     alwaysHit: true,
     effects: [{ kind: "applyStatus", statusId: "undying", stacks: 1, duration: 1 }],
+  },
+  gasok: {
+    id: "gasok",
+    name: "가속술",
+    target: "ally",
+    cooldown: 3,
+    accuracy: 0,
+    alwaysHit: true,
+    // 신속(버프) 부여 → 받은 아군은 정규 턴 행동 시 끼어들기 (끼어들기 출처가 스킬이 아닌 예시)
+    effects: [{ kind: "applyStatus", statusId: "haste", stacks: 1, duration: 2 }],
   },
 
   // ── 적 ──

@@ -83,6 +83,20 @@ test("끼어들기: 연격 사용 시 서열에 interrupt 삽입, 쿨타임 미�
   assert.equal(state.current?.kind, "interrupt");
 });
 
+test("끼어들기 출처 일반화: 버프(신속)가 있으면 무관한 스킬로도 끼어들기 (2.11)", () => {
+  const state = createBattle(42, DEMO_ENCOUNTER);
+  const beef = state.units.find((u) => u.name === "비프")!;
+  beef.statuses.push({ defId: "haste", stacks: 1, duration: 2, sourceUid: "x" }); // 신속 버프
+  beef.cooldowns = {};
+  const slime = state.units.find((u) => u.side === "enemy" && u.pos.col <= 1)!;
+  slime.dex = -100;
+  forceTurn(state, beef.uid);
+  // 강타는 grantsInterrupt 없음 → 그래도 신속 버프로 끼어들기 발생
+  step(state, { type: "skill", skillId: "gangta", targetUid: slime.uid });
+  assert.ok(state.log.some((e) => e.t === "interrupt" && e.uid === beef.uid), "버프 출처 끼어들기");
+  assert.equal(state.current?.kind, "interrupt");
+});
+
 test("빙결: 행동불가 → 합법행동은 스킵뿐, 1턴 후 해제 (3.5)", () => {
   const state = createBattle(42, DEMO_ENCOUNTER);
   const beef = state.units.find((u) => u.name === "비프")!;

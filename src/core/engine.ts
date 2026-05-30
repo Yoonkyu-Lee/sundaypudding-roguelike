@@ -418,12 +418,28 @@ function applyEffects(state: GameState, actor: Unit, skill: Skill, target: Unit,
         if (who.alive) moveUnit(state, who, eff.deltaCol);
         break;
       }
-      case "interruptSelf":
-        // 끼어들기: 현재 칸 바로 뒤에 동적 삽입 → 다음 차례로 행동, 차감 무시 (2.11)
-        state.roundOrder.splice(state.cursor + 1, 0, { uid: actor.uid, kind: "interrupt", spd: 0 });
-        state.log.push({ t: "interrupt", uid: actor.uid });
-        break;
     }
+  }
+}
+
+/**
+ * 이 행동이 발생시킬 끼어들기 횟수 — 모든 출처 종합 (2.11).
+ * 출처: ① 스킬의 grantsInterrupt ② 보유 버프/상태(grantsInterrupt). 향후 캐릭 특성도 여기에.
+ * 실행(step)과 미리보기(웹)가 이 함수를 공유 → 분기 없음.
+ */
+export function countInterruptsFor(state: GameState, actor: Unit, skill: Skill | null): number {
+  let n = skill?.grantsInterrupt ?? 0;
+  for (const s of actor.statuses) {
+    if (STATUS_DEFS[s.defId].grantsInterrupt && s.stacks > 0) n += 1; // 버프 1건당 1회
+  }
+  return n;
+}
+
+/** 끼어들기 칸을 현재 칸 바로 뒤에 동적 삽입 (2.11). */
+function insertInterrupts(state: GameState, actor: Unit, count: number): void {
+  for (let i = 0; i < count; i++) {
+    state.roundOrder.splice(state.cursor + 1, 0, { uid: actor.uid, kind: "interrupt", spd: 0 });
+    state.log.push({ t: "interrupt", uid: actor.uid });
   }
 }
 
@@ -450,6 +466,8 @@ export function step(state: GameState, action: Action): GameState {
       // 쿨타임은 사용 즉시 설정(끼어들기에서도 설정됨; 단 '감소'만 끼어들기서 안 됨)
       actor.cooldowns[action.skillId] = skill.cooldown;
       resolveSkill(state, actor, skill, action.targetUid);
+      // 끼어들기: 정규 턴에서만, 모든 출처(스킬+버프) 종합 (2.11). 끼어들기 턴은 연쇄 방지로 제외.
+      if (entry.kind === "normal") insertInterrupts(state, actor, countInterruptsFor(state, actor, skill));
     }
   }
 

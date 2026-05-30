@@ -54,7 +54,8 @@ src/
 | HP 손실 미리보기(관통/공포 반영) | `previewHpLoss` |
 | 스킬 효과 디스패치(데미지/상태/쉴드/힐/이동/끼어들기) (3.9) | `applyEffects` |
 | 동적 재배치 (6.4) | `moveUnit` |
-| 끼어들기 삽입 (2.11) | `applyEffects`의 `interruptSelf` 케이스 |
+| 끼어들기 출처 종합(스킬+버프+특성) (2.11) | `countInterruptsFor` (실행·미리보기 공유) |
+| 끼어들기 동적 삽입 (2.11) | `insertInterrupts` (step에서 정규 턴만 호출) |
 | 포메이션 열보너스·총량보존 (6.1/6.3) | `getFormationBonus` + `applyEffects`(damage/shield/heal에 합연산) |
 | 데미지 미리보기(비크리 결정론, 타겟팅 UI용) | `previewDamage` |
 | 승패 (7.3) | `checkWin` |
