@@ -9,6 +9,13 @@ import { STATUS_DEFS } from "../data/statuses.ts";
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const r1 = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
 
+// 전투 화면 로그 사이드 폭 — 드래그로 조절, localStorage에 저장(재렌더에도 유지)
+const SIDE_KEY = "spr-side-w";
+function getSideW(): number {
+  const v = parseInt(localStorage.getItem(SIDE_KEY) ?? "300", 10);
+  return Number.isFinite(v) ? Math.max(180, Math.min(760, v)) : 300;
+}
+
 /** 아바타: 이미지 경로면 <img>, 이모지면 그대로 (저작권 안전 폴백) */
 export function avatarHtml(av: string | undefined, cls = "avt"): string {
   if (!av) return "";
@@ -326,7 +333,7 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
       </div>
     </header>
     ${turnBar(obs, state, ghostNames)}
-    <div class="battlelayout">
+    <div class="battlelayout" id="battlelayout" style="grid-template-columns: 1fr 7px ${getSideW()}px">
       <div class="battlemain">
         <div class="arena">
           ${grid("아군", obs.allies, "ally", obs.current?.uid ?? null, ui.damaged, tgt)}
@@ -334,6 +341,7 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
         </div>
         ${actionPanel(obs, state, ui)}
       </div>
+      <div class="gutter" id="gutter" title="드래그해서 폭 조절"></div>
       <aside class="battleside">
         <div class="logpanel"><div class="loginner">${logHtml}</div></div>
       </aside>
@@ -356,6 +364,29 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
     const v = app.querySelector<HTMLInputElement>("#seed");
     h.onNewBattle(Number(v?.value ?? ui.seed));
   });
+
+  // 드래그 스플리터 — 전장/로그 폭 수동 조절 (저장)
+  const gutter = app.querySelector<HTMLElement>("#gutter");
+  const layout = app.querySelector<HTMLElement>("#battlelayout");
+  if (gutter && layout) {
+    gutter.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      const onMove = (ev: PointerEvent) => {
+        const rect = layout.getBoundingClientRect();
+        const w = Math.max(180, Math.min(760, rect.right - ev.clientX));
+        layout.style.gridTemplateColumns = `1fr 7px ${w}px`;
+        localStorage.setItem(SIDE_KEY, String(Math.round(w)));
+      };
+      const onUp = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        document.body.style.userSelect = "";
+      };
+      document.body.style.userSelect = "none";
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    });
+  }
 
   const lp = app.querySelector<HTMLElement>(".loginner");
   if (lp) lp.scrollTop = lp.scrollHeight;
