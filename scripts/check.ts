@@ -1,0 +1,136 @@
+// 자동 게이트 — 슬라이스 드리프트를 "행동하는 순간"에 잡는다. (CLAUDE.md 모듈/경계 규칙의 기계적 강제)
+// 실행: `npm run check` (수동) 또는 git pre-commit 훅(.githooks/pre-commit).
+// FAIL 하나라도 있으면 exit 1. WARN은 통과(시야 확보용). `--update`로 골든 데모 해시 재생성.
+import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from "node:fs";
+import { execSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { join, relative, dirname, resolve, basename } from "node:path";
+
+const ROOT = resolve(import.meta.dirname, "..");
+const SRC = join(ROOT, "src");
+const fails: string[] = [];
+const warns: string[] = [];
+const fail = (m: string) => fails.push(m);
+const warn = (m: string) => warns.push(m);
+
+// ── 0) 파일 수집 ──────────────────────────────────────────────────────────
+function walk(dir: string, out: string[] = []): string[] {
+  if (!existsSync(dir)) return out;
+  for (const name of readdirSync(dir)) {
+    if (name === "node_modules" || name === ".git") continue;
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) walk(p, out);
+    else out.push(p);
+  }
+  return out;
+}
+const srcFiles = walk(SRC).filter((f) => f.endsWith(".ts"));
+const rel = (f: string) => relative(ROOT, f).replace(/\\/g, "/");
+
+// ── 1) 줄 수 캡 (소프트캡 ~300 경고, ~400 실패) ──────────────────────────────
+const CODE_WARN = 300, CODE_FAIL = 400;
+for (const f of srcFiles) {
+  const n = readFileSync(f, "utf8").split("\n").length;
+  if (n >= CODE_FAIL) fail(`줄 수 초과(${n}≥${CODE_FAIL}): ${rel(f)} — 먼저 분리 후 추가`);
+  else if (n >= CODE_WARN) warn(`줄 수 근접(${n}≥${CODE_WARN}): ${rel(f)} — 곧 분리 고려`);
+}
+// 문서 길이(#6) — 경고만. 스펙(GAME-DESIGN)은 길 수 있으니 관대하게.
+const DOC_WARN = 700;
+for (const d of ["CLAUDE.md", "README.md", "docs/GAME-DESIGN.md", "docs/CODE-MAP.md"]) {
+  const p = join(ROOT, d);
+  if (!existsSync(p)) continue;
+  const n = readFileSync(p, "utf8").split("\n").length;
+  const cap = d === "CLAUDE.md" ? 200 : DOC_WARN;
+  if (n >= cap) warn(`문서 김(${n}≥${cap}줄): ${d} — 분리/축약 고려`);
+}
+
+// ── 2) 코어 순수성 (8.1/8.3) ─────────────────────────────────────────────────
+const coreFiles = srcFiles.filter((f) => rel(f).startsWith("src/core/"));
+for (const f of coreFiles) {
+  const txt = readFileSync(f, "utf8");
+  // 결정론: 테스트 포함 전부 금지
+  for (const pat of [/\bMath\.random\b/, /\bDate\.now\b/, /\bnew Date\b/]) {
+    if (pat.test(txt)) fail(`코어 결정론 위반(${pat.source}): ${rel(f)} — 무작위는 state.rng만`);
+  }
+  if (f.endsWith(".test.ts")) continue; // 아래는 비테스트만
+  if (/\bconsole\s*\./.test(txt)) fail(`코어 IO 위반(console): ${rel(f)} — 출력은 cli/web에서만`);
+  if (/from\s+["'][^"']*\/(cli|web)\//.test(txt) || /from\s+["']\.\.?\/(cli|web)/.test(txt))
+    fail(`코어→뷰 의존(단방향 위반): ${rel(f)} — core는 view를 import하지 않음`);
+  if (/\brequire\(["']readline/.test(txt) || /from\s+["']node:readline/.test(txt))
+    fail(`코어 IO 위반(readline): ${rel(f)}`);
+}
+
+// ── 3) 배럴 규율 (서브시스템 내부 파일은 배럴/파사드로만 접근) ──────────────────
+const SUBSYS = ["combat", "run", "types", "ai"]; // src/core/<S>/
+const isCoreFacade = (f: string) => /^src\/core\/[^/]+\.ts$/.test(rel(f)); // src/core 바로 밑 파일 = 파사드 허용
+for (const f of srcFiles) {
+  const rf = rel(f);
+  const txt = readFileSync(f, "utf8");
+  for (const m of txt.matchAll(/from\s+["'](\.[^"']+)["']/g)) {
+    const target = rel(resolve(dirname(f), m[1]));
+    const seg = target.match(/^src\/core\/(combat|run|types|ai)\/(.+)$/);
+    if (!seg) continue;
+    const [, sub, inner] = seg;
+    if (basename(inner) === "index.ts") continue; // 배럴은 OK
+    const importerInSub = rf.startsWith(`src/core/${sub}/`);
+    if (importerInSub) continue; // 같은 서브시스템 내부 = OK
+    if (isCoreFacade(f)) continue; // 파사드(engine.ts 등) = OK
+    warn(`배럴 우회 import: ${rf} → ${target} (배럴/파사드 경유 권장)`);
+  }
+}
+
+// ── 4) tsc ────────────────────────────────────────────────────────────────
+function run(cmd: string): { ok: boolean; out: string } {
+  try { return { ok: true, out: execSync(cmd, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }) }; }
+  catch (e: any) { return { ok: false, out: `${e.stdout ?? ""}${e.stderr ?? ""}` }; }
+}
+process.stdout.write("typecheck… ");
+const tsc = run("npm run -s typecheck");
+console.log(tsc.ok ? "ok" : "FAIL");
+if (!tsc.ok) fail(`typecheck 에러:\n${tsc.out.trim().split("\n").slice(-12).join("\n")}`);
+
+// ── 5) 테스트 ────────────────────────────────────────────────────────────────
+process.stdout.write("test… ");
+const test = run("npm test");
+const passed = /pass (\d+)/.exec(test.out)?.[1];
+console.log(test.ok ? `ok (${passed} pass)` : "FAIL");
+if (!test.ok) fail(`테스트 실패:\n${test.out.trim().split("\n").slice(-15).join("\n")}`);
+
+// ── 6) 데모 해시 회귀 (결정론 = 순수 리팩토링 안전망) ─────────────────────────
+const GOLD = join(ROOT, "scripts", "golden-hashes.json");
+const SEEDS = [1, 42, 7];
+const md5 = (s: string) => createHash("md5").update(s).digest("hex");
+const hashes: Record<string, string> = {};
+process.stdout.write("demo regression… ");
+for (const seed of SEEDS) {
+  const r = run(`node src/cli/play.ts --demo --seed ${seed}`);
+  hashes[seed] = r.ok ? md5(r.out) : "ERR";
+}
+if (process.argv.includes("--update")) {
+  writeFileSync(GOLD, JSON.stringify(hashes, null, 2) + "\n");
+  console.log("골든 해시 갱신됨:", GOLD);
+} else if (existsSync(GOLD)) {
+  const gold = JSON.parse(readFileSync(GOLD, "utf8")) as Record<string, string>;
+  const drift = SEEDS.filter((s) => gold[s] !== hashes[s]);
+  console.log(drift.length ? "DRIFT" : "ok");
+  for (const s of drift) fail(`데모 회귀(seed ${s}): ${gold[s]} → ${hashes[s]} — 의도한 동작변경이면 'npm run check -- --update'`);
+} else {
+  console.log("골든 없음");
+  warn(`골든 해시 없음 — 'npm run check -- --update'로 생성`);
+}
+
+// ── 7) 문서 동기화(#5) — staged src 변경 시 CODE-MAP 갱신 확인 ────────────────
+const staged = run("git diff --cached --name-only");
+if (staged.ok && staged.out.trim()) {
+  const names = staged.out.trim().split("\n");
+  const srcChanged = names.some((n) => n.startsWith("src/") && n.endsWith(".ts") && !n.endsWith(".test.ts"));
+  const mapChanged = names.includes("docs/CODE-MAP.md");
+  if (srcChanged && !mapChanged) warn("src 변경됨 — docs/CODE-MAP.md 갱신 확인(새 파일/함수 매핑)");
+}
+
+// ── 결과 ─────────────────────────────────────────────────────────────────────
+console.log("");
+if (warns.length) { console.log(`⚠️  WARN ${warns.length}`); for (const w of warns) console.log("  - " + w); }
+if (fails.length) { console.log(`\n❌ FAIL ${fails.length}`); for (const f of fails) console.log("  - " + f); }
+if (!warns.length && !fails.length) console.log("✅ 전부 통과");
+process.exit(fails.length ? 1 : 0);
