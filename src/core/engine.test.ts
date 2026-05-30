@@ -271,6 +271,46 @@ test("면적 row: 같은 행의 적 다수를 한 번에 타격", () => {
   assert.equal(e3.hp, h3, "다른 행(3)은 무사");
 });
 
+test("면적 free: 자유 선택한 칸들의 적을 타격, 그 외는 무사", () => {
+  const enc = {
+    id: "t", name: "t",
+    allies: [{ charId: "shin", pos: { row: 1, col: 0 } }],
+    enemies: [{ charId: "slime", pos: { row: 0, col: 0 } }, { charId: "slime", pos: { row: 2, col: 3 } }, { charId: "slime", pos: { row: 3, col: 3 } }],
+  };
+  const state = createBattle(1, enc);
+  const shin = state.units.find((u) => u.name === "신영균")!;
+  shin.cooldowns = {};
+  const e0 = state.units.find((u) => u.side === "enemy" && u.pos.row === 0)!;
+  const e1 = state.units.find((u) => u.side === "enemy" && u.pos.row === 2)!;
+  const e2 = state.units.find((u) => u.side === "enemy" && u.pos.row === 3)!;
+  for (const e of [e0, e1, e2]) e.dex = -100;
+  const [h0, h1, h2] = [e0.hp, e1.hp, e2.hp];
+  forceTurn(state, shin.uid);
+  // shin_ult = free. cells로 0,0 과 2,3 선택
+  step(state, { type: "skill", skillId: "shin_ult", cells: [{ row: 0, col: 0 }, { row: 2, col: 3 }] });
+  assert.ok(e0.hp < h0 && e1.hp < h1, "선택한 칸 타격");
+  assert.equal(e2.hp, h2, "선택 안 한 칸은 무사");
+});
+
+test("빈 칸 앵커: 적 없는 칸을 앵커로 한 십자/행도 주변 유닛 타격", () => {
+  const enc = {
+    id: "t", name: "t",
+    allies: [{ charId: "cho", pos: { row: 0, col: 0 } }],
+    enemies: [{ charId: "slime", pos: { row: 2, col: 0 } }, { charId: "slime", pos: { row: 2, col: 3 } }],
+  };
+  const state = createBattle(1, enc);
+  const cho = state.units.find((u) => u.name === "조병옥")!;
+  cho.cooldowns = {};
+  const e0 = state.units.find((u) => u.side === "enemy" && u.pos.col === 0)!;
+  const e3 = state.units.find((u) => u.side === "enemy" && u.pos.col === 3)!;
+  e0.dex = -100; e3.dex = -100;
+  const [h0, h3] = [e0.hp, e3.hp];
+  forceTurn(state, cho.uid);
+  // cho_police = row. 빈 칸 (row2,col1) 을 앵커로 → 2행 전체
+  step(state, { type: "skill", skillId: "cho_police", targetCell: { row: 2, col: 1 } });
+  assert.ok(e0.hp < h0 && e3.hp < h3, "빈 칸 앵커의 행 전체 타격");
+});
+
 test("데미지는 쉴드부터 깎고 그다음 HP (2.9)", () => {
   const state = createBattle(42, DEMO_ENCOUNTER);
   const target = state.units.find((u) => u.side === "enemy")!;

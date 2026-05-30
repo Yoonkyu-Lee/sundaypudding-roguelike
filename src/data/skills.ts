@@ -204,7 +204,7 @@ export const SKILLS: Record<string, Skill> = {
   shin_axe: { id: "shin_axe", name: "도끼 휘두르기", target: "enemy", cooldown: 0, accuracy: 90, targetCells: FRONT2, effects: [{ kind: "damage", amount: 12 }, { kind: "applyStatus", statusId: "bleed", stacks: 2, duration: 3 }] },
   shin_charge: { id: "shin_charge", name: "분노의 돌격", target: "enemy", cooldown: 3, accuracy: 90, targetCells: FRONT2, effects: [{ kind: "move", who: "self", deltaCol: -3 }, { kind: "damage", amount: 8 }, { kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }, { kind: "applyStatusSelf", statusId: "weaken", stacks: 1, duration: 1 }] },
   shin_awaken: { id: "shin_awaken", name: "야수성 각성", target: "self", cooldown: 4, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 3 }, { kind: "applyStatus", statusId: "regen", stacks: 2, duration: 3 }] },
-  shin_ult: { id: "shin_ult", name: "에이잇! 할아버지!", target: "enemy", area: { kind: "all" }, cooldown: 4, accuracy: 85, effects: [{ kind: "damage", amount: 9 }, { kind: "applyStatus", statusId: "bleed", stacks: 1, duration: 2 }] },
+  shin_ult: { id: "shin_ult", name: "에이잇! 할아버지!", target: "enemy", area: { kind: "free", count: 4 }, cooldown: 4, accuracy: 85, effects: [{ kind: "damage", amount: 9 }, { kind: "applyStatus", statusId: "bleed", stacks: 1, duration: 2 }] },
 
   // 조병옥 (지휘관/서포터)
   cho_warn: { id: "cho_warn", name: "경무부장의 경고", target: "enemy", cooldown: 0, accuracy: 90, effects: [{ kind: "damage", amount: 3 }, { kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }] },

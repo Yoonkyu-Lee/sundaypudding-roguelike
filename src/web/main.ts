@@ -4,6 +4,7 @@ import { step } from "../core/engine.ts";
 import { chooseAction } from "../core/ai.ts";
 import { createRun, enterNode, resolveBattleEnd, chooseReward, getRunView, type RunState } from "../core/run.ts";
 import type { Action } from "../core/types.ts";
+import { SKILLS } from "../data/skills.ts";
 import { renderApp, type Handlers, type Ui } from "./render.ts";
 import { renderRunScreen, type RunHandlers } from "./runRender.ts";
 
@@ -19,12 +20,18 @@ const ROSTER = [
 let run: RunState;
 let seed = 42;
 let busy = false;
-const ui: Ui = { selectedSkillId: null, hoverTargetUid: null, damaged: new Set(), seed };
+const ui: Ui = { selectedSkillId: null, hoverCell: null, pickedCells: [], damaged: new Set(), seed };
 
 function resetUi(): void {
   ui.selectedSkillId = null;
-  ui.hoverTargetUid = null;
+  ui.hoverCell = null;
+  ui.pickedCells = [];
   ui.damaged = new Set();
+}
+function endTargeting(): void {
+  ui.selectedSkillId = null;
+  ui.hoverCell = null;
+  ui.pickedCells = [];
 }
 
 function render(): void {
@@ -65,32 +72,47 @@ function battleStep(action: Action): void {
   const before = b.log.length;
   step(b, action);
   ui.damaged = new Set(b.log.slice(before).flatMap((e) => (e.t === "damage" ? [e.targetUid] : [])));
-  ui.selectedSkillId = null;
-  ui.hoverTargetUid = null;
+  endTargeting();
   render();
 }
 
 const battleHandlers: Handlers = {
   onSkill(skillId) {
     if (busy || !run.battle || run.battle.phase !== "inProgress") return;
-    // 타겟팅 모드 진입 — self/ally 스킬은 자기/아군 칸이 하이라이트되어 클릭으로 시전
+    const sk = SKILLS[skillId];
+    if (sk?.target === "self") {
+      // 자기 대상은 즉시 시전 (앵커=자신 위치)
+      const actor = run.battle.units.find((u) => u.uid === run.battle!.current!.uid)!;
+      battleStep({ type: "skill", skillId, targetCell: { ...actor.pos } });
+      return;
+    }
     ui.selectedSkillId = skillId;
-    ui.hoverTargetUid = null;
+    ui.hoverCell = null;
+    ui.pickedCells = [];
     render();
   },
-  onTarget(uid) {
+  onCellClick(pos) {
     if (busy || !ui.selectedSkillId) return;
-    battleStep({ type: "skill", skillId: ui.selectedSkillId, targetUid: uid });
+    const sk = SKILLS[ui.selectedSkillId];
+    if (sk.area?.kind === "free") {
+      const count = sk.area.count;
+      if (!ui.pickedCells.some((p) => p.row === pos.row && p.col === pos.col)) ui.pickedCells.push(pos);
+      if (ui.pickedCells.length >= count) battleStep({ type: "skill", skillId: ui.selectedSkillId, cells: ui.pickedCells.slice() });
+      else render();
+    } else {
+      battleStep({ type: "skill", skillId: ui.selectedSkillId, targetCell: pos });
+    }
   },
-  onHover(uid) {
-    if (ui.selectedSkillId && uid !== ui.hoverTargetUid) {
-      ui.hoverTargetUid = uid;
+  onCellHover(pos) {
+    if (!ui.selectedSkillId) return;
+    const cur = ui.hoverCell;
+    if ((pos?.row ?? -9) !== (cur?.row ?? -9) || (pos?.col ?? -9) !== (cur?.col ?? -9)) {
+      ui.hoverCell = pos;
       render();
     }
   },
   onCancel() {
-    ui.selectedSkillId = null;
-    ui.hoverTargetUid = null;
+    endTargeting();
     render();
   },
   onSkip() {

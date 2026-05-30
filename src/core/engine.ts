@@ -318,17 +318,18 @@ export function computeAreaCells(anchor: Pos, area: AreaShape | undefined, rows:
   return cells;
 }
 
-/** 면적 스킬의 영향 유닛 (앵커=대상 위치). single/all 외 모양은 풋프린트 내 같은 진영 유닛 */
-function areaTargets(state: GameState, actor: Unit, skill: Skill, anchor: Unit | null): Unit[] {
+/** 면적 스킬의 영향 유닛. 앵커=칸(Pos). free면 cells(자유선택). single/all 외엔 풋프린트 내 같은 진영 유닛 */
+function areaTargets(state: GameState, actor: Unit, skill: Skill, anchor: Pos, freeCells?: Pos[]): Unit[] {
+  if (skill.target === "self") return [actor];
   const side = skill.target === "enemy" ? (actor.side === "ally" ? "enemy" : "ally") : actor.side;
   const area = skill.area;
-  if (skill.target === "self") return [actor];
-  if (!area || area.kind === "single") return [anchor ?? actor];
+  const unitsIn = (cells: Pos[]) =>
+    state.units.filter((u) => u.alive && u.side === side && cells.some((c) => c.row === u.pos.row && c.col === u.pos.col));
+  if (!area || area.kind === "single") return unitsIn([anchor]);
   if (area.kind === "all") return validTargets(state, actor, skill); // 마스크 존중
-  const a = (anchor ?? actor).pos;
+  if (area.kind === "free") return unitsIn(freeCells ?? []);
   const dims = sideDims(state, side);
-  const cells = computeAreaCells(a, area, dims.rows, dims.cols);
-  return state.units.filter((u) => u.alive && u.side === side && cells.some((c) => c.row === u.pos.row && c.col === u.pos.col));
+  return unitsIn(computeAreaCells(anchor, area, dims.rows, dims.cols));
 }
 
 export function computeHitChance(actor: Unit, skill: Skill, target: Unit): number {
@@ -458,15 +459,20 @@ function moveUnit(state: GameState, u: Unit, deltaCol: number): void {
   state.log.push({ t: "move", uid: u.uid, from, to: { ...dest } });
 }
 
-function resolveSkill(state: GameState, actor: Unit, skill: Skill, targetUid?: string): void {
-  state.log.push({ t: "skillUsed", uid: actor.uid, skillId: skill.id, targetUid });
+function resolveSkill(
+  state: GameState,
+  actor: Unit,
+  skill: Skill,
+  sel: { targetUid?: string; targetCell?: Pos; cells?: Pos[] },
+): void {
+  state.log.push({ t: "skillUsed", uid: actor.uid, skillId: skill.id, targetUid: sel.targetUid });
 
   // 시전자 자기 효과 1회 (광역 중복 방지)
   applySelfEffects(state, actor, skill);
 
-  // 타겟 목록 결정 — 면적 모양 기반 (앵커 = 선택 대상)
-  const anchor = skill.target !== "self" && targetUid ? unitById(state, targetUid) : null;
-  const targets = areaTargets(state, actor, skill, anchor);
+  // 앵커 칸: 명시 칸 > 대상 유닛 위치 > 시전자 위치
+  const anchor: Pos = sel.targetCell ?? (sel.targetUid ? unitById(state, sel.targetUid).pos : actor.pos);
+  const targets = areaTargets(state, actor, skill, anchor, sel.cells);
 
   for (const tgt of targets) {
     if (!tgt.alive) continue;
@@ -587,7 +593,7 @@ export function step(state: GameState, action: Action): GameState {
     if (actor.alive) {
       // 쿨타임은 사용 즉시 설정(끼어들기에서도 설정됨; 단 '감소'만 끼어들기서 안 됨)
       actor.cooldowns[action.skillId] = skill.cooldown;
-      resolveSkill(state, actor, skill, action.targetUid);
+      resolveSkill(state, actor, skill, action);
       // 끼어들기: 정규 턴에서만, 모든 출처(스킬+버프) 종합. 주체는 self/대상아군 (2.11). 끼어들기 턴은 연쇄 방지로 제외.
       if (entry.kind === "normal") insertInterrupts(state, predictInterruptSubjects(state, actor, skill, action.targetUid));
     }

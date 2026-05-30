@@ -43,14 +43,15 @@ function skillDesc(sk: Skill): string {
 // ── UI 상태 / 핸들러 ──
 export interface Ui {
   selectedSkillId: string | null; // null = 스킬 선택 모드 / 값 = 타겟팅 모드
-  hoverTargetUid: string | null;
+  hoverCell: { row: number; col: number } | null; // 호버 중인 앵커 칸
+  pickedCells: { row: number; col: number }[]; // 자유선택(free)에서 고른 칸들
   damaged: Set<string>;
   seed: number;
 }
 export interface Handlers {
   onSkill: (skillId: string) => void;
-  onTarget: (uid: string) => void;
-  onHover: (uid: string | null) => void;
+  onCellClick: (pos: { row: number; col: number }) => void;
+  onCellHover: (pos: { row: number; col: number } | null) => void;
   onCancel: () => void;
   onSkip: () => void;
   onNewBattle: (seed: number) => void;
@@ -80,16 +81,19 @@ export function formatEvent(state: GameState, e: GameEvent): string | null {
   }
 }
 
-// ── 타겟팅 컨텍스트 ──
+// ── 타겟팅 컨텍스트 (셀 기반) ──
 interface TgtCtx {
   active: boolean;
-  validHit: Map<string, number>; // uid → 명중%
-  hoverUid: string | null;
-  previewLoss: { hpLoss: number; shieldConsumed: number } | null; // 호버 대상 예상
+  validHit: Map<string, number>; // uid → 명중% (점유 칸 머리 위 표시)
+  previewLoss: { hpLoss: number; shieldConsumed: number } | null;
   casterUid: string | null;
-  areaSide: "ally" | "enemy" | null; // 면적이 적용되는 진영
-  areaSet: Set<string>; // 영향 칸 키 "row,col" (바닥 하이라이트)
+  areaSide: "ally" | "enemy" | null; // 타겟팅 대상 진영
+  hoverCell: string | null; // "row,col"
+  anchorOk: Set<string>; // 클릭 가능한 앵커/다음선택 칸 키
+  footprint: Set<string>; // 영향 칸 미리보기 (바닥 하이라이트)
+  picked: Set<string>; // 자유선택에서 이미 고른 칸
 }
+const ck = (p: { row: number; col: number }) => `${p.row},${p.col}`;
 
 function statusChips(u: UnitView): string {
   return u.statuses
@@ -106,11 +110,12 @@ function formationBadge(u: UnitView): string {
 }
 
 function unitCard(u: UnitView, isCurrent: boolean, damaged: boolean, tgt: TgtCtx): string {
-  const targetable = tgt.active && tgt.validHit.has(u.uid);
-  const hovering = targetable && tgt.hoverUid === u.uid;
+  const key = ck(u.pos);
+  const inFoot = tgt.active && tgt.areaSide === u.side && tgt.footprint.has(key);
+  const hovering = tgt.active && tgt.areaSide === u.side && tgt.hoverCell === key;
   const hpPct = Math.max(0, (u.hp / u.hpMax) * 100);
 
-  // 호버 시 HP 깎일 양 미리보기 (쉴드/관통/공포 반영, 0.2 투명성)
+  // 호버(앵커) 대상 HP 깎일 양 미리보기 (쉴드/관통/공포 반영, 0.2)
   let preview = "";
   let lossText = "";
   if (hovering && tgt.previewLoss) {
@@ -121,11 +126,10 @@ function unitCard(u: UnitView, isCurrent: boolean, damaged: boolean, tgt: TgtCtx
     lossText = ` <span class="lossnum">−${hpLoss}</span>${shieldConsumed > 0 ? `<span class="absnum">(🛡−${shieldConsumed})</span>` : ""}`;
   }
 
-  const cls = ["card", u.side, isCurrent ? "current" : "", damaged ? "flash" : "", targetable ? "tgt" : "", hovering ? "hovering" : ""].join(" ").replace(/\s+/g, " ").trim();
-  const dataTgt = targetable ? `data-target="${u.uid}"` : "";
-  const hitBadge = targetable ? `<div class="hitbadge">${tgt.validHit.get(u.uid)}%</div>` : "";
+  const cls = ["card", u.side, isCurrent ? "current" : "", damaged ? "flash" : "", inFoot ? "tgt" : ""].join(" ").replace(/\s+/g, " ").trim();
+  const hitBadge = tgt.active && tgt.validHit.has(u.uid) ? `<div class="hitbadge">${tgt.validHit.get(u.uid)}%</div>` : "";
 
-  return `<div class="${cls}" data-uid="${u.uid}" ${dataTgt}>
+  return `<div class="${cls}" data-uid="${u.uid}">
     ${hitBadge}
     <div class="cardtop"><span class="nm">${avatarHtml(u.avatar)}${esc(u.name)}</span>${formationBadge(u)}</div>
     <div class="hpbar"><div class="hp" style="width:${hpPct}%"></div>${preview}${u.shield > 0 ? `<div class="sh">🛡${u.shield}</div>` : ""}</div>
@@ -139,10 +143,14 @@ function grid(title: string, units: UnitView[], side: "ally" | "enemy", curUid: 
   for (let row = 0; row < 4; row++) {
     for (let col = 0; col < 4; col++) {
       const u = units.find((x) => x.alive && x.pos.row === row && x.pos.col === col);
-      const cellTargetable = u && tgt.active && tgt.validHit.has(u.uid);
-      const inArea = tgt.active && tgt.areaSide === side && tgt.areaSet.has(`${row},${col}`);
-      const cls = `cell${cellTargetable ? " targetable" : ""}${inArea ? " inarea" : ""}`;
-      cells += `<div class="${cls}">${u ? unitCard(u, u.uid === curUid, damaged.has(u.uid), tgt) : `<span class="empty">c${col}r${row}</span>`}</div>`;
+      const key = `${row},${col}`;
+      const onSide = tgt.active && tgt.areaSide === side;
+      const clickable = onSide && tgt.anchorOk.has(key);
+      const inArea = onSide && tgt.footprint.has(key);
+      const picked = onSide && tgt.picked.has(key);
+      const cls = `cell${clickable ? " cellpick" : ""}${inArea ? " inarea" : ""}${picked ? " picked" : ""}`;
+      const attr = clickable ? `data-cell="${row},${col}"` : "";
+      cells += `<div class="${cls}" ${attr}>${u ? unitCard(u, u.uid === curUid, damaged.has(u.uid), tgt) : `<span class="empty">·</span>`}</div>`;
     }
   }
   return `<div class="side"><h2>${title}</h2><div class="board">${cells}</div></div>`;
@@ -255,39 +263,54 @@ function drawArrow(app: HTMLElement, casterUid: string, targetUid: string): void
 export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handlers): void {
   const obs = buildObservation(state);
 
-  // 타겟팅 컨텍스트
-  const tgt: TgtCtx = { active: false, validHit: new Map(), hoverUid: ui.hoverTargetUid, previewLoss: null, casterUid: obs.current?.uid ?? null, areaSide: null, areaSet: new Set() };
+  // 타겟팅 컨텍스트 (셀 기반)
+  const tgt: TgtCtx = {
+    active: false, validHit: new Map(), previewLoss: null, casterUid: obs.current?.uid ?? null,
+    areaSide: null, hoverCell: ui.hoverCell ? ck(ui.hoverCell) : null,
+    anchorOk: new Set(), footprint: new Set(), picked: new Set(),
+  };
+  let ghostNames: string[] = [];
   if (ui.selectedSkillId && obs.current?.side === "ally") {
     tgt.active = true;
     const skill = SKILLS[ui.selectedSkillId];
+    const actor = state.units.find((u) => u.uid === obs.current!.uid)!;
     for (const la of obs.legalActions) {
-      if (la.action.type === "skill" && la.action.skillId === ui.selectedSkillId && la.targetUid) {
-        tgt.validHit.set(la.targetUid, la.hitChance ?? 100);
-      }
+      if (la.action.type === "skill" && la.action.skillId === ui.selectedSkillId && la.targetUid) tgt.validHit.set(la.targetUid, la.hitChance ?? 100);
     }
-    const actor = state.units.find((u) => u.uid === obs.current!.uid)!;
-    const hover = ui.hoverTargetUid ? state.units.find((u) => u.uid === ui.hoverTargetUid) : null;
-    if (hover && tgt.validHit.has(hover.uid)) {
-      tgt.previewLoss = previewHpLoss(state, actor, skill, hover);
-    }
-    // 면적 풋프린트 → 바닥 하이라이트 (앵커=호버 대상)
-    tgt.areaSide = skill.target === "enemy" ? "enemy" : skill.target === "ally" ? "ally" : null;
-    if (tgt.areaSide && skill.area) {
-      const sideUnits = tgt.areaSide === "enemy" ? obs.enemies : obs.allies;
-      let rows = 4;
-      let cols = 4;
+    const side = skill.target === "enemy" ? "enemy" : skill.target === "ally" ? "ally" : null;
+    tgt.areaSide = side;
+    const unitAt = (p: { row: number; col: number } | null) =>
+      p ? state.units.find((u) => u.alive && u.pos.row === p.row && u.pos.col === p.col && (!side || u.side === side)) : undefined;
+    if (side) {
+      const sideUnits = side === "enemy" ? obs.enemies : obs.allies;
+      let rows = 4; let cols = 4;
       for (const u of sideUnits.filter((x) => x.alive)) { rows = Math.max(rows, u.pos.row + 1); cols = Math.max(cols, u.pos.col + 1); }
-      const anchor = skill.area.kind === "all" ? { row: 0, col: 0 } : hover?.pos;
-      if (anchor) for (const c of computeAreaCells(anchor, skill.area, rows, cols)) tgt.areaSet.add(`${c.row},${c.col}`);
+      const region = new Set<string>();
+      if (skill.targetCells?.length) for (const c of skill.targetCells) region.add(ck(c));
+      else for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) region.add(`${r},${c}`);
+      const area = skill.area;
+      if (area?.kind === "free") {
+        tgt.picked = new Set(ui.pickedCells.map(ck));
+        if (ui.pickedCells.length === 0) tgt.anchorOk = region;
+        else {
+          for (const p of ui.pickedCells) for (const [dr, dc] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const r = p.row + dr, c = p.col + dc;
+            if (r >= 0 && r < rows && c >= 0 && c < cols && !tgt.picked.has(`${r},${c}`)) tgt.anchorOk.add(`${r},${c}`);
+          }
+        }
+        tgt.footprint = new Set(tgt.picked);
+        if (ui.hoverCell && tgt.anchorOk.has(ck(ui.hoverCell))) tgt.footprint.add(ck(ui.hoverCell));
+      } else {
+        tgt.anchorOk = region;
+        if (area?.kind === "all") { for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) tgt.footprint.add(`${r},${c}`); }
+        else if (ui.hoverCell) for (const c of computeAreaCells(ui.hoverCell, area, rows, cols)) tgt.footprint.add(ck(c));
+      }
+      const hu = unitAt(ui.hoverCell);
+      if (hu && tgt.validHit.has(hu.uid)) tgt.previewLoss = previewHpLoss(state, actor, skill, hu);
     }
-  }
-
-  // 끼어들기 예고: 타겟팅 중인 행동이 발생시킬 끼어들기의 주체 이름들 (스킬+버프 등 모든 출처)
-  let ghostNames: string[] = [];
-  if (ui.selectedSkillId && obs.current?.side === "ally") {
-    const actor = state.units.find((u) => u.uid === obs.current!.uid)!;
-    const subjects = predictInterruptSubjects(state, actor, SKILLS[ui.selectedSkillId], ui.hoverTargetUid ?? undefined);
-    ghostNames = subjects.map((uid) => state.units.find((u) => u.uid === uid)?.name ?? uid);
+    // 끼어들기 예고 (앵커 유닛 기준)
+    const anchorUnit = ui.hoverCell ? state.units.find((u) => u.alive && u.pos.row === ui.hoverCell!.row && u.pos.col === ui.hoverCell!.col) : undefined;
+    ghostNames = predictInterruptSubjects(state, actor, skill, anchorUnit?.uid).map((uid) => state.units.find((u) => u.uid === uid)?.name ?? uid);
   }
 
   const logHtml = state.log.slice(-40).map((e) => formatEvent(state, e)).filter(Boolean).join("<br>");
@@ -315,10 +338,11 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
   );
   app.querySelector("#skipbtn")?.addEventListener("click", () => h.onSkip());
   app.querySelector("#cancelbtn")?.addEventListener("click", () => h.onCancel());
-  app.querySelectorAll<HTMLElement>("[data-target]").forEach((el) => {
-    el.addEventListener("click", () => h.onTarget(el.dataset.target!));
-    el.addEventListener("mouseenter", () => h.onHover(el.dataset.target!));
-    el.addEventListener("mouseleave", () => h.onHover(null));
+  app.querySelectorAll<HTMLElement>("[data-cell]").forEach((el) => {
+    const [row, col] = el.dataset.cell!.split(",").map(Number);
+    el.addEventListener("click", () => h.onCellClick({ row, col }));
+    el.addEventListener("mouseenter", () => h.onCellHover({ row, col }));
+    el.addEventListener("mouseleave", () => h.onCellHover(null));
   });
   app.querySelector<HTMLButtonElement>("#newb")?.addEventListener("click", () => {
     const v = app.querySelector<HTMLInputElement>("#seed");
@@ -328,8 +352,9 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
   const lp = app.querySelector<HTMLElement>(".loginner");
   if (lp) lp.scrollTop = lp.scrollHeight;
 
-  // 화살표: 타겟팅 + 호버 시
-  if (tgt.active && tgt.casterUid && ui.hoverTargetUid) {
-    drawArrow(app, tgt.casterUid, ui.hoverTargetUid);
+  // 화살표: 타겟팅 + 호버 칸에 유닛이 있으면 그 유닛으로
+  if (tgt.active && tgt.casterUid && ui.hoverCell) {
+    const hu = state.units.find((u) => u.alive && u.pos.row === ui.hoverCell!.row && u.pos.col === ui.hoverCell!.col);
+    if (hu) drawArrow(app, tgt.casterUid, hu.uid);
   }
 }

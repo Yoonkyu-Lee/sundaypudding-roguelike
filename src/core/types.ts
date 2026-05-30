@@ -89,7 +89,9 @@ export type SkillEffect =
  * cross=앵커+직교 인접(radius) / all=대상 진영 전체.
  * (향후: 자유 인접 N칸 선택 등 인터랙티브 패턴)
  */
-export type AreaShape = { kind: "single" | "row" | "col" | "square" | "cross" | "all"; radius?: number };
+export type AreaShape =
+  | { kind: "single" | "row" | "col" | "square" | "cross" | "all"; radius?: number }
+  | { kind: "free"; count: number }; // 자유 인접 N칸 선택 (인터랙티브)
 
 export type SkillTarget = "enemy" | "ally" | "self";
 
@@ -193,7 +195,7 @@ export interface QueueEntry {
 }
 
 export type Action =
-  | { type: "skill"; skillId: string; targetUid?: string }
+  | { type: "skill"; skillId: string; targetUid?: string; targetCell?: Pos; cells?: Pos[] } // 앵커=유닛/칸, 또는 자유선택 cells
   | { type: "skip" }; // 쓸 기술 없음 → 효과 없는 스킵 (2.10)
 
 export type Phase = "inProgress" | "allyWin" | "enemyWin";
