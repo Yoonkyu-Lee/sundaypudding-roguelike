@@ -10,15 +10,23 @@ import { CHARACTERS } from "../data/characters.ts";
 import { SKILLS } from "../data/skills.ts";
 import type { Placement } from "../data/encounters.ts";
 
-export type NodeType = "battle" | "elite" | "shop" | "encounter" | "rest" | "boss";
+export type NodeType = "start" | "battle" | "elite" | "shop" | "encounter" | "rest" | "boss";
 export type RunPhase = "map" | "battle" | "reward" | "won" | "lost";
 
+/**
+ * 헥스 타일맵 셀 (axial 좌표 q,r). r=깊이(보스 방향, 클수록 보스에 가까움).
+ * 간선은 별도 저장하지 않고 **좌표 인접성으로 암시**된다 (진짜 벌집).
+ * 전진 = r+1 방향 인접 셀: (q, r+1) / (q-1, r+1) (pointy-top SE/SW).
+ */
 export interface RunNode {
   id: string;
-  layer: number;
-  col: number;
+  q: number;
+  r: number;
   type: NodeType;
-  next: string[];
+}
+
+function hid(q: number, r: number): string {
+  return `${q}_${r}`;
 }
 
 export type RewardOption =
@@ -33,7 +41,8 @@ export interface RunState {
   nodes: RunNode[];
   party: PartyMemberState[];
   visited: string[];
-  reachable: string[]; // 지금 선택 가능한 노드
+  reachable: string[]; // 지금 선택 가능한 노드 (다음 선택지)
+  currentNodeId: string; // 지금 서 있는(클리어한) 위치
   activeNodeId: string | null; // 전투/보상 중인 노드
   phase: RunPhase;
   battle: GameState | null;
@@ -49,43 +58,58 @@ function pickType(rng: Rng, row: number): NodeType {
   return pool[rng.int(0, pool.length - 1)];
 }
 
-function genMap(rng: Rng, rows: number): RunNode[] {
-  const widths: number[] = [];
-  for (let r = 0; r < rows; r++) widths[r] = rng.int(2, 3);
-  widths[rows] = 1; // 보스 행
+/** 전진(r+1) 인접 셀 id 목록 — 좌표로 계산 (간선 데이터 없음). 시작 노드는 첫 행(r=0) 전체로 전진(허브) */
+function forwardIds(nodes: RunNode[], c: RunNode): string[] {
+  if (c.type === "start") return nodes.filter((n) => n.r === 0).map((n) => n.id);
+  const has = (q: number, r: number) => nodes.some((n) => n.q === q && n.r === r);
+  return [
+    [c.q, c.r + 1],
+    [c.q - 1, c.r + 1],
+  ]
+    .filter(([q, r]) => has(q, r))
+    .map(([q, r]) => hid(q, r));
+}
 
-  const nodes: RunNode[] = [];
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < widths[r]; c++) {
-      nodes.push({ id: `n${r}_${c}`, layer: r, col: c, type: pickType(rng, r), next: [] });
+/** 헥스 타일맵 생성: 자식 규칙으로 벌집을 깔고, start↔boss 경로 밖 셀은 프루닝 */
+function genMap(rng: Rng, choiceRows: number): RunNode[] {
+  // 1) 행별 q 집합 (각 부모는 자식 q 또는 q-1을 가짐 → 연결 보장 + 분기)
+  const rowsQ: number[][] = [[]];
+  const w0 = rng.int(2, 3);
+  for (let i = 0; i < w0; i++) rowsQ[0].push(i);
+  for (let r = 1; r < choiceRows; r++) {
+    const set = new Set<number>();
+    for (const q of rowsQ[r - 1]) {
+      set.add(rng.chance(50) ? q : q - 1); // 최소 1자식
+      if (rng.chance(40)) set.add(q);
+      if (rng.chance(40)) set.add(q - 1);
     }
+    rowsQ[r] = [...set].sort((a, b) => a - b);
   }
-  nodes.push({ id: "boss", layer: rows, col: 0, type: "boss", next: [] });
+  // 2) 보스 셀: 마지막 행의 중앙 자식 위치
+  const last = rowsQ[choiceRows - 1];
+  const qb = last[Math.floor(last.length / 2)];
 
-  const ratio = (col: number, w: number) => (w > 1 ? col / (w - 1) : 0.5);
-  for (let r = 0; r < rows; r++) {
-    const cur = nodes.filter((n) => n.layer === r);
-    const nxt = nodes.filter((n) => n.layer === r + 1);
-    for (const n of cur) {
-      const ti = Math.round(ratio(n.col, widths[r]) * (widths[r + 1] - 1));
-      const targets = new Set<number>([ti]);
-      if (rng.chance(45) && ti + 1 < widths[r + 1]) targets.add(ti + 1);
-      if (rng.chance(45) && ti - 1 >= 0) targets.add(ti - 1);
-      for (const t of targets) n.next.push(nxt.find((x) => x.col === t)!.id);
-    }
-    // 모든 다음 노드가 들어오는 간선을 갖도록 보장 (연결성)
-    for (const m of nxt) {
-      if (cur.some((n) => n.next.includes(m.id))) continue;
-      let best = cur[0];
-      let bd = Infinity;
-      for (const n of cur) {
-        const d = Math.abs(ratio(n.col, widths[r]) - ratio(m.col, widths[r + 1]));
-        if (d < bd) { bd = d; best = n; }
-      }
-      best.next.push(m.id);
-    }
+  // 3) 셀 생성
+  const cells: RunNode[] = [];
+  for (let r = 0; r < choiceRows; r++) for (const q of rowsQ[r]) cells.push({ id: hid(q, r), q, r, type: pickType(rng, r) });
+  cells.push({ id: hid(qb, choiceRows), q: qb, r: choiceRows, type: "boss" });
+
+  // 4) 프루닝: start 도달 가능 ∧ boss 도달 가능 셀만 유지 → 막다른 길/고립 제거
+  const bossId = hid(qb, choiceRows);
+  const canBoss = new Set<string>([bossId]);
+  for (let r = choiceRows - 1; r >= 0; r--) {
+    for (const c of cells.filter((x) => x.r === r)) if (forwardIds(cells, c).some((id) => canBoss.has(id))) canBoss.add(c.id);
   }
-  return nodes;
+  const fromStart = new Set<string>(cells.filter((c) => c.r === 0).map((c) => c.id));
+  for (let r = 0; r < choiceRows; r++) {
+    for (const c of cells.filter((x) => x.r === r)) if (fromStart.has(c.id)) for (const id of forwardIds(cells, c)) fromStart.add(id);
+  }
+  const kept = cells.filter((c) => canBoss.has(c.id) && fromStart.has(c.id));
+  // 시작 노드: 첫 행 위 중앙에 단일 허브 (r=-1). 좌표 인접 무관하게 첫 행 전체로 전진
+  const r0 = kept.filter((c) => c.r === 0);
+  const qs = r0.length ? r0[Math.floor(r0.length / 2)].q : 0;
+  kept.push({ id: "start", q: qs, r: -1, type: "start" });
+  return kept;
 }
 
 // ── 적 구성 (노드 타입별) ───────────────────────────────────────────────────
@@ -130,8 +154,9 @@ export function createRun(seed: number, roster: { charId: string; pos: Pos }[], 
     rows,
     nodes,
     party,
-    visited: [],
-    reachable: nodes.filter((n) => n.layer === 0).map((n) => n.id),
+    visited: ["start"],
+    reachable: nodes.filter((n) => n.r === 0).map((n) => n.id), // 시작 노드의 전진 = 첫 행
+    currentNodeId: "start",
     activeNodeId: null,
     phase: "map",
     battle: null,
@@ -199,7 +224,8 @@ export function enterNode(run: RunState, nodeId: string): void {
 function completeNode(run: RunState, nodeId: string): void {
   if (!run.visited.includes(nodeId)) run.visited.push(nodeId);
   const n = node(run, nodeId);
-  run.reachable = n.next.slice();
+  run.currentNodeId = nodeId; // 지금 서 있는 위치 갱신
+  run.reachable = forwardIds(run.nodes, n); // 전진(r+1) 인접 셀 (좌표로 계산)
   run.activeNodeId = null;
   run.phase = "map";
 }
@@ -280,12 +306,12 @@ export function chooseReward(run: RunState, optionId: string): void {
 
 // ── 관측(맵/파티/보상) — 전투는 run.battle을 직접 사용 ──────────────────────
 
-export type NodeStatus = "visited" | "active" | "reachable" | "locked";
+export type NodeStatus = "current" | "visited" | "active" | "reachable" | "locked";
 
 export interface RunView {
   phase: RunPhase;
   rows: number;
-  nodes: { id: string; layer: number; col: number; type: NodeType; next: string[]; status: NodeStatus }[];
+  nodes: { id: string; q: number; r: number; type: NodeType; status: NodeStatus }[];
   party: { name: string; charId: string; avatar?: string; hp: number; maxHp: number; alive: boolean }[];
   rewards: RewardOption[] | null;
   log: string[];
@@ -297,10 +323,11 @@ export function getRunView(run: RunState): RunView {
     rows: run.rows,
     nodes: run.nodes.map((n) => {
       let status: NodeStatus = "locked";
-      if (run.visited.includes(n.id)) status = "visited";
+      if (run.currentNodeId === n.id) status = "current"; // 지금 서 있는 위치 (테두리)
+      else if (run.reachable.includes(n.id)) status = "reachable"; // 다음 선택지 (다른 색 테두리)
       else if (run.activeNodeId === n.id) status = "active";
-      else if (run.reachable.includes(n.id)) status = "reachable";
-      return { id: n.id, layer: n.layer, col: n.col, type: n.type, next: n.next, status };
+      else if (run.visited.includes(n.id)) status = "visited";
+      return { id: n.id, q: n.q, r: n.r, type: n.type, status };
     }),
     party: run.party.map((m) => ({ name: CHARACTERS[m.charId].name, charId: m.charId, avatar: CHARACTERS[m.charId].avatar, hp: m.hp, maxHp: m.maxHp, alive: m.hp > 0 })),
     rewards: run.rewards,

@@ -25,7 +25,7 @@ src/
 | `src/core/rng.ts` | core | 시드 PRNG. **모든 무작위의 유일한 출처**(결정론, 8.3) | `Rng` |
 | `src/core/types.ts` | core | **타입 스키마 = 명세서.** 모든 상태/행동/관측/이벤트 타입 | (모든 타입) |
 | `src/core/engine.ts` | core | 전투 로직 전부. 상태+행동→다음상태 | `createBattle` · `getLegalActions` · `step` · `computeHitChance` |
-| `src/core/run.ts` | core | **런(7장)**: 분기 노드맵·노드해소·전투생성·보상·승패. 전투는 engine 재사용 | `createRun` · `enterNode` · `resolveBattleEnd` · `chooseReward` · `getRunView` |
+| `src/core/run.ts` | core | **런(7장)**: **헥스 타일맵**(axial q,r·좌표인접성=간선·프루닝)·노드해소·전투생성·보상·승패. 전투는 engine 재사용 | `createRun` · `enterNode` · `resolveBattleEnd` · `chooseReward` · `getRunView` |
 | `src/core/observation.ts` | core | 관측 빌드(JSON) + ASCII 보드 렌더 | `buildObservation` · `renderAscii` |
 | `src/core/ai.ts` | core | 결정론 휴리스틱 정책(데모/적 조종) | `chooseAction` |
 | `src/core/engine.test.ts` | core | 결정론·기능 단위 테스트 | — |

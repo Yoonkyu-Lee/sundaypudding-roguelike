@@ -37,12 +37,35 @@ test("런 결정론: 같은 시드 = 같은 맵", () => {
   assert.equal(JSON.stringify(a.nodes), JSON.stringify(b.nodes));
 });
 
-test("맵 연결성: layer>0 모든 노드는 들어오는 간선이 있다", () => {
-  const run = createRun(3, ROSTER);
-  for (const n of run.nodes) {
-    if (n.layer === 0) continue;
-    assert.ok(run.nodes.some((m) => m.next.includes(n.id)), `${n.id} 고립`);
+test("헥스맵 연결성: 시작 노드 포함 모든 셀이 start 도달 ∧ boss 도달 (프루닝 보장)", () => {
+  for (const seed of [1, 2, 3, 7, 42]) {
+    const run = createRun(seed, ROSTER);
+    const has = (q: number, r: number) => run.nodes.some((n) => n.q === q && n.r === r);
+    // 시작 노드(start)는 첫 행(r=0) 전체로 전진(허브), 그 외는 axial 인접
+    const fwd = (c: { id: string; q: number; r: number; type: string }) =>
+      c.type === "start"
+        ? run.nodes.filter((n) => n.r === 0).map((n) => n.id)
+        : [[c.q, c.r + 1], [c.q - 1, c.r + 1]].filter(([q, r]) => has(q, r)).map(([q, r]) => `${q}_${r}`);
+    const minR = Math.min(...run.nodes.map((n) => n.r)); // -1 (시작)
+    const maxR = Math.max(...run.nodes.map((n) => n.r)); // 보스
+    const bossId = run.nodes.find((n) => n.type === "boss")!.id;
+    const canBoss = new Set<string>([bossId]);
+    for (let r = maxR - 1; r >= minR; r--) for (const c of run.nodes.filter((x) => x.r === r)) if (fwd(c).some((id) => canBoss.has(id))) canBoss.add(c.id);
+    const fromStart = new Set<string>(run.nodes.filter((n) => n.type === "start").map((n) => n.id));
+    for (let r = minR; r < maxR; r++) for (const c of run.nodes.filter((x) => x.r === r)) if (fromStart.has(c.id)) for (const id of fwd(c)) fromStart.add(id);
+    for (const n of run.nodes) {
+      assert.ok(canBoss.has(n.id), `seed ${seed}: ${n.id} 보스 도달 불가`);
+      assert.ok(fromStart.has(n.id), `seed ${seed}: ${n.id} start 도달 불가`);
+    }
   }
+});
+
+test("시작 노드: createRun 시 current=start, 다음 선택지=첫 행", () => {
+  const run = createRun(7, ROSTER);
+  assert.equal(run.currentNodeId, "start");
+  assert.ok(run.nodes.some((n) => n.type === "start"));
+  assert.ok(run.reachable.length > 0);
+  assert.ok(run.reachable.every((id) => run.nodes.find((n) => n.id === id)!.r === 0));
 });
 
 test("런 완주: map→battle→reward 루프가 보스까지 가서 승/패로 종료", () => {
@@ -55,7 +78,7 @@ test("런 완주: map→battle→reward 루프가 보스까지 가서 승/패로
 test("보상 스킬강화: 데미지 보너스 누적 + map 복귀", () => {
   const run = createRun(1, ROSTER);
   run.phase = "reward";
-  run.activeNodeId = "n0_0";
+  run.activeNodeId = run.nodes[0].id;
   run.rewards = [{ id: "x", kind: "skillUp", charId: "beef", skillId: "gangta", amount: 3, label: "t" }];
   chooseReward(run, "x");
   assert.equal(run.party.find((m) => m.charId === "beef")!.skillDmgBonus["gangta"], 3);
@@ -64,8 +87,9 @@ test("보상 스킬강화: 데미지 보너스 누적 + map 복귀", () => {
 
 test("보스전은 적 진형 보너스 활성(6.3) — boss 노드 진입 시 enemyFormation 설정", () => {
   const run = createRun(2, ROSTER);
-  run.reachable = ["boss"];
-  enterNode(run, "boss");
+  const bossId = run.nodes.find((n) => n.type === "boss")!.id;
+  run.reachable = [bossId];
+  enterNode(run, bossId);
   assert.notEqual(run.battle, null);
   assert.notEqual(run.battle!.enemyFormation, null);
 });

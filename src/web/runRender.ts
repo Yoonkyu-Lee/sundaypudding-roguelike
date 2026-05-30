@@ -11,6 +11,7 @@ export interface RunHandlers {
 }
 
 const TYPE_ICON: Record<NodeType, string> = {
+  start: "📍",
   battle: "⚔️",
   elite: "💀",
   shop: "🛒",
@@ -19,6 +20,7 @@ const TYPE_ICON: Record<NodeType, string> = {
   boss: "👑",
 };
 const TYPE_NAME: Record<NodeType, string> = {
+  start: "시작",
   battle: "전투",
   elite: "엘리트",
   shop: "상점",
@@ -47,28 +49,34 @@ function logPanel(view: RunView): string {
 }
 
 function mapScreen(view: RunView, h: RunHandlers): string {
-  // 레이어를 행으로(위=시작, 아래=보스)
-  let rowsHtml = "";
-  for (let layer = 0; layer <= view.rows; layer++) {
-    const nodes = view.nodes.filter((n) => n.layer === layer).sort((a, b) => a.col - b.col);
-    const chips = nodes
-      .map((n) => {
-        const clickable = n.status === "reachable";
-        const attrs = clickable ? `data-node="${n.id}"` : "";
-        return `<button class="mnode ${n.status} ${n.type}" ${attrs} ${clickable ? "" : "disabled"}
-          title="${TYPE_NAME[n.type]}" data-uid="${n.id}">
+  // axial(q,r) → 픽셀 (pointy-top): x=W*(q+r/2), y=1.5*size*r. 진짜 벌집 테셀레이션.
+  const SIZE = 46;
+  const W = Math.sqrt(3) * SIZE; // 헥스 폭
+  const H = 2 * SIZE; // 헥스 높이
+  const pos = view.nodes.map((n) => ({ n, x: W * (n.q + n.r / 2), y: SIZE * 1.5 * n.r }));
+  const minX = Math.min(...pos.map((p) => p.x));
+  const minY = Math.min(...pos.map((p) => p.y));
+  const cw = Math.max(...pos.map((p) => p.x)) - minX + W;
+  const ch = Math.max(...pos.map((p) => p.y)) - minY + H;
+
+  const hexes = pos
+    .map(({ n, x, y }) => {
+      const clickable = n.status === "reachable";
+      const attrs = clickable ? `data-node="${n.id}"` : "disabled";
+      return `<button class="mnode ${n.status} ${n.type}"
+        style="left:${x - minX}px;top:${y - minY}px;width:${W}px;height:${H}px"
+        ${attrs} data-uid="${n.id}" title="${TYPE_NAME[n.type]}">
+        <span class="mhex">
           <span class="mico">${TYPE_ICON[n.type]}</span>
           <span class="mlabel">${TYPE_NAME[n.type]}</span>
           ${n.status === "visited" ? '<span class="mdone">✓</span>' : ""}
-        </button>`;
-      })
-      .join("");
-    rowsHtml += `<div class="maprow" data-layer="${layer}">${chips}</div>`;
-  }
-  return `<div class="mapwrap honeycomb">
-    ${rowsHtml}
-  </div>
-  <div class="hint">빛나는 육각 노드를 클릭해 전진하세요.</div>`;
+          ${n.status === "current" ? '<span class="mhere">▾</span>' : ""}
+        </span>
+      </button>`;
+    })
+    .join("");
+  return `<div class="mapwrap"><div class="hexfield" style="width:${cw}px;height:${ch}px">${hexes}</div></div>
+  <div class="hint">위쪽이 시작, 아래쪽이 보스. 빛나는 육각 셀을 클릭해 전진하세요.</div>`;
 }
 
 function rewardScreen(view: RunView, h: RunHandlers): string {
