@@ -5,17 +5,10 @@ import { buildObservation } from "../core/observation.ts";
 import { previewHpLoss, predictInterruptSubjects, computeAreaCells } from "../core/engine.ts";
 import { SKILLS } from "../data/skills.ts";
 import { STATUS_DEFS } from "../data/statuses.ts";
-import { devOn, geomOf, wirePanel } from "./devlayout.ts";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const r1 = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
 
-// 전투 화면 로그 사이드 폭 — 드래그로 조절, localStorage에 저장(재렌더에도 유지)
-const SIDE_KEY = "spr-side-w";
-function getSideW(): number {
-  const v = parseInt(localStorage.getItem(SIDE_KEY) ?? "300", 10);
-  return Number.isFinite(v) ? Math.max(180, Math.min(760, v)) : 300;
-}
 
 /** 아바타: 이미지 경로면 <img>, 이모지면 그대로 (저작권 안전 폴백) */
 export function avatarHtml(av: string | undefined, cls = "avt"): string {
@@ -63,7 +56,6 @@ export interface Handlers {
   onCancel: () => void;
   onSkip: () => void;
   onNewBattle: (seed: number) => void;
-  onToggleDev: () => void;
 }
 
 // ── 이벤트 → 사람 가독 한 줄 (8.5) ──
@@ -337,34 +329,15 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
       <h1>🍮 Sunday Pudding Roguelike</h1>
       <div class="meta">ROUND ${obs.round} · ${obs.phase} · seed
         <input id="seed" type="number" value="${ui.seed}" /> <button id="newb">새 전투</button>
-        <button id="devbtn" title="레이아웃 모드 (백틱 \`)">🛠</button>
       </div>
     </header>`;
 
-  if (devOn()) {
-    const dp = (pid: string, title: string, inner: string) => {
-      const g = geomOf(pid);
-      return `<section class="devpanel" data-pid="${pid}" style="left:${g.x}px;top:${g.y}px;width:${g.w}px;height:${g.h}px">
-        <div class="dphead">${title}</div><div class="dpbody">${inner}</div></section>`;
-    };
-    app.innerHTML = `<svg class="arrows"></svg>${header}
-      <div class="devbar">🛠 레이아웃 모드 — 헤더 드래그=이동 · 모서리=크기 · <b>\`</b>끄기 · <b>R</b>리셋 · <b>E</b>내보내기(클립보드)</div>
-      <div id="workspace">
-        ${dp("turnbar", "서열", pTurnbar)}
-        ${dp("ally", "아군", pAlly)}
-        ${dp("enemy", "적", pEnemy)}
-        ${dp("actions", "행동", pActions)}
-        ${dp("log", "로그", pLog)}
-      </div>`;
-  } else {
-    app.innerHTML = `<svg class="arrows"></svg>${header}
-      ${pTurnbar}
-      <div class="battlelayout" id="battlelayout" style="grid-template-columns: 1fr 7px ${getSideW()}px">
-        <div class="battlemain"><div class="arena">${pAlly}${pEnemy}</div>${pActions}</div>
-        <div class="gutter" id="gutter" title="드래그해서 폭 조절"></div>
-        <aside class="battleside">${pLog}</aside>
-      </div>`;
-  }
+  app.innerHTML = `<svg class="arrows"></svg>${header}
+    ${pTurnbar}
+    <div class="battlelayout">
+      <div class="battlemain"><div class="arena">${pAlly}${pEnemy}</div>${pActions}</div>
+      <aside class="battleside">${pLog}</aside>
+    </div>`;
 
   // 와이어링
   app.querySelectorAll<HTMLButtonElement>("button.sk[data-skill]").forEach((b) =>
@@ -382,31 +355,6 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
     const v = app.querySelector<HTMLInputElement>("#seed");
     h.onNewBattle(Number(v?.value ?? ui.seed));
   });
-  app.querySelector("#devbtn")?.addEventListener("click", () => h.onToggleDev());
-  if (devOn()) app.querySelectorAll<HTMLElement>(".devpanel").forEach((el) => wirePanel(el, el.dataset.pid!));
-
-  // 드래그 스플리터 — 전장/로그 폭 수동 조절 (저장)
-  const gutter = app.querySelector<HTMLElement>("#gutter");
-  const layout = app.querySelector<HTMLElement>("#battlelayout");
-  if (gutter && layout) {
-    gutter.addEventListener("pointerdown", (e) => {
-      e.preventDefault();
-      const onMove = (ev: PointerEvent) => {
-        const rect = layout.getBoundingClientRect();
-        const w = Math.max(180, Math.min(760, rect.right - ev.clientX));
-        layout.style.gridTemplateColumns = `1fr 7px ${w}px`;
-        localStorage.setItem(SIDE_KEY, String(Math.round(w)));
-      };
-      const onUp = () => {
-        window.removeEventListener("pointermove", onMove);
-        window.removeEventListener("pointerup", onUp);
-        document.body.style.userSelect = "";
-      };
-      document.body.style.userSelect = "none";
-      window.addEventListener("pointermove", onMove);
-      window.addEventListener("pointerup", onUp);
-    });
-  }
 
   const lp = app.querySelector<HTMLElement>(".loginner");
   if (lp) lp.scrollTop = lp.scrollHeight;

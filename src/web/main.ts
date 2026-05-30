@@ -7,7 +7,6 @@ import type { Action } from "../core/types.ts";
 import { SKILLS } from "../data/skills.ts";
 import { renderApp, type Handlers, type Ui } from "./render.ts";
 import { renderRunScreen, type RunHandlers } from "./runRender.ts";
-import { devOn, toggleDev, resetLayout, exportLayout } from "./devlayout.ts";
 
 const app = document.getElementById("app")!;
 
@@ -122,10 +121,6 @@ const battleHandlers: Handlers = {
   onNewBattle() {
     runHandlers.onRestart(); // 전투 화면의 '새 전투' = 런 재시작
   },
-  onToggleDev() {
-    toggleDev();
-    render();
-  },
 };
 
 // ── 런 핸들러 ──
@@ -155,16 +150,9 @@ function newRun(s: number): void {
   render();
 }
 
-// 단축키: ` 레이아웃모드 토글 · Esc 타겟팅취소 · (레이아웃모드) R 리셋 · E 내보내기
+// Esc로 타겟팅 취소
 window.addEventListener("keydown", (e) => {
-  const t = e.target as HTMLElement | null;
-  if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
-  if (e.key === "`") { toggleDev(); render(); return; }
-  if (e.key === "Escape" && ui.selectedSkillId) { battleHandlers.onCancel(); return; }
-  if (devOn()) {
-    if (e.key === "r" || e.key === "R") { resetLayout(); render(); }
-    else if (e.key === "e" || e.key === "E") { const s = exportLayout(); navigator.clipboard?.writeText(s); console.log("[layout]\n" + s); }
-  }
+  if (e.key === "Escape" && ui.selectedSkillId) battleHandlers.onCancel();
 });
 
 newRun(42);
