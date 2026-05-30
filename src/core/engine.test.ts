@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createBattle, getLegalActions, step, computeHitChance, getFormationBonus } from "./engine.ts";
+import { createBattle, getLegalActions, step, computeHitChance, getFormationBonus, previewDamage } from "./engine.ts";
 import { chooseAction } from "./ai.ts";
 import { DEMO_ENCOUNTER } from "../data/encounters.ts";
 import type { Encounter } from "../data/encounters.ts";
@@ -146,6 +146,13 @@ test("적 진형 보너스: 일반전투=미적용, 보스전=적용 (6.3)", () 
   const boss = createBattle(1, { ...base, boss: true });
   const e2 = boss.units.find((u) => u.side === "enemy")!;
   assert.equal(getFormationBonus(boss, e2, "attackPower"), 4); // 보스전 적 = 적용
+});
+
+test("데미지 미리보기: 스킬상수+포메이션, 비크리 결정론 (타겟팅 UI용)", () => {
+  const state = createBattle(42, DEMO_ENCOUNTER);
+  const beef = state.units.find((u) => u.name === "비프")!; // 강타 12, 0열 attackPower 4 단독
+  // 강타 단독 데미지 = 12 + 4(포메이션) = 16
+  assert.equal(previewDamage(state, beef, SKILLS["gangta"]), 16);
 });
 
 test("데미지는 쉴드부터 깎고 그다음 HP (2.9)", () => {

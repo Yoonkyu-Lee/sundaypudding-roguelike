@@ -1,80 +1,110 @@
-// 웹 렌더러 (사람용 뷰). 코어 상태를 읽어 DOM으로. AI 플레이엔 불필요(8.1).
-// 같은 코어 상태를 ASCII(터미널) 대신 HTML로 그릴 뿐 — 진실은 동일.
-import type { GameEvent, GameState, Observation, UnitView } from "../core/types.ts";
-import { buildObservation } from "../core/observation.ts";
+// 웹 렌더러 (사람용 뷰). 코어 상태를 읽어 DOM으로. 2단계 상호작용: 스킬 선택 → 타겟팅.
+// 에셋 없이 텍스트·도형·선으로: 칸 하이라이트(2.4)·머리위 명중%(2.7)·눈금 화살표·HP 미리보기(0.2).
+import type { GameEvent, GameState, Observation, Unit, UnitView } from "../core/types.ts";
+import { buildObservation, } from "../core/observation.ts";
+import { previewDamage } from "../core/engine.ts";
+import { SKILLS } from "../data/skills.ts";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const r1 = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
 
-// ── 이벤트 → 사람 가독 한 줄 (8.5: 이벤트 로그 재생) ──
+// ── UI 상태 / 핸들러 ──
+export interface Ui {
+  selectedSkillId: string | null; // null = 스킬 선택 모드 / 값 = 타겟팅 모드
+  hoverTargetUid: string | null;
+  damaged: Set<string>;
+  seed: number;
+}
+export interface Handlers {
+  onSkill: (skillId: string) => void;
+  onTarget: (uid: string) => void;
+  onHover: (uid: string | null) => void;
+  onCancel: () => void;
+  onSkip: () => void;
+  onNewBattle: (seed: number) => void;
+}
+
+// ── 이벤트 → 사람 가독 한 줄 (8.5) ──
 export function formatEvent(state: GameState, e: GameEvent): string | null {
   const nm = (uid?: string) => state.units.find((u) => u.uid === uid)?.name ?? uid ?? "?";
   switch (e.t) {
-    case "roundStart":
-      return `<b>── ROUND ${e.round} ──</b>`;
-    case "turnStart":
-      return `· <i>${nm(e.uid)}의 턴${e.kind === "interrupt" ? " ⚡끼어들기" : ""}</i>`;
-    case "skillUsed":
-      return `${nm(e.uid)} → 「${e.skillId}」${e.targetUid ? ` (${nm(e.targetUid)})` : ""}`;
-    case "miss":
-      return `&nbsp;&nbsp;✗ 빗나감 (${e.chance}%)`;
-    case "hit":
-      return `&nbsp;&nbsp;✓ 명중${e.crit ? " 💥크리!" : ""}`;
-    case "damage":
-      return `&nbsp;&nbsp;💢 ${nm(e.targetUid)} 피해 ${e.final} (쉴드 ${e.toShield}/HP ${e.toHp})`;
-    case "statusTick":
-      return `&nbsp;&nbsp;${nm(e.targetUid)} ${e.statusId} 지속피해 ${e.dmg}`;
-    case "statusApplied":
-      return `&nbsp;&nbsp;☢ ${nm(e.targetUid)} ${e.statusId} ${e.stacks}스택(${e.duration}턴)`;
-    case "shieldGain":
-      return `&nbsp;&nbsp;🛡 ${nm(e.targetUid)} 쉴드 +${e.amount}`;
-    case "heal":
-      return `&nbsp;&nbsp;➕ ${nm(e.targetUid)} 회복 ${e.amount}`;
-    case "move":
-      return `&nbsp;&nbsp;↔ ${nm(e.uid)} 이동 (c${e.from.col}→c${e.to.col})`;
-    case "interrupt":
-      return `&nbsp;&nbsp;⚡ ${nm(e.uid)} 끼어들기!`;
-    case "skip":
-      return `${nm(e.uid)} 스킵 (${e.reason})`;
-    case "death":
-      return `&nbsp;&nbsp;☠ ${nm(e.uid)} 전투불능`;
-    case "battleEnd":
-      return `<b>${e.phase === "allyWin" ? "🏆 아군 승리!" : "💀 패배..."}</b>`;
-    default:
-      return null;
+    case "roundStart": return `<b>── ROUND ${e.round} ──</b>`;
+    case "turnStart": return `· <i>${nm(e.uid)}의 턴${e.kind === "interrupt" ? " ⚡끼어들기" : ""}</i>`;
+    case "skillUsed": return `${nm(e.uid)} → 「${e.skillId}」${e.targetUid ? ` (${nm(e.targetUid)})` : ""}`;
+    case "miss": return `&nbsp;&nbsp;✗ 빗나감 (${e.chance}%)`;
+    case "hit": return `&nbsp;&nbsp;✓ 명중${e.crit ? " 💥크리!" : ""}`;
+    case "damage": return `&nbsp;&nbsp;💢 ${nm(e.targetUid)} 피해 ${e.final} (쉴드 ${e.toShield}/HP ${e.toHp})`;
+    case "statusTick": return `&nbsp;&nbsp;${nm(e.targetUid)} ${e.statusId} 지속피해 ${e.dmg}`;
+    case "statusApplied": return `&nbsp;&nbsp;☢ ${nm(e.targetUid)} ${e.statusId} ${e.stacks}스택(${e.duration}턴)`;
+    case "shieldGain": return `&nbsp;&nbsp;🛡 ${nm(e.targetUid)} 쉴드 +${e.amount}`;
+    case "heal": return `&nbsp;&nbsp;➕ ${nm(e.targetUid)} 회복 ${e.amount}`;
+    case "move": return `&nbsp;&nbsp;↔ ${nm(e.uid)} 이동 (c${e.from.col}→c${e.to.col})`;
+    case "interrupt": return `&nbsp;&nbsp;⚡ ${nm(e.uid)} 끼어들기!`;
+    case "skip": return `${nm(e.uid)} 스킵 (${e.reason})`;
+    case "death": return `&nbsp;&nbsp;☠ ${nm(e.uid)} 전투불능`;
+    case "battleEnd": return `<b>${e.phase === "allyWin" ? "🏆 아군 승리!" : "💀 패배..."}</b>`;
+    default: return null;
   }
 }
 
-// ── 유닛 카드 ──
+// ── 타겟팅 컨텍스트 ──
+interface TgtCtx {
+  active: boolean;
+  validHit: Map<string, number>; // uid → 명중%
+  hoverUid: string | null;
+  previewDmg: number; // 비크리 예상 데미지
+  casterUid: string | null;
+}
+
 function statusChips(u: UnitView): string {
   return u.statuses
     .map((s) => `<span class="chip" title="${s.id}">${s.icon}<sup>${s.stacks}</sup><sub>${s.duration}</sub></span>`)
     .join("");
 }
-
 function formationBadge(u: UnitView): string {
   const a = u.formation.attackPower > 0 ? `<span class="fb atk">⚔+${r1(u.formation.attackPower)}</span>` : "";
   const d = u.formation.defensePower > 0 ? `<span class="fb def">🛡+${r1(u.formation.defensePower)}</span>` : "";
   return a + d;
 }
 
-function unitCard(u: UnitView, isCurrent: boolean, damaged: boolean): string {
+function unitCard(u: UnitView, isCurrent: boolean, damaged: boolean, tgt: TgtCtx): string {
+  const targetable = tgt.active && tgt.validHit.has(u.uid);
+  const hovering = targetable && tgt.hoverUid === u.uid;
   const hpPct = Math.max(0, (u.hp / u.hpMax) * 100);
-  const cls = ["card", u.side, isCurrent ? "current" : "", damaged ? "flash" : ""].join(" ").trim();
-  return `<div class="${cls}">
+
+  // 호버 시 HP 깎일 양 미리보기 (쉴드 먼저 흡수, 0.2 투명성)
+  let preview = "";
+  let lossText = "";
+  if (hovering) {
+    const absorb = Math.min(u.shield, tgt.previewDmg);
+    const hpLoss = Math.max(0, Math.min(u.hp, tgt.previewDmg - absorb));
+    const leftPct = ((u.hp - hpLoss) / u.hpMax) * 100;
+    const widthPct = (hpLoss / u.hpMax) * 100;
+    preview = `<div class="ploss" style="left:${leftPct}%;width:${widthPct}%"></div>`;
+    lossText = ` <span class="lossnum">−${hpLoss}</span>${absorb > 0 ? `<span class="absnum">(🛡−${absorb})</span>` : ""}`;
+  }
+
+  const cls = ["card", u.side, isCurrent ? "current" : "", damaged ? "flash" : "", targetable ? "tgt" : "", hovering ? "hovering" : ""].join(" ").replace(/\s+/g, " ").trim();
+  const dataTgt = targetable ? `data-target="${u.uid}"` : "";
+  const hitBadge = targetable ? `<div class="hitbadge">${tgt.validHit.get(u.uid)}%</div>` : "";
+
+  return `<div class="${cls}" data-uid="${u.uid}" ${dataTgt}>
+    ${hitBadge}
     <div class="cardtop"><span class="nm">${esc(u.name)}</span>${formationBadge(u)}</div>
-    <div class="hpbar"><div class="hp" style="width:${hpPct}%"></div>${u.shield > 0 ? `<div class="sh">🛡${u.shield}</div>` : ""}</div>
-    <div class="hptext">HP ${u.hp}/${u.hpMax}</div>
+    <div class="hpbar"><div class="hp" style="width:${hpPct}%"></div>${preview}${u.shield > 0 ? `<div class="sh">🛡${u.shield}</div>` : ""}</div>
+    <div class="hptext">HP ${u.hp}/${u.hpMax}${lossText}</div>
     <div class="chips">${statusChips(u)}</div>
   </div>`;
 }
 
-function grid(title: string, units: UnitView[], curUid: string | null, damaged: Set<string>): string {
+function grid(title: string, units: UnitView[], side: "ally" | "enemy", curUid: string | null, damaged: Set<string>, tgt: TgtCtx): string {
   let cells = "";
   for (let row = 0; row < 4; row++) {
     for (let col = 0; col < 4; col++) {
       const u = units.find((x) => x.alive && x.pos.row === row && x.pos.col === col);
-      cells += `<div class="cell">${u ? unitCard(u, u.uid === curUid, damaged.has(u.uid)) : `<span class="empty">c${col}r${row}</span>`}</div>`;
+      const cellTargetable = u && tgt.active && tgt.validHit.has(u.uid);
+      const cls = `cell${cellTargetable ? " targetable" : ""}`;
+      cells += `<div class="${cls}">${u ? unitCard(u, u.uid === curUid, damaged.has(u.uid), tgt) : `<span class="empty">c${col}r${row}</span>`}</div>`;
     }
   }
   return `<div class="side"><h2>${title}</h2><div class="board">${cells}</div></div>`;
@@ -93,61 +123,137 @@ function turnBar(obs: Observation, state: GameState): string {
   return `<div class="turnbar">${chips || "<span class='tchip'>—</span>"}</div>`;
 }
 
-function actionPanel(obs: Observation): string {
+// 행동 패널: 스킬 선택 모드 vs 타겟팅 모드
+function actionPanel(obs: Observation, state: GameState, ui: Ui): string {
   if (obs.phase !== "inProgress") {
     return `<div class="actions"><div class="result">${obs.phase === "allyWin" ? "🏆 아군 승리!" : "💀 패배..."}</div></div>`;
   }
-  const isAlly = obs.current?.side === "ally";
-  if (!isAlly) {
+  if (obs.current?.side !== "ally") {
     return `<div class="actions"><div class="enemyturn">적(${esc(obs.current?.name ?? "")}) 행동 중…</div></div>`;
   }
-  const btns = obs.legalActions
-    .map((a, i) => {
-      const hit = a.hitChance !== undefined ? `<em>${a.hitChance}%</em>` : "";
-      return `<button class="act" data-idx="${i}">${esc(a.label)} ${hit}</button>`;
+  // 스킵만 가능(빙결/쓸 기술 없음)
+  const onlySkip = obs.legalActions.length === 1 && obs.legalActions[0].action.type === "skip";
+  if (onlySkip) {
+    return `<div class="actions"><div class="prompt">▶ ${esc(obs.current.name)}</div><button class="act skip" id="skipbtn">${esc(obs.legalActions[0].label)}</button></div>`;
+  }
+
+  const actor = state.units.find((u) => u.uid === obs.current!.uid)!;
+  // 스킬별 합법 타겟 그룹
+  const group = new Map<string, boolean>();
+  for (const la of obs.legalActions) {
+    if (la.action.type === "skill") group.set(la.action.skillId, true);
+  }
+
+  if (ui.selectedSkillId) {
+    const sk = SKILLS[ui.selectedSkillId];
+    return `<div class="actions targeting">
+      <div class="prompt">🎯 「${esc(sk.name)}」 대상 선택 — 칸을 클릭</div>
+      <button class="act cancel" id="cancelbtn">취소 (Esc)</button>
+    </div>`;
+  }
+
+  // 스킬 선택 모드: 활성 스킬 4개를 버튼으로 (쿨/사정권 상태 반영)
+  const btns = actor.activeSkillIds
+    .map((id) => {
+      const sk = SKILLS[id];
+      if (!sk) return "";
+      const cd = actor.cooldowns[id] ?? 0;
+      const usable = group.has(id);
+      if (cd > 0) return `<button class="act sk disabled" disabled>${esc(sk.name)} <em>쿨 ${cd}</em></button>`;
+      if (!usable) return `<button class="act sk disabled" disabled>${esc(sk.name)} <em>사정권 없음</em></button>`;
+      const tag = sk.target === "self" ? "<em>자신</em>" : sk.target === "ally" ? "<em>아군</em>" : "";
+      return `<button class="act sk" data-skill="${id}">${esc(sk.name)} ${tag}</button>`;
     })
     .join("");
-  return `<div class="actions"><div class="prompt">▶ ${esc(obs.current?.name ?? "")}의 턴 — 행동 선택</div>${btns}</div>`;
+  return `<div class="actions"><div class="prompt">▶ ${esc(obs.current.name)}의 턴 — 스킬 선택</div>${btns}</div>`;
+}
+
+// 캐스터→타겟 눈금 화살표 (SVG, 측정 기반)
+function drawArrow(app: HTMLElement, casterUid: string, targetUid: string): void {
+  const svg = app.querySelector<SVGSVGElement>(".arrows");
+  const cEl = app.querySelector<HTMLElement>(`.card[data-uid="${casterUid}"]`);
+  const tEl = app.querySelector<HTMLElement>(`.card[data-uid="${targetUid}"]`);
+  if (!svg || !cEl || !tEl) return;
+  const c = cEl.getBoundingClientRect();
+  const t = tEl.getBoundingClientRect();
+  const x1 = c.left + c.width / 2, y1 = c.top + c.height / 2;
+  const x2 = t.left + t.width / 2, y2 = t.top + t.height / 2;
+  const dx = x2 - x1, dy = y2 - y1;
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len, uy = dy / len; // 단위벡터
+  const px = -uy, py = ux; // 수직(눈금용)
+
+  // 눈금: 시작~끝 사이 일정 간격으로 짧은 수직 segment
+  let ticks = "";
+  const step = 22;
+  for (let d = step; d < len - 18; d += step) {
+    const bx = x1 + ux * d, by = y1 + uy * d;
+    ticks += `<line x1="${bx - px * 4}" y1="${by - py * 4}" x2="${bx + px * 4}" y2="${by + py * 4}" class="tick"/>`;
+  }
+  // 화살촉
+  const hx = x2 - ux * 12, hy = y2 - uy * 12;
+  const head = `<polygon points="${x2},${y2} ${hx + px * 6},${hy + py * 6} ${hx - px * 6},${hy - py * 6}" class="head"/>`;
+  const line = `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="shaft"/>`;
+  svg.innerHTML = line + ticks + head;
 }
 
 // ── 전체 렌더 ──
-export function renderApp(
-  app: HTMLElement,
-  state: GameState,
-  onAction: (idx: number) => void,
-  onNewBattle: (seed: number) => void,
-  damaged: Set<string>,
-  seed: number,
-): void {
+export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handlers): void {
   const obs = buildObservation(state);
-  const logHtml = state.log
-    .slice(-40)
-    .map((e) => formatEvent(state, e))
-    .filter(Boolean)
-    .join("<br>");
+
+  // 타겟팅 컨텍스트
+  const tgt: TgtCtx = { active: false, validHit: new Map(), hoverUid: ui.hoverTargetUid, previewDmg: 0, casterUid: obs.current?.uid ?? null };
+  if (ui.selectedSkillId && obs.current?.side === "ally") {
+    tgt.active = true;
+    for (const la of obs.legalActions) {
+      if (la.action.type === "skill" && la.action.skillId === ui.selectedSkillId && la.targetUid) {
+        tgt.validHit.set(la.targetUid, la.hitChance ?? 100);
+      }
+    }
+    const actor = state.units.find((u) => u.uid === obs.current!.uid)!;
+    tgt.previewDmg = previewDamage(state, actor, SKILLS[ui.selectedSkillId]);
+  }
+
+  const logHtml = state.log.slice(-40).map((e) => formatEvent(state, e)).filter(Boolean).join("<br>");
 
   app.innerHTML = `
+    <svg class="arrows"></svg>
     <header>
       <h1>🍮 Sunday Pudding Roguelike</h1>
       <div class="meta">ROUND ${obs.round} · ${obs.phase} · seed
-        <input id="seed" type="number" value="${seed}" /> <button id="newb">새 전투</button>
+        <input id="seed" type="number" value="${ui.seed}" /> <button id="newb">새 전투</button>
       </div>
     </header>
     ${turnBar(obs, state)}
     <div class="arena">
-      ${grid("아군", obs.allies, obs.current?.uid ?? null, damaged)}
-      ${grid("적", obs.enemies, obs.current?.uid ?? null, damaged)}
+      ${grid("아군", obs.allies, "ally", obs.current?.uid ?? null, ui.damaged, tgt)}
+      ${grid("적", obs.enemies, "enemy", obs.current?.uid ?? null, ui.damaged, tgt)}
     </div>
-    ${actionPanel(obs)}
+    ${actionPanel(obs, state, ui)}
     <div class="logpanel"><div class="loginner">${logHtml}</div></div>
   `;
 
-  app.querySelectorAll<HTMLButtonElement>("button.act").forEach((b) => {
-    b.addEventListener("click", () => onAction(Number(b.dataset.idx)));
+  // 와이어링
+  app.querySelectorAll<HTMLButtonElement>("button.sk[data-skill]").forEach((b) =>
+    b.addEventListener("click", () => h.onSkill(b.dataset.skill!)),
+  );
+  app.querySelector("#skipbtn")?.addEventListener("click", () => h.onSkip());
+  app.querySelector("#cancelbtn")?.addEventListener("click", () => h.onCancel());
+  app.querySelectorAll<HTMLElement>("[data-target]").forEach((el) => {
+    el.addEventListener("click", () => h.onTarget(el.dataset.target!));
+    el.addEventListener("mouseenter", () => h.onHover(el.dataset.target!));
+    el.addEventListener("mouseleave", () => h.onHover(null));
   });
-  const newb = app.querySelector<HTMLButtonElement>("#newb");
-  const seedInput = app.querySelector<HTMLInputElement>("#seed");
-  newb?.addEventListener("click", () => onNewBattle(Number(seedInput?.value ?? seed)));
+  app.querySelector<HTMLButtonElement>("#newb")?.addEventListener("click", () => {
+    const v = app.querySelector<HTMLInputElement>("#seed");
+    h.onNewBattle(Number(v?.value ?? ui.seed));
+  });
+
   const lp = app.querySelector<HTMLElement>(".loginner");
   if (lp) lp.scrollTop = lp.scrollHeight;
+
+  // 화살표: 타겟팅 + 호버 시
+  if (tgt.active && tgt.casterUid && ui.hoverTargetUid) {
+    drawArrow(app, tgt.casterUid, ui.hoverTargetUid);
+  }
 }

@@ -102,6 +102,18 @@ export function createBattle(seed: number, enc: Encounter): GameState {
   return state;
 }
 
+/** 데미지 미리보기(비크리 기준, 결정론). 타겟팅 UI의 "깎일 양" 표시용. (0.2/2.7) */
+export function previewDamage(state: GameState, actor: Unit, skill: Skill): number {
+  let total = 0;
+  for (const eff of skill.effects) {
+    if (eff.kind === "damage") {
+      const atk = getFormationBonus(state, actor, "attackPower");
+      total += computeDamage(actor, eff.amount + atk, false);
+    }
+  }
+  return total;
+}
+
 /** 포메이션 열보너스 — 총량보존(같은 열 유닛 수로 분배). (6.1) */
 export function getFormationBonus(state: GameState, unit: Unit, kind: FormationBonusKind): number {
   const layout = unit.side === "ally" ? state.allyFormation : state.enemyFormation;

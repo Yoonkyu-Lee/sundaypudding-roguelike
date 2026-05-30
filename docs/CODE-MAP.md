@@ -35,7 +35,7 @@ src/
 | `src/data/formations.ts` | data | 포메이션 열보너스 배치(총량보존, 6장) | `STANDARD_FORMATION` |
 | `src/cli/play.ts` | cli | 대화형/`--demo` 터미널 드라이버 | (엔트리) |
 | `src/web/main.ts` | web | 웹 엔트리·게임 루프(아군=클릭, 적=AI 자동) | (엔트리) |
-| `src/web/render.ts` | web | DOM 렌더(그리드·유닛카드·턴바·로그) + `formatEvent` | `renderApp` · `formatEvent` |
+| `src/web/render.ts` | web | DOM 렌더 + **2단계 타겟팅 GUI**(칸 하이라이트·머리위 명중%·눈금 화살표·HP 미리보기) + `formatEvent` | `renderApp` · `formatEvent` |
 | `src/web/style.css` | web | 다크 테마 스타일 | — |
 | `index.html` · `vite.config.ts` | web | Vite 진입/설정 (`npm run dev`) | — |
 
@@ -54,6 +54,7 @@ src/
 | 동적 재배치 (6.4) | `moveUnit` |
 | 끼어들기 삽입 (2.11) | `applyEffects`의 `interruptSelf` 케이스 |
 | 포메이션 열보너스·총량보존 (6.1/6.3) | `getFormationBonus` + `applyEffects`(damage/shield/heal에 합연산) |
+| 데미지 미리보기(비크리 결정론, 타겟팅 UI용) | `previewDamage` |
 | 승패 (7.3) | `checkWin` |
 | 행동 1회 처리(턴 진행) | `step` |
 
