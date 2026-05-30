@@ -2,7 +2,7 @@
 // 에셋 없이 텍스트·도형·선으로: 칸 하이라이트(2.4)·머리위 명중%(2.7)·눈금 화살표·HP 미리보기(0.2).
 import type { GameEvent, GameState, Observation, Skill, UnitView } from "../core/types.ts";
 import { buildObservation } from "../core/observation.ts";
-import { previewHpLoss, countInterruptsFor } from "../core/engine.ts";
+import { previewHpLoss, predictInterruptSubjects } from "../core/engine.ts";
 import { SKILLS } from "../data/skills.ts";
 import { STATUS_DEFS } from "../data/statuses.ts";
 
@@ -26,7 +26,10 @@ function skillDesc(sk: Skill): string {
       default: return "";
     }
   }).filter(Boolean);
-  if (sk.grantsInterrupt) fx.push(`끼어들기${sk.grantsInterrupt > 1 ? ` ×${sk.grantsInterrupt}` : ""}`);
+  if (sk.grantsInterrupt) {
+    const who = sk.grantsInterruptTo === "target" ? "대상 끼어들기" : "끼어들기";
+    fx.push(`${who}${sk.grantsInterrupt > 1 ? ` ×${sk.grantsInterrupt}` : ""}`);
+  }
   return `${meta} | ${fx.join(", ")}`;
 }
 
@@ -136,7 +139,8 @@ function grid(title: string, units: UnitView[], side: "ally" | "enemy", curUid: 
 
 // 동적 삽입형 타임라인: 완료(✓ 흐림) / 현재(▶ 포인터) / 예정 / 끼어들기(초록 삽입) / 사망(회색 취소선)
 // previewInterrupts > 0 이면 현재 칸 뒤에 "끼어들기 예고" 유령 칸(밖→안 슬라이드+깜빡)을 삽입.
-function turnBar(obs: Observation, state: GameState, previewInterrupts: number): string {
+// ghostNames: 현재 칸 뒤에 삽입될 끼어들기 주체 이름들(예고). 초록 모션만으로 예고를 전달, 텍스트 불필요.
+function turnBar(obs: Observation, state: GameState, ghostNames: string[]): string {
   const parts: string[] = [];
   obs.order.forEach((e, i) => {
     const u = state.units.find((x) => x.uid === e.uid);
@@ -149,10 +153,10 @@ function turnBar(obs: Observation, state: GameState, previewInterrupts: number):
     const ptr = cur ? `<span class="turnptr">▶</span>` : "";
     const label = e.kind === "interrupt" ? `⚡${esc(nm)}` : `${esc(nm)} <em>${e.spd}</em>`;
     parts.push(`${ptr}<span class="${cls}">${done && !dead ? "✓" : ""}${label}</span>`);
-    // 끼어들기 예고: 현재 칸 바로 뒤
-    if (cur && previewInterrupts > 0) {
-      for (let k = 0; k < previewInterrupts; k++) {
-        parts.push(`<span class="tchip interrupt ghost" title="확정 시 여기에 끼어들기 삽입">⚡예고</span>`);
+    // 끼어들기 예고: 현재 칸 바로 뒤. 주체 이름 표시(서포트면 다른 캐릭일 수 있음).
+    if (cur) {
+      for (const name of ghostNames) {
+        parts.push(`<span class="tchip interrupt ghost" title="확정 시 삽입">⚡${esc(name)}</span>`);
       }
     }
   });
@@ -256,11 +260,12 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
     }
   }
 
-  // 끼어들기 예고: 타겟팅 중인 행동이 발생시킬 끼어들기 수 (스킬+버프 등 모든 출처)
-  let previewInterrupts = 0;
+  // 끼어들기 예고: 타겟팅 중인 행동이 발생시킬 끼어들기의 주체 이름들 (스킬+버프 등 모든 출처)
+  let ghostNames: string[] = [];
   if (ui.selectedSkillId && obs.current?.side === "ally") {
     const actor = state.units.find((u) => u.uid === obs.current!.uid)!;
-    previewInterrupts = countInterruptsFor(state, actor, SKILLS[ui.selectedSkillId]);
+    const subjects = predictInterruptSubjects(state, actor, SKILLS[ui.selectedSkillId], ui.hoverTargetUid ?? undefined);
+    ghostNames = subjects.map((uid) => state.units.find((u) => u.uid === uid)?.name ?? uid);
   }
 
   const logHtml = state.log.slice(-40).map((e) => formatEvent(state, e)).filter(Boolean).join("<br>");
@@ -273,7 +278,7 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
         <input id="seed" type="number" value="${ui.seed}" /> <button id="newb">새 전투</button>
       </div>
     </header>
-    ${turnBar(obs, state, previewInterrupts)}
+    ${turnBar(obs, state, ghostNames)}
     <div class="arena">
       ${grid("아군", obs.allies, "ally", obs.current?.uid ?? null, ui.damaged, tgt)}
       ${grid("적", obs.enemies, "enemy", obs.current?.uid ?? null, ui.damaged, tgt)}

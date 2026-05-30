@@ -145,6 +145,17 @@ export const SKILLS: Record<string, Skill> = {
     // 신속(버프) 부여 → 받은 아군은 정규 턴 행동 시 끼어들기 (끼어들기 출처가 스킬이 아닌 예시)
     effects: [{ kind: "applyStatus", statusId: "haste", stacks: 1, duration: 2 }],
   },
+  jaechok: {
+    id: "jaechok",
+    name: "재촉",
+    target: "ally",
+    cooldown: 3,
+    accuracy: 0,
+    alwaysHit: true,
+    grantsInterrupt: 1,
+    grantsInterruptTo: "target", // 시전자가 아닌 "대상 아군"이 끼어들기 (서포트)
+    effects: [],
+  },
 
   // ── 적 ──
   jump: {

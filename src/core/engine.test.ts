@@ -97,6 +97,19 @@ test("끼어들기 출처 일반화: 버프(신속)가 있으면 무관한 스�
   assert.equal(state.current?.kind, "interrupt");
 });
 
+test("끼어들기 주체=대상: 서포트(재촉)가 다른 아군을 끼어들기시킴 (2.11)", () => {
+  const state = createBattle(42, DEMO_ENCOUNTER);
+  const jelly = state.units.find((u) => u.name === "젤리")!;
+  const pudding = state.units.find((u) => u.name === "푸딩")!;
+  jelly.cooldowns = {};
+  forceTurn(state, jelly.uid);
+  step(state, { type: "skill", skillId: "jaechok", targetUid: pudding.uid });
+  // 끼어들기 주체는 시전자(젤리)가 아니라 대상(푸딩)
+  assert.ok(state.log.some((e) => e.t === "interrupt" && e.uid === pudding.uid), "푸딩이 끼어들기 주체");
+  assert.equal(state.current?.uid, pudding.uid);
+  assert.equal(state.current?.kind, "interrupt");
+});
+
 test("빙결: 행동불가 → 합법행동은 스킵뿐, 1턴 후 해제 (3.5)", () => {
   const state = createBattle(42, DEMO_ENCOUNTER);
   const beef = state.units.find((u) => u.name === "비프")!;

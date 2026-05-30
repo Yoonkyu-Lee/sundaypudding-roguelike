@@ -101,6 +101,8 @@ export interface Skill {
   targetCells?: Pos[];
   /** 이 스킬 사용 시 부여하는 끼어들기 횟수 (2.11). 끼어들기 출처의 하나일 뿐 — 버프 등 다른 출처도 있음 */
   grantsInterrupt?: number;
+  /** 끼어들기 주체: "self"=시전자 본인 / "target"=대상 아군(서포트). 기본 self (2.11) */
+  grantsInterruptTo?: "self" | "target";
   effects: SkillEffect[];
 }
 
