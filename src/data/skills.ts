@@ -217,6 +217,7 @@ export const SKILLS: Record<string, Skill> = {
   jung_shot: { id: "jung_shot", name: "냉철한 사격", target: "enemy", cooldown: 0, accuracy: 90, effects: [{ kind: "applyStatusSelf", statusId: "pierce", stacks: 1, duration: 1 }, { kind: "damage", amount: 9 }] },
   jung_retreat: { id: "jung_retreat", name: "전술적 후퇴", target: "self", cooldown: 2, accuracy: 0, alwaysHit: true, effects: [{ kind: "move", who: "self", deltaCol: 3 }, { kind: "applyStatus", statusId: "might", stacks: 1, duration: 2 }] },
   jung_charge: { id: "jung_charge", name: "전위대 돌격 명령", target: "enemy", area: { kind: "all" }, cooldown: 3, accuracy: 85, effects: [{ kind: "damage", amount: 6 }] },
+  // target:"ally" = 시전자 자기 진영(적 유닛 기준의 아군). grantsInterruptTo:"self" = 시전자 본인 끼어들기 — 정확함(읽기 주의).
   jung_ult: { id: "jung_ult", name: "이념의 이름으로", target: "ally", area: { kind: "all" }, cooldown: 5, accuracy: 0, alwaysHit: true, grantsInterrupt: 1, grantsInterruptTo: "self", effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 2 }] },
 
   // 김천호 (암살자)

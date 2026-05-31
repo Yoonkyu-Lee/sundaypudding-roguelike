@@ -321,3 +321,29 @@ test("데미지는 쉴드부터 깎고 그다음 HP (2.9)", () => {
   assert.equal(target.shield, 5);
   assert.equal(target.hp, hp0);
 });
+
+test("끼어들기 버그수정: targetCell만 줘도(웹 경로) 대상-끼어들기 실현 (2.11)", () => {
+  const state = createBattle(42, DEMO_ENCOUNTER);
+  const jelly = state.units.find((u) => u.name === "젤리")!;
+  const pudding = state.units.find((u) => u.name === "푸딩")!;
+  jelly.cooldowns = {};
+  forceTurn(state, jelly.uid);
+  // 웹은 targetUid 없이 targetCell만 보냄 → 앵커 해소로 대상(푸딩) 끼어들기 발생해야
+  step(state, { type: "skill", skillId: "jaechok", targetCell: { ...pudding.pos } });
+  assert.ok(state.log.some((e) => e.t === "interrupt" && e.uid === pudding.uid), "targetCell 경로에서도 푸딩 끼어들기");
+  assert.equal(state.current?.uid, pudding.uid);
+  assert.equal(state.current?.kind, "interrupt");
+});
+
+test("대기: 쓸 스킬이 있어도 자발적 턴 넘기기 가능(chosen), 쿨 미소모", () => {
+  const state = createBattle(42, DEMO_ENCOUNTER);
+  const beef = state.units.find((u) => u.name === "비프")!;
+  beef.cooldowns = {};
+  forceTurn(state, beef.uid);
+  const legal = getLegalActions(state);
+  assert.ok(legal.some((a) => a.action.type === "skill"), "스킬 선택지 존재");
+  assert.ok(legal.some((a) => a.action.type === "skip"), "대기 선택지도 존재");
+  step(state, { type: "skip" });
+  assert.ok(state.log.some((e) => e.t === "skip" && e.reason === "chosen"), "자발적 대기는 chosen 사유");
+  assert.ok(Object.values(beef.cooldowns).every((c) => c === 0), "대기는 어떤 스킬도 쿨에 안 올림");
+});

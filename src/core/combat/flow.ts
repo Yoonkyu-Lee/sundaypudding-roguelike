@@ -3,8 +3,9 @@ import type { Action, GameState } from "../types.ts";
 import { SKILLS } from "../../data/skills.ts";
 import { isFrozen, unitById } from "../util.ts";
 import { tickPeriodic } from "./status.ts";
-import { resolveSkill } from "./skills.ts";
+import { resolveSkill, resolveAnchorUid } from "./skills.ts";
 import { insertInterrupts, predictInterruptSubjects } from "./interrupt.ts";
+import { getLegalActions } from "./targeting.ts";
 import { advance, onNormalTurnEnd } from "./turnOrder.ts";
 import { checkWin } from "./winCheck.ts";
 
@@ -14,7 +15,12 @@ export function step(state: GameState, action: Action): GameState {
   const actor = unitById(state, entry.uid);
 
   if (action.type === "skip") {
-    const reason = isFrozen(actor) ? "frozen" : "noUsableSkill";
+    // 빙결=강제, 쓸 스킬 있으면 자발적 대기("chosen"), 없으면 강제 스킵
+    const reason = isFrozen(actor)
+      ? "frozen"
+      : getLegalActions(state).some((a) => a.action.type === "skill")
+        ? "chosen"
+        : "noUsableSkill";
     state.log.push({ t: "skip", uid: actor.uid, reason });
   } else {
     const skill = SKILLS[action.skillId];
@@ -30,7 +36,11 @@ export function step(state: GameState, action: Action): GameState {
       actor.cooldowns[action.skillId] = skill.cooldown;
       resolveSkill(state, actor, skill, action);
       // 끼어들기: 정규 턴에서만, 모든 출처(스킬+버프) 종합. 주체는 self/대상아군 (2.11). 끼어들기 턴은 연쇄 방지로 제외.
-      if (entry.kind === "normal") insertInterrupts(state, predictInterruptSubjects(state, actor, skill, action.targetUid));
+      // 앵커 uid를 action에서 해소(웹은 targetCell만 보내므로 targetUid가 비어 있을 수 있음 — 대상 끼어들기 버그 수정).
+      if (entry.kind === "normal") {
+        const anchorUid = resolveAnchorUid(state, actor, skill, action);
+        insertInterrupts(state, predictInterruptSubjects(state, actor, skill, anchorUid));
+      }
     }
   }
 

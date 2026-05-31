@@ -107,5 +107,7 @@ export function getLegalActions(state: GameState): LegalAction[] {
   if (out.length === 0) {
     return [{ action: { type: "skip" }, label: "스킵 (쓸 수 있는 기술 없음)" }];
   }
+  // 자발적 대기: 아무것도 안 하고 턴 넘기기 (쿨 소모·효과 없음). 모든 유닛 상시 선택지.
+  out.push({ action: { type: "skip" }, label: "대기 (턴 넘김)" });
   return out;
 }

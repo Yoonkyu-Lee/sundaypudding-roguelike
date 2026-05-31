@@ -7,6 +7,21 @@ import { applyStatusInstance } from "./status.ts";
 import { getFormationBonus } from "./formation.ts";
 import { areaTargets, computeHitChance } from "./targeting.ts";
 
+/** 앵커(주 대상) 유닛 uid 해소 — targetUid > targetCell/cells[0]의 대상 진영 유닛. 끼어들기 주체 해소에 공유(2.11). */
+export function resolveAnchorUid(
+  state: GameState,
+  actor: Unit,
+  skill: Skill,
+  sel: { targetUid?: string; targetCell?: Pos; cells?: Pos[] },
+): string | undefined {
+  if (sel.targetUid) return sel.targetUid;
+  if (skill.target === "self") return actor.uid;
+  const pos = sel.targetCell ?? sel.cells?.[0];
+  if (!pos) return undefined;
+  const side = skill.target === "enemy" ? (actor.side === "ally" ? "enemy" : "ally") : actor.side;
+  return state.units.find((u) => u.alive && u.side === side && samePos(u.pos, pos))?.uid;
+}
+
 function moveUnit(state: GameState, u: Unit, deltaCol: number): void {
   const newCol = clamp(u.pos.col + deltaCol, 0, 3);
   if (newCol === u.pos.col) return;
