@@ -4,6 +4,7 @@ import { createRun, enterNode, resolveBattleEnd, chooseReward, buyShopOffer, lea
 import { step } from "./engine.ts";
 import { chooseAction } from "./ai.ts";
 import { ENCOUNTER_EVENTS } from "../data/events.ts";
+import type { MapGenConfig } from "./types.ts";
 
 const ROSTER = [
   { charId: "beef", pos: { row: 1, col: 0 } },
@@ -156,6 +157,20 @@ test("인카운터: 선택지 결과 적용 후 map 복귀 (7.2)", () => {
   chooseEncounterOption(run, "loot");
   assert.equal(run.gold, before + 25, "골드 보상");
   assert.equal(run.phase, "map", "노드 완료 후 맵");
+});
+
+test("맵 데이터화: 커스텀 MapGenConfig가 깊이·첫행·타입 가중치를 제어 (7.1/7.3)", () => {
+  const cfg: MapGenConfig = {
+    rows: 5,
+    startWidth: [2, 2],
+    firstRowType: "rest",
+    nodeWeights: { battle: 1 }, // 행1+는 battle만
+    branch: { keepQChance: 50, extraSameChance: 0, extraLeftChance: 0 },
+  };
+  const run = createRun(7, ROSTER, cfg);
+  assert.equal(Math.max(...run.nodes.map((n) => n.r)), 5, "보스가 rows(=5) 깊이");
+  assert.ok(run.nodes.some((n) => n.r === 0 && n.type === "rest"), "첫 행 = firstRowType");
+  assert.ok(run.nodes.filter((n) => n.r >= 1 && n.r <= 4).every((n) => n.type === "battle"), "행1+ = nodeWeights(battle)만");
 });
 
 test("보스전은 적 진형 보너스 활성(6.3) — boss 노드 진입 시 enemyFormation 설정", () => {

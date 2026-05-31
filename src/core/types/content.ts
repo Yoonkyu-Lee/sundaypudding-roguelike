@@ -144,3 +144,17 @@ export interface Character {
   critMultiplier: number; // 치명 배수, 기본 1.5 (2.6)
   skillIds: string[]; // 보유 풀. 슬라이스에선 앞 4개를 활성으로 사용
 }
+
+// ── 런 맵 생성 (7장, 데이터 주도) ──────────────────────────────────────────
+// 노드 종류 (7.2). start/boss는 생성기가 자동 배치, 나머지는 nodeWeights로 추첨.
+export type NodeType = "start" | "battle" | "elite" | "shop" | "encounter" | "rest" | "boss";
+
+/** 맵 생성 설정 — 디자이너 편집. 메커니즘(genMap)=엔진, 값=여기. (다층은 후속: 이 형태의 배열로 확장) */
+export interface MapGenConfig {
+  rows: number; // 선택 층(보스 제외) 깊이 (7.3 parameterizable)
+  startWidth: [number, number]; // 시작 행 너비 범위(min,max)
+  firstRowType: NodeType; // 첫 행 고정 타입(안전 시작, 보통 battle)
+  nodeWeights: Partial<Record<NodeType, number>>; // 행1+ 노드 타입 가중치 추첨
+  /** 자식 분기 확률(%) — 각 부모가 다음 행에 만드는 자식 */
+  branch: { keepQChance: number; extraSameChance: number; extraLeftChance: number };
+}

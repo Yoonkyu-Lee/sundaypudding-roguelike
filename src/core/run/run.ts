@@ -2,19 +2,20 @@
 // (상점·인카운터 본구현이 커지면 비전투 해소를 nodes.ts로 분리할 것 — 파일 분리 규칙)
 import { Rng } from "../rng.ts";
 import { createBattle } from "../engine.ts";
-import type { PartyMemberState, Phase, Pos } from "../types.ts";
+import type { MapGenConfig, PartyMemberState, Phase, Pos } from "../types.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { SKILLS } from "../../data/skills.ts";
 import { NODE_ROSTERS } from "../../data/encounters.ts";
+import { DEFAULT_MAP } from "../../data/maps.ts";
 import { ENCOUNTER_EVENTS, type EncounterOutcome } from "../../data/events.ts";
 import { forwardIds, genMap } from "./map.ts";
 import type { RunNode } from "./map.ts";
 import type { RunState, ShopOffer } from "./types.ts";
 import { genRewards } from "./rewards.ts";
 
-export function createRun(seed: number, roster: { charId: string; pos: Pos }[], rows = 3): RunState {
+export function createRun(seed: number, roster: { charId: string; pos: Pos }[], map: MapGenConfig = DEFAULT_MAP): RunState {
   const rng = new Rng(seed ^ 0x9e3779b9);
-  const nodes = genMap(rng, rows);
+  const nodes = genMap(rng, map);
   const party: PartyMemberState[] = roster.map((m) => {
     const c = CHARACTERS[m.charId];
     const owned = c.skillIds.slice(0, 4); // 시작 보유 = learnset 앞 4 (나머지는 학습기, 보상으로 습득)
@@ -23,7 +24,7 @@ export function createRun(seed: number, roster: { charId: string; pos: Pos }[], 
   return {
     rng,
     seed,
-    rows,
+    rows: map.rows,
     nodes,
     party,
     visited: ["start"],
