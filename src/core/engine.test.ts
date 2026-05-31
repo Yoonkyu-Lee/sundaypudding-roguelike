@@ -335,6 +335,19 @@ test("끼어들기 버그수정: targetCell만 줘도(웹 경로) 대상-끼어�
   assert.equal(state.current?.kind, "interrupt");
 });
 
+test("라운드 SPD 분해: roundStart에 rolls 노출, spd=max(1,roll−spdDown), roll∈[min,max] (2.2)", () => {
+  const state = createBattle(42, DEMO_ENCOUNTER);
+  const rs = state.log.find((e) => e.t === "roundStart");
+  assert.ok(rs && rs.t === "roundStart" && rs.rolls.length > 0, "rolls 노출");
+  if (rs && rs.t === "roundStart") {
+    for (const r of rs.rolls) {
+      assert.equal(r.spd, Math.max(1, r.roll - r.spdDown), "최종 spd 공식");
+      assert.ok(r.roll >= r.spdMin && r.roll <= r.spdMax, "roll 범위 내");
+    }
+    assert.equal(rs.rolls.length, rs.order.length, "rolls와 order 동수");
+  }
+});
+
 test("대기: 쓸 스킬이 있어도 자발적 턴 넘기기 가능(chosen), 쿨 미소모", () => {
   const state = createBattle(42, DEMO_ENCOUNTER);
   const beef = state.units.find((u) => u.name === "비프")!;

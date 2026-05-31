@@ -59,6 +59,16 @@ export interface QueueEntry {
   spd: number; // 이번 라운드 굴린 SPD (normal만 의미)
 }
 
+/** 라운드 SPD 주사위 분해 — 연출용(주사위→±→최종). 결정에 필요한 정보 노출(8.2/2.2). */
+export interface SpdRoll {
+  uid: string;
+  spdMin: number;
+  spdMax: number;
+  roll: number; // spdMin~spdMax 주사위 결과
+  spdDown: number; // 마비/둔화 합 (3.5)
+  spd: number; // 최종 = max(1, roll − spdDown)
+}
+
 export type Action =
   | { type: "skill"; skillId: string; targetUid?: string; targetCell?: Pos; cells?: Pos[] } // 앵커=유닛/칸, 또는 자유선택 cells
   | { type: "skip" }; // 쓸 기술 없음 → 효과 없는 스킵 (2.10)
@@ -68,7 +78,7 @@ export type Phase = "inProgress" | "allyWin" | "enemyWin";
 // ── 이벤트 로그 (8.3, 8.5: 애니메이션 구동원) ──────────────────────────────
 
 export type GameEvent =
-  | { t: "roundStart"; round: number; order: QueueEntry[] }
+  | { t: "roundStart"; round: number; order: QueueEntry[]; rolls: SpdRoll[] }
   | { t: "turnStart"; uid: string; kind: TurnKind }
   | { t: "skillUsed"; uid: string; skillId: string; targetUid?: string }
   | { t: "miss"; uid: string; targetUid: string; chance: number }
