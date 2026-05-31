@@ -66,18 +66,39 @@ export function playRoundIntro(app: HTMLElement, round: number, rolls: RollView[
     }, 650 + i * 110) as unknown as number);
   });
 
-  // Phase C: 최종 서열로 재정렬 + 순위 라벨 (order = 엔진 확정 순서)
+  // Phase C: 최종 서열로 재정렬 + 순위 라벨 — FLIP으로 슬라이드(순간이동 방지)
   const settleEnd = 650 + rolls.length * 110;
   timers.push(setTimeout(() => {
     const list = overlay.querySelector<HTMLElement>(".ri-list")!;
+    // First: 재정렬 전 각 행의 화면 위치 기록
+    const before = new Map<string, number>();
+    for (const uid of orderUids) before.set(uid, rowOf(uid).getBoundingClientRect().top);
+    // 재정렬 + 순위 라벨 (DOM 순서 = 엔진 확정 서열)
     orderUids.forEach((uid, rank) => {
       const row = rowOf(uid);
       row.querySelector<HTMLElement>(".ri-rank")!.textContent = `${rank + 1}`;
       row.classList.add("ri-ranked");
-      list.appendChild(row); // DOM 순서 = 최종 서열
+      list.appendChild(row);
     });
+    // Invert: 이전 위치로 되돌리는 transform (transition 없이)
+    const moved: HTMLElement[] = [];
+    for (const uid of orderUids) {
+      const row = rowOf(uid);
+      const delta = before.get(uid)! - row.getBoundingClientRect().top;
+      if (!delta) continue;
+      row.style.transition = "none";
+      row.style.transform = `translateY(${delta}px)`;
+      moved.push(row);
+    }
+    // 강제 리플로우로 invert 위치를 커밋 (단일 rAF보다 안정적 — 점프 방지)
+    void list.offsetWidth;
+    // Play: transform 해제 → 새 위치로 슬라이드
+    for (const row of moved) {
+      row.style.transition = "transform .45s cubic-bezier(.4,0,.2,1)";
+      row.style.transform = "";
+    }
   }, settleEnd + 250) as unknown as number);
 
-  // Phase D: 자동 마무리
-  timers.push(setTimeout(finish, settleEnd + 250 + 950) as unknown as number);
+  // Phase D: 자동 마무리 (슬라이드 시간 확보)
+  timers.push(setTimeout(finish, settleEnd + 250 + 1100) as unknown as number);
 }
