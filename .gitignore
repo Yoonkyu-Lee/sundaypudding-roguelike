@@ -6,3 +6,6 @@ dist/
 
 # 데모용 캐릭터 이미지(저작권) — 로컬 전용
 public/avatars/
+
+# 로컬 데모 에셋 (머신 절대경로 훅이 참조)
+Yainsidae_Gap_Boon_Sa.wav

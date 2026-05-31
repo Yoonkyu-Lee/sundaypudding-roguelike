@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "powershell -NoProfile -Command \"(New-Object Media.SoundPlayer 'D:\\Engineering\\sundaypudding-roguelike\\Yainsidae_Gap_Boon_Sa.wav').PlaySync()\" 2>/dev/null || true",
+            "async": true,
+            "statusMessage": "🔔 알림음 재생"
+          }
+        ]
+      }
+    ]
+  }
+}
