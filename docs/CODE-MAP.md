@@ -41,7 +41,7 @@ src/core/
     damage.ts       computeDamage · dealRawDamage · previewDamage · previewHpLoss
     targeting.ts    validTargets · sideDims · computeAreaCells · areaTargets ·
                     computeHitChance · getLegalActions
-    skills.ts       resolveSkill · applySelfEffects · applyTargetEffects · moveUnit
+    skills.ts       resolveSkill · resolveAnchorUid · applySelfEffects · applyTargetEffects · moveUnit
     interrupt.ts    predictInterruptSubjects · insertInterrupts
     turnOrder.ts    startRound · advance · onNormalTurnStart · onNormalTurnEnd (ACTION_CONST)
     flow.ts         step (행동 1회 처리 오케스트레이터)
@@ -105,7 +105,10 @@ src/core/
 | 스킬 효과 디스패치(뎀/상태/쉴드/힐/이동/끼어들기) (3.9) | `combat/skills.ts`: `applyTargetEffects`/`applySelfEffects` |
 | 동적 재배치 (6.4) | `combat/skills.ts`: `moveUnit` |
 | 끼어들기 주체 예측(스킬+버프+특성) (2.11) | `combat/interrupt.ts`: `predictInterruptSubjects` (실행·미리보기 공유) |
+| 끼어들기 대상 앵커 해소(웹 targetCell→유닛) (2.11) | `combat/skills.ts`: `resolveAnchorUid` (flow가 끼어들기 주체에 사용) |
 | 끼어들기 동적 삽입 (2.11) | `combat/interrupt.ts`: `insertInterrupts` (flow의 정규 턴만 호출) |
+| 자발적 대기(턴 넘김, 쿨 미소모) (2.10) | `combat/targeting.ts`: `getLegalActions`("대기" 상시) · `flow.ts` skip "chosen" |
+| 상태이상 출처(유닛+스킬) (3.1) | `StatusInstance.sourceSkillId` → `combat/observation.ts` `viewStatuses`(via=스킬명) |
 | 포메이션 열보너스·총량보존 (6.1/6.3) | `combat/formation.ts`: `getFormationBonus` |
 | 면적(AoE) 모양→영향 칸/유닛 | `combat/targeting.ts`: `computeAreaCells`/`areaTargets` (웹 바닥 하이라이트 공유) |
 | 승패 (7.3) | `combat/winCheck.ts`: `checkWin` |
