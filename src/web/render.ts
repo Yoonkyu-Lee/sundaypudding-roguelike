@@ -1,15 +1,15 @@
-// 전투 렌더 오케스트레이터 — 관측을 읽어 3열 레이아웃(타임라인 좌 │ 전장+행동 │ 로그 우)으로.
-// 세부 렌더는 battle/* 모듈. 2단계 상호작용(스킬→타겟)·셀 타겟팅 컨텍스트·SVG 화살표 와이어링만 여기.
+// 전투 렌더 — 영속 셸(svg·header·battlelayout)을 1회 만들고, 매 step **배틀 존만** 갱신.
+// .battleleft(행동서열 패널)는 TimelinePanel이 소유 → 통짜 재렌더에서 분리(주사위↔타임라인 연속성).
 import type { GameState, Observation } from "../core/types.ts";
 import { buildObservation } from "../core/observation.ts";
 import { previewHpLoss, predictInterruptSubjects, computeAreaCells } from "../core/engine.ts";
 import { SKILLS } from "../data/skills.ts";
 import { ck, type Handlers, type TgtCtx, type Ui } from "./battle/shared.ts";
 import { unitCard } from "./battle/unitCard.ts";
-import { turnBar } from "./battle/timeline.ts";
 import { actionPanel } from "./battle/actions.ts";
 import { drawArrow } from "./battle/arrow.ts";
 import { formatEvent } from "./battle/events.ts";
+import type { TimelinePanel } from "./battle/timelinePanel.ts";
 
 // 외부(main/runRender) 호환: 공개 표면 재노출
 export { avatarHtml } from "./battle/shared.ts";
@@ -34,8 +34,24 @@ function grid(title: string, units: Observation["allies"], side: "ally" | "enemy
   return `<div class="side ${side}"><h2>${title}</h2><div class="board">${cells}</div></div>`;
 }
 
-// ── 전체 렌더 ──
-export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handlers): void {
+/** 전투 셸(svg·header·3존)을 1회 생성하고 패널을 .battleleft에 마운트. 헤더 버튼은 1회 와이어링. */
+function ensureShell(app: HTMLElement, ui: Ui, h: Handlers, panel: TimelinePanel): void {
+  if (app.querySelector(".battlelayout")) return;
+  app.innerHTML = `<svg class="arrows"></svg>
+    <header><h1>🍮 Sunday Pudding Roguelike</h1>
+      <div class="meta"><span id="roundmeta"></span> seed <input id="seed" type="number" value="${ui.seed}" /> <button id="newb">새 전투</button></div>
+    </header>
+    <div class="battlelayout"><aside class="battleleft"></aside><div class="battlemain"></div><aside class="battleside"></aside></div>`;
+  app.querySelector(".battleleft")!.appendChild(panel.root);
+  app.querySelector<HTMLButtonElement>("#newb")!.addEventListener("click", () => {
+    const v = app.querySelector<HTMLInputElement>("#seed");
+    h.onNewBattle(Number(v?.value ?? ui.seed));
+  });
+}
+
+// ── 전투 렌더 (존 갱신) ──
+export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handlers, panel: TimelinePanel): void {
+  ensureShell(app, ui, h, panel);
   const obs = buildObservation(state);
 
   // 타겟팅 컨텍스트 (셀 기반) — 로직 불변
@@ -83,52 +99,43 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
         : undefined;
       if (hu && tgt.validHit.has(hu.uid)) tgt.previewLoss = previewHpLoss(state, actor, skill, hu);
     }
-    // 끼어들기 예고 (앵커 유닛 기준 — 대상 진영 필터)
     const anchorUnit = ui.hoverCell
       ? state.units.find((u) => u.alive && u.side === side && u.pos.row === ui.hoverCell!.row && u.pos.col === ui.hoverCell!.col)
       : undefined;
     ghostNames = predictInterruptSubjects(state, actor, skill, anchorUnit?.uid).map((uid) => state.units.find((u) => u.uid === uid)?.name ?? uid);
   }
 
-  const logHtml = state.log.slice(-40).map((e) => formatEvent(state, e)).filter(Boolean).join("<br>");
   const curUid = obs.current?.uid ?? null;
-  const pTurnbar = turnBar(obs, state, ghostNames);
-  const pAlly = grid("아군", obs.allies, "ally", curUid, ui.damaged, ui.moved, tgt);
-  const pEnemy = grid("적", obs.enemies, "enemy", curUid, ui.damaged, ui.moved, tgt);
-  const pActions = actionPanel(obs, state, ui);
-  const pLog = `<div class="logpanel"><h2>전투 로그</h2><div class="loginner">${logHtml}</div></div>`;
-  const header = `<header>
-      <h1>🍮 Sunday Pudding Roguelike</h1>
-      <div class="meta">ROUND ${obs.round} · ${obs.phase} · seed
-        <input id="seed" type="number" value="${ui.seed}" /> <button id="newb">새 전투</button>
-      </div>
-    </header>`;
+  // 헤더 텍스트 (입력/버튼은 셸에 1회 와이어링됨)
+  const meta = app.querySelector("#roundmeta");
+  if (meta) meta.textContent = `ROUND ${obs.round} · ${obs.phase} ·`;
 
-  app.innerHTML = `<svg class="arrows"></svg>${header}
-    <div class="battlelayout">
-      <aside class="battleleft">${pTurnbar}</aside>
-      <div class="battlemain"><div class="arena">${pAlly}${pEnemy}</div>${pActions}</div>
-      <aside class="battleside">${pLog}</aside>
-    </div>`;
+  // 배틀 존: 전장 + 행동
+  const mainEl = app.querySelector<HTMLElement>(".battlemain")!;
+  mainEl.innerHTML = `<div class="arena">${grid("아군", obs.allies, "ally", curUid, ui.damaged, ui.moved, tgt)}${grid("적", obs.enemies, "enemy", curUid, ui.damaged, ui.moved, tgt)}</div>${actionPanel(obs, state, ui)}`;
 
-  // 와이어링
-  app.querySelectorAll<HTMLButtonElement>("button.skcard[data-skill]").forEach((b) =>
+  // 로그 존
+  const logHtml = state.log.slice(-40).map((e) => formatEvent(state, e)).filter(Boolean).join("<br>");
+  const sideEl = app.querySelector<HTMLElement>(".battleside")!;
+  sideEl.innerHTML = `<div class="logpanel"><h2>전투 로그</h2><div class="loginner">${logHtml}</div></div>`;
+
+  // 행동서열 패널 (live — 굴림 중이면 패널이 보류)
+  panel.update(obs, state, ghostNames);
+
+  // 와이어링 (배틀 존 한정)
+  mainEl.querySelectorAll<HTMLButtonElement>("button.skcard[data-skill]").forEach((b) =>
     b.addEventListener("click", () => h.onSkill(b.dataset.skill!)),
   );
-  app.querySelector("#skipbtn")?.addEventListener("click", () => h.onSkip());
-  app.querySelector("#cancelbtn")?.addEventListener("click", () => h.onCancel());
-  app.querySelectorAll<HTMLElement>("[data-cell]").forEach((el) => {
+  mainEl.querySelector("#skipbtn")?.addEventListener("click", () => h.onSkip());
+  mainEl.querySelector("#cancelbtn")?.addEventListener("click", () => h.onCancel());
+  mainEl.querySelectorAll<HTMLElement>("[data-cell]").forEach((el) => {
     const [row, col] = el.dataset.cell!.split(",").map(Number);
     el.addEventListener("click", () => h.onCellClick({ row, col }));
     el.addEventListener("mouseenter", () => h.onCellHover({ row, col }));
     el.addEventListener("mouseleave", () => h.onCellHover(null));
   });
-  app.querySelector<HTMLButtonElement>("#newb")?.addEventListener("click", () => {
-    const v = app.querySelector<HTMLInputElement>("#seed");
-    h.onNewBattle(Number(v?.value ?? ui.seed));
-  });
 
-  const lp = app.querySelector<HTMLElement>(".loginner");
+  const lp = sideEl.querySelector<HTMLElement>(".loginner");
   if (lp) lp.scrollTop = lp.scrollHeight;
 
   // 화살표: 타겟팅 + 호버 칸의 "대상 진영" 유닛으로 (좌표 공유 → side 필터 필수)

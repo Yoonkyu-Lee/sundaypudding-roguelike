@@ -29,7 +29,7 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 
 /* 전투 3열: 타임라인(좌, 세로) │ 전장+행동(중) │ 로그(우) — 가로폭 활용 */
 .battlelayout { display: grid; grid-template-columns: 172px 1fr 320px; gap: 16px; align-items: start; margin-top: 12px; }
-.battleleft { position: sticky; top: 12px; }
+.battleleft { } /* sticky 금지: stacking context를 만들어 rolling 패널(fixed z:100)을 가둬버림 */
 .battlemain { min-width: 0; }
 @media (max-width: 1100px) { .battlelayout { grid-template-columns: 1fr; } .battleleft { position: static; } }
 
@@ -279,22 +279,30 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .endscreen.lost .endbig { color: var(--enemy); }
 
 /* ── 라운드 시작 연출 (SPD 주사위 → ± → 최종 → 서열) ── */
-.roundintro { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(10,12,16,.82); backdrop-filter: blur(3px); animation: rifade .25s ease; cursor: pointer; }
-.roundintro.ri-out { animation: rifadeout .18s ease forwards; }
+/* ── 행동서열 패널: rolling(중앙 확장 주사위) ↔ live(레일). 같은 .timeline 루트, 모드만 전환 ── */
+.timeline.rolling {
+  position: fixed; inset: 0; margin: auto; /* transform 없이 중앙 — ::before 백드롭의 fixed가 뷰포트 기준이 되도록 */
+  width: 440px; max-width: 92vw; height: max-content; max-height: 90vh;
+  z-index: 100; padding: 22px 26px; box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  animation: rifade .25s ease;
+}
+.timeline.rolling::before { content: ""; position: fixed; inset: 0; z-index: -1; background: rgba(10,12,16,.82); backdrop-filter: blur(3px); }
+.timeline.rolling h2 { font-size: 16px; color: var(--accent); text-align: center; letter-spacing: .04em; margin: 0 0 14px; text-transform: none; }
+.timeline.rolling .trows { gap: 8px; }
+.timeline.rolling .trow { padding: 7px 12px; gap: 10px; border-radius: 10px; font-size: 13px; }
+.timeline.rolling .tmark { width: 18px; font-weight: 800; color: var(--accent); font-size: 13px; }
+.timeline.rolling .tname { font-weight: 600; flex: 1; }
+.timeline.rolling .tname.ally { color: var(--ally); }
+.timeline.rolling .tname.enemy { color: var(--enemy); }
+.timeline.rolling .tspd { width: 48px; text-align: right; font-weight: 700; font-size: 14px; color: var(--hp); font-variant-numeric: tabular-nums; }
 @keyframes rifade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes rifadeout { to { opacity: 0; } }
-.ri-box { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px 26px; min-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
-.ri-box h2 { margin: 0 0 16px; font-size: 16px; color: var(--accent); text-align: center; letter-spacing: .04em; }
-.ri-list { display: flex; flex-direction: column; gap: 8px; }
-.ri-row { display: flex; align-items: center; gap: 10px; padding: 6px 10px; background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; }
-.ri-rank { width: 18px; text-align: center; font-weight: 800; color: var(--accent); font-size: 13px; }
-.ri-name { flex: 1; font-weight: 600; font-size: 13px; white-space: nowrap; }
-.ri-name.ally { color: var(--ally); }
-.ri-name.enemy { color: var(--enemy); }
+/* docking: 슬라이드 중 클리핑 방지 + 위로 */
+.timeline.docking { z-index: 50; overflow: visible; }
+/* 주사위 조각(아바타/주사위/보정)은 rolling에서만 노출 — live·docking은 콤팩트(.timeline 스코프라 arena 무관) */
+.timeline:not(.rolling) .avt, .timeline:not(.rolling) .ri-die, .timeline:not(.rolling) .ri-adj { display: none; }
 .ri-die { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; background: #11141b; border: 1px solid var(--line); border-radius: 8px; font-weight: 800; font-size: 16px; font-variant-numeric: tabular-nums; }
-.ri-row.ri-settled .ri-die { border-color: var(--accent); color: var(--accent); animation: ripop .3s ease; }
+.trow.ri-settled .ri-die { border-color: var(--accent); color: var(--accent); animation: ripop .3s ease; }
 @keyframes ripop { 0% { transform: scale(1.35); } 100% { transform: scale(1); } }
 .ri-adj { width: 30px; text-align: center; font-size: 12px; color: var(--enemy); }
-.ri-spd { width: 50px; text-align: right; font-weight: 700; font-size: 14px; color: var(--hp); font-variant-numeric: tabular-nums; }
-.ri-row.ri-ranked { box-shadow: inset 0 0 0 1px rgba(255,209,102,.35); } /* 이동은 FLIP(roundIntro.ts) */
+.trow.ri-ranked { box-shadow: inset 0 0 0 1px rgba(255,209,102,.35); }
 .ri-skip { margin-top: 16px; text-align: center; font-size: 11px; color: var(--dim); }

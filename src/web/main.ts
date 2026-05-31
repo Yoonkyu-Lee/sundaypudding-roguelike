@@ -8,9 +8,10 @@ import { SKILLS } from "../data/skills.ts";
 import { CHARACTERS } from "../data/characters.ts";
 import { renderApp, type Handlers, type Ui } from "./render.ts";
 import { renderRunScreen, type RunHandlers } from "./runRender.ts";
-import { playRoundIntro, type RollView } from "./battle/roundIntro.ts";
+import { createTimelinePanel, type RollView } from "./battle/timelinePanel.ts";
 
 const app = document.getElementById("app")!;
+const panel = createTimelinePanel(); // 행동서열 패널 — 주사위(rolling)↔전투(live) 한 컴포넌트, 전투 셸에 영속 마운트
 
 const ROSTER = [
   { charId: "kim", pos: { row: 1, col: 0 } }, // 김두한 전방
@@ -52,9 +53,11 @@ function render(): void {
           const u = b.units.find((x) => x.uid === r.uid)!;
           return { ...r, name: u.name, avatar: CHARACTERS[u.charId]?.avatar, side: u.side };
         });
-        playRoundIntro(app, b.round, views, rs.order.map((e) => e.uid), () => {
+        // 셸+존 렌더(패널 마운트, 레일 위치 확정) 후 같은 tick에 굴림 시작 → stale 깜빡임 없음
+        renderApp(app, b, ui, battleHandlers, panel);
+        panel.playRoll(b.round, views, rs.order.map((e) => e.uid), () => {
           busy = false;
-          renderBattle();
+          renderBattle(); // 도킹 완료 후 전투 진행(driveBattle)
         });
         return;
       }
@@ -67,7 +70,7 @@ function render(): void {
 }
 
 function renderBattle(): void {
-  renderApp(app, run.battle!, ui, battleHandlers);
+  renderApp(app, run.battle!, ui, battleHandlers, panel);
   driveBattle();
 }
 
