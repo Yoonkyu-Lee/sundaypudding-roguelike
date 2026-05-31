@@ -14,9 +14,11 @@ npm run play          # 터미널 대화형: 아군=당신, 적=AI
 node src/cli/play.ts --demo --seed 7    # 시드 지정
 npm test              # 결정론 + 기능 단위 테스트 (11개)
 npm run typecheck     # 코어 + 웹 타입체크 (devDeps 설치 후)
+npm run build:app     # ★ 단일 HTML 빌드 → dist/index.html (JS·CSS·아바타 전부 인라인)
 ```
 
 > 웹은 `npm install` 후 `npm run dev` → 브라우저에서 localhost:5173. 코어는 무수정으로 브라우저 구동(Vite).
+> **배포/공유**: `npm run build:app` → `dist/index.html` 한 파일. 더블클릭하면 브라우저에서 실행(오프라인, 서버 불필요) — 친구에게 그 파일만 보내면 됨.
 
 > 외부 런타임 의존성 0. `typescript`/`@types/node`는 타입체크 전용 devDependency.
 

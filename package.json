@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "description": "육성형 로그라이크 자체 엔진 — 헤드리스 결정론 전투 코어 + CLI. 설계 SoT: docs/GAME-DESIGN.md",
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "play": "node src/cli/play.ts",
     "demo": "node src/cli/play.ts --demo --seed 42",
@@ -13,11 +15,13 @@
     "check": "node scripts/check.ts",
     "dev": "vite",
     "build": "vite build",
+    "build:app": "vite build && node scripts/inline-avatars.mjs",
     "preview": "vite preview"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
     "@types/node": "^22.0.0",
-    "vite": "^6.0.0"
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0",
+    "vite-plugin-singlefile": "^2.3.3"
   }
 }

@@ -5,7 +5,8 @@ export const ck = (p: { row: number; col: number }) => `${p.row},${p.col}`;
 
 /** 아바타: 이미지 경로면 <img>(고정 크기), 이모지면 칸. 그리드 칸 규격 통일을 위해 항상 같은 박스. */
 export function avatarHtml(av: string | undefined, cls = "avt"): string {
-  if (av && (av.startsWith("/") || /\.(png|jpe?g|webp|gif|avif)$/i.test(av)))
+  // 경로(/) · data: URL(단일 HTML 빌드 인라인) · 이미지 확장자 → <img>, 그 외 이모지
+  if (av && (av.startsWith("/") || av.startsWith("data:") || /\.(png|jpe?g|webp|gif|avif)$/i.test(av)))
     return `<img class="${cls}" src="${av}" alt="" onerror="this.replaceWith(document.createTextNode('🎭'))">`;
   return `<span class="${cls} avem">${av ?? "🎭"}</span>`;
 }
