@@ -10,8 +10,9 @@ export function applyStatusInstance(
   defId: string,
   stacks: number,
   duration: number,
+  sourceSkillId?: string, // 부여 출처 스킬 (3.1 원장 — 팝오버 "유닛 — 스킬" 표시용)
 ): void {
-  const inst: StatusInstance = { defId, stacks, duration, sourceUid: source.uid };
+  const inst: StatusInstance = { defId, stacks, duration, sourceUid: source.uid, sourceSkillId };
   target.statuses.push(inst); // 인스턴스 합치지 않고 추가 (3.1 원장)
   state.log.push({ t: "statusApplied", targetUid: target.uid, statusId: defId, stacks, duration });
 }

@@ -32,7 +32,7 @@ function chip(s: UnitView["statuses"][number]): string {
   const def = STATUS_DEFS[s.id];
   const cls = def?.buff ? "buff" : "debuff";
   const srcRow = s.sources.length
-    ? `<span class="poprow"><span>출처</span><b>${s.sources.map(esc).join(", ")}</b></span>`
+    ? `<span class="poprow src"><span>출처</span><b>${s.sources.map((x) => `${esc(x.unit)}${x.via ? ` — 「${esc(x.via)}」` : ""}`).join(", ")}</b></span>`
     : "";
   const changeRow = s.nextChange !== s.duration
     ? `<span class="poprow"><span>다음 변화</span><b>${s.nextChange}턴 후</b></span>`

@@ -4,16 +4,19 @@ import { getLegalActions } from "./targeting.ts";
 import { getFormationBonus } from "./formation.ts";
 import { STATUS_DEFS } from "../../data/statuses.ts";
 import { CHARACTERS } from "../../data/characters.ts";
+import { SKILLS } from "../../data/skills.ts";
 
+type Src = { unit: string; via?: string };
 function viewStatuses(state: GameState, u: Unit): UnitView["statuses"] {
   const nameOf = (uid: string) => state.units.find((x) => x.uid === uid)?.name ?? uid;
-  const byDef = new Map<string, { stacks: number; durs: number[]; sources: string[] }>();
+  const byDef = new Map<string, { stacks: number; durs: number[]; sources: Src[] }>();
   for (const s of u.statuses) {
     const e = byDef.get(s.defId) ?? { stacks: 0, durs: [], sources: [] };
     e.stacks += s.stacks;
     e.durs.push(s.duration);
-    const src = nameOf(s.sourceUid); // 원인(누가 걸었나) 노출 — 관측에 모든 결정정보 (규칙5/3.1)
-    if (!e.sources.includes(src)) e.sources.push(src);
+    // 원인(누가·무엇으로 걸었나) 노출 — 유닛 + 스킬명 (규칙5/3.1). 향후 특성/도구도 via로.
+    const src: Src = { unit: nameOf(s.sourceUid), via: s.sourceSkillId ? SKILLS[s.sourceSkillId]?.name ?? s.sourceSkillId : undefined };
+    if (!e.sources.some((x) => x.unit === src.unit && x.via === src.via)) e.sources.push(src);
     byDef.set(s.defId, e);
   }
   const out: UnitView["statuses"] = [];

@@ -38,7 +38,7 @@ function moveUnit(state: GameState, u: Unit, deltaCol: number): void {
 function applySelfEffects(state: GameState, actor: Unit, skill: Skill): void {
   for (const eff of skill.effects) {
     if (eff.kind === "applyStatusSelf" && actor.alive) {
-      applyStatusInstance(state, actor, actor, eff.statusId, eff.stacks, eff.duration);
+      applyStatusInstance(state, actor, actor, eff.statusId, eff.stacks, eff.duration, skill.id);
     } else if (eff.kind === "move" && eff.who === "self" && actor.alive) {
       moveUnit(state, actor, eff.deltaCol);
     }
@@ -57,7 +57,7 @@ function applyTargetEffects(state: GameState, actor: Unit, skill: Skill, target:
         break;
       }
       case "applyStatus":
-        if (target.alive) applyStatusInstance(state, target, actor, eff.statusId, eff.stacks, eff.duration);
+        if (target.alive) applyStatusInstance(state, target, actor, eff.statusId, eff.stacks, eff.duration, skill.id);
         break;
       case "cleanse": {
         const before = target.statuses.length;

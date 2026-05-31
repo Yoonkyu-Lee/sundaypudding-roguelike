@@ -11,7 +11,8 @@ export interface StatusInstance {
   defId: StatusDefId;
   stacks: number;
   duration: number; // 잔여 정규 턴 수
-  sourceUid: string; // 누가 걸었나
+  sourceUid: string; // 누가 걸었나 (유닛)
+  sourceSkillId?: string; // 무엇으로 걸었나 (스킬). 향후 특성/도구도 같은 자리로 확장 (3.1)
 }
 
 /** 전투 중 유닛 인스턴스 */
@@ -114,7 +115,7 @@ export interface UnitView {
   hpMax: number;
   shield: number;
   alive: boolean;
-  statuses: { id: string; icon: string; stacks: number; duration: number; nextChange: number; sources: string[] }[];
+  statuses: { id: string; icon: string; stacks: number; duration: number; nextChange: number; sources: { unit: string; via?: string }[] }[];
   cooldowns: Record<string, number>;
   /** 현재 위치에서 받는 포메이션 보너스(총량보존 적용 후 실제값, 6.1). 수치 투명성(0.2) */
   formation: { attackPower: number; defensePower: number };
