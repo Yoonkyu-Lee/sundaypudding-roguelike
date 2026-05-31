@@ -15,7 +15,8 @@ export function createRun(seed: number, roster: { charId: string; pos: Pos }[], 
   const nodes = genMap(rng, rows);
   const party: PartyMemberState[] = roster.map((m) => {
     const c = CHARACTERS[m.charId];
-    return { charId: m.charId, pos: { ...m.pos }, hp: c.hp, maxHp: c.hp, skillDmgBonus: {} };
+    const owned = c.skillIds.slice(0, 4); // 시작 보유 = learnset 앞 4 (나머지는 학습기, 보상으로 습득)
+    return { charId: m.charId, pos: { ...m.pos }, hp: c.hp, maxHp: c.hp, skillDmgBonus: {}, ownedSkillIds: owned, activeSkillIds: [...owned] };
   });
   return {
     rng,
@@ -45,6 +46,16 @@ function healParty(run: RunState, pct: number): void {
     if (m.hp <= 0) continue; // 전투불능은 회복 안 함(런 빌드 휘발)
     m.hp = Math.min(m.maxHp, m.hp + Math.round(m.maxHp * pct));
   }
+}
+
+/** 로드아웃(4.2): 활성 스킬 토글 — 보유 중에서 ≤4, 최소 1. 맵 단계에서만. */
+export function setActiveSkill(run: RunState, charId: string, skillId: string): void {
+  if (run.phase !== "map") return;
+  const m = run.party.find((p) => p.charId === charId);
+  if (!m || !m.ownedSkillIds.includes(skillId)) return;
+  const i = m.activeSkillIds.indexOf(skillId);
+  if (i >= 0) { if (m.activeSkillIds.length > 1) m.activeSkillIds.splice(i, 1); } // 끄기(최소 1 유지)
+  else if (m.activeSkillIds.length < 4) m.activeSkillIds.push(skillId); // 켜기(최대 4)
 }
 
 /** reachable 노드를 선택해 진입. 전투면 battle 생성, 아니면 즉시 해소 후 map. */
@@ -123,12 +134,19 @@ export function chooseReward(run: RunState, optionId: string): void {
   if (run.phase !== "reward" || !run.rewards) return;
   const opt = run.rewards.find((o) => o.id === optionId);
   if (!opt) return;
-  if (opt.kind === "skillUp") {
+  if (opt.kind === "upgradeSkill") {
     const m = run.party.find((p) => p.charId === opt.charId);
-    if (m) m.skillDmgBonus[opt.skillId] = (m.skillDmgBonus[opt.skillId] ?? 0) + opt.amount;
-  } else if (opt.kind === "maxhp") {
+    if (m) {
+      const swap = (arr: string[]) => { const i = arr.indexOf(opt.fromSkillId); if (i >= 0) arr[i] = opt.toSkillId; };
+      swap(m.ownedSkillIds); // 보유 풀에서 티어 교체
+      swap(m.activeSkillIds); // 활성 중이면 그대로 강화된 버전으로
+    }
+  } else if (opt.kind === "learnSkill") {
     const m = run.party.find((p) => p.charId === opt.charId);
-    if (m) { m.maxHp += opt.amount; m.hp += opt.amount; }
+    if (m && !m.ownedSkillIds.includes(opt.skillId)) {
+      m.ownedSkillIds.push(opt.skillId);
+      if (m.activeSkillIds.length < 4) m.activeSkillIds.push(opt.skillId); // 여유 있으면 자동 활성
+    }
   } else if (opt.kind === "heal") {
     healParty(run, opt.pct);
   }

@@ -75,14 +75,31 @@ test("런 완주: map→battle→reward 루프가 보스까지 가서 승/패로
   }
 });
 
-test("보상 스킬강화: 데미지 보너스 누적 + map 복귀", () => {
+test("보상 강화: 보유·활성 스킬을 다음 티어로 교체 + map 복귀 (4.6)", () => {
   const run = createRun(1, ROSTER);
   run.phase = "reward";
   run.activeNodeId = run.nodes[0].id;
-  run.rewards = [{ id: "x", kind: "skillUp", charId: "beef", skillId: "gangta", amount: 3, label: "t" }];
-  chooseReward(run, "x");
-  assert.equal(run.party.find((m) => m.charId === "beef")!.skillDmgBonus["gangta"], 3);
+  const beef = run.party.find((m) => m.charId === "beef")!;
+  assert.ok(beef.ownedSkillIds.includes("gangta") && beef.activeSkillIds.includes("gangta"));
+  run.rewards = [{ id: "u", kind: "upgradeSkill", charId: "beef", fromSkillId: "gangta", toSkillId: "gangta_x", label: "t" }];
+  chooseReward(run, "u");
+  assert.ok(!beef.ownedSkillIds.includes("gangta") && beef.ownedSkillIds.includes("gangta_x"), "보유 티어 교체");
+  assert.ok(beef.activeSkillIds.includes("gangta_x"), "활성도 강화 버전으로");
   assert.equal(run.phase, "map");
+});
+
+test("보상 새 스킬: 미보유 스킬을 보유 풀에 추가 (4.5)", () => {
+  const run = createRun(1, ROSTER);
+  run.phase = "reward";
+  run.activeNodeId = run.nodes[0].id;
+  const jelly = run.party.find((m) => m.charId === "jelly")!; // learnset 6, 보유=앞4
+  const newId = "gwantongbuyeo"; // 미보유 학습기
+  assert.ok(!jelly.ownedSkillIds.includes(newId));
+  const before = jelly.ownedSkillIds.length;
+  run.rewards = [{ id: "l", kind: "learnSkill", charId: "jelly", skillId: newId, label: "t" }];
+  chooseReward(run, "l");
+  assert.ok(jelly.ownedSkillIds.includes(newId), "보유 풀 추가");
+  assert.equal(jelly.ownedSkillIds.length, before + 1);
 });
 
 test("보스전은 적 진형 보너스 활성(6.3) — boss 노드 진입 시 enemyFormation 설정", () => {

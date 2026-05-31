@@ -67,10 +67,10 @@ export const CHARACTERS: Record<string, Character> = {
   },
 
   // ══ 우익(대한민청) — 플레이어 파티 ══
-  kim: { id: "kim", name: "김두한", avatar: "/avatars/kim.webp", hp: 46, speedMin: 4, speedMax: 7, evasion: 8, accuracy: 0, critChance: 25, critMultiplier: 1.6, skillIds: ["kim_punch", "kim_kick", "kim_oyabun", "kim_4dollar"] },
-  shanghai: { id: "shanghai", name: "상하이 조", avatar: "/avatars/shanghai.webp", hp: 28, speedMin: 6, speedMax: 9, evasion: 12, accuracy: 5, critChance: 15, critMultiplier: 1.5, skillIds: ["sh_pistol", "sh_leg", "sh_grenade", "sh_ult"] },
-  shin: { id: "shin", name: "신영균", avatar: "/avatars/shin.webp", hp: 50, speedMin: 3, speedMax: 6, evasion: 6, accuracy: 0, critChance: 10, critMultiplier: 1.5, skillIds: ["shin_axe", "shin_charge", "shin_awaken", "shin_ult"] },
-  cho: { id: "cho", name: "조병옥", avatar: "/avatars/cho.webp", hp: 34, speedMin: 5, speedMax: 8, evasion: 9, accuracy: 0, critChance: 5, critMultiplier: 1.5, skillIds: ["cho_warn", "cho_martial", "cho_police", "cho_ult"] },
+  kim: { id: "kim", name: "김두한", avatar: "/avatars/kim.webp", hp: 46, speedMin: 4, speedMax: 7, evasion: 8, accuracy: 0, critChance: 25, critMultiplier: 1.6, skillIds: ["kim_punch", "kim_kick", "kim_oyabun", "kim_4dollar", "kim_guard"] },
+  shanghai: { id: "shanghai", name: "상하이 조", avatar: "/avatars/shanghai.webp", hp: 28, speedMin: 6, speedMax: 9, evasion: 12, accuracy: 5, critChance: 15, critMultiplier: 1.5, skillIds: ["sh_pistol", "sh_leg", "sh_grenade", "sh_ult", "sh_trap"] },
+  shin: { id: "shin", name: "신영균", avatar: "/avatars/shin.webp", hp: 50, speedMin: 3, speedMax: 6, evasion: 6, accuracy: 0, critChance: 10, critMultiplier: 1.5, skillIds: ["shin_axe", "shin_charge", "shin_awaken", "shin_ult", "shin_roar"] },
+  cho: { id: "cho", name: "조병옥", avatar: "/avatars/cho.webp", hp: 34, speedMin: 5, speedMax: 8, evasion: 9, accuracy: 0, critChance: 5, critMultiplier: 1.5, skillIds: ["cho_warn", "cho_martial", "cho_police", "cho_ult", "cho_rally"] },
 
   // ══ 좌익(조선공산당) — 적(엘리트/보스) ══
   jung: { id: "jung", name: "정진영", avatar: "/avatars/jung.webp", hp: 32, speedMin: 6, speedMax: 9, evasion: 11, accuracy: 0, critChance: 15, critMultiplier: 1.5, skillIds: ["jung_shot", "jung_retreat", "jung_charge", "jung_ult"] },

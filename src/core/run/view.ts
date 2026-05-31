@@ -1,6 +1,7 @@
 // 런 관측(맵/파티/보상) — RunState → RunView. 전투 화면은 run.battle을 직접 사용.
 import type { NodeStatus, RunState, RunView } from "./types.ts";
 import { CHARACTERS } from "../../data/characters.ts";
+import { SKILLS } from "../../data/skills.ts";
 
 export function getRunView(run: RunState): RunView {
   return {
@@ -14,7 +15,22 @@ export function getRunView(run: RunState): RunView {
       else if (run.visited.includes(n.id)) status = "visited";
       return { id: n.id, q: n.q, r: n.r, type: n.type, status };
     }),
-    party: run.party.map((m) => ({ name: CHARACTERS[m.charId].name, charId: m.charId, avatar: CHARACTERS[m.charId].avatar, hp: m.hp, maxHp: m.maxHp, alive: m.hp > 0 })),
+    party: run.party.map((m) => ({
+      name: CHARACTERS[m.charId].name,
+      charId: m.charId,
+      avatar: CHARACTERS[m.charId].avatar,
+      hp: m.hp,
+      maxHp: m.maxHp,
+      alive: m.hp > 0,
+      skills: m.ownedSkillIds.map((sid) => ({
+        id: sid,
+        name: SKILLS[sid]?.name ?? sid,
+        tier: SKILLS[sid]?.tier ?? 1,
+        active: m.activeSkillIds.includes(sid),
+        canUpgrade: !!SKILLS[sid]?.nextTierId,
+      })),
+      activeCount: m.activeSkillIds.length,
+    })),
     rewards: run.rewards,
     log: run.log.slice(-12),
   };

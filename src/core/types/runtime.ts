@@ -46,6 +46,8 @@ export interface PartyMemberState {
   hp: number;
   maxHp: number;
   skillDmgBonus: Record<string, number>;
+  ownedSkillIds: string[]; // 보유 풀 (4.2): 강화=티어 교체, 새 스킬=추가
+  activeSkillIds: string[]; // 전투 활성 ≤4 (보유 중 선택, 4.2)
 }
 
 // ── 턴 서열 & 행동 (2.2, 2.11) ─────────────────────────────────────────────

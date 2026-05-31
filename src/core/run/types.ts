@@ -6,9 +6,9 @@ import type { NodeType, RunNode } from "./map.ts";
 export type RunPhase = "map" | "battle" | "reward" | "won" | "lost";
 
 export type RewardOption =
-  | { id: string; kind: "skillUp"; charId: string; skillId: string; amount: number; label: string }
-  | { id: string; kind: "heal"; pct: number; label: string }
-  | { id: string; kind: "maxhp"; charId: string; amount: number; label: string };
+  | { id: string; kind: "upgradeSkill"; charId: string; fromSkillId: string; toSkillId: string; label: string }
+  | { id: string; kind: "learnSkill"; charId: string; skillId: string; label: string }
+  | { id: string; kind: "heal"; pct: number; label: string };
 
 export interface RunState {
   rng: Rng;
@@ -32,7 +32,17 @@ export interface RunView {
   phase: RunPhase;
   rows: number;
   nodes: { id: string; q: number; r: number; type: NodeType; status: NodeStatus }[];
-  party: { name: string; charId: string; avatar?: string; hp: number; maxHp: number; alive: boolean }[];
+  party: {
+    name: string;
+    charId: string;
+    avatar?: string;
+    hp: number;
+    maxHp: number;
+    alive: boolean;
+    // 로드아웃(4.2): 보유 스킬 + 활성 여부 + 티어/강화가능
+    skills: { id: string; name: string; tier: number; active: boolean; canUpgrade: boolean }[];
+    activeCount: number;
+  }[];
   rewards: RewardOption[] | null;
   log: string[];
 }

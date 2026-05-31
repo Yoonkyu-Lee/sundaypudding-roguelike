@@ -10,7 +10,7 @@ function makeUnit(
   p: Placement,
   side: "ally" | "enemy",
   idx: number,
-  growth?: { hp?: number; maxHp?: number; skillDmgBonus?: Record<string, number> },
+  growth?: { hp?: number; maxHp?: number; skillDmgBonus?: Record<string, number>; activeSkillIds?: string[] },
 ): Unit {
   const c = CHARACTERS[p.charId];
   if (!c) throw new Error(`character not found: ${p.charId}`);
@@ -30,7 +30,7 @@ function makeUnit(
     accuracy: c.accuracy,
     critChance: c.critChance,
     critMultiplier: c.critMultiplier,
-    activeSkillIds: c.skillIds.slice(0, 4), // 전투 활성 최대 4 (2.3)
+    activeSkillIds: growth?.activeSkillIds ?? c.skillIds.slice(0, 4), // 런 선택 활성 4 (없으면 기본 앞 4)
     cooldowns: {},
     statuses: [],
     alive: true,
@@ -42,11 +42,11 @@ function makeUnit(
 export function createBattle(
   seed: number,
   enc: Encounter,
-  allyStates?: { charId: string; pos: Pos; hp: number; maxHp: number; skillDmgBonus: Record<string, number> }[],
+  allyStates?: { charId: string; pos: Pos; hp: number; maxHp: number; skillDmgBonus: Record<string, number>; activeSkillIds?: string[] }[],
 ): GameState {
   const allyUnits = allyStates
     ? allyStates.map((m, i) =>
-        makeUnit({ charId: m.charId, pos: m.pos }, "ally", i, { hp: m.hp, maxHp: m.maxHp, skillDmgBonus: m.skillDmgBonus }),
+        makeUnit({ charId: m.charId, pos: m.pos }, "ally", i, { hp: m.hp, maxHp: m.maxHp, skillDmgBonus: m.skillDmgBonus, activeSkillIds: m.activeSkillIds }),
       )
     : enc.allies.map((p, i) => makeUnit(p, "ally", i));
   const units: Unit[] = [...allyUnits, ...enc.enemies.map((p, i) => makeUnit(p, "enemy", i))];
