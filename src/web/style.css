@@ -208,6 +208,8 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .lskill.on { background: #243528; border-color: var(--green); color: #cdeed8; }
 .lskill:hover { border-color: var(--ally); }
 .lskill sup { color: var(--accent); font-size: 8px; }
+/* 전용기 = 금색 점, 범용기 = 무표시 (4.6) */
+.lskill.sig::before { content: "★"; color: var(--accent); font-size: 8px; margin-right: 2px; }
 .phpbar { height: 8px; background: #11141b; border-radius: 4px; overflow: hidden; }
 .php { height: 100%; background: var(--hp); transition: width .35s ease; }
 .phptext { color: var(--dim); }

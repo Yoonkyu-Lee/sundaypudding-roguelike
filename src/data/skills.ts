@@ -189,28 +189,28 @@ export const SKILLS: Record<string, Skill> = {
 
   // ══ 우익(대한민청) — 플레이어 ══
   // 김두한 (브루저/딜러, 높은 치명)
-  kim_punch: { id: "kim_punch", name: "종로의 주먹", target: "enemy", cooldown: 0, accuracy: 90, targetCells: FRONT2, tier: 1, nextTierId: "kim_punch2", effects: [{ kind: "damage", amount: 14 }] },
-  kim_kick: { id: "kim_kick", name: "공중 이단 발차기", target: "enemy", cooldown: 2, accuracy: 90, targetCells: FRONT2, effects: [{ kind: "move", who: "self", deltaCol: -3 }, { kind: "damage", amount: 12 }] },
-  kim_oyabun: { id: "kim_oyabun", name: "오야붕의 위엄", target: "self", cooldown: 4, accuracy: 0, alwaysHit: true, effects: [{ kind: "cleanse" }, { kind: "applyStatus", statusId: "might", stacks: 1, duration: 3 }, { kind: "applyStatus", statusId: "edge", stacks: 1, duration: 3 }] },
-  kim_4dollar: { id: "kim_4dollar", name: "4달러", target: "ally", cooldown: 5, accuracy: 0, alwaysHit: true, grantsInterrupt: 1, grantsInterruptTo: "target", effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 2 }] },
+  kim_punch: { id: "kim_punch", name: "종로의 주먹", exclusiveTo: "kim", target: "enemy", cooldown: 0, accuracy: 90, targetCells: FRONT2, tier: 1, nextTierId: "kim_punch2", effects: [{ kind: "damage", amount: 14 }] },
+  kim_kick: { id: "kim_kick", name: "공중 이단 발차기", exclusiveTo: "kim", target: "enemy", cooldown: 2, accuracy: 90, targetCells: FRONT2, effects: [{ kind: "move", who: "self", deltaCol: -3 }, { kind: "damage", amount: 12 }] },
+  kim_oyabun: { id: "kim_oyabun", name: "오야붕의 위엄", exclusiveTo: "kim", target: "self", cooldown: 4, accuracy: 0, alwaysHit: true, effects: [{ kind: "cleanse" }, { kind: "applyStatus", statusId: "might", stacks: 1, duration: 3 }, { kind: "applyStatus", statusId: "edge", stacks: 1, duration: 3 }] },
+  kim_4dollar: { id: "kim_4dollar", name: "4달러", exclusiveTo: "kim", target: "ally", cooldown: 5, accuracy: 0, alwaysHit: true, grantsInterrupt: 1, grantsInterruptTo: "target", effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 2 }] },
 
   // 상하이 조 (원거리 디버퍼)
-  sh_pistol: { id: "sh_pistol", name: "권총 사격", target: "enemy", cooldown: 0, accuracy: 90, tier: 1, nextTierId: "sh_pistol2", effects: [{ kind: "damage", amount: 10 }] },
-  sh_leg: { id: "sh_leg", name: "다리 조준 사격", target: "enemy", cooldown: 2, accuracy: 90, effects: [{ kind: "damage", amount: 4 }, { kind: "applyStatus", statusId: "paralyze", stacks: 2, duration: 2 }] },
-  sh_grenade: { id: "sh_grenade", name: "수류탄 투척", target: "enemy", area: { kind: "square", radius: 1 }, cooldown: 3, accuracy: 85, effects: [{ kind: "damage", amount: 7 }, { kind: "applyStatus", statusId: "burn", stacks: 1, duration: 2 }] },
-  sh_ult: { id: "sh_ult", name: "안 되겠소, 쏩니다!", target: "enemy", cooldown: 5, accuracy: 90, effects: [{ kind: "damage", amount: 16 }, { kind: "applyStatus", statusId: "freeze", stacks: 1, duration: 1 }] },
+  sh_pistol: { id: "sh_pistol", name: "권총 사격", exclusiveTo: "shanghai", target: "enemy", cooldown: 0, accuracy: 90, tier: 1, nextTierId: "sh_pistol2", effects: [{ kind: "damage", amount: 10 }] },
+  sh_leg: { id: "sh_leg", name: "다리 조준 사격", exclusiveTo: "shanghai", target: "enemy", cooldown: 2, accuracy: 90, effects: [{ kind: "damage", amount: 4 }, { kind: "applyStatus", statusId: "paralyze", stacks: 2, duration: 2 }] },
+  sh_grenade: { id: "sh_grenade", name: "수류탄 투척", exclusiveTo: "shanghai", target: "enemy", area: { kind: "square", radius: 1 }, cooldown: 3, accuracy: 85, effects: [{ kind: "damage", amount: 7 }, { kind: "applyStatus", statusId: "burn", stacks: 1, duration: 2 }] },
+  sh_ult: { id: "sh_ult", name: "안 되겠소, 쏩니다!", exclusiveTo: "shanghai", target: "enemy", cooldown: 5, accuracy: 90, effects: [{ kind: "damage", amount: 16 }, { kind: "applyStatus", statusId: "freeze", stacks: 1, duration: 1 }] },
 
   // 신영균 (광전사)
-  shin_axe: { id: "shin_axe", name: "도끼 휘두르기", target: "enemy", cooldown: 0, accuracy: 90, targetCells: FRONT2, tier: 1, nextTierId: "shin_axe2", effects: [{ kind: "damage", amount: 12 }, { kind: "applyStatus", statusId: "bleed", stacks: 2, duration: 3 }] },
-  shin_charge: { id: "shin_charge", name: "분노의 돌격", target: "enemy", cooldown: 3, accuracy: 90, targetCells: FRONT2, effects: [{ kind: "move", who: "self", deltaCol: -3 }, { kind: "damage", amount: 8 }, { kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }, { kind: "applyStatusSelf", statusId: "weaken", stacks: 1, duration: 1 }] },
-  shin_awaken: { id: "shin_awaken", name: "야수성 각성", target: "self", cooldown: 4, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 3 }, { kind: "applyStatus", statusId: "regen", stacks: 2, duration: 3 }] },
-  shin_ult: { id: "shin_ult", name: "에이잇! 할아버지!", target: "enemy", area: { kind: "free", count: 4 }, cooldown: 4, accuracy: 85, effects: [{ kind: "damage", amount: 9 }, { kind: "applyStatus", statusId: "bleed", stacks: 1, duration: 2 }] },
+  shin_axe: { id: "shin_axe", name: "도끼 휘두르기", exclusiveTo: "shin", target: "enemy", cooldown: 0, accuracy: 90, targetCells: FRONT2, tier: 1, nextTierId: "shin_axe2", effects: [{ kind: "damage", amount: 12 }, { kind: "applyStatus", statusId: "bleed", stacks: 2, duration: 3 }] },
+  shin_charge: { id: "shin_charge", name: "분노의 돌격", exclusiveTo: "shin", target: "enemy", cooldown: 3, accuracy: 90, targetCells: FRONT2, effects: [{ kind: "move", who: "self", deltaCol: -3 }, { kind: "damage", amount: 8 }, { kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }, { kind: "applyStatusSelf", statusId: "weaken", stacks: 1, duration: 1 }] },
+  shin_awaken: { id: "shin_awaken", name: "야수성 각성", exclusiveTo: "shin", target: "self", cooldown: 4, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 3 }, { kind: "applyStatus", statusId: "regen", stacks: 2, duration: 3 }] },
+  shin_ult: { id: "shin_ult", name: "에이잇! 할아버지!", exclusiveTo: "shin", target: "enemy", area: { kind: "free", count: 4 }, cooldown: 4, accuracy: 85, effects: [{ kind: "damage", amount: 9 }, { kind: "applyStatus", statusId: "bleed", stacks: 1, duration: 2 }] },
 
   // 조병옥 (지휘관/서포터)
-  cho_warn: { id: "cho_warn", name: "경무부장의 경고", target: "enemy", cooldown: 0, accuracy: 90, tier: 1, nextTierId: "cho_warn2", effects: [{ kind: "damage", amount: 3 }, { kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }] },
-  cho_martial: { id: "cho_martial", name: "비상계엄령", target: "ally", area: { kind: "all" }, cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "shield", amount: 10 }] },
-  cho_police: { id: "cho_police", name: "경찰 병력 호출", target: "enemy", area: { kind: "row" }, cooldown: 4, accuracy: 85, effects: [{ kind: "damage", amount: 6 }, { kind: "applyStatus", statusId: "paralyze", stacks: 1, duration: 2 }] },
-  cho_ult: { id: "cho_ult", name: "당장 그만두시오!", target: "enemy", area: { kind: "all" }, cooldown: 5, accuracy: 90, effects: [{ kind: "applyStatus", statusId: "fear", stacks: 3, duration: 2 }] },
+  cho_warn: { id: "cho_warn", name: "경무부장의 경고", exclusiveTo: "cho", target: "enemy", cooldown: 0, accuracy: 90, tier: 1, nextTierId: "cho_warn2", effects: [{ kind: "damage", amount: 3 }, { kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }] },
+  cho_martial: { id: "cho_martial", name: "비상계엄령", exclusiveTo: "cho", target: "ally", area: { kind: "all" }, cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "shield", amount: 10 }] },
+  cho_police: { id: "cho_police", name: "경찰 병력 호출", exclusiveTo: "cho", target: "enemy", area: { kind: "row" }, cooldown: 4, accuracy: 85, effects: [{ kind: "damage", amount: 6 }, { kind: "applyStatus", statusId: "paralyze", stacks: 1, duration: 2 }] },
+  cho_ult: { id: "cho_ult", name: "당장 그만두시오!", exclusiveTo: "cho", target: "enemy", area: { kind: "all" }, cooldown: 5, accuracy: 90, effects: [{ kind: "applyStatus", statusId: "fear", stacks: 3, duration: 2 }] },
 
   // ══ 좌익(조선공산당) — 적 ══
   // 정진영 (밸런스 딜러)
@@ -244,18 +244,19 @@ export const SKILLS: Record<string, Skill> = {
   thug_club: { id: "thug_club", name: "각목 후려치기", target: "enemy", cooldown: 0, accuracy: 85, targetCells: FRONT2, effects: [{ kind: "damage", amount: 8 }] },
   thug_throw: { id: "thug_throw", name: "벽돌 던지기", target: "enemy", cooldown: 2, accuracy: 80, effects: [{ kind: "damage", amount: 6 }] },
 
-  // ══ 육성: 강화 티어 체인 (4.6) — 보상 "강화"로 nextTierId 교체. 보유 풀엔 직접 안 들어감 ══
-  kim_punch2: { id: "kim_punch2", name: "종로의 주먹+", target: "enemy", cooldown: 0, accuracy: 90, targetCells: FRONT2, tier: 2, nextTierId: "kim_punch3", effects: [{ kind: "damage", amount: 18 }] },
-  kim_punch3: { id: "kim_punch3", name: "종로의 주먹++", target: "enemy", cooldown: 0, accuracy: 90, targetCells: FRONT2, tier: 3, effects: [{ kind: "damage", amount: 22 }, { kind: "applyStatus", statusId: "bleed", stacks: 1, duration: 2 }] },
-  sh_pistol2: { id: "sh_pistol2", name: "권총 속사", target: "enemy", cooldown: 0, accuracy: 90, tier: 2, nextTierId: "sh_pistol3", effects: [{ kind: "damage", amount: 13 }] },
-  sh_pistol3: { id: "sh_pistol3", name: "권총 난사", target: "enemy", cooldown: 0, accuracy: 90, tier: 3, effects: [{ kind: "damage", amount: 16 }, { kind: "applyStatus", statusId: "paralyze", stacks: 1, duration: 1 }] },
-  shin_axe2: { id: "shin_axe2", name: "도끼 강타", target: "enemy", cooldown: 0, accuracy: 90, targetCells: FRONT2, tier: 2, nextTierId: "shin_axe3", effects: [{ kind: "damage", amount: 15 }, { kind: "applyStatus", statusId: "bleed", stacks: 2, duration: 3 }] },
-  shin_axe3: { id: "shin_axe3", name: "도끼 분쇄", target: "enemy", cooldown: 0, accuracy: 90, targetCells: FRONT2, tier: 3, effects: [{ kind: "damage", amount: 18 }, { kind: "applyStatus", statusId: "bleed", stacks: 3, duration: 3 }] },
-  cho_warn2: { id: "cho_warn2", name: "엄중 경고", target: "enemy", cooldown: 0, accuracy: 90, tier: 2, effects: [{ kind: "damage", amount: 6 }, { kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }] },
+  // ══ 육성: 강화 티어 체인 (4.6) — 전용기 강화. 보상 "강화"로 nextTierId 교체. 보유 풀엔 직접 안 들어감 ══
+  kim_punch2: { id: "kim_punch2", name: "종로의 주먹+", exclusiveTo: "kim", target: "enemy", cooldown: 0, accuracy: 90, targetCells: FRONT2, tier: 2, nextTierId: "kim_punch3", effects: [{ kind: "damage", amount: 18 }] },
+  kim_punch3: { id: "kim_punch3", name: "종로의 주먹++", exclusiveTo: "kim", target: "enemy", cooldown: 0, accuracy: 90, targetCells: FRONT2, tier: 3, effects: [{ kind: "damage", amount: 22 }, { kind: "applyStatus", statusId: "bleed", stacks: 1, duration: 2 }] },
+  sh_pistol2: { id: "sh_pistol2", name: "권총 속사", exclusiveTo: "shanghai", target: "enemy", cooldown: 0, accuracy: 90, tier: 2, nextTierId: "sh_pistol3", effects: [{ kind: "damage", amount: 13 }] },
+  sh_pistol3: { id: "sh_pistol3", name: "권총 난사", exclusiveTo: "shanghai", target: "enemy", cooldown: 0, accuracy: 90, tier: 3, effects: [{ kind: "damage", amount: 16 }, { kind: "applyStatus", statusId: "paralyze", stacks: 1, duration: 1 }] },
+  shin_axe2: { id: "shin_axe2", name: "도끼 강타", exclusiveTo: "shin", target: "enemy", cooldown: 0, accuracy: 90, targetCells: FRONT2, tier: 2, nextTierId: "shin_axe3", effects: [{ kind: "damage", amount: 15 }, { kind: "applyStatus", statusId: "bleed", stacks: 2, duration: 3 }] },
+  shin_axe3: { id: "shin_axe3", name: "도끼 분쇄", exclusiveTo: "shin", target: "enemy", cooldown: 0, accuracy: 90, targetCells: FRONT2, tier: 3, effects: [{ kind: "damage", amount: 18 }, { kind: "applyStatus", statusId: "bleed", stacks: 3, duration: 3 }] },
+  cho_warn2: { id: "cho_warn2", name: "엄중 경고", exclusiveTo: "cho", target: "enemy", cooldown: 0, accuracy: 90, tier: 2, effects: [{ kind: "damage", amount: 6 }, { kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }] },
 
-  // ══ 육성: 확장 학습기 (4.5) — 보상 "새 스킬"로 보유 풀에 추가 (시작 시 미보유) ══
-  kim_guard: { id: "kim_guard", name: "맷집", target: "self", cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "shield", amount: 10 }] },
-  sh_trap: { id: "sh_trap", name: "함정 설치", target: "enemy", cooldown: 3, accuracy: 85, effects: [{ kind: "damage", amount: 6 }, { kind: "applyStatus", statusId: "paralyze", stacks: 2, duration: 2 }] },
-  shin_roar: { id: "shin_roar", name: "포효", target: "self", cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 3 }] },
-  cho_rally: { id: "cho_rally", name: "독려", target: "ally", area: { kind: "all" }, cooldown: 4, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "regen", stacks: 1, duration: 3 }] },
+  // ══ 범용기 (4.6) — exclusiveTo 없음 = 여러 캐릭이 learnset에 가질 수 있는 공유 스킬. 중립 네이밍 ══
+  u_guard: { id: "u_guard", name: "철벽 방어", target: "self", cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "shield", amount: 10 }] },
+  u_war_cry: { id: "u_war_cry", name: "전투 함성", target: "self", cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 3 }] },
+  u_aimed_shot: { id: "u_aimed_shot", name: "조준 사격", target: "enemy", cooldown: 1, accuracy: 90, effects: [{ kind: "damage", amount: 8 }] },
+  u_snare: { id: "u_snare", name: "올가미", target: "enemy", cooldown: 3, accuracy: 85, effects: [{ kind: "damage", amount: 5 }, { kind: "applyStatus", statusId: "paralyze", stacks: 2, duration: 2 }] },
+  u_first_aid: { id: "u_first_aid", name: "응급 처치", target: "ally", cooldown: 2, accuracy: 0, alwaysHit: true, effects: [{ kind: "heal", amount: 12 }] },
 };

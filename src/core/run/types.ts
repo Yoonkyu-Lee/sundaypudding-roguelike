@@ -39,8 +39,8 @@ export interface RunView {
     hp: number;
     maxHp: number;
     alive: boolean;
-    // 로드아웃(4.2): 보유 스킬 + 활성 여부 + 티어/강화가능
-    skills: { id: string; name: string; tier: number; active: boolean; canUpgrade: boolean }[];
+    // 로드아웃(4.2): 보유 스킬 + 활성 여부 + 티어/강화가능 + 전용기 여부(4.6)
+    skills: { id: string; name: string; tier: number; active: boolean; canUpgrade: boolean; signature: boolean }[];
     activeCount: number;
   }[];
   rewards: RewardOption[] | null;

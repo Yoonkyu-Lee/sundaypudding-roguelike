@@ -36,7 +36,7 @@ function partyPanel(view: RunView): string {
       const pct = Math.max(0, (m.hp / m.maxHp) * 100);
       const cls = m.alive ? "" : " dead";
       const chips = m.skills
-        .map((s) => `<button class="lskill${s.active ? " on" : ""}" data-char="${m.charId}" data-lskill="${s.id}" title="${esc(s.name)}${s.canUpgrade ? " · 강화 가능" : ""}">${esc(s.name)}${s.tier > 1 ? `<sup>${s.tier}</sup>` : ""}</button>`)
+        .map((s) => `<button class="lskill${s.active ? " on" : ""}${s.signature ? " sig" : " univ"}" data-char="${m.charId}" data-lskill="${s.id}" title="${esc(s.name)} · ${s.signature ? "전용기" : "범용기"}${s.canUpgrade ? " · 강화 가능" : ""}">${esc(s.name)}${s.tier > 1 ? `<sup>${s.tier}</sup>` : ""}</button>`)
         .join("");
       return `<div class="pmember${cls}">
         <div class="prow">

@@ -28,6 +28,7 @@ export function getRunView(run: RunState): RunView {
         tier: SKILLS[sid]?.tier ?? 1,
         active: m.activeSkillIds.includes(sid),
         canUpgrade: !!SKILLS[sid]?.nextTierId,
+        signature: !!SKILLS[sid]?.exclusiveTo, // 전용기(4.6)면 금테, 없으면 범용기
       })),
       activeCount: m.activeSkillIds.length,
     })),
