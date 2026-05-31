@@ -1,0 +1,78 @@
+// 스킬 데이터 → 게임다운 정돈된 설명 (정보 비대칭 해소). 쿨·명중·피해·사정권·면적규칙·특징.
+// 모든 값은 기존 Skill/AreaShape/STATUS_DEFS 데이터에서 생성 (데이터-온리).
+import type { AreaShape, Skill } from "../../core/types.ts";
+import { STATUS_DEFS } from "../../data/statuses.ts";
+import { esc } from "./shared.ts";
+
+/** 사정권: 근접(전방 2열) vs 원거리(아무 칸) vs 아군/자신. 투명하게. */
+export function rangeRule(sk: Skill): string {
+  if (sk.target === "self") return "자신";
+  if (sk.target === "ally") return "아군";
+  return sk.targetCells && sk.targetCells.length ? "근접 · 전방 2열" : "원거리 · 아무 칸";
+}
+
+/** 면적(AoE) 규칙을 앵커 기준으로 한 줄 설명. 범위 지정 법칙을 단순·투명하게. */
+export function areaRule(area: AreaShape | undefined): string {
+  if (!area || area.kind === "single") return "단일 대상";
+  switch (area.kind) {
+    case "row": return "앵커 가로줄 전체";
+    case "col": return "앵커 세로줄(열) 전체";
+    case "square": { const r = area.radius ?? 1; return `앵커 중심 ${2 * r + 1}×${2 * r + 1}칸`; }
+    case "cross": { const r = area.radius ?? 1; return `앵커 + 상하좌우 ${r}칸`; }
+    case "all": return "대상 진영 전체";
+    case "free": return `인접한 ${area.count}칸 직접 선택`;
+    default: return "단일 대상";
+  }
+}
+
+/** 스탯 한 줄: 쿨 · 명중(또는 필중) · 피해. 라벨/값 구조화. */
+export function skillStats(sk: Skill): { label: string; value: string }[] {
+  const dmg = sk.effects.find((e) => e.kind === "damage");
+  const out: { label: string; value: string }[] = [{ label: "쿨", value: sk.cooldown === 0 ? "없음" : `${sk.cooldown}턴` }];
+  if (sk.target === "enemy") out.push({ label: "명중", value: `${sk.accuracy >= 0 ? "+" : ""}${sk.accuracy}` });
+  else if (sk.alwaysHit) out.push({ label: "명중", value: "필중" });
+  if (dmg && dmg.kind === "damage") out.push({ label: "피해", value: String(dmg.amount) });
+  return out;
+}
+
+/** 특징 칩(상태부여/쉴드/회복/이동/정화/끼어들기) — 버프/디버프 색 구분. */
+export function skillTraits(sk: Skill): { text: string; cls: "buff" | "debuff" | "util" }[] {
+  const t: { text: string; cls: "buff" | "debuff" | "util" }[] = [];
+  for (const e of sk.effects) {
+    switch (e.kind) {
+      case "applyStatus": {
+        const d = STATUS_DEFS[e.statusId];
+        t.push({ text: `${d?.name ?? e.statusId} ${e.stacks}×${e.duration}턴`, cls: d?.buff ? "buff" : "debuff" });
+        break;
+      }
+      case "applyStatusSelf": {
+        const d = STATUS_DEFS[e.statusId];
+        t.push({ text: `자신 ${d?.name ?? e.statusId} ${e.stacks}×${e.duration}턴`, cls: d?.buff ? "buff" : "debuff" });
+        break;
+      }
+      case "shield": t.push({ text: `쉴드 +${e.amount}`, cls: "buff" }); break;
+      case "heal": t.push({ text: `회복 ${e.amount}`, cls: "buff" }); break;
+      case "cleanse": t.push({ text: "디버프 정화", cls: "buff" }); break;
+      case "move": t.push({ text: e.who === "self" ? (e.deltaCol < 0 ? "자신 전진" : "자신 후퇴") : (e.deltaCol > 0 ? "대상 밀기" : "대상 끌기"), cls: "util" }); break;
+    }
+  }
+  if (sk.grantsInterrupt) t.push({ text: `${sk.grantsInterruptTo === "target" ? "대상 " : ""}끼어들기${sk.grantsInterrupt > 1 ? ` ×${sk.grantsInterrupt}` : ""}`, cls: "util" });
+  return t;
+}
+
+/** 스킬 카드 본문 HTML (선택 패널의 균일 카드용). */
+export function skillCardBody(sk: Skill): string {
+  const stats = skillStats(sk).map((s) => `<span class="skstat"><i>${s.label}</i>${esc(s.value)}</span>`).join("");
+  const traits = skillTraits(sk).map((t) => `<span class="sktrait ${t.cls}">${esc(t.text)}</span>`).join("");
+  const aoe = sk.area && sk.area.kind !== "single" ? ` · ${esc(areaRule(sk.area))}` : "";
+  return `<span class="skstats">${stats}</span>
+    <span class="skrange">${esc(rangeRule(sk))}${aoe}</span>
+    <span class="sktraits">${traits}</span>`;
+}
+
+/** 타겟팅 프롬프트용 한 줄 요약. */
+export function skillInline(sk: Skill): string {
+  const stats = skillStats(sk).map((s) => `${s.label} ${s.value}`).join(" · ");
+  const aoe = sk.area && sk.area.kind !== "single" ? ` · ${areaRule(sk.area)}` : "";
+  return `${rangeRule(sk)} · ${stats}${aoe}`;
+}
