@@ -16,6 +16,7 @@ export interface Ui {
   hoverCell: { row: number; col: number } | null; // 호버 중인 앵커 칸
   pickedCells: { row: number; col: number }[]; // 자유선택(free)에서 고른 칸들
   damaged: Set<string>;
+  moved: Set<string>; // 직전 step에서 이동한 유닛 (이동 펄스 연출)
   seed: number;
 }
 export interface Handlers {

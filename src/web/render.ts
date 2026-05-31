@@ -16,7 +16,7 @@ export { avatarHtml } from "./battle/shared.ts";
 export type { Ui, Handlers } from "./battle/shared.ts";
 export { formatEvent } from "./battle/events.ts";
 
-function grid(title: string, units: Observation["allies"], side: "ally" | "enemy", curUid: string | null, damaged: Set<string>, tgt: TgtCtx): string {
+function grid(title: string, units: Observation["allies"], side: "ally" | "enemy", curUid: string | null, damaged: Set<string>, moved: Set<string>, tgt: TgtCtx): string {
   let cells = "";
   for (let row = 0; row < 4; row++) {
     for (let col = 0; col < 4; col++) {
@@ -28,7 +28,7 @@ function grid(title: string, units: Observation["allies"], side: "ally" | "enemy
       const picked = onSide && tgt.picked.has(key);
       const cls = `cell${clickable ? " cellpick" : ""}${inArea ? " inarea" : ""}${picked ? " picked" : ""}`;
       const attr = clickable ? `data-cell="${row},${col}"` : "";
-      cells += `<div class="${cls}" ${attr}>${u ? unitCard(u, u.uid === curUid, damaged.has(u.uid), tgt) : `<span class="empty">·</span>`}</div>`;
+      cells += `<div class="${cls}" ${attr}>${u ? unitCard(u, u.uid === curUid, damaged.has(u.uid), tgt, moved.has(u.uid)) : `<span class="empty">·</span>`}</div>`;
     }
   }
   return `<div class="side ${side}"><h2>${title}</h2><div class="board">${cells}</div></div>`;
@@ -93,8 +93,8 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
   const logHtml = state.log.slice(-40).map((e) => formatEvent(state, e)).filter(Boolean).join("<br>");
   const curUid = obs.current?.uid ?? null;
   const pTurnbar = turnBar(obs, state, ghostNames);
-  const pAlly = grid("아군", obs.allies, "ally", curUid, ui.damaged, tgt);
-  const pEnemy = grid("적", obs.enemies, "enemy", curUid, ui.damaged, tgt);
+  const pAlly = grid("아군", obs.allies, "ally", curUid, ui.damaged, ui.moved, tgt);
+  const pEnemy = grid("적", obs.enemies, "enemy", curUid, ui.damaged, ui.moved, tgt);
   const pActions = actionPanel(obs, state, ui);
   const pLog = `<div class="logpanel"><h2>전투 로그</h2><div class="loginner">${logHtml}</div></div>`;
   const header = `<header>

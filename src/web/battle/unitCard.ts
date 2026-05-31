@@ -10,7 +10,7 @@ function formationBadge(u: UnitView): string {
   return a || d ? `<span class="fbs">${a}${d}</span>` : "";
 }
 
-export function unitCard(u: UnitView, isCurrent: boolean, damaged: boolean, tgt: TgtCtx): string {
+export function unitCard(u: UnitView, isCurrent: boolean, damaged: boolean, tgt: TgtCtx, moved = false): string {
   const key = ck(u.pos);
   const inFoot = tgt.active && tgt.areaSide === u.side && tgt.footprint.has(key);
   const hovering = tgt.active && tgt.areaSide === u.side && tgt.hoverCell === key;
@@ -28,7 +28,7 @@ export function unitCard(u: UnitView, isCurrent: boolean, damaged: boolean, tgt:
     lossText = ` <span class="lossnum">−${hpLoss}</span>${shieldConsumed > 0 ? `<span class="absnum">🛡−${shieldConsumed}</span>` : ""}`;
   }
 
-  const cls = ["card", u.side, isCurrent ? "current" : "", damaged ? "flash" : "", inFoot ? "tgt" : ""].join(" ").replace(/\s+/g, " ").trim();
+  const cls = ["card", u.side, isCurrent ? "current" : "", damaged ? "flash" : "", moved ? "moved" : "", inFoot ? "tgt" : ""].join(" ").replace(/\s+/g, " ").trim();
   const hitBadge = tgt.active && tgt.validHit.has(u.uid) ? `<div class="hitbadge">${tgt.validHit.get(u.uid)}%</div>` : "";
 
   return `<div class="${cls}" data-uid="${u.uid}">

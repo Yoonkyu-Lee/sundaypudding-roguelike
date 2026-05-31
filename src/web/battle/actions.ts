@@ -2,7 +2,7 @@
 import type { GameState, Observation } from "../../core/types.ts";
 import { SKILLS } from "../../data/skills.ts";
 import { esc, type Ui } from "./shared.ts";
-import { skillCardBody, skillInline } from "./skillDesc.ts";
+import { skillCardBody, skillInline, skillType } from "./skillDesc.ts";
 
 export function actionPanel(obs: Observation, state: GameState, ui: Ui): string {
   if (obs.phase !== "inProgress") {
@@ -36,10 +36,11 @@ export function actionPanel(obs: Observation, state: GameState, ui: Ui): string 
     const disabled = cd > 0 || !usable.has(id);
     const reason = cd > 0 ? `쿨 ${cd}` : !usable.has(id) ? "사정권 없음" : "";
     const attrs = disabled ? "disabled" : `data-skill="${id}"`;
-    return `<button class="skcard ${disabled ? "disabled" : ""}" ${attrs}>
+    return `<button class="skcard t-${skillType(sk).key} ${disabled ? "disabled" : ""}" ${attrs}>
       <span class="skhead"><span class="skname">${esc(sk.name)}</span>${reason ? `<span class="skreason">${reason}</span>` : ""}</span>
       ${skillCardBody(sk)}
     </button>`;
   }).join("");
-  return `<div class="actions skillsel"><div class="prompt">▶ ${esc(obs.current.name)}의 턴 — 스킬 선택</div><div class="skgrid">${cards}</div></div>`;
+  // 대기: 아무것도 안 하고 턴 넘기기 (항상 노출, 쿨 소모 없음)
+  return `<div class="actions skillsel"><div class="prompt">▶ ${esc(obs.current.name)}의 턴 — 스킬 선택</div><div class="skgrid">${cards}</div><button class="act skip wait" id="skipbtn">⏭ 대기 (턴 넘김)</button></div>`;
 }

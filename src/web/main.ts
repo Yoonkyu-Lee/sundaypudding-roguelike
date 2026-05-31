@@ -20,13 +20,14 @@ const ROSTER = [
 let run: RunState;
 let seed = 42;
 let busy = false;
-const ui: Ui = { selectedSkillId: null, hoverCell: null, pickedCells: [], damaged: new Set(), seed };
+const ui: Ui = { selectedSkillId: null, hoverCell: null, pickedCells: [], damaged: new Set(), moved: new Set(), seed };
 
 function resetUi(): void {
   ui.selectedSkillId = null;
   ui.hoverCell = null;
   ui.pickedCells = [];
   ui.damaged = new Set();
+  ui.moved = new Set();
 }
 function endTargeting(): void {
   ui.selectedSkillId = null;
@@ -71,7 +72,9 @@ function battleStep(action: Action): void {
   const b = run.battle!;
   const before = b.log.length;
   step(b, action);
-  ui.damaged = new Set(b.log.slice(before).flatMap((e) => (e.t === "damage" ? [e.targetUid] : [])));
+  const newEvents = b.log.slice(before);
+  ui.damaged = new Set(newEvents.flatMap((e) => (e.t === "damage" ? [e.targetUid] : [])));
+  ui.moved = new Set(newEvents.flatMap((e) => (e.t === "move" ? [e.uid] : [])));
   endTargeting();
   render();
 }

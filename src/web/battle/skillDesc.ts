@@ -60,12 +60,26 @@ export function skillTraits(sk: Skill): { text: string; cls: "buff" | "debuff" |
   return t;
 }
 
-/** 스킬 카드 본문 HTML (선택 패널의 균일 카드용). */
+/** 스킬 분류(색 액센트·타입 칩용). 공격/지원/강화/약화/기동. */
+export function skillType(sk: Skill): { key: "attack" | "support" | "buff" | "debuff" | "move"; label: string } {
+  const has = (k: string) => sk.effects.some((e) => e.kind === k);
+  if (has("damage")) return { key: "attack", label: "공격" };
+  if (has("heal") || has("shield")) return { key: "support", label: "지원" };
+  if (sk.target === "ally" || sk.target === "self") return { key: "buff", label: "강화" };
+  if (has("applyStatus")) return { key: "debuff", label: "약화" };
+  return { key: "move", label: "기동" };
+}
+
+const STAT_ICON: Record<string, string> = { "쿨": "⏱", "명중": "🎯", "피해": "💥" };
+
+/** 스킬 카드 본문 HTML (선택 패널의 균일 카드용). 타입 칩 + 아이콘 스탯 + 사정권/면적 + 특징. */
 export function skillCardBody(sk: Skill): string {
-  const stats = skillStats(sk).map((s) => `<span class="skstat"><i>${s.label}</i>${esc(s.value)}</span>`).join("");
-  const traits = skillTraits(sk).map((t) => `<span class="sktrait ${t.cls}">${esc(t.text)}</span>`).join("");
+  const t = skillType(sk);
+  const stats = skillStats(sk).map((s) => `<span class="skstat"><i>${STAT_ICON[s.label] ?? s.label}</i>${esc(s.value)}</span>`).join("");
+  const traits = skillTraits(sk).map((x) => `<span class="sktrait ${x.cls}">${esc(x.text)}</span>`).join("");
   const aoe = sk.area && sk.area.kind !== "single" ? ` · ${esc(areaRule(sk.area))}` : "";
-  return `<span class="skstats">${stats}</span>
+  return `<span class="sktype t-${t.key}">${t.label}</span>
+    <span class="skstats">${stats}</span>
     <span class="skrange">${esc(rangeRule(sk))}${aoe}</span>
     <span class="sktraits">${traits}</span>`;
 }
