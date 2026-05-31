@@ -13,15 +13,15 @@ function formationBadge(u: UnitView): string {
 export function unitCard(u: UnitView, isCurrent: boolean, damaged: boolean, tgt: TgtCtx, moved = false): string {
   const key = ck(u.pos);
   const inFoot = tgt.active && tgt.areaSide === u.side && tgt.footprint.has(key);
-  const hovering = tgt.active && tgt.areaSide === u.side && tgt.hoverCell === key;
   const hpPct = Math.max(0, (u.hp / u.hpMax) * 100);
   const shPct = u.shield > 0 ? Math.min(100, (u.shield / u.hpMax) * 100) : 0; // 쉴드 = hpMax 대비 비율, 좌측정렬
 
-  // 호버(앵커) 대상 HP 깎일 양 미리보기 (쉴드/관통/공포 반영, 0.2)
+  // 영향 칸 대상 HP 깎일 양 미리보기 (쉴드/관통/공포 반영, 0.2) — AoE면 빨간 하이라이트 안 전원
   let preview = "";
   let lossText = "";
-  if (hovering && tgt.previewLoss) {
-    const { hpLoss, shieldConsumed } = tgt.previewLoss;
+  const pl = tgt.previewLoss.get(u.uid);
+  if (pl) {
+    const { hpLoss, shieldConsumed } = pl;
     const leftPct = ((u.hp - hpLoss) / u.hpMax) * 100;
     const widthPct = (hpLoss / u.hpMax) * 100;
     preview = `<div class="ploss" style="left:${leftPct}%;width:${widthPct}%"></div>`;

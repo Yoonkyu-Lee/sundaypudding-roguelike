@@ -33,7 +33,7 @@ export interface Handlers {
 export interface TgtCtx {
   active: boolean;
   validHit: Map<string, number>; // uid → 명중% (점유 칸 머리 위 표시)
-  previewLoss: { hpLoss: number; shieldConsumed: number } | null;
+  previewLoss: Map<string, { hpLoss: number; shieldConsumed: number }>; // uid → HP 미리보기 (AoE면 영향 칸 전체)
   casterUid: string | null;
   areaSide: "ally" | "enemy" | null; // 타겟팅 대상 진영
   hoverCell: string | null; // "row,col"

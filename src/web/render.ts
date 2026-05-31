@@ -56,7 +56,7 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
 
   // 타겟팅 컨텍스트 (셀 기반) — 로직 불변
   const tgt: TgtCtx = {
-    active: false, validHit: new Map(), previewLoss: null, casterUid: obs.current?.uid ?? null,
+    active: false, validHit: new Map(), previewLoss: new Map(), casterUid: obs.current?.uid ?? null,
     areaSide: null, hoverCell: ui.hoverCell ? ck(ui.hoverCell) : null,
     anchorOk: new Set(), footprint: new Set(), picked: new Set(),
   };
@@ -94,10 +94,12 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
         if (area?.kind === "all") { for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) tgt.footprint.add(`${r},${c}`); }
         else if (ui.hoverCell) for (const c of computeAreaCells(ui.hoverCell, area, rows, cols)) tgt.footprint.add(ck(c));
       }
-      const hu = ui.hoverCell
-        ? state.units.find((u) => u.alive && u.pos.row === ui.hoverCell!.row && u.pos.col === ui.hoverCell!.col && u.side === side)
-        : undefined;
-      if (hu && tgt.validHit.has(hu.uid)) tgt.previewLoss = previewHpLoss(state, actor, skill, hu);
+      // 영향 칸(footprint) 안의 대상 진영 유닛 전부에 HP 미리보기 (AoE면 일괄, 0.2)
+      for (const key of tgt.footprint) {
+        const [r, c] = key.split(",").map(Number);
+        const tu = state.units.find((u) => u.alive && u.side === side && u.pos.row === r && u.pos.col === c);
+        if (tu) tgt.previewLoss.set(tu.uid, previewHpLoss(state, actor, skill, tu));
+      }
     }
     const anchorUnit = ui.hoverCell
       ? state.units.find((u) => u.alive && u.side === side && u.pos.row === ui.hoverCell!.row && u.pos.col === ui.hoverCell!.col)
