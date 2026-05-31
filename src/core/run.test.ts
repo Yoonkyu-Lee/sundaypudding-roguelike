@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRun, enterNode, resolveBattleEnd, chooseReward, buyShopOffer, leaveShop, chooseEncounterOption } from "./run.ts";
+import { createRun, enterNode, resolveBattleEnd, chooseReward, buyShopOffer, leaveShop, chooseEncounterOption, getRunView } from "./run.ts";
 import { step } from "./engine.ts";
 import { chooseAction } from "./ai.ts";
 import { ENCOUNTER_EVENTS } from "../data/events.ts";
@@ -129,6 +129,22 @@ test("상점: 골드 부족이면 구매 불가", () => {
   buyShopOffer(run, "h");
   assert.equal(run.gold, 10, "차감 안 됨");
   assert.equal(run.shop!.length, 1, "항목 유지");
+});
+
+test("RunView: 상점/인카운터/골드 화면 데이터 노출 (웹 렌더 계약)", () => {
+  const run = createRun(1, ROSTER);
+  run.gold = 50;
+  run.phase = "shop";
+  run.shop = [{ id: "x", kind: "heal", cost: 15, pct: 0.5, label: "치료" }];
+  let v = getRunView(run);
+  assert.equal(v.gold, 50);
+  assert.equal(v.shop?.length, 1);
+  run.phase = "encounter";
+  run.shop = null;
+  run.encounterId = "shrine";
+  v = getRunView(run);
+  assert.ok(v.encounter && v.encounter.choices.length >= 2, "인카운터 뷰(제목/선택지)");
+  assert.equal(v.encounter!.title, "수상한 제단");
 });
 
 test("인카운터: 선택지 결과 적용 후 map 복귀 (7.2)", () => {

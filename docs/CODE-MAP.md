@@ -53,7 +53,7 @@ src/core/
     map.ts          헥스 타일맵 생성: hid · pickType · forwardIds · genMap (axial q,r·좌표인접=간선·프루닝)
     types.ts        런 도메인 타입(leaf): RunPhase·RewardOption·RunState·NodeStatus·RunView
     rewards.ts      genRewards(강화/학습 3택1) · damagingSkills (순수 생성; 적용은 run.ts)
-    run.ts          createRun · enterNode · resolveBattleEnd · chooseReward · setActiveSkill(로드아웃) (+ node/completeNode/healParty)
+    run.ts          createRun · enterNode · resolveBattleEnd · chooseReward · setActiveSkill(로드아웃) · buyShopOffer/leaveShop(상점) · chooseEncounterOption(인카운터) (+ node/completeNode/healParty/generateShop/applyOutcome)
     view.ts         getRunView (RunState → RunView)
     index.ts        ▸배럴
   ai.ts             ▸배럴(파사드): export * from ai/index
@@ -72,6 +72,7 @@ src/core/
 | `src/data/skills.ts` | data | 스킬(위치마스크·쿨타임·명중·효과) | `SKILLS` |
 | `src/data/characters.ts` | data | 캐릭터(고유 스탯 + learnset) | `CHARACTERS` |
 | `src/data/encounters.ts` | data | 전투 배치 + **노드 타입별 적 구성(`NODE_ROSTERS`)** + 보스/포메이션 override | `DEMO_ENCOUNTER` · `NODE_ROSTERS` · `Encounter`/`Placement` |
+| `src/data/events.ts` | data | 인카운터 이벤트(7.2) — 제목·텍스트·선택지(확정/도박)·결과(heal/hurt/gold/강화/학습) | `ENCOUNTER_EVENTS` · `EncounterEvent`/`EncounterOutcome` |
 | `src/data/formations.ts` | data | 포메이션 열보너스 배치(총량보존, 6장) | `STANDARD_FORMATION` |
 | `src/cli/play.ts` | cli | 대화형/`--demo` 터미널 드라이버 | (엔트리) |
 | `src/cli/ascii.ts` | cli | ASCII 보드 렌더(뷰 — core 아님) | `renderAscii` |
@@ -121,6 +122,7 @@ src/core/
 | 보상 3택1 생성·적용 (4.5) | `run/rewards.ts`: `genRewards` · `run/run.ts`: `chooseReward` |
 | 육성: 스킬 보유풀/활성선택/강화티어 (4.2/4.6) | `PartyMemberState.ownedSkillIds`/`activeSkillIds` · `Skill.nextTierId`(데이터 티어) · `run/run.ts`: `setActiveSkill`·`chooseReward`(강화=id교체/학습=풀추가) · `combat/state.ts` makeUnit가 활성 4 사용 |
 | 전용기/범용기 + learnset (4.6) | `Skill.exclusiveTo`(전용기 소유자, 없으면 범용기 `u_*`) · `Character.skillIds`=learnset(포켓몬식, 학습 가능 여부) · 범용기는 여러 learnset 공유(예 `u_guard`=kim·shin·cho) · 게이팅=`run/rewards.ts` genRewards가 learnset에서 추첨 |
+| 상점·인카운터 + 골드 (7.2) | `RunState.gold`(전투승리/인카운터 획득) · 상점=`generateShop`+`buyShopOffer`(강화권/범용기/회복, 골드)·`leaveShop` · 인카운터=`data/events.ts` 이벤트 추첨+`chooseEncounterOption`(확정/도박, 생존보장) · 웹: runRender `shopScreen`/`encounterScreen` |
 | 적 구성(노드별, 데이터) | `data/encounters.ts`: `NODE_ROSTERS` (run.ts가 키로 조회) |
 | 결정론 휴리스틱 AI | `ai/policy.ts`: `chooseAction` |
 
