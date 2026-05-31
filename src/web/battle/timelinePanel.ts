@@ -74,6 +74,7 @@ export function createTimelinePanel(): TimelinePanel {
       root.classList.add("docking");
       const h2 = root.querySelector("h2"); // 제목을 레일 라벨로 미리 정착 → dock 중 긴 제목이 좁은 폭에서 wrap(높이 출렁임)되는 것 방지
       if (h2) h2.textContent = "서열";
+      root.querySelector(".ri-skip")?.remove(); // "클릭하면 건너뛰기"는 도킹 시작 전에 제거(레일로 돌아가는 동안 남지 않게)
       // Invert + Play: 각 행을 중앙 위치로 되돌렸다가 레일로 슬라이드
       const moved: HTMLElement[] = [];
       for (const r of rolls) {
