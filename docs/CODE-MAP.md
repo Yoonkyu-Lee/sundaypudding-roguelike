@@ -78,14 +78,13 @@ src/core/
 | `src/cli/play.ts` | cli | 대화형/`--demo` 터미널 드라이버 | (엔트리) |
 | `src/cli/ascii.ts` | cli | ASCII 보드 렌더(뷰 — core 아님) | `renderAscii` |
 | `src/web/main.ts` | web | 웹 엔트리·**런 컨트롤러**(맵↔전투↔보상↔결과 분기) | (엔트리) |
-| `src/web/render.ts` | web | **전투 렌더 오케스트레이터**(파사드) — 3열 레이아웃(타임라인 좌│전장+행동│로그 우)·셀 타겟팅 컨텍스트·SVG 화살표 와이어링. 세부는 `battle/*`. avatarHtml/Ui/Handlers/formatEvent 재노출 | `renderApp` · `avatarHtml` |
+| `src/web/render.ts` | web | **전투 렌더** — 영속 셸(svg·header·battlelayout) 1회 생성 후 **존 갱신**(.battlemain/.battleside). **.battleleft는 TimelinePanel이 소유**(통짜 재렌더서 분리). 셀 타겟팅·SVG 화살표. renderApp(…, panel) | `renderApp` · `avatarHtml` |
 | `src/web/battle/shared.ts` | web | 공용 소도구(esc·r1·ck·avatarHtml) + UI 타입(Ui·Handlers·TgtCtx) | — |
 | `src/web/battle/unitCard.ts` | web | 그리드 캐릭터 카드(아바타·쉴드바(체력바 위 좌측정렬)·HP바·HP·상태칩) | `unitCard` |
 | `src/web/battle/status.ts` | web | 상태이상 칩 + 펼침 팝오버(거동설명·스택·지속·다음변화·**출처**, 호버/포커스) | `statusChips` · `describeStatus` |
 | `src/web/battle/skillDesc.ts` | web | 스킬 데이터→정돈 설명(쿨·명중·피해/사정권·AoE 규칙/특징 칩) | `skillCardBody` · `skillInline` · `areaRule` |
 | `src/web/battle/actions.ts` | web | 행동 패널(균일 스킬 카드 4개 / 타겟팅 프롬프트) | `actionPanel` |
-| `src/web/battle/timeline.ts` | web | 행동 서열 타임라인(좌측 세로, 완료/현재/끼어들기 예고) | `turnBar` |
-| `src/web/battle/roundIntro.ts` | web | 라운드 시작 SPD 주사위 연출(굴림→±speedDown→최종→서열 정렬, 클릭 스킵). `roundStart` 이벤트 재생(8.5) | `playRoundIntro` |
+| `src/web/battle/timelinePanel.ts` | web | **행동서열 패널(영속·모드)** — `rolling`(중앙 확장 SPD 주사위→±→서열) → `dock()`(같은 행 FLIP 슬라이드로 좌측 레일) → `live`(전투 타임라인: 완료✓/현재▶/끼어들기). roundIntro+timeline 통합. `.battleleft`에 영속 마운트 | `createTimelinePanel` · `RollView` |
 | `src/web/battle/{events,arrow}.ts` | web | 이벤트→로그 한 줄 / 캐스터→타겟 눈금 화살표 | `formatEvent` · `drawArrow` |
 | `src/web/runRender.ts` | web | **맵/보상/결과** 화면 렌더 + 헥스 노드 | `renderRunScreen` |
 | `src/web/style.css` | web | 다크 테마 스타일 | — |
@@ -96,7 +95,7 @@ src/core/
 | 게임 기능 (GAME-DESIGN 참조) | 모듈 · 함수 |
 |---|---|
 | 라운드/SPD 주사위 서열 (2.2) | `combat/turnOrder.ts`: `startRound`/`advance` (타임라인 `roundOrder`+`cursor`) |
-| SPD 주사위 분해 노출(연출용) (2.2) | `roundStart` 이벤트 `rolls: SpeedRoll[]`(roll·speedDown·final) → 웹 `roundIntro.ts` |
+| SPD 주사위 분해 노출(연출용) (2.2) | `roundStart` 이벤트 `rolls: SpeedRoll[]`(roll·speedDown·final) → 웹 `timelinePanel.ts`(rolling 모드) |
 | 정규 턴 시작·종료(쿨타임↓·DoT·지속턴↓) | `combat/turnOrder.ts`: `onNormalTurnStart`/`onNormalTurnEnd` |
 | 합법 행동 열거·사정권/쿨다운/빙결 (8.2/2.10) | `combat/targeting.ts`: `getLegalActions`/`validTargets` · `util.ts`: `isFrozen` |
 | 명중 판정 (2.7) | `combat/targeting.ts`: `computeHitChance` · `combat/skills.ts`: `resolveSkill` |
