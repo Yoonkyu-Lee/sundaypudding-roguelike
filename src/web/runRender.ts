@@ -9,6 +9,9 @@ export interface RunHandlers {
   onReward: (id: string) => void;
   onRestart: () => void;
   onToggleSkill: (charId: string, skillId: string) => void; // 로드아웃 활성 토글
+  onBuy: (offerId: string) => void; // 상점 구매
+  onLeaveShop: () => void; // 상점 나가기
+  onEncounterChoice: (choiceId: string) => void; // 인카운터 선택
 }
 
 const TYPE_ICON: Record<NodeType, string> = {
@@ -48,7 +51,28 @@ function partyPanel(view: RunView): string {
       </div>`;
     })
     .join("");
-  return `<div class="party"><h3>파티 — 활성 스킬(전투 전 선택)</h3>${rows}</div>`;
+  return `<div class="party"><h3>파티 <span class="goldtag">💰 ${view.gold}G</span></h3>${rows}</div>`;
+}
+
+function shopScreen(view: RunView): string {
+  const items = (view.shop ?? [])
+    .map((o) => {
+      const afford = view.gold >= o.cost;
+      return `<button class="shopitem${afford ? "" : " broke"}" ${afford ? `data-buy="${o.id}"` : "disabled"}>
+        <span class="shoplabel">${esc(o.label)}</span><span class="shopcost">${o.cost}G</span>
+      </button>`;
+    })
+    .join("");
+  return `<div class="shop"><h2>🛒 상점 <span class="goldtag">보유 💰 ${view.gold}G</span></h2>
+    <div class="shopitems">${items || "<div class='hint'>살 수 있는 게 없다.</div>"}</div>
+    <button class="act" id="leaveshop">나가기 →</button></div>`;
+}
+
+function encounterScreen(view: RunView): string {
+  const ev = view.encounter;
+  if (!ev) return "";
+  const choices = ev.choices.map((c) => `<button class="enchoice" data-choice="${c.id}">${esc(c.label)}</button>`).join("");
+  return `<div class="encounter"><h2>❓ ${esc(ev.title)}</h2><p class="enctext">${esc(ev.text)}</p><div class="encchoices">${choices}</div></div>`;
 }
 
 function logPanel(view: RunView): string {
@@ -105,6 +129,8 @@ export function renderRunScreen(app: HTMLElement, view: RunView, h: RunHandlers)
   let body = "";
   if (view.phase === "won" || view.phase === "lost") body = endScreen(view);
   else if (view.phase === "reward") body = rewardScreen(view, h);
+  else if (view.phase === "shop") body = shopScreen(view);
+  else if (view.phase === "encounter") body = encounterScreen(view);
   else body = mapScreen(view, h);
 
   app.innerHTML = `
@@ -126,6 +152,13 @@ export function renderRunScreen(app: HTMLElement, view: RunView, h: RunHandlers)
   );
   app.querySelectorAll<HTMLButtonElement>(".lskill[data-lskill]").forEach((b) =>
     b.addEventListener("click", () => h.onToggleSkill(b.dataset.char!, b.dataset.lskill!)),
+  );
+  app.querySelectorAll<HTMLButtonElement>("[data-buy]").forEach((b) =>
+    b.addEventListener("click", () => h.onBuy(b.dataset.buy!)),
+  );
+  app.querySelector("#leaveshop")?.addEventListener("click", () => h.onLeaveShop());
+  app.querySelectorAll<HTMLButtonElement>("[data-choice]").forEach((b) =>
+    b.addEventListener("click", () => h.onEncounterChoice(b.dataset.choice!)),
   );
   app.querySelector("#restart")?.addEventListener("click", () => h.onRestart());
 }
