@@ -8,6 +8,7 @@ export interface RunHandlers {
   onNode: (id: string) => void;
   onReward: (id: string) => void;
   onRestart: () => void;
+  onToggleSkill: (charId: string, skillId: string) => void; // 로드아웃 활성 토글
 }
 
 const TYPE_ICON: Record<NodeType, string> = {
@@ -34,14 +35,20 @@ function partyPanel(view: RunView): string {
     .map((m) => {
       const pct = Math.max(0, (m.hp / m.maxHp) * 100);
       const cls = m.alive ? "" : " dead";
+      const chips = m.skills
+        .map((s) => `<button class="lskill${s.active ? " on" : ""}" data-char="${m.charId}" data-lskill="${s.id}" title="${esc(s.name)}${s.canUpgrade ? " · 강화 가능" : ""}">${esc(s.name)}${s.tier > 1 ? `<sup>${s.tier}</sup>` : ""}</button>`)
+        .join("");
       return `<div class="pmember${cls}">
-        <span class="pname">${avatarHtml(m.avatar, "avt sm")}${esc(m.name)}</span>
-        <div class="phpbar"><div class="php" style="width:${pct}%"></div></div>
-        <span class="phptext">${m.hp}/${m.maxHp}</span>
+        <div class="prow">
+          <span class="pname">${avatarHtml(m.avatar, "avt sm")}${esc(m.name)}</span>
+          <div class="phpbar"><div class="php" style="width:${pct}%"></div></div>
+          <span class="phptext">${m.hp}/${m.maxHp}</span>
+        </div>
+        <div class="lskills"><span class="lcount">활성 ${m.activeCount}/4</span>${chips}</div>
       </div>`;
     })
     .join("");
-  return `<div class="party"><h3>파티</h3>${rows}</div>`;
+  return `<div class="party"><h3>파티 — 활성 스킬(전투 전 선택)</h3>${rows}</div>`;
 }
 
 function logPanel(view: RunView): string {
@@ -116,6 +123,9 @@ export function renderRunScreen(app: HTMLElement, view: RunView, h: RunHandlers)
   );
   app.querySelectorAll<HTMLButtonElement>("[data-reward]").forEach((b) =>
     b.addEventListener("click", () => h.onReward(b.dataset.reward!)),
+  );
+  app.querySelectorAll<HTMLButtonElement>(".lskill[data-lskill]").forEach((b) =>
+    b.addEventListener("click", () => h.onToggleSkill(b.dataset.char!, b.dataset.lskill!)),
   );
   app.querySelector("#restart")?.addEventListener("click", () => h.onRestart());
 }

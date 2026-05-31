@@ -2,7 +2,7 @@
 // 전투는 render.ts(renderApp) 재사용, 맵/보상/결과는 runRender.ts. (7장)
 import { step } from "../core/engine.ts";
 import { chooseAction } from "../core/ai.ts";
-import { createRun, enterNode, resolveBattleEnd, chooseReward, getRunView, type RunState } from "../core/run.ts";
+import { createRun, enterNode, resolveBattleEnd, chooseReward, setActiveSkill, getRunView, type RunState } from "../core/run.ts";
 import type { Action } from "../core/types.ts";
 import { SKILLS } from "../data/skills.ts";
 import { CHARACTERS } from "../data/characters.ts";
@@ -169,6 +169,11 @@ const runHandlers: RunHandlers = {
   onRestart() {
     seed += 1;
     newRun(seed);
+  },
+  onToggleSkill(charId, skillId) {
+    if (busy || run.phase !== "map") return;
+    setActiveSkill(run, charId, skillId);
+    render();
   },
 };
 

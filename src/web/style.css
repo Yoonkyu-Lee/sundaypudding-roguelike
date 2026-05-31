@@ -197,9 +197,17 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .runside { display: flex; flex-direction: column; gap: 12px; }
 .party { background: var(--panel); border-radius: 10px; padding: 10px 12px; }
 .party h3 { margin: 0 0 8px; font-size: 13px; color: var(--dim); }
-.pmember { display: grid; grid-template-columns: 48px 1fr auto; gap: 6px; align-items: center; margin-bottom: 6px; font-size: 12px; }
+.pmember { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; font-size: 12px; }
 .pmember.dead { opacity: .4; text-decoration: line-through; }
+.prow { display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items: center; }
 .pname { font-weight: 600; }
+/* 로드아웃: 활성 스킬 토글 칩 (켜짐=초록) */
+.lskills { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.lcount { font-size: 10px; color: var(--dim); margin-right: 2px; }
+.lskill { font-size: 10px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel2); color: var(--dim); cursor: pointer; }
+.lskill.on { background: #243528; border-color: var(--green); color: #cdeed8; }
+.lskill:hover { border-color: var(--ally); }
+.lskill sup { color: var(--accent); font-size: 8px; }
 .phpbar { height: 8px; background: #11141b; border-radius: 4px; overflow: hidden; }
 .php { height: 100%; background: var(--hp); transition: width .35s ease; }
 .phptext { color: var(--dim); }
