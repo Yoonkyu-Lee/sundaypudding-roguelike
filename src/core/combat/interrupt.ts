@@ -24,7 +24,7 @@ export function predictInterruptSubjects(state: GameState, actor: Unit, skill: S
 export function insertInterrupts(state: GameState, subjects: string[]): void {
   // 역순 삽입으로 subjects 순서가 보존되도록 (모두 cursor+1에 꽂음)
   for (let i = subjects.length - 1; i >= 0; i--) {
-    state.roundOrder.splice(state.cursor + 1, 0, { uid: subjects[i], kind: "interrupt", spd: 0 });
+    state.roundOrder.splice(state.cursor + 1, 0, { uid: subjects[i], kind: "interrupt", speed: 0 });
     state.log.push({ t: "interrupt", uid: subjects[i] });
   }
 }

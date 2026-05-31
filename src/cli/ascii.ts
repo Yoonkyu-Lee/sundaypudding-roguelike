@@ -44,7 +44,7 @@ export function renderAscii(state: GameState): string {
       const nm = u ? u.name : e.uid;
       const cur = i === obs.cursorIndex ? "▶" : "";
       const done = i < obs.cursorIndex ? "✓" : "";
-      const label = e.kind === "interrupt" ? `⚡${nm}` : `${nm}(${e.spd})`;
+      const label = e.kind === "interrupt" ? `⚡${nm}` : `${nm}(${e.speed})`;
       return `${cur}${done}${label}`;
     })
     .join(" ");

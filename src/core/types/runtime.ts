@@ -25,12 +25,12 @@ export interface Unit {
   hpMax: number;
   hp: number;
   shield: number;
-  spdMin: number;
-  spdMax: number;
-  dex: number;
+  speedMin: number;
+  speedMax: number;
+  evasion: number;
   accuracy: number;
-  critPct: number;
-  critMult: number;
+  critChance: number;
+  critMultiplier: number;
   activeSkillIds: string[]; // ≤4 (2.3)
   cooldowns: Record<string, number>; // skillId → 잔여 쿨타임
   statuses: StatusInstance[]; // 상태이상 원장 (3.1)
@@ -56,17 +56,17 @@ export type TurnKind = "normal" | "interrupt";
 export interface QueueEntry {
   uid: string;
   kind: TurnKind; // interrupt = 끼어들기(차감 무시) (2.11)
-  spd: number; // 이번 라운드 굴린 SPD (normal만 의미)
+  speed: number; // 이번 라운드 굴린 SPD (normal만 의미)
 }
 
 /** 라운드 SPD 주사위 분해 — 연출용(주사위→±→최종). 결정에 필요한 정보 노출(8.2/2.2). */
-export interface SpdRoll {
+export interface SpeedRoll {
   uid: string;
-  spdMin: number;
-  spdMax: number;
-  roll: number; // spdMin~spdMax 주사위 결과
-  spdDown: number; // 마비/둔화 합 (3.5)
-  spd: number; // 최종 = max(1, roll − spdDown)
+  speedMin: number;
+  speedMax: number;
+  roll: number; // speedMin~speedMax 주사위 결과
+  speedDown: number; // 마비/둔화 합 (3.5)
+  speed: number; // 최종 = max(1, roll − speedDown)
 }
 
 export type Action =
@@ -78,7 +78,7 @@ export type Phase = "inProgress" | "allyWin" | "enemyWin";
 // ── 이벤트 로그 (8.3, 8.5: 애니메이션 구동원) ──────────────────────────────
 
 export type GameEvent =
-  | { t: "roundStart"; round: number; order: QueueEntry[]; rolls: SpdRoll[] }
+  | { t: "roundStart"; round: number; order: QueueEntry[]; rolls: SpeedRoll[] }
   | { t: "turnStart"; uid: string; kind: TurnKind }
   | { t: "skillUsed"; uid: string; skillId: string; targetUid?: string }
   | { t: "miss"; uid: string; targetUid: string; chance: number }

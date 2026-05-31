@@ -50,15 +50,15 @@ export interface StatusDef {
   /** 주는 데미지 합연산 보정(공위증=+, 약화=-). (3.6/3.7) */
   dmgDealtFlat?: number;
   /** 치명타 확률 가산(%) */
-  critPctAdd?: number;
+  critChanceAdd?: number;
   /** 치명타 배수 가산 */
-  critMultAdd?: number;
+  critMultiplierAdd?: number;
   /** 무적: 모든 피해 0 (백병원 등) */
   invincible?: boolean;
   /** 도발: 보유 유닛(아군)에게 적 공격이 집중됨 (AI가 참조) */
   taunt?: boolean;
   /** SPD 감소(마비/둔화): 라운드 서열에서 뒤로 밀림 (3.5) */
-  spdDown?: number;
+  speedDown?: number;
 }
 
 // ── 스킬 (2.3~2.10) ────────────────────────────────────────────────────────
@@ -130,11 +130,11 @@ export interface Character {
   /** 프로필(아바타). 이모지 또는 이미지 경로. 저작권 안전한 플레이스홀더 → 후일 교체 */
   avatar?: string;
   hp: number;
-  spdMin: number; // SPD 범위 (2.2)
-  spdMax: number;
-  dex: number; // 회피 (2.6)
-  accuracy: number; // 기본 0 (2.7)
-  critPct: number; // 기본 10 (2.6)
-  critMult: number; // 기본 1.5 (2.6)
+  speedMin: number; // SPD 범위 (2.2)
+  speedMax: number;
+  evasion: number; // 회피 — 명중에서 차감 (2.6)
+  accuracy: number; // 명중 가산, 기본 0 (2.7)
+  critChance: number; // 치명 확률 %, 기본 10 (2.6)
+  critMultiplier: number; // 치명 배수, 기본 1.5 (2.6)
   skillIds: string[]; // 보유 풀. 슬라이스에선 앞 4개를 활성으로 사용
 }

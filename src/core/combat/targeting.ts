@@ -71,7 +71,7 @@ export function areaTargets(state: GameState, actor: Unit, skill: Skill, anchor:
 
 export function computeHitChance(actor: Unit, skill: Skill, target: Unit): number {
   if (skill.alwaysHit || skill.target !== "enemy") return 100;
-  return clamp(Math.round(actor.accuracy + skill.accuracy - target.dex), 0, 100);
+  return clamp(Math.round(actor.accuracy + skill.accuracy - target.evasion), 0, 100);
 }
 
 export function getLegalActions(state: GameState): LegalAction[] {

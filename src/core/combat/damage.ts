@@ -8,7 +8,7 @@ import { getFormationBonus } from "./formation.ts";
 export function computeDamage(actor: Unit, base: number, crit: boolean): number {
   let dmg = base + statusNumSum(actor, "dmgDealtFlat"); // 공위증(+)/약화(-) 합연산
   if (hasStatus(actor, "frost")) dmg *= STATUS_DEFS["frost"].damageDealtMult ?? 1; // 곱연산(전역)
-  if (crit) dmg *= actor.critMult + statusNumSum(actor, "critMultAdd");
+  if (crit) dmg *= actor.critMultiplier + statusNumSum(actor, "critMultiplierAdd");
   return Math.max(0, Math.round(dmg));
 }
 

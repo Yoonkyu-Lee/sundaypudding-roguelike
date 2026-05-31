@@ -14,7 +14,7 @@ export function turnBar(obs: Observation, state: GameState, ghostNames: string[]
     const cls = ["trow", e.kind === "interrupt" ? "interrupt" : "", cur ? "cur" : "", done ? "done" : "", dead ? "dead" : ""]
       .join(" ").replace(/\s+/g, " ").trim();
     const mark = e.kind === "interrupt" ? "⚡" : done && !dead ? "✓" : cur ? "▶" : "";
-    const spd = e.kind === "interrupt" ? "" : `<em>${e.spd}</em>`;
+    const spd = e.kind === "interrupt" ? "" : `<em>${e.speed}</em>`;
     rows.push(`<div class="${cls}"><span class="tmark">${mark}</span><span class="tname">${esc(nm)}</span>${spd}</div>`);
     if (cur) {
       for (const name of ghostNames) {

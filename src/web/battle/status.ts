@@ -19,11 +19,11 @@ export function describeStatus(def: StatusDef | undefined): string {
   if (def.undying) p.push("HP 0 이하로 안 죽음 (1턴 생존)");
   if (def.grantsInterrupt) p.push("정규 턴 행동 시 끼어들기 발생");
   if (def.dmgDealtFlat !== undefined) p.push(`주는 피해 ${def.dmgDealtFlat > 0 ? "+" : ""}${def.dmgDealtFlat} (합연산)`);
-  if (def.critPctAdd) p.push(`치명 확률 +${def.critPctAdd}%`);
-  if (def.critMultAdd) p.push(`치명 배수 +${def.critMultAdd}`);
+  if (def.critChanceAdd) p.push(`치명 확률 +${def.critChanceAdd}%`);
+  if (def.critMultiplierAdd) p.push(`치명 배수 +${def.critMultiplierAdd}`);
   if (def.invincible) p.push("모든 피해 0");
   if (def.taunt) p.push("적 공격이 이 유닛에 집중");
-  if (def.spdDown) p.push(`SPD -${def.spdDown} → 서열 밀림`);
+  if (def.speedDown) p.push(`SPD -${def.speedDown} → 서열 밀림`);
   return p.join(" · ") || "특수 효과";
 }
 

@@ -44,8 +44,8 @@ test("명중 공식: (명중률 + 스킬명중) − DEX, 클램프 (2.7)", () =>
   const state = createBattle(42, DEMO_ENCOUNTER);
   const beef = state.units.find((u) => u.name === "비프")!;
   const slime = state.units.find((u) => u.side === "enemy")!;
-  // 강타 acc 90, 비프 acc 0, 슬라임 dex 6 → 84
-  const expected = 0 + SKILLS["gangta"].accuracy - slime.dex;
+  // 강타 acc 90, 비프 acc 0, 슬라임 evasion 6 → 84
+  const expected = 0 + SKILLS["gangta"].accuracy - slime.evasion;
   assert.equal(computeHitChance(beef, SKILLS["gangta"], slime), expected);
 });
 
@@ -56,9 +56,9 @@ test("합법 행동: 시작 시 빈 배열이 아니고, 쿨다운/사정권을 
   // 첫 행동 유닛이 적이든 아군이든, 최소 1개 합법 행동(또는 스킵)
 });
 
-// 명중 확률 100%면 rng.chance(100)는 항상 true → 결정론적 명중 보장 (dex 매우 낮게)
+// 명중 확률 100%면 rng.chance(100)는 항상 true → 결정론적 명중 보장 (evasion 매우 낮게)
 function forceTurn(state: GameState, uid: string): void {
-  const entry = { uid, kind: "normal" as const, spd: 5 };
+  const entry = { uid, kind: "normal" as const, speed: 5 };
   state.roundOrder = [entry];
   state.cursor = 0;
   state.current = entry;
@@ -68,7 +68,7 @@ test("끼어들기: 연격 사용 시 서열에 interrupt 삽입, 쿨타임 미�
   const state = createBattle(42, DEMO_ENCOUNTER);
   const beef = state.units.find((u) => u.name === "비프")!;
   const slime = state.units.find((u) => u.side === "enemy" && u.pos.col <= 1)!;
-  slime.dex = -100; // 명중 100% 보장
+  slime.evasion = -100; // 명중 100% 보장
   beef.cooldowns = {};
   forceTurn(state, beef.uid);
 
@@ -89,7 +89,7 @@ test("끼어들기 출처 일반화: 버프(신속)가 있으면 무관한 스�
   beef.statuses.push({ defId: "haste", stacks: 1, duration: 2, sourceUid: "x" }); // 신속 버프
   beef.cooldowns = {};
   const slime = state.units.find((u) => u.side === "enemy" && u.pos.col <= 1)!;
-  slime.dex = -100;
+  slime.evasion = -100;
   forceTurn(state, beef.uid);
   // 강타는 grantsInterrupt 없음 → 그래도 신속 버프로 끼어들기 발생
   step(state, { type: "skill", skillId: "gangta", targetUid: slime.uid });
@@ -129,7 +129,7 @@ test("동적 재배치: 밀치기가 대상을 뒤 열로 이동 (6.4)", () => {
   const state = createBattle(42, DEMO_ENCOUNTER);
   const beef = state.units.find((u) => u.name === "비프")!;
   const slime = state.units.find((u) => u.side === "enemy" && u.pos.col === 0)!;
-  slime.dex = -100;
+  slime.evasion = -100;
   beef.cooldowns = {};
   const col0 = slime.pos.col;
   forceTurn(state, beef.uid);
@@ -185,7 +185,7 @@ test("공포: 쉴드 잠식 가속 — 1피해가 쉴드를 (스택)만큼 깎�
   forceTurn(state, state.units.find((u) => u.name === "비프")!.uid);
   const beef = state.units.find((u) => u.name === "비프")!;
   beef.cooldowns = {};
-  t.dex = -100; // 명중 보장
+  t.evasion = -100; // 명중 보장
   const hp0 = t.hp;
   step(state, { type: "skill", skillId: "gangta", targetUid: t.uid }); // 강타 12(+포메이션) 비크리 가정 어려우니 쉴드만 확인
   // 공포3 → 피해가 쉴드를 3배로 깎음. 쉴드 12는 피해 4만 흡수하고 소진. HP는 나머지로 깎임.
@@ -199,7 +199,7 @@ test("관통: 공격자 보유 시 쉴드 무시하고 HP 직접 (3.6)", () => {
   beef.cooldowns = {};
   const t = state.units.find((u) => u.side === "enemy")!;
   t.shield = 50;
-  t.dex = -100;
+  t.evasion = -100;
   const hp0 = t.hp;
   forceTurn(state, beef.uid);
   step(state, { type: "skill", skillId: "gangta", targetUid: t.uid });
@@ -214,7 +214,7 @@ test("불사: HP 0 이하여도 1턴 생존, 만료 후 사망 가능 (3.6)", ()
   beef.statuses.push({ defId: "undying", stacks: 1, duration: 1, sourceUid: "x" });
   const enemy = state.units.find((u) => u.side === "enemy")!;
   enemy.cooldowns = {};
-  beef.dex = -100;
+  beef.evasion = -100;
   forceTurn(state, enemy.uid);
   step(state, { type: "skill", skillId: "jump", targetUid: beef.uid }); // 큰 피해
   assert.equal(beef.alive, true, "불사로 생존");
@@ -262,7 +262,7 @@ test("면적 row: 같은 행의 적 다수를 한 번에 타격", () => {
   const e0 = state.units.find((u) => u.side === "enemy" && u.pos.row === 1 && u.pos.col === 0)!;
   const e2 = state.units.find((u) => u.side === "enemy" && u.pos.row === 1 && u.pos.col === 2)!;
   const e3 = state.units.find((u) => u.side === "enemy" && u.pos.row === 3)!;
-  for (const e of [e0, e2, e3]) e.dex = -100;
+  for (const e of [e0, e2, e3]) e.evasion = -100;
   const hp = (u: typeof e0) => u.hp;
   const [h0, h2, h3] = [hp(e0), hp(e2), hp(e3)];
   forceTurn(state, cho.uid);
@@ -283,7 +283,7 @@ test("면적 free: 자유 선택한 칸들의 적을 타격, 그 외는 무사",
   const e0 = state.units.find((u) => u.side === "enemy" && u.pos.row === 0)!;
   const e1 = state.units.find((u) => u.side === "enemy" && u.pos.row === 2)!;
   const e2 = state.units.find((u) => u.side === "enemy" && u.pos.row === 3)!;
-  for (const e of [e0, e1, e2]) e.dex = -100;
+  for (const e of [e0, e1, e2]) e.evasion = -100;
   const [h0, h1, h2] = [e0.hp, e1.hp, e2.hp];
   forceTurn(state, shin.uid);
   // shin_ult = free. cells로 0,0 과 2,3 선택
@@ -303,7 +303,7 @@ test("빈 칸 앵커: 적 없는 칸을 앵커로 한 십자/행도 주변 유�
   cho.cooldowns = {};
   const e0 = state.units.find((u) => u.side === "enemy" && u.pos.col === 0)!;
   const e3 = state.units.find((u) => u.side === "enemy" && u.pos.col === 3)!;
-  e0.dex = -100; e3.dex = -100;
+  e0.evasion = -100; e3.evasion = -100;
   const [h0, h3] = [e0.hp, e3.hp];
   forceTurn(state, cho.uid);
   // cho_police = row. 빈 칸 (row2,col1) 을 앵커로 → 2행 전체
@@ -335,14 +335,14 @@ test("끼어들기 버그수정: targetCell만 줘도(웹 경로) 대상-끼어�
   assert.equal(state.current?.kind, "interrupt");
 });
 
-test("라운드 SPD 분해: roundStart에 rolls 노출, spd=max(1,roll−spdDown), roll∈[min,max] (2.2)", () => {
+test("라운드 SPD 분해: roundStart에 rolls 노출, speed=max(1,roll−speedDown), roll∈[min,max] (2.2)", () => {
   const state = createBattle(42, DEMO_ENCOUNTER);
   const rs = state.log.find((e) => e.t === "roundStart");
   assert.ok(rs && rs.t === "roundStart" && rs.rolls.length > 0, "rolls 노출");
   if (rs && rs.t === "roundStart") {
     for (const r of rs.rolls) {
-      assert.equal(r.spd, Math.max(1, r.roll - r.spdDown), "최종 spd 공식");
-      assert.ok(r.roll >= r.spdMin && r.roll <= r.spdMax, "roll 범위 내");
+      assert.equal(r.speed, Math.max(1, r.roll - r.speedDown), "최종 speed 공식");
+      assert.ok(r.roll >= r.speedMin && r.roll <= r.speedMax, "roll 범위 내");
     }
     assert.equal(rs.rolls.length, rs.order.length, "rolls와 order 동수");
   }

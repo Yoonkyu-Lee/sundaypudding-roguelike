@@ -29,8 +29,8 @@ export function totalStacks(unit: Unit, defId: string): number {
   return unit.statuses.filter((s) => s.defId === defId).reduce((sum, s) => sum + s.stacks, 0);
 }
 
-/** 상태이상 정의의 수치 필드를 스택 가중 합산 (dmgDealtFlat/critPctAdd/critMultAdd/spdDown) */
-export function statusNumSum(unit: Unit, key: "dmgDealtFlat" | "critPctAdd" | "critMultAdd" | "spdDown"): number {
+/** 상태이상 정의의 수치 필드를 스택 가중 합산 (dmgDealtFlat/critChanceAdd/critMultiplierAdd/speedDown) */
+export function statusNumSum(unit: Unit, key: "dmgDealtFlat" | "critChanceAdd" | "critMultiplierAdd" | "speedDown"): number {
   let sum = 0;
   for (const s of unit.statuses) {
     const v = STATUS_DEFS[s.defId][key];
@@ -45,7 +45,7 @@ export function statusFlag(unit: Unit, key: "invincible" | "taunt"): boolean {
 }
 
 export function critPctOf(unit: Unit): number {
-  return unit.critPct + statusNumSum(unit, "critPctAdd");
+  return unit.critChance + statusNumSum(unit, "critChanceAdd");
 }
 
 /** 빙결 등 행동 봉쇄 상태 */

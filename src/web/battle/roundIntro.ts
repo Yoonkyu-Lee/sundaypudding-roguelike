@@ -1,9 +1,9 @@
-// 라운드 시작 연출 — 각 유닛이 주사위를 굴리고(spdMin~spdMax) → ±spdDown → 최종 SPD → 서열 정렬 (2.2).
-// 8.5 원칙: roundStart 이벤트(SpdRoll[])의 재생. 결정값은 엔진에서 옴, 여기선 연출만. 클릭 스킵.
-import type { SpdRoll } from "../../core/types.ts";
+// 라운드 시작 연출 — 각 유닛이 주사위를 굴리고(speedMin~speedMax) → ±speedDown → 최종 SPD → 서열 정렬 (2.2).
+// 8.5 원칙: roundStart 이벤트(SpeedRoll[])의 재생. 결정값은 엔진에서 옴, 여기선 연출만. 클릭 스킵.
+import type { SpeedRoll } from "../../core/types.ts";
 import { avatarHtml, esc } from "./shared.ts";
 
-export interface RollView extends SpdRoll {
+export interface RollView extends SpeedRoll {
   name: string;
   avatar?: string;
   side: "ally" | "enemy";
@@ -17,8 +17,8 @@ export function playRoundIntro(app: HTMLElement, round: number, rolls: RollView[
         <span class="ri-rank"></span>
         ${avatarHtml(r.avatar, "avt")}
         <span class="ri-name ${r.side}">${esc(r.name)}</span>
-        <span class="ri-die" data-min="${r.spdMin}" data-max="${r.spdMax}">?</span>
-        <span class="ri-adj">${r.spdDown > 0 ? `−${r.spdDown}` : ""}</span>
+        <span class="ri-die" data-min="${r.speedMin}" data-max="${r.speedMax}">?</span>
+        <span class="ri-adj">${r.speedDown > 0 ? `−${r.speedDown}` : ""}</span>
         <span class="ri-spd"></span>
       </div>`,
     )
@@ -48,20 +48,20 @@ export function playRoundIntro(app: HTMLElement, round: number, rolls: RollView[
   // Phase A: 주사위 회전 (min→max 순환)
   for (const r of rolls) {
     const die = rowOf(r.uid).querySelector<HTMLElement>(".ri-die")!;
-    let v = r.spdMin;
+    let v = r.speedMin;
     spins.push(setInterval(() => {
       die.textContent = String(v);
-      v = v >= r.spdMax ? r.spdMin : v + 1;
+      v = v >= r.speedMax ? r.speedMin : v + 1;
     }, 60) as unknown as number);
   }
 
-  // Phase B: 차례로 멈춰 roll 확정 + ±spdDown + 최종 spd
+  // Phase B: 차례로 멈춰 roll 확정 + ±speedDown + 최종 speed
   rolls.forEach((r, i) => {
     timers.push(setTimeout(() => {
       clearInterval(spins[i]);
       const row = rowOf(r.uid);
       row.querySelector<HTMLElement>(".ri-die")!.textContent = String(r.roll);
-      row.querySelector<HTMLElement>(".ri-spd")!.textContent = `= ${r.spd}`;
+      row.querySelector<HTMLElement>(".ri-spd")!.textContent = `= ${r.speed}`;
       row.classList.add("ri-settled");
     }, 650 + i * 110) as unknown as number);
   });

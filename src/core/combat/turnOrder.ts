@@ -1,6 +1,6 @@
 // 턴 서열 (2.2 라운드제) — SPD 주사위 서열, 커서 진행, 정규 턴 시작/종료 주기 효과.
 // 턴서열은 교체 가능한 모듈(0.1): 라운드제 기본, 스타레일式 연속 타임라인은 별도 모듈로 후속.
-import type { GameState, QueueEntry, SpdRoll, Unit } from "../types.ts";
+import type { GameState, QueueEntry, SpeedRoll, Unit } from "../types.ts";
 import { aliveUnits, statusNumSum, unitById } from "../util.ts";
 import { tickPeriodic } from "./status.ts";
 import { checkWin } from "./winCheck.ts";
@@ -9,17 +9,17 @@ const ACTION_CONST = 10000; // 행동 서열 = ACTION_CONST / SPD (2.2)
 
 export function startRound(state: GameState): void {
   state.round++;
-  // 라운드마다 SPD 주사위 (2.2) − 마비/둔화(spdDown)로 뒤로 밀림 (3.5). 분해값을 연출용으로 포착(rng 호출 불변).
-  const rolls: SpdRoll[] = aliveUnits(state).map((u) => {
-    const roll = state.rng.int(u.spdMin, u.spdMax);
-    const spdDown = statusNumSum(u, "spdDown");
-    return { uid: u.uid, spdMin: u.spdMin, spdMax: u.spdMax, roll, spdDown, spd: Math.max(1, roll - spdDown) };
+  // 라운드마다 SPD 주사위 (2.2) − 마비/둔화(speedDown)로 뒤로 밀림 (3.5). 분해값을 연출용으로 포착(rng 호출 불변).
+  const rolls: SpeedRoll[] = aliveUnits(state).map((u) => {
+    const roll = state.rng.int(u.speedMin, u.speedMax);
+    const speedDown = statusNumSum(u, "speedDown");
+    return { uid: u.uid, speedMin: u.speedMin, speedMax: u.speedMax, roll, speedDown, speed: Math.max(1, roll - speedDown) };
   });
-  const entries: QueueEntry[] = rolls.map((r) => ({ uid: r.uid, kind: "normal" as const, spd: r.spd }));
+  const entries: QueueEntry[] = rolls.map((r) => ({ uid: r.uid, kind: "normal" as const, speed: r.speed }));
   // 행동 서열 = ACTION_CONST / SPD 오름차순 → SPD 높을수록 먼저. 동점은 uid로 결정론적 정렬.
   entries.sort((a, b) => {
-    const av = ACTION_CONST / a.spd;
-    const bv = ACTION_CONST / b.spd;
+    const av = ACTION_CONST / a.speed;
+    const bv = ACTION_CONST / b.speed;
     if (av !== bv) return av - bv;
     return a.uid < b.uid ? -1 : 1;
   });
