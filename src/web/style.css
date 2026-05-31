@@ -35,7 +35,7 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 
 /* ── 타임라인 (좌측 세로, 위→아래) ── */
 .timeline { background: var(--panel); border-radius: 10px; padding: 10px; }
-.timeline h2 { font-size: 11px; color: var(--dim); margin: 0 0 8px; letter-spacing: .08em; text-transform: uppercase; }
+.timeline h2 { font-size: 11px; color: var(--dim); margin: 0 0 8px; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .trows { display: flex; flex-direction: column; gap: 5px; }
 .trow { display: flex; align-items: center; gap: 6px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 5px 8px; font-size: 12px; }
 .trow .tmark { width: 12px; text-align: center; color: var(--dim); font-size: 11px; }

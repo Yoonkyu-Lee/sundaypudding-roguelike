@@ -72,6 +72,8 @@ export function createTimelinePanel(): TimelinePanel {
       // 레일(live)로: rolling 해제 → 콤팩트 레이아웃으로 리플로우 (행은 그대로, CSS가 주사위 숨김)
       root.classList.remove("rolling");
       root.classList.add("docking");
+      const h2 = root.querySelector("h2"); // 제목을 레일 라벨로 미리 정착 → dock 중 긴 제목이 좁은 폭에서 wrap(높이 출렁임)되는 것 방지
+      if (h2) h2.textContent = "서열";
       // Invert + Play: 각 행을 중앙 위치로 되돌렸다가 레일로 슬라이드
       const moved: HTMLElement[] = [];
       for (const r of rolls) {
