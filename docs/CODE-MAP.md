@@ -52,8 +52,8 @@ src/core/
   run/
     map.ts          헥스 타일맵 생성: hid · pickType · forwardIds · genMap (axial q,r·좌표인접=간선·프루닝)
     types.ts        런 도메인 타입(leaf): RunPhase·RewardOption·RunState·NodeStatus·RunView
-    rewards.ts      genRewards · damagingSkills (순수 생성; 적용은 run.ts)
-    run.ts          createRun · enterNode · resolveBattleEnd · chooseReward (+ node/completeNode/healParty)
+    rewards.ts      genRewards(강화/학습 3택1) · damagingSkills (순수 생성; 적용은 run.ts)
+    run.ts          createRun · enterNode · resolveBattleEnd · chooseReward · setActiveSkill(로드아웃) (+ node/completeNode/healParty)
     view.ts         getRunView (RunState → RunView)
     index.ts        ▸배럴
   ai.ts             ▸배럴(파사드): export * from ai/index
@@ -119,6 +119,7 @@ src/core/
 | 헥스 타일맵 생성·전진 인접·프루닝 (7.1) | `run/map.ts`: `genMap`/`forwardIds` |
 | 노드 진입·해소·전투생성·승패 (7장) | `run/run.ts`: `enterNode`/`resolveBattleEnd` |
 | 보상 3택1 생성·적용 (4.5) | `run/rewards.ts`: `genRewards` · `run/run.ts`: `chooseReward` |
+| 육성: 스킬 보유풀/활성선택/강화티어 (4.2/4.6) | `PartyMemberState.ownedSkillIds`/`activeSkillIds` · `Skill.nextTierId`(데이터 티어) · `run/run.ts`: `setActiveSkill`·`chooseReward`(강화=id교체/학습=풀추가) · `combat/state.ts` makeUnit가 활성 4 사용 |
 | 적 구성(노드별, 데이터) | `data/encounters.ts`: `NODE_ROSTERS` (run.ts가 키로 조회) |
 | 결정론 휴리스틱 AI | `ai/policy.ts`: `chooseAction` |
 
