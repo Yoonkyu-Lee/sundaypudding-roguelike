@@ -114,7 +114,7 @@ export interface UnitView {
   hpMax: number;
   shield: number;
   alive: boolean;
-  statuses: { id: string; icon: string; stacks: number; duration: number; nextChange: number }[];
+  statuses: { id: string; icon: string; stacks: number; duration: number; nextChange: number; sources: string[] }[];
   cooldowns: Record<string, number>;
   /** 현재 위치에서 받는 포메이션 보너스(총량보존 적용 후 실제값, 6.1). 수치 투명성(0.2) */
   formation: { attackPower: number; defensePower: number };

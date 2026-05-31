@@ -5,12 +5,15 @@ import { getFormationBonus } from "./formation.ts";
 import { STATUS_DEFS } from "../../data/statuses.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 
-function viewStatuses(u: Unit): UnitView["statuses"] {
-  const byDef = new Map<string, { stacks: number; durs: number[] }>();
+function viewStatuses(state: GameState, u: Unit): UnitView["statuses"] {
+  const nameOf = (uid: string) => state.units.find((x) => x.uid === uid)?.name ?? uid;
+  const byDef = new Map<string, { stacks: number; durs: number[]; sources: string[] }>();
   for (const s of u.statuses) {
-    const e = byDef.get(s.defId) ?? { stacks: 0, durs: [] };
+    const e = byDef.get(s.defId) ?? { stacks: 0, durs: [], sources: [] };
     e.stacks += s.stacks;
     e.durs.push(s.duration);
+    const src = nameOf(s.sourceUid); // 원인(누가 걸었나) 노출 — 관측에 모든 결정정보 (규칙5/3.1)
+    if (!e.sources.includes(src)) e.sources.push(src);
     byDef.set(s.defId, e);
   }
   const out: UnitView["statuses"] = [];
@@ -21,6 +24,7 @@ function viewStatuses(u: Unit): UnitView["statuses"] {
       stacks: e.stacks, // superscript (3.2)
       duration: Math.max(...e.durs), // subscript: 소멸까지
       nextChange: Math.min(...e.durs), // ▾: 다음 변화까지
+      sources: e.sources, // 원장 출처(3.1)
     });
   }
   return out;
@@ -37,7 +41,7 @@ function viewUnit(state: GameState, u: Unit): UnitView {
     hpMax: u.hpMax,
     shield: u.shield,
     alive: u.alive,
-    statuses: viewStatuses(u),
+    statuses: viewStatuses(state, u),
     cooldowns: { ...u.cooldowns },
     formation: {
       attackPower: getFormationBonus(state, u, "attackPower"),
