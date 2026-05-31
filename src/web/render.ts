@@ -144,10 +144,14 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
   // 매 렌더 먼저 비운다 — 시전/취소로 타겟팅이 끝나면 직전 화살표가 잔류하지 않게.
   const svg = app.querySelector(".arrows");
   if (svg) svg.innerHTML = "";
-  if (tgt.active && tgt.casterUid && ui.hoverCell) {
+  if (tgt.active && tgt.casterUid && ui.hoverCell && tgt.areaSide) {
     const hu = state.units.find(
       (u) => u.alive && u.side === tgt.areaSide && u.pos.row === ui.hoverCell!.row && u.pos.col === ui.hoverCell!.col,
     );
-    if (hu) drawArrow(app, tgt.casterUid, hu.uid);
+    // 유닛이 있으면 그 카드로, 빈 칸이면 호버 중인 앵커 칸으로 (빈 칸 타겟팅도 화살표 표시)
+    const targetEl = hu
+      ? app.querySelector<HTMLElement>(`.card[data-uid="${hu.uid}"]`)
+      : app.querySelector<HTMLElement>(`.side.${tgt.areaSide} [data-cell="${ui.hoverCell.row},${ui.hoverCell.col}"]`);
+    if (targetEl) drawArrow(app, tgt.casterUid, targetEl);
   }
 }
