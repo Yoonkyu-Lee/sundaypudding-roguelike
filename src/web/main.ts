@@ -5,8 +5,10 @@ import { chooseAction } from "../core/ai.ts";
 import { createRun, enterNode, resolveBattleEnd, chooseReward, getRunView, type RunState } from "../core/run.ts";
 import type { Action } from "../core/types.ts";
 import { SKILLS } from "../data/skills.ts";
+import { CHARACTERS } from "../data/characters.ts";
 import { renderApp, type Handlers, type Ui } from "./render.ts";
 import { renderRunScreen, type RunHandlers } from "./runRender.ts";
+import { playRoundIntro, type RollView } from "./battle/roundIntro.ts";
 
 const app = document.getElementById("app")!;
 
@@ -35,13 +37,38 @@ function endTargeting(): void {
   ui.pickedCells = [];
 }
 
+let introRound = 0; // 마지막으로 주사위 연출한 라운드 (라운드마다 1회)
+
 function render(): void {
   if (run.phase === "battle" && run.battle) {
-    renderApp(app, run.battle, ui, battleHandlers);
-    driveBattle();
+    const b = run.battle;
+    // 새 라운드 시작 시 SPD 주사위 연출을 먼저 재생, 끝나면 전투 렌더 (8.5: 이벤트 재생)
+    if (b.phase === "inProgress" && b.round !== introRound) {
+      introRound = b.round;
+      const rs = [...b.log].reverse().find((e) => e.t === "roundStart" && e.round === b.round);
+      if (rs && rs.t === "roundStart") {
+        busy = true;
+        const views: RollView[] = rs.rolls.map((r) => {
+          const u = b.units.find((x) => x.uid === r.uid)!;
+          return { ...r, name: u.name, avatar: CHARACTERS[u.charId]?.avatar, side: u.side };
+        });
+        playRoundIntro(app, b.round, views, rs.order.map((e) => e.uid), () => {
+          busy = false;
+          renderBattle();
+        });
+        return;
+      }
+    }
+    renderBattle();
   } else {
+    introRound = 0; // 전투를 떠나면 리셋 → 다음 전투는 1라운드부터 연출
     renderRunScreen(app, getRunView(run), runHandlers);
   }
+}
+
+function renderBattle(): void {
+  renderApp(app, run.battle!, ui, battleHandlers);
+  driveBattle();
 }
 
 // ── 전투 진행 ──
