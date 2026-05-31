@@ -2,6 +2,7 @@
 import type { NodeStatus, RunState, RunView } from "./types.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { SKILLS } from "../../data/skills.ts";
+import { ENCOUNTER_EVENTS } from "../../data/events.ts";
 
 export function getRunView(run: RunState): RunView {
   return {
@@ -33,6 +34,16 @@ export function getRunView(run: RunState): RunView {
       activeCount: m.activeSkillIds.length,
     })),
     rewards: run.rewards,
+    gold: run.gold,
+    shop: run.shop,
+    encounter: encounterView(run),
     log: run.log.slice(-12),
   };
+}
+
+function encounterView(run: RunState): RunView["encounter"] {
+  if (run.phase !== "encounter" || !run.encounterId) return null;
+  const ev = ENCOUNTER_EVENTS.find((e) => e.id === run.encounterId);
+  if (!ev) return null;
+  return { id: ev.id, title: ev.title, text: ev.text, choices: ev.choices.map((c) => ({ id: c.id, label: c.label })) };
 }

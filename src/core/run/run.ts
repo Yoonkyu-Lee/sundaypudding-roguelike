@@ -4,11 +4,13 @@ import { Rng } from "../rng.ts";
 import { createBattle } from "../engine.ts";
 import type { PartyMemberState, Phase, Pos } from "../types.ts";
 import { CHARACTERS } from "../../data/characters.ts";
+import { SKILLS } from "../../data/skills.ts";
 import { NODE_ROSTERS } from "../../data/encounters.ts";
+import { ENCOUNTER_EVENTS, type EncounterOutcome } from "../../data/events.ts";
 import { forwardIds, genMap } from "./map.ts";
 import type { RunNode } from "./map.ts";
-import type { RunState } from "./types.ts";
-import { damagingSkills, genRewards } from "./rewards.ts";
+import type { RunState, ShopOffer } from "./types.ts";
+import { genRewards } from "./rewards.ts";
 
 export function createRun(seed: number, roster: { charId: string; pos: Pos }[], rows = 3): RunState {
   const rng = new Rng(seed ^ 0x9e3779b9);
@@ -31,8 +33,24 @@ export function createRun(seed: number, roster: { charId: string; pos: Pos }[], 
     phase: "map",
     battle: null,
     rewards: null,
+    gold: 0,
+    shop: null,
+    encounterId: null,
     log: [`런 시작 (seed ${seed})`],
   };
+}
+
+// 보유 풀/활성에서 스킬 티어 교체 (강화 — 보상·상점·인카운터 공유) */
+function upgradeOwned(m: PartyMemberState, fromId: string, toId: string): void {
+  const swap = (a: string[]) => { const i = a.indexOf(fromId); if (i >= 0) a[i] = toId; };
+  swap(m.ownedSkillIds);
+  swap(m.activeSkillIds);
+}
+// 보유 풀에 스킬 추가 (학습 — 여유 있으면 자동 활성) */
+function learnOwned(m: PartyMemberState, skillId: string): void {
+  if (m.ownedSkillIds.includes(skillId)) return;
+  m.ownedSkillIds.push(skillId);
+  if (m.activeSkillIds.length < 4) m.activeSkillIds.push(skillId);
 }
 
 function node(run: RunState, id: string): RunNode {
@@ -73,26 +91,95 @@ export function enterNode(run: RunState, nodeId: string): void {
     return;
   }
 
-  // 비전투 노드: 즉시 해소
+  // 휴식: 즉시 해소
   if (n.type === "rest") {
     healParty(run, 0.5);
     run.log.push("휴식 — 파티 50% 회복");
-  } else if (n.type === "shop") {
-    healParty(run, 0.3);
-    run.log.push("상점 — (준비 중) 30% 회복");
-  } else if (n.type === "encounter") {
-    // 인카운터: 생존 보장, 성장/저해 도박 (7.2)
-    if (run.rng.chance(60)) {
-      const m = run.party.find((p) => p.hp > 0);
-      const sk = m ? damagingSkills(m.charId)[0] : null;
-      if (m && sk) { m.skillDmgBonus[sk] = (m.skillDmgBonus[sk] ?? 0) + 4; run.log.push(`인카운터 — ${CHARACTERS[m.charId].name} 강화(+4)`); }
-      else run.log.push("인카운터 — 별 일 없음");
-    } else {
-      for (const m of run.party) if (m.hp > 0) m.hp = Math.max(1, m.hp - Math.round(m.maxHp * 0.1));
-      run.log.push("인카운터 — 함정! 파티 10% 피해");
-    }
+    completeNode(run, nodeId);
+    return;
+  }
+  // 상점: 진열 생성 후 상호작용 화면 (구매는 buyShopOffer, 나갈 때 leaveShop)
+  if (n.type === "shop") {
+    run.shop = generateShop(run);
+    run.phase = "shop";
+    run.log.push("상점 진입");
+    return;
+  }
+  // 인카운터: 이벤트 추첨 후 선택지 화면 (chooseEncounterOption)
+  if (n.type === "encounter") {
+    const ev = ENCOUNTER_EVENTS[run.rng.int(0, ENCOUNTER_EVENTS.length - 1)];
+    run.encounterId = ev.id;
+    run.phase = "encounter";
+    run.log.push(`인카운터 — ${ev.title}`);
+    return;
   }
   completeNode(run, nodeId);
+}
+
+// ── 상점 (7.2) — 골드 구매. 강화권은 상점에서만(4.6) ──
+function generateShop(run: RunState): ShopOffer[] {
+  let k = 0;
+  const mk = () => `shop${run.visited.length}_${k++}`;
+  const pool: ShopOffer[] = [];
+  for (const m of run.party.filter((p) => p.hp > 0)) {
+    const c = CHARACTERS[m.charId];
+    for (const sid of m.ownedSkillIds) {
+      const sk = SKILLS[sid];
+      const to = sk?.nextTierId ? SKILLS[sk.nextTierId] : undefined;
+      if (sk && to) pool.push({ id: mk(), kind: "upgrade", cost: 25, charId: m.charId, fromSkillId: sid, toSkillId: sk.nextTierId!, label: `강화권: ${c.name} 「${sk.name}」→「${to.name}」` });
+    }
+    for (const sid of c.skillIds) {
+      if (!m.ownedSkillIds.includes(sid) && !SKILLS[sid]?.exclusiveTo) pool.push({ id: mk(), kind: "learn", cost: 20, charId: m.charId, skillId: sid, label: `스킬: ${c.name} 「${SKILLS[sid].name}」(범용)` });
+    }
+  }
+  const picked: ShopOffer[] = [];
+  while (picked.length < 3 && pool.length) picked.push(pool.splice(run.rng.int(0, pool.length - 1), 1)[0]);
+  picked.push({ id: mk(), kind: "heal", cost: 15, pct: 0.5, label: "치료: 파티 50% 회복" });
+  return picked;
+}
+
+export function buyShopOffer(run: RunState, offerId: string): void {
+  if (run.phase !== "shop" || !run.shop) return;
+  const o = run.shop.find((x) => x.id === offerId);
+  if (!o || run.gold < o.cost) return;
+  run.gold -= o.cost;
+  if (o.kind === "upgrade") { const m = run.party.find((p) => p.charId === o.charId); if (m) upgradeOwned(m, o.fromSkillId, o.toSkillId); }
+  else if (o.kind === "learn") { const m = run.party.find((p) => p.charId === o.charId); if (m) learnOwned(m, o.skillId); }
+  else if (o.kind === "heal") healParty(run, o.pct);
+  run.shop = run.shop.filter((x) => x.id !== offerId); // 구매한 항목 제거(재구매 방지)
+  run.log.push(`구매: ${o.label} (−${o.cost}G)`);
+}
+
+export function leaveShop(run: RunState): void {
+  if (run.phase !== "shop") return;
+  run.shop = null;
+  completeNode(run, run.activeNodeId!);
+}
+
+// ── 인카운터 (7.2) — 선택지/도박. 생존 보장(피해는 최소 HP1) ──
+function applyOutcome(run: RunState, o: EncounterOutcome): void {
+  if (o.kind === "heal") { healParty(run, o.pct); run.log.push(`파티 ${Math.round(o.pct * 100)}% 회복`); }
+  else if (o.kind === "hurt") { for (const m of run.party) if (m.hp > 0) m.hp = Math.max(1, m.hp - Math.round(m.maxHp * o.pct)); run.log.push(`파티 ${Math.round(o.pct * 100)}% 피해`); }
+  else if (o.kind === "gold") { run.gold = Math.max(0, run.gold + o.amount); run.log.push(`골드 ${o.amount >= 0 ? "+" : ""}${o.amount}`); }
+  else if (o.kind === "upgradeRandom") {
+    const cand = run.party.filter((m) => m.hp > 0).flatMap((m) => m.ownedSkillIds.filter((sid) => SKILLS[sid]?.nextTierId).map((sid) => ({ m, sid })));
+    if (cand.length) { const p = cand[run.rng.int(0, cand.length - 1)]; upgradeOwned(p.m, p.sid, SKILLS[p.sid].nextTierId!); run.log.push(`${CHARACTERS[p.m.charId].name} 「${SKILLS[p.sid].name}」 강화!`); }
+  } else if (o.kind === "learnUniversal") {
+    const cand = run.party.filter((m) => m.hp > 0).flatMap((m) => CHARACTERS[m.charId].skillIds.filter((sid) => !m.ownedSkillIds.includes(sid) && !SKILLS[sid]?.exclusiveTo).map((sid) => ({ m, sid })));
+    if (cand.length) { const p = cand[run.rng.int(0, cand.length - 1)]; learnOwned(p.m, p.sid); run.log.push(`${CHARACTERS[p.m.charId].name} 「${SKILLS[p.sid].name}」 습득!`); }
+  }
+}
+
+export function chooseEncounterOption(run: RunState, choiceId: string): void {
+  if (run.phase !== "encounter" || !run.encounterId) return;
+  const ev = ENCOUNTER_EVENTS.find((e) => e.id === run.encounterId);
+  const ch = ev?.choices.find((c) => c.id === choiceId);
+  if (!ev || !ch) return;
+  let outcome: EncounterOutcome = ch.result ?? { kind: "nothing" };
+  if (ch.gamble) { const win = run.rng.chance(ch.gamble.chance); run.log.push(`${ev.title}: ${win ? "성공!" : "실패…"}`); outcome = win ? ch.gamble.win : ch.gamble.lose; }
+  applyOutcome(run, outcome);
+  run.encounterId = null;
+  completeNode(run, run.activeNodeId!);
 }
 
 function completeNode(run: RunState, nodeId: string): void {
@@ -125,9 +212,10 @@ export function resolveBattleEnd(run: RunState): void {
     run.log.push("보스 격파 — 런 클리어!");
     return;
   }
+  run.gold += n.type === "elite" ? 16 : 8; // 전투 보상 골드(상점 통화)
   run.rewards = genRewards(run);
   run.phase = "reward";
-  run.log.push("전투 승리 — 보상 선택");
+  run.log.push(`전투 승리 (+${n.type === "elite" ? 16 : 8}G) — 보상 선택`);
 }
 
 export function chooseReward(run: RunState, optionId: string): void {
@@ -136,17 +224,10 @@ export function chooseReward(run: RunState, optionId: string): void {
   if (!opt) return;
   if (opt.kind === "upgradeSkill") {
     const m = run.party.find((p) => p.charId === opt.charId);
-    if (m) {
-      const swap = (arr: string[]) => { const i = arr.indexOf(opt.fromSkillId); if (i >= 0) arr[i] = opt.toSkillId; };
-      swap(m.ownedSkillIds); // 보유 풀에서 티어 교체
-      swap(m.activeSkillIds); // 활성 중이면 그대로 강화된 버전으로
-    }
+    if (m) upgradeOwned(m, opt.fromSkillId, opt.toSkillId);
   } else if (opt.kind === "learnSkill") {
     const m = run.party.find((p) => p.charId === opt.charId);
-    if (m && !m.ownedSkillIds.includes(opt.skillId)) {
-      m.ownedSkillIds.push(opt.skillId);
-      if (m.activeSkillIds.length < 4) m.activeSkillIds.push(opt.skillId); // 여유 있으면 자동 활성
-    }
+    if (m) learnOwned(m, opt.skillId);
   } else if (opt.kind === "heal") {
     healParty(run, opt.pct);
   }

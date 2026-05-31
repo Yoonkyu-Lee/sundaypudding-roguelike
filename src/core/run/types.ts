@@ -3,12 +3,18 @@ import type { GameState, PartyMemberState } from "../types.ts";
 import type { Rng } from "../rng.ts";
 import type { NodeType, RunNode } from "./map.ts";
 
-export type RunPhase = "map" | "battle" | "reward" | "won" | "lost";
+export type RunPhase = "map" | "battle" | "reward" | "shop" | "encounter" | "won" | "lost";
 
 export type RewardOption =
   | { id: string; kind: "upgradeSkill"; charId: string; fromSkillId: string; toSkillId: string; label: string }
   | { id: string; kind: "learnSkill"; charId: string; skillId: string; label: string }
   | { id: string; kind: "heal"; pct: number; label: string };
+
+/** 상점 판매 항목(7.2) — 골드로 구매. 강화권은 상점에서만(4.6). */
+export type ShopOffer =
+  | { id: string; kind: "upgrade"; cost: number; charId: string; fromSkillId: string; toSkillId: string; label: string }
+  | { id: string; kind: "learn"; cost: number; charId: string; skillId: string; label: string }
+  | { id: string; kind: "heal"; cost: number; pct: number; label: string };
 
 export interface RunState {
   rng: Rng;
@@ -23,6 +29,9 @@ export interface RunState {
   phase: RunPhase;
   battle: GameState | null;
   rewards: RewardOption[] | null;
+  gold: number; // 런 내부 통화(7.2): 전투 승리·인카운터로 획득, 상점서 소비. 메타 재화와 별개(380행)
+  shop: ShopOffer[] | null; // 상점 진열(방문 시 생성, 구매하면 제거)
+  encounterId: string | null; // 진행 중 인카운터 이벤트 id (data/events)
   log: string[];
 }
 
@@ -44,5 +53,8 @@ export interface RunView {
     activeCount: number;
   }[];
   rewards: RewardOption[] | null;
+  gold: number;
+  shop: ShopOffer[] | null;
+  encounter: { id: string; title: string; text: string; choices: { id: string; label: string }[] } | null;
   log: string[];
 }

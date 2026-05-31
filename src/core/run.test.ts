@@ -1,8 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRun, enterNode, resolveBattleEnd, chooseReward } from "./run.ts";
+import { createRun, enterNode, resolveBattleEnd, chooseReward, buyShopOffer, leaveShop, chooseEncounterOption } from "./run.ts";
 import { step } from "./engine.ts";
 import { chooseAction } from "./ai.ts";
+import { ENCOUNTER_EVENTS } from "../data/events.ts";
 
 const ROSTER = [
   { charId: "beef", pos: { row: 1, col: 0 } },
@@ -26,6 +27,10 @@ function autoRun(seed: number): string {
       resolveBattleEnd(run);
     } else if (run.phase === "reward") {
       chooseReward(run, run.rewards![0].id);
+    } else if (run.phase === "shop") {
+      leaveShop(run); // 자동주행: 구매 없이 나감
+    } else if (run.phase === "encounter") {
+      chooseEncounterOption(run, ENCOUNTER_EVENTS.find((e) => e.id === run.encounterId)!.choices[0].id);
     }
   }
   return run.phase;
@@ -100,6 +105,41 @@ test("보상 새 스킬: 미보유 스킬을 보유 풀에 추가 (4.5)", () => 
   chooseReward(run, "l");
   assert.ok(jelly.ownedSkillIds.includes(newId), "보유 풀 추가");
   assert.equal(jelly.ownedSkillIds.length, before + 1);
+});
+
+test("상점: 골드로 구매 → 적용 + 차감 + 항목 제거 (7.2)", () => {
+  const run = createRun(1, ROSTER);
+  run.gold = 100;
+  run.phase = "shop";
+  run.activeNodeId = run.nodes[0].id;
+  run.shop = [{ id: "h", kind: "heal", cost: 15, pct: 0.5, label: "치료" }];
+  run.party[0].hp = 1;
+  buyShopOffer(run, "h");
+  assert.equal(run.gold, 85, "골드 차감");
+  assert.ok(run.party[0].hp > 1, "회복 적용");
+  assert.equal(run.shop!.length, 0, "구매 항목 제거(재구매 방지)");
+});
+
+test("상점: 골드 부족이면 구매 불가", () => {
+  const run = createRun(1, ROSTER);
+  run.gold = 10;
+  run.phase = "shop";
+  run.activeNodeId = run.nodes[0].id;
+  run.shop = [{ id: "h", kind: "heal", cost: 15, pct: 0.5, label: "치료" }];
+  buyShopOffer(run, "h");
+  assert.equal(run.gold, 10, "차감 안 됨");
+  assert.equal(run.shop!.length, 1, "항목 유지");
+});
+
+test("인카운터: 선택지 결과 적용 후 map 복귀 (7.2)", () => {
+  const run = createRun(1, ROSTER);
+  run.phase = "encounter";
+  run.activeNodeId = run.nodes[0].id;
+  run.encounterId = "cache"; // 안전 선택(loot=골드 +25)
+  const before = run.gold;
+  chooseEncounterOption(run, "loot");
+  assert.equal(run.gold, before + 25, "골드 보상");
+  assert.equal(run.phase, "map", "노드 완료 후 맵");
 });
 
 test("보스전은 적 진형 보너스 활성(6.3) — boss 노드 진입 시 enemyFormation 설정", () => {
