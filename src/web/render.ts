@@ -141,6 +141,9 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
   if (lp) lp.scrollTop = lp.scrollHeight;
 
   // 화살표: 타겟팅 + 호버 칸의 "대상 진영" 유닛으로 (좌표 공유 → side 필터 필수)
+  // 매 렌더 먼저 비운다 — 시전/취소로 타겟팅이 끝나면 직전 화살표가 잔류하지 않게.
+  const svg = app.querySelector(".arrows");
+  if (svg) svg.innerHTML = "";
   if (tgt.active && tgt.casterUid && ui.hoverCell) {
     const hu = state.units.find(
       (u) => u.alive && u.side === tgt.areaSide && u.pos.row === ui.hoverCell!.row && u.pos.col === ui.hoverCell!.col,
