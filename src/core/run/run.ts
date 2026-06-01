@@ -65,9 +65,13 @@ function node(run: RunState, id: string): RunNode {
   return n;
 }
 
-function healParty(run: RunState, pct: number): void {
+/** 파티 회복. revive=true면 전투불능(hp≤0)도 maxHp*pct로 부활(휴식·액트전환). false면 생존자만 회복. */
+function healParty(run: RunState, pct: number, revive = false): void {
   for (const m of run.party) {
-    if (m.hp <= 0) continue; // 전투불능은 회복 안 함(런 빌드 휘발)
+    if (m.hp <= 0) {
+      if (revive) m.hp = Math.max(1, Math.round(m.maxHp * pct)); // 부활
+      continue;
+    }
     m.hp = Math.min(m.maxHp, m.hp + Math.round(m.maxHp * pct));
   }
 }
@@ -111,8 +115,8 @@ export function enterNode(run: RunState, nodeId: string): void {
 
   // 휴식: 즉시 해소
   if (n.type === "rest") {
-    healParty(run, 0.5);
-    run.log.push("휴식 — 파티 50% 회복");
+    healParty(run, 0.5, true); // 재정비 거점: 전투불능도 부활 + 50% 회복
+    run.log.push("휴식 — 전투불능 부활 + 파티 50% 회복");
     completeNode(run, nodeId);
     return;
   }
@@ -222,9 +226,9 @@ function advanceAct(run: RunState): void {
   run.currentNodeId = "start";
   run.activeNodeId = null;
   run.battle = null;
-  healParty(run, 0.5);
+  healParty(run, 0.5, true); // 액트 전환: 전투불능 부활 + 50% 회복
   run.phase = "map";
-  run.log.push(`액트 ${run.act} 진입 — 파티 50% 회복`);
+  run.log.push(`액트 ${run.act} 진입 — 전투불능 부활 + 파티 50% 회복`);
 }
 
 /** run.battle.phase가 종료 상태일 때 호출 — HP 반영, 승=보상/보스승=다음 액트(최종 보스=클리어), 패=실패. */

@@ -219,6 +219,7 @@ test("다층(7.3): 액트 보스 격파→다음 액트(새 맵·파티 유지),
   const partyN = run.party.length;
   for (let expect = 1; expect <= 3; expect++) {
     assert.equal(run.act, expect);
+    if (expect === 1) run.party[0].hp = 0; // 액트1 보스 전 1명 전투불능 → 액트 전환 부활 검증용
     const bossId = run.nodes.find((n) => n.type === "boss")!.id;
     run.reachable = [bossId];
     enterNode(run, bossId);
@@ -226,6 +227,7 @@ test("다층(7.3): 액트 보스 격파→다음 액트(새 맵·파티 유지),
     run.battle!.phase = "allyWin"; // 보스전 승리 강제(결정론)
     resolveBattleEnd(run);
     assert.equal(run.party.length, partyN, "파티 유지");
+    if (expect === 1) assert.ok(run.party[0].hp > 0, "액트 전환 시 전투불능 멤버 부활");
     if (expect < 3) {
       assert.equal(run.phase, "map", `액트${expect} 보스 후 다음 액트 맵`);
       assert.equal(run.act, expect + 1, "다음 액트로 진행");
