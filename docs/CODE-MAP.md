@@ -55,6 +55,7 @@ src/core/
     rewards.ts      genRewards(강화/학습 3택1) · damagingSkills (순수 생성; 적용은 run.ts)
     run.ts          createRun · enterNode · resolveBattleEnd · chooseReward · setActiveSkill(로드아웃) · movePartyMember(진형 배치/교대, 맵전용) · buyShopOffer/leaveShop(상점) · chooseEncounterOption(인카운터) (+ node/completeNode/healParty/generateShop/applyOutcome)
     items.ts        장착(4.3): equipItem/unequipItem(maxHp 재계산) · genItemOffers(상점)/itemRewardOptions(보상) · 인벤토리 왕복
+    save.ts         런 이어하기 직렬화(순수): serializeRun/deserializeRun (Rng→{__rng:state} 치환·복원)
     view.ts         getRunView (RunState → RunView; party[].pos 노출)
     index.ts        ▸배럴
   ai.ts             ▸배럴(파사드): export * from ai/index
@@ -134,6 +135,7 @@ src/core/
 | 헥스 타일맵 생성·전진 인접·프루닝 (7.1) | `run/map.ts`: `genMap(cfg)`/`forwardIds` (메커니즘=엔진) |
 | 맵 생성 값 데이터화 (7.1) | `data/maps.ts` `DEFAULT_MAP` (가중치·분기·깊이) · `content.ts` `MapGenConfig`/`NodeType` · `createRun(seed,roster,map?)` |
 | 노드 진입·해소·전투생성·승패 (7장) | `run/run.ts`: `enterNode`/`resolveBattleEnd` |
+| 런 이어하기 영속화 (셸) | `run/save.ts` `serializeRun`/`deserializeRun`(순수, Rng=state만) · 웹 `main.ts` localStorage(`spr_save_v1`, render마다 저장·승패/포기 시 삭제·부팅 복원) |
 | 다층 3액트 진행 (7.3) | `RunState.act`/`acts`(`data/maps.ts ACTS`) · `run/run.ts` `advanceAct`(보스→다음 액트 맵·50%회복, 결정론) · `resolveBattleEnd`(최종 액트 보스=won) · `RunView.act`/`totalActs` · 웹 "액트 N/3" 표기 |
 | 보상 3택1 생성·적용 (4.5) | `run/rewards.ts`: `genRewards` · `run/run.ts`: `chooseReward` |
 | 육성: 스킬 보유풀/활성선택/강화티어 (4.2/4.6) | `PartyMemberState.ownedSkillIds`/`activeSkillIds` · `Skill.nextTierId`(데이터 티어) · `run/run.ts`: `setActiveSkill`·`chooseReward`(강화=id교체/학습=풀추가) · `combat/state.ts` makeUnit가 활성 4 사용 |

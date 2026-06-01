@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRun, enterNode, resolveBattleEnd, chooseReward, buyShopOffer, leaveShop, chooseEncounterOption, movePartyMember, getRunView } from "./run.ts";
+import { createRun, enterNode, resolveBattleEnd, chooseReward, buyShopOffer, leaveShop, chooseEncounterOption, movePartyMember, serializeRun, deserializeRun, getRunView } from "./run.ts";
 import { step, createBattle, getFormationBonus } from "./engine.ts";
 import { chooseAction } from "./ai.ts";
 import { ENCOUNTER_EVENTS } from "../data/events.ts";
@@ -210,6 +210,36 @@ test("진형 편성: 배치 변경이 전투 진형 보너스(열 분배)에 반
   assert.equal(ub.pos.col, 0);
   assert.equal(getFormationBonus(g, ub, "attackPower"), 2); // 0열 총량4 ÷ 2명
   assert.equal(getFormationBonus(g, uj, "defensePower"), 4); // 3열 총량4 ÷ 1명
+});
+
+test("세이브 라운드트립: 상태·rng 연속성 보존 (이어하기)", () => {
+  const run = createRun(11, ROSTER);
+  run.gold = 42;
+  run.inventory.push("iron_plate");
+  movePartyMember(run, "beef", { row: 3, col: 3 });
+  const json = serializeRun(run);
+  const a = run.rng.next(); // 직렬화 시점 이후 원본의 다음 난수
+  const r = deserializeRun(json)!;
+  assert.equal(r.act, run.act);
+  assert.equal(r.gold, 42);
+  assert.deepEqual(r.inventory, run.inventory);
+  assert.equal(r.party.length, run.party.length);
+  assert.deepEqual(r.party.find((p) => p.charId === "beef")!.pos, { row: 3, col: 3 });
+  assert.equal(r.rng.next(), a, "복원된 rng가 같은 다음 값 (결정론 보존)");
+});
+
+test("세이브 라운드트립: 전투 중 GameState·battle.rng 복원", () => {
+  const run = createRun(11, ROSTER);
+  const battleId = run.nodes.find((n) => n.type === "battle")!.id;
+  run.reachable = [battleId];
+  enterNode(run, battleId);
+  assert.equal(run.phase, "battle");
+  const json = serializeRun(run);
+  const a = run.battle!.rng.next();
+  const r = deserializeRun(json)!;
+  assert.equal(r.phase, "battle");
+  assert.equal(r.battle!.units.length, run.battle!.units.length);
+  assert.equal(r.battle!.rng.next(), a, "복원된 battle.rng 연속성");
 });
 
 test("다층(7.3): 액트 보스 격파→다음 액트(새 맵·파티 유지), 3액트 보스=게임 클리어", () => {

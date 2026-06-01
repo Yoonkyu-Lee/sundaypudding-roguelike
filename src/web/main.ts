@@ -2,7 +2,7 @@
 // 전투는 render.ts(renderApp) 재사용, 맵/보상/결과는 runRender.ts. (7장)
 import { step } from "../core/engine.ts";
 import { chooseAction } from "../core/ai.ts";
-import { createRun, enterNode, resolveBattleEnd, chooseReward, setActiveSkill, buyShopOffer, leaveShop, chooseEncounterOption, getRunView, type RunState } from "../core/run.ts";
+import { createRun, enterNode, resolveBattleEnd, chooseReward, setActiveSkill, buyShopOffer, leaveShop, chooseEncounterOption, serializeRun, deserializeRun, getRunView, type RunState } from "../core/run.ts";
 import type { Action } from "../core/types.ts";
 import { SKILLS } from "../data/skills.ts";
 import { CHARACTERS } from "../data/characters.ts";
@@ -28,6 +28,13 @@ let busy = false;
 let appState: "title" | "hub" | "run" = "title"; // 게임 흐름 셸 (슬라이스2)
 let runActive = false; // 진행 중 런이 있나(이어하기 가능)
 let pauseOpen = false; // 런 중 일시정지 오버레이
+
+// ── 런 이어하기 영속화 (localStorage, 슬라이스3) ──
+const SAVE_KEY = "spr_save_v1"; // 스키마 변경 시 버전 bump → 구세이브 자연 폐기
+function saveRun(): void { try { localStorage.setItem(SAVE_KEY, serializeRun(run)); } catch { /* 용량/비활성 무시 */ } }
+function clearSave(): void { try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } }
+function loadRun(): RunState | null { try { const s = localStorage.getItem(SAVE_KEY); return s ? deserializeRun(s) : null; } catch { return null; } }
+function persist(): void { if (appState === "run" && runActive) saveRun(); } // 런 진행 중인 상태만 저장
 const ui: Ui = { selectedSkillId: null, hoverCell: null, pickedCells: [], damaged: new Set(), moved: new Set(), seed, sheetCharId: null, sheetUid: null, partyOpen: false, sheetDetail: false };
 
 function resetUi(): void {
@@ -98,11 +105,13 @@ function render(): void {
   }
   if (pauseOpen) renderPause(app, shellHandlers);
   else app.querySelector(".pause-overlay")?.remove();
+  persist();
 }
 
 function renderBattle(): void {
   renderApp(app, run.battle!, ui, battleHandlers, panel);
   overlay.renderOverlay();
+  persist();
   driveBattle();
 }
 
@@ -262,10 +271,10 @@ const shellHandlers: ShellHandlers = {
   onStart() { appState = "hub"; render(); },
   onNewRun() { newRun(seed + 1); },
   onResumeRun() { appState = "run"; pauseOpen = false; render(); },
-  onAbandonRun() { runActive = false; render(); },
-  onToHub() { appState = "hub"; pauseOpen = false; if (run.phase === "won" || run.phase === "lost") runActive = false; render(); },
+  onAbandonRun() { runActive = false; clearSave(); render(); },
+  onToHub() { appState = "hub"; pauseOpen = false; if (run.phase === "won" || run.phase === "lost") { runActive = false; clearSave(); } render(); },
   onResume() { pauseOpen = false; render(); },
-  onToTitle() { appState = "title"; pauseOpen = false; runActive = false; render(); },
+  onToTitle() { appState = "title"; pauseOpen = false; runActive = false; clearSave(); render(); },
 };
 
 // Esc: 오버레이(파티뷰>시트>타겟팅)를 먼저 닫고, 런 중 다 닫혀 있으면 일시정지 토글
@@ -277,6 +286,8 @@ window.addEventListener("keydown", (e) => {
   else { pauseOpen = !pauseOpen; render(); }
 });
 
-// 부팅: 런은 만들어 두되(상태 유효) 타이틀부터 시작
-run = createRun(seed, ROSTER);
+// 부팅: 저장된 런이 있으면 복원(이어하기 가능), 없으면 새 런 준비. 화면은 타이틀부터.
+const loaded = loadRun();
+if (loaded) { run = loaded; runActive = true; seed = run.seed; }
+else run = createRun(seed, ROSTER);
 render();
