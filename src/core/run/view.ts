@@ -7,6 +7,8 @@ import { ENCOUNTER_EVENTS } from "../../data/events.ts";
 export function getRunView(run: RunState): RunView {
   return {
     phase: run.phase,
+    act: run.act,
+    totalActs: run.acts.length,
     rows: run.rows,
     nodes: run.nodes.map((n) => {
       let status: NodeStatus = "locked";

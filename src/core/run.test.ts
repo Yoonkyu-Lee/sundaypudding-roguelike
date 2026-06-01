@@ -167,7 +167,7 @@ test("맵 데이터화: 커스텀 MapGenConfig가 깊이·첫행·타입 가중�
     nodeWeights: { battle: 1 }, // 행1+는 battle만
     branch: { keepQChance: 50, extraSameChance: 0, extraLeftChance: 0 },
   };
-  const run = createRun(7, ROSTER, cfg);
+  const run = createRun(7, ROSTER, [cfg]); // 1액트 런
   assert.equal(Math.max(...run.nodes.map((n) => n.r)), 5, "보스가 rows(=5) 깊이");
   assert.ok(run.nodes.some((n) => n.r === 0 && n.type === "rest"), "첫 행 = firstRowType");
   assert.ok(run.nodes.filter((n) => n.r >= 1 && n.r <= 4).every((n) => n.type === "battle"), "행1+ = nodeWeights(battle)만");
@@ -210,4 +210,28 @@ test("진형 편성: 배치 변경이 전투 진형 보너스(열 분배)에 반
   assert.equal(ub.pos.col, 0);
   assert.equal(getFormationBonus(g, ub, "attackPower"), 2); // 0열 총량4 ÷ 2명
   assert.equal(getFormationBonus(g, uj, "defensePower"), 4); // 3열 총량4 ÷ 1명
+});
+
+test("다층(7.3): 액트 보스 격파→다음 액트(새 맵·파티 유지), 3액트 보스=게임 클리어", () => {
+  const run = createRun(3, ROSTER);
+  assert.equal(run.act, 1);
+  assert.equal(run.acts.length, 3);
+  const partyN = run.party.length;
+  for (let expect = 1; expect <= 3; expect++) {
+    assert.equal(run.act, expect);
+    const bossId = run.nodes.find((n) => n.type === "boss")!.id;
+    run.reachable = [bossId];
+    enterNode(run, bossId);
+    assert.equal(run.phase, "battle");
+    run.battle!.phase = "allyWin"; // 보스전 승리 강제(결정론)
+    resolveBattleEnd(run);
+    assert.equal(run.party.length, partyN, "파티 유지");
+    if (expect < 3) {
+      assert.equal(run.phase, "map", `액트${expect} 보스 후 다음 액트 맵`);
+      assert.equal(run.act, expect + 1, "다음 액트로 진행");
+      assert.equal(Math.max(...run.nodes.map((n) => n.r)), run.acts[run.act - 1].rows, "새 액트 깊이 반영");
+    } else {
+      assert.equal(run.phase, "won", "3액트 보스 = 게임 클리어");
+    }
+  }
 });

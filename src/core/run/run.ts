@@ -6,7 +6,7 @@ import type { MapGenConfig, PartyMemberState, Phase, Pos } from "../types.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { SKILLS } from "../../data/skills.ts";
 import { NODE_ROSTERS } from "../../data/encounters.ts";
-import { DEFAULT_MAP } from "../../data/maps.ts";
+import { ACTS } from "../../data/maps.ts";
 import { ENCOUNTER_EVENTS, type EncounterOutcome } from "../../data/events.ts";
 import { forwardIds, genMap } from "./map.ts";
 import type { RunNode } from "./map.ts";
@@ -14,8 +14,9 @@ import type { RunState, ShopOffer } from "./types.ts";
 import { genRewards } from "./rewards.ts";
 import { genItemOffers } from "./items.ts";
 
-export function createRun(seed: number, roster: { charId: string; pos: Pos }[], map: MapGenConfig = DEFAULT_MAP): RunState {
+export function createRun(seed: number, roster: { charId: string; pos: Pos }[], acts: MapGenConfig[] = ACTS): RunState {
   const rng = new Rng(seed ^ 0x9e3779b9);
+  const map = acts[0];
   const nodes = genMap(rng, map);
   const party: PartyMemberState[] = roster.map((m) => {
     const c = CHARACTERS[m.charId];
@@ -25,6 +26,8 @@ export function createRun(seed: number, roster: { charId: string; pos: Pos }[], 
   return {
     rng,
     seed,
+    act: 1,
+    acts,
     rows: map.rows,
     nodes,
     party,
@@ -208,7 +211,23 @@ function completeNode(run: RunState, nodeId: string): void {
   run.phase = "map";
 }
 
-/** run.battle.phase가 종료 상태일 때 호출 — HP 반영, 승=보상/보스승=클리어, 패=실패. */
+/** 다음 액트로 (7.3 다층): 새 맵 생성·진행 초기화·파티 50% 회복(숨돌리기). 결정론(run.rng). */
+function advanceAct(run: RunState): void {
+  run.act += 1;
+  const map = run.acts[run.act - 1];
+  run.rows = map.rows;
+  run.nodes = genMap(run.rng, map);
+  run.visited = ["start"];
+  run.reachable = run.nodes.filter((n) => n.r === 0).map((n) => n.id);
+  run.currentNodeId = "start";
+  run.activeNodeId = null;
+  run.battle = null;
+  healParty(run, 0.5);
+  run.phase = "map";
+  run.log.push(`액트 ${run.act} 진입 — 파티 50% 회복`);
+}
+
+/** run.battle.phase가 종료 상태일 때 호출 — HP 반영, 승=보상/보스승=다음 액트(최종 보스=클리어), 패=실패. */
 export function resolveBattleEnd(run: RunState): void {
   if (run.phase !== "battle" || !run.battle || run.battle.phase === "inProgress") return;
   const result: Phase = run.battle.phase;
@@ -225,8 +244,9 @@ export function resolveBattleEnd(run: RunState): void {
   // allyWin
   const n = node(run, run.activeNodeId!);
   if (n.type === "boss") {
+    if (run.act < run.acts.length) { advanceAct(run); return; } // 다음 액트로
     run.phase = "won";
-    run.log.push("보스 격파 — 런 클리어!");
+    run.log.push("최종 보스 격파 — 게임 클리어!");
     return;
   }
   run.gold += n.type === "elite" ? 16 : 8; // 전투 보상 골드(상점 통화)

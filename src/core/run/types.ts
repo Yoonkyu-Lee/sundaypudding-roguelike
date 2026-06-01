@@ -1,5 +1,5 @@
 // 런 도메인 타입 (전투 위 레이어). 사이클 방지를 위해 leaf 타입 모듈로 분리.
-import type { GameState, PartyMemberState } from "../types.ts";
+import type { GameState, MapGenConfig, PartyMemberState } from "../types.ts";
 import type { Rng } from "../rng.ts";
 import type { NodeType, RunNode } from "./map.ts";
 
@@ -21,7 +21,9 @@ export type ShopOffer =
 export interface RunState {
   rng: Rng;
   seed: number;
-  rows: number; // 보스 제외 선택 층 수 (기본 3, parameterizable 7.3)
+  act: number; // 현재 액트 (1-base, 7.3 다층)
+  acts: MapGenConfig[]; // 액트별 맵 구성 (acts.length = 총 액트 수)
+  rows: number; // 현재 액트 깊이 (보스 제외 선택 층 수, 7.3)
   nodes: RunNode[];
   party: PartyMemberState[];
   visited: string[];
@@ -42,6 +44,8 @@ export type NodeStatus = "current" | "visited" | "active" | "reachable" | "locke
 
 export interface RunView {
   phase: RunPhase;
+  act: number; // 현재 액트 (1-base)
+  totalActs: number; // 총 액트 수
   rows: number;
   nodes: { id: string; q: number; r: number; type: NodeType; status: NodeStatus }[];
   party: {

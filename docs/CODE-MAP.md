@@ -81,7 +81,7 @@ src/core/
 | `src/data/characters.ts` | data | 캐릭터(고유 스탯 + learnset) | `CHARACTERS` |
 | `src/data/encounters.ts` | data | 전투 배치 + **노드 타입별 적 구성(`NODE_ROSTERS`)** + 보스/포메이션 override | `DEMO_ENCOUNTER` · `NODE_ROSTERS` · `Encounter`/`Placement` |
 | `src/data/events.ts` | data | 인카운터 이벤트(7.2) — 제목·텍스트·선택지(확정/도박)·결과(heal/hurt/gold/강화/학습) | `ENCOUNTER_EVENTS` · `EncounterEvent`/`EncounterOutcome` |
-| `src/data/maps.ts` | data | 맵 생성 값(7.1) — 노드 타입 가중치·분기 확률·깊이·시작너비 (`NodeType`/`MapGenConfig`는 content.ts) | `DEFAULT_MAP` |
+| `src/data/maps.ts` | data | 맵 생성 값(7.1) + **3액트 맵 구성(7.3, 깊이·엘리트 램프)** (`NodeType`/`MapGenConfig`는 content.ts) | `ACTS` · `DEFAULT_MAP` |
 | `src/data/formations.ts` | data | 포메이션 열보너스 배치(총량보존, 6장) | `STANDARD_FORMATION` |
 | `src/data/items.ts` | data | 장착 아이템(4.3) — 무기(dmgFlat·crit) / 방어구(hp·쉴드획득). `ItemDef`는 content.ts | `ITEMS` · `ITEM_POOL` |
 | `src/cli/play.ts` | cli | 대화형/`--demo` 터미널 드라이버 | (엔트리) |
@@ -133,6 +133,7 @@ src/core/
 | 헥스 타일맵 생성·전진 인접·프루닝 (7.1) | `run/map.ts`: `genMap(cfg)`/`forwardIds` (메커니즘=엔진) |
 | 맵 생성 값 데이터화 (7.1) | `data/maps.ts` `DEFAULT_MAP` (가중치·분기·깊이) · `content.ts` `MapGenConfig`/`NodeType` · `createRun(seed,roster,map?)` |
 | 노드 진입·해소·전투생성·승패 (7장) | `run/run.ts`: `enterNode`/`resolveBattleEnd` |
+| 다층 3액트 진행 (7.3) | `RunState.act`/`acts`(`data/maps.ts ACTS`) · `run/run.ts` `advanceAct`(보스→다음 액트 맵·50%회복, 결정론) · `resolveBattleEnd`(최종 액트 보스=won) · `RunView.act`/`totalActs` · 웹 "액트 N/3" 표기 |
 | 보상 3택1 생성·적용 (4.5) | `run/rewards.ts`: `genRewards` · `run/run.ts`: `chooseReward` |
 | 육성: 스킬 보유풀/활성선택/강화티어 (4.2/4.6) | `PartyMemberState.ownedSkillIds`/`activeSkillIds` · `Skill.nextTierId`(데이터 티어) · `run/run.ts`: `setActiveSkill`·`chooseReward`(강화=id교체/학습=풀추가) · `combat/state.ts` makeUnit가 활성 4 사용 |
 | 전용기/범용기 + learnset (4.6) | `Skill.exclusiveTo`(전용기 소유자, 없으면 범용기 `u_*`) · `Character.skillIds`=learnset(포켓몬식, 학습 가능 여부) · 범용기는 여러 learnset 공유(예 `u_guard`=kim·shin·cho) · 게이팅=`run/rewards.ts` genRewards가 learnset에서 추첨 |
