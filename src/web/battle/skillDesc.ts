@@ -2,6 +2,7 @@
 // 모든 값은 기존 Skill/AreaShape/STATUS_DEFS 데이터에서 생성 (데이터-온리).
 import type { AreaShape, Skill } from "../../core/types.ts";
 import { STATUS_DEFS } from "../../data/statuses.ts";
+import { describeStatus } from "./status.ts";
 import { esc } from "./shared.ts";
 
 /** 사정권: 근접(reach=최전열) vs 원거리(아무 칸) vs 아군/자신. 투명하게. */
@@ -39,19 +40,21 @@ export function skillStats(sk: Skill, effDmg?: number): { label: string; value: 
   return out;
 }
 
-/** 특징 칩(상태부여/쉴드/회복/이동/정화/끼어들기) — 버프/디버프 색 구분. */
-export function skillTraits(sk: Skill): { text: string; cls: "buff" | "debuff" | "util" }[] {
-  const t: { text: string; cls: "buff" | "debuff" | "util" }[] = [];
+interface Trait { text: string; cls: "buff" | "debuff" | "util"; statusId?: string }
+
+/** 특징 칩(상태부여/쉴드/회복/이동/정화/끼어들기). 상태부여는 statusId 동봉(효과 설명 팝오버용). */
+export function skillTraits(sk: Skill): Trait[] {
+  const t: Trait[] = [];
   for (const e of sk.effects) {
     switch (e.kind) {
       case "applyStatus": {
         const d = STATUS_DEFS[e.statusId];
-        t.push({ text: `${d?.name ?? e.statusId} ${e.stacks}×${e.duration}턴`, cls: d?.buff ? "buff" : "debuff" });
+        t.push({ text: `${d?.name ?? e.statusId} ${e.stacks}×${e.duration}턴`, cls: d?.buff ? "buff" : "debuff", statusId: e.statusId });
         break;
       }
       case "applyStatusSelf": {
         const d = STATUS_DEFS[e.statusId];
-        t.push({ text: `자신 ${d?.name ?? e.statusId} ${e.stacks}×${e.duration}턴`, cls: d?.buff ? "buff" : "debuff" });
+        t.push({ text: `자신 ${d?.name ?? e.statusId} ${e.stacks}×${e.duration}턴`, cls: d?.buff ? "buff" : "debuff", statusId: e.statusId });
         break;
       }
       case "shield": t.push({ text: `쉴드 +${e.amount}`, cls: "buff" }); break;
@@ -62,6 +65,18 @@ export function skillTraits(sk: Skill): { text: string; cls: "buff" | "debuff" |
   }
   if (sk.grantsInterrupt) t.push({ text: `${sk.grantsInterruptTo === "target" ? "대상 " : ""}끼어들기${sk.grantsInterrupt > 1 ? ` ×${sk.grantsInterrupt}` : ""}`, cls: "util" });
   return t;
+}
+
+/** 특징 칩 HTML — 상태부여 칩은 호버/포커스 시 효과 설명 팝오버(유닛 상태칩과 동일 `describeStatus` 재사용). */
+export function traitsHtml(sk: Skill): string {
+  return skillTraits(sk)
+    .map((t) => {
+      if (!t.statusId) return `<span class="sktrait ${t.cls}">${esc(t.text)}</span>`;
+      const d = STATUS_DEFS[t.statusId];
+      const pop = `<span class="statuspop ${t.cls}"><span class="poptitle">${d?.icon ?? ""} ${esc(d?.name ?? t.statusId)}<em>${d?.buff ? "버프" : "디버프"}</em></span><span class="popdesc">${esc(describeStatus(d))}</span></span>`;
+      return `<span class="sktrait ${t.cls} pop" tabindex="0">${esc(t.text)}${pop}</span>`;
+    })
+    .join("");
 }
 
 /** 스킬 분류(색 액센트·타입 칩용). 공격/지원/강화/약화/기동. */
@@ -80,7 +95,7 @@ const STAT_ICON: Record<string, string> = { "쿨": "⏱", "명중": "🎯", "피
 export function skillCardBody(sk: Skill, effDmg?: number): string {
   const t = skillType(sk);
   const stats = skillStats(sk, effDmg).map((s) => `<span class="skstat"><i>${STAT_ICON[s.label] ?? s.label}</i>${esc(s.value)}</span>`).join("");
-  const traits = skillTraits(sk).map((x) => `<span class="sktrait ${x.cls}">${esc(x.text)}</span>`).join("");
+  const traits = traitsHtml(sk);
   const aoe = sk.area && sk.area.kind !== "single" ? ` · ${esc(areaRule(sk.area))}` : "";
   return `<span class="sktype t-${t.key}">${t.label}</span>
     <span class="skstats">${stats}</span>

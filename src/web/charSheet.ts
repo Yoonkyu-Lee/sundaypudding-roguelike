@@ -5,7 +5,7 @@ import type { EquipSlot, ItemDef, UnitView } from "../core/types.ts";
 import { ITEMS } from "../data/items.ts";
 import { SKILLS } from "../data/skills.ts";
 import { statusChipsList } from "./battle/status.ts";
-import { skillInline, skillType } from "./battle/skillDesc.ts";
+import { skillInline, skillType, skillTraits, traitsHtml } from "./battle/skillDesc.ts";
 import { avatarHtml, esc, r1 } from "./battle/shared.ts";
 
 export interface SheetBaseStats {
@@ -143,6 +143,7 @@ function skillRow(s: SheetSkill, d: SheetData): string {
   const tag = s.signature ? `<span class="csk-tag sig">전용기</span>` : `<span class="csk-tag univ">범용기</span>`;
   const up = s.canUpgrade ? `<span class="csk-up" title="강화 가능">⬆</span>` : "";
   const spec = sk ? `<span class="csk-spec">${esc(skillInline(sk))}</span>` : "";
+  const traits = sk && skillTraits(sk).length ? `<div class="csk-traits">${traitsHtml(sk)}</div>` : ""; // 효과 칩(호버=설명)
   // 출전 토글: 활성=빼기(최소 1), 비활성=넣기(최대 4). setActiveSkill이 한도 처리.
   const canAdd = !s.active && d.activeCount < 4;
   const btn = d.editable
@@ -150,7 +151,7 @@ function skillRow(s: SheetSkill, d: SheetData): string {
     : "";
   return `<div class="csk-row${s.active ? " active" : ""}">
     <div class="csk-line"><span class="sktype t-${tk}">${sk ? skillType(sk).label : ""}</span><span class="csk-name">${esc(s.name)}${s.tier > 1 ? `<sup>T${s.tier}</sup>` : ""}</span>${tag}${up}${btn}</div>
-    ${spec}
+    ${spec}${traits}
   </div>`;
 }
 

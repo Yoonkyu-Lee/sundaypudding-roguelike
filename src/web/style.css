@@ -409,3 +409,8 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .csk-line .sktype { flex: none; }
 .csk-spec { font-size: 10px; color: var(--dim); line-height: 1.35; padding-left: 2px; }
 .csk-toggle[disabled] { opacity: .35; cursor: not-allowed; }
+
+/* 스킬 효과 칩 호버/포커스 팝오버 (유닛 상태칩과 동일 describeStatus 재사용) */
+.sktrait.pop { position: relative; display: inline-block; cursor: help; }
+.sktrait.pop:hover .statuspop, .sktrait.pop:focus .statuspop, .sktrait.pop:focus-within .statuspop { display: block; }
+.csk-traits { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
