@@ -133,6 +133,7 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
     b.addEventListener("click", () => h.onSkill(b.dataset.skill!)),
   );
   mainEl.querySelector("#skipbtn")?.addEventListener("click", () => h.onSkip());
+  mainEl.querySelector("#detailbtn")?.addEventListener("click", () => h.onToggleDetail());
   mainEl.querySelector("#cancelbtn")?.addEventListener("click", () => h.onCancel());
   mainEl.querySelectorAll<HTMLElement>("[data-cell]").forEach((el) => {
     const [row, col] = el.dataset.cell!.split(",").map(Number);

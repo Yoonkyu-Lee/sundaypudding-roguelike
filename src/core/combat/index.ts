@@ -4,6 +4,6 @@ export { step } from "./flow.ts";
 export { getLegalActions, computeHitChance, computeAreaCells, reachableColumns } from "./targeting.ts";
 export { buildObservation } from "./observation.ts";
 export { getFormationBonus } from "./formation.ts";
-export { computeDamage, previewDamage, previewHpLoss } from "./damage.ts";
+export { computeDamage, previewDamage, previewDamageParts, previewHpLoss } from "./damage.ts";
 export { predictInterruptSubjects } from "./interrupt.ts";
 export { unitById, totalStacks, isFrozen } from "../util.ts";

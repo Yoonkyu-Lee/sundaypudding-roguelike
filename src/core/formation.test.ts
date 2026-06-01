@@ -1,7 +1,7 @@
 // 포메이션(6.1/6.3) + 데미지 미리보기 — 열 총량보존·보스전 적 적용·비크리 결정론.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createBattle, getFormationBonus, previewDamage } from "./engine.ts";
+import { createBattle, getFormationBonus, previewDamage, previewDamageParts } from "./engine.ts";
 import { DEMO_ENCOUNTER } from "../data/encounters.ts";
 import type { Encounter } from "../data/encounters.ts";
 import { SKILLS } from "../data/skills.ts";
@@ -50,4 +50,15 @@ test("데미지 미리보기: 스킬상수+포메이션, 비크리 결정론 (�
   const beef = state.units.find((u) => u.name === "비프")!; // 강타 12, 0열 attackPower 4 단독
   // 강타 단독 데미지 = 12 + 4(포메이션) = 16
   assert.equal(previewDamage(state, beef, SKILLS["gangta"]), 16);
+});
+
+test("데미지 분해(자세히 보기): 기본+포메이션 = 최종, 라벨 노출", () => {
+  const state = createBattle(42, DEMO_ENCOUNTER);
+  const beef = state.units.find((u) => u.name === "비프")!; // 강타 12, 0열 attackPower 4 단독
+  const b = previewDamageParts(state, beef, SKILLS["gangta"])!;
+  assert.equal(b.total, 16);
+  assert.equal(b.parts.reduce((s, p) => s + p.amount, 0), 16, "분해 합 = 최종(비-동상)");
+  assert.ok(b.parts.some((p) => p.label === "기본" && p.amount === 12));
+  assert.ok(b.parts.some((p) => p.label === "포메이션" && p.amount === 4));
+  assert.equal(previewDamageParts(state, beef, SKILLS["suho"]), null, "비데미지 스킬은 null");
 });

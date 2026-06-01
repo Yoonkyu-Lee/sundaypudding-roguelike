@@ -34,9 +34,7 @@ export function skillStats(sk: Skill, effDmg?: number): { label: string; value: 
   if (sk.target === "enemy") out.push({ label: "명중", value: `${sk.accuracy >= 0 ? "+" : ""}${sk.accuracy}` });
   else if (sk.alwaysHit) out.push({ label: "명중", value: "필중" });
   if (dmg && dmg.kind === "damage") {
-    const base = dmg.amount;
-    const value = effDmg === undefined || effDmg === base ? String(base) : `${base}→${effDmg}`;
-    out.push({ label: "피해", value });
+    out.push({ label: "피해", value: String(effDmg ?? dmg.amount) }); // 최종값만 (원인 분해는 '자세히')
   }
   return out;
 }

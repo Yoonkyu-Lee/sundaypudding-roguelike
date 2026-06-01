@@ -1,6 +1,6 @@
 // 행동 패널: 스킬 선택 모드(균일 카드 4개) vs 타겟팅 모드. 스킬 설명은 skillDesc(데이터).
 import type { GameState, Observation, Unit } from "../../core/types.ts";
-import { previewDamage } from "../../core/engine.ts";
+import { previewDamage, previewDamageParts } from "../../core/engine.ts";
 import { SKILLS } from "../../data/skills.ts";
 import { esc, type Ui } from "./shared.ts";
 import { skillCardBody, skillInline, skillType } from "./skillDesc.ts";
@@ -9,6 +9,14 @@ import { skillCardBody, skillInline, skillType } from "./skillDesc.ts";
 function effDmgOf(state: GameState, actor: Unit, skillId: string): number | undefined {
   const sk = SKILLS[skillId];
   return sk?.effects.some((e) => e.kind === "damage") ? previewDamage(state, actor, sk) : undefined;
+}
+
+/** 자세히 보기: 피해 원인 분해 한 줄 (기본 12 · 무기 +3 · 포메이션 +2 = 17). 데미지 스킬만. */
+function breakdownLine(state: GameState, actor: Unit, skillId: string): string {
+  const b = previewDamageParts(state, actor, SKILLS[skillId]);
+  if (!b) return "";
+  const parts = b.parts.map((p) => (p.label === "기본" ? `기본 ${p.amount}` : p.label === "동상" ? "동상 ×" : `${p.label} ${p.amount >= 0 ? "+" : ""}${p.amount}`)).join(" · ");
+  return `<span class="skbreak">${parts} = <b>${b.total}</b></span>`;
 }
 
 export function actionPanel(obs: Observation, state: GameState, ui: Ui): string {
@@ -43,11 +51,13 @@ export function actionPanel(obs: Observation, state: GameState, ui: Ui): string 
     const disabled = cd > 0 || !usable.has(id);
     const reason = cd > 0 ? `쿨 ${cd}` : !usable.has(id) ? "사정권 없음" : "";
     const attrs = disabled ? "disabled" : `data-skill="${id}"`;
+    const brk = ui.sheetDetail ? breakdownLine(state, actor, id) : "";
     return `<button class="skcard t-${skillType(sk).key} ${disabled ? "disabled" : ""}" ${attrs}>
       <span class="skhead"><span class="skname">${esc(sk.name)}</span>${reason ? `<span class="skreason">${reason}</span>` : ""}</span>
-      ${skillCardBody(sk, effDmgOf(state, actor, id))}
+      ${skillCardBody(sk, effDmgOf(state, actor, id))}${brk}
     </button>`;
   }).join("");
-  // 대기: 아무것도 안 하고 턴 넘기기 (항상 노출, 쿨 소모 없음)
-  return `<div class="actions skillsel"><div class="prompt">▶ ${esc(obs.current.name)}의 턴 — 스킬 선택</div><div class="skgrid">${cards}</div><button class="act skip wait" id="skipbtn">⏭ 대기 (턴 넘김)</button></div>`;
+  // 대기: 아무것도 안 하고 턴 넘기기 (항상 노출, 쿨 소모 없음) + 자세히(피해 분해) 토글
+  const detailBtn = `<button class="detail-toggle${ui.sheetDetail ? " on" : ""}" id="detailbtn">${ui.sheetDetail ? "자세히 ✓" : "자세히"}</button>`;
+  return `<div class="actions skillsel"><div class="prompt">▶ ${esc(obs.current.name)}의 턴 — 스킬 선택 ${detailBtn}</div><div class="skgrid">${cards}</div><button class="act skip wait" id="skipbtn">⏭ 대기 (턴 넘김)</button></div>`;
 }

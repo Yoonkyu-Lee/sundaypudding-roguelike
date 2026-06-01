@@ -394,3 +394,9 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .pv-detail { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
 .pv-detail .cshead { margin-bottom: 12px; }
 @media (max-width: 820px) { .party-grid { grid-template-columns: 1fr; } }
+
+/* 자세히 토글 + 피해 분해 (행동 패널) */
+.detail-toggle { font-size: 10px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel2); color: var(--dim); cursor: pointer; margin-left: 6px; }
+.detail-toggle.on { border-color: var(--accent); color: var(--accent); }
+.skbreak { display: block; margin-top: 5px; font-size: 9.5px; color: var(--dim); line-height: 1.4; }
+.skbreak b { color: var(--enemy); }

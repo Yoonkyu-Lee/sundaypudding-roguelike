@@ -64,6 +64,25 @@ export function previewDamage(state: GameState, actor: Unit, skill: Skill): numb
   return total;
 }
 
+/** 데미지 분해(자세히 보기용): 기본(스킬상수)·포메이션·강화·무기·공위증/약화 등 원인별 기여 + 최종. 데미지 스킬 아니면 null. */
+export function previewDamageParts(state: GameState, actor: Unit, skill: Skill): { total: number; parts: { label: string; amount: number }[] } | null {
+  const dmgEffs = skill.effects.filter((e) => e.kind === "damage");
+  if (!dmgEffs.length) return null;
+  const n = dmgEffs.length;
+  const base = dmgEffs.reduce((s, e) => s + (e.kind === "damage" ? e.amount : 0), 0);
+  const atk = getFormationBonus(state, actor, "attackPower") * n;
+  const up = (actor.skillDmgBonus[skill.id] ?? 0) * n;
+  const weapon = actor.equipDmgFlat * n;
+  const status = statusNumSum(actor, "dmgDealtFlat") * n; // 공위증(+)/약화(−)
+  const parts: { label: string; amount: number }[] = [{ label: "기본", amount: base }];
+  if (atk) parts.push({ label: "포메이션", amount: atk });
+  if (up) parts.push({ label: "강화", amount: up });
+  if (weapon) parts.push({ label: "무기", amount: weapon });
+  if (status) parts.push({ label: status > 0 ? "공위증" : "약화", amount: status });
+  if (hasStatus(actor, "frost")) parts.push({ label: "동상", amount: 0 }); // ×배율(곱연산) — 라벨만, 최종에 반영됨
+  return { total: previewDamage(state, actor, skill), parts };
+}
+
 /** 관통/쉴드 고려 HP 손실 미리보기. 타겟팅 UI용(0.2). */
 export function previewHpLoss(state: GameState, attacker: Unit, skill: Skill, target: Unit): { hpLoss: number; shieldConsumed: number } {
   const dmg = previewDamage(state, attacker, skill);

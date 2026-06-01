@@ -168,6 +168,10 @@ const battleHandlers: Handlers = {
     ui.sheetUid = uid; // 전투 유닛 프로필(아군/적)
     render();
   },
+  onToggleDetail() {
+    ui.sheetDetail = !ui.sheetDetail; // 전역 자세히(피해 분해/스탯 원본 병기)
+    render();
+  },
 };
 
 // ── 런 핸들러 ──
