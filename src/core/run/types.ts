@@ -48,6 +48,7 @@ export interface RunView {
     name: string;
     charId: string;
     avatar?: string;
+    pos: { row: number; col: number }; // 진형 위치 (6장)
     hp: number;
     maxHp: number;
     alive: boolean;

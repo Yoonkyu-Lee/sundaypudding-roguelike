@@ -2,7 +2,7 @@
 // 전투는 render.ts(renderApp) 재사용, 맵/보상/결과는 runRender.ts. (7장)
 import { step } from "../core/engine.ts";
 import { chooseAction } from "../core/ai.ts";
-import { createRun, enterNode, resolveBattleEnd, chooseReward, setActiveSkill, buyShopOffer, leaveShop, chooseEncounterOption, equipItem, unequipItem, getRunView, type RunState } from "../core/run.ts";
+import { createRun, enterNode, resolveBattleEnd, chooseReward, setActiveSkill, movePartyMember, buyShopOffer, leaveShop, chooseEncounterOption, equipItem, unequipItem, getRunView, type RunState } from "../core/run.ts";
 import type { Action } from "../core/types.ts";
 import { SKILLS } from "../data/skills.ts";
 import { CHARACTERS } from "../data/characters.ts";
@@ -10,6 +10,7 @@ import { renderApp, type Handlers, type Ui } from "./render.ts";
 import { renderRunScreen, type RunHandlers } from "./runRender.ts";
 import { createTimelinePanel, type RollView } from "./battle/timelinePanel.ts";
 import { renderCharSheet, type SheetData, type SheetHandlers } from "./charSheet.ts";
+import { renderPartyView, type PartyViewHandlers } from "./partyView.ts";
 
 const app = document.getElementById("app")!;
 const panel = createTimelinePanel(); // 행동서열 패널 — 주사위(rolling)↔전투(live) 한 컴포넌트, 전투 셸에 영속 마운트
@@ -24,7 +25,7 @@ const ROSTER = [
 let run: RunState;
 let seed = 42;
 let busy = false;
-const ui: Ui = { selectedSkillId: null, hoverCell: null, pickedCells: [], damaged: new Set(), moved: new Set(), seed, sheetCharId: null };
+const ui: Ui = { selectedSkillId: null, hoverCell: null, pickedCells: [], damaged: new Set(), moved: new Set(), seed, sheetCharId: null, partyOpen: false };
 
 function resetUi(): void {
   ui.selectedSkillId = null;
@@ -32,7 +33,8 @@ function resetUi(): void {
   ui.pickedCells = [];
   ui.damaged = new Set();
   ui.moved = new Set();
-  ui.sheetCharId = null; // 노드 전환 시 시트 닫기
+  ui.sheetCharId = null; // 노드 전환 시 시트/파티뷰 닫기
+  ui.partyOpen = false;
 }
 function endTargeting(): void {
   ui.selectedSkillId = null;
@@ -68,22 +70,28 @@ function render(): void {
   } else {
     introRound = 0; // 전투를 떠나면 리셋 → 다음 전투는 1라운드부터 연출
     renderRunScreen(app, getRunView(run), runHandlers);
-    renderSheetIfOpen();
+    renderOverlay();
   }
 }
 
 function renderBattle(): void {
   renderApp(app, run.battle!, ui, battleHandlers, panel);
-  renderSheetIfOpen();
+  renderOverlay();
   driveBattle();
 }
 
-// ── 캐릭터 시트(모달) — ui.sheetCharId 단일 출처, 매 렌더 후 재그림(통짜 재렌더에 파괴되지 않게) ──
+// ── 오버레이(맵=파티 편성 / 전투=단독 캐릭터 시트) — ui 단일 출처, 매 렌더 후 재그림 ──
 const sheetHandlers: SheetHandlers = {
   onToggle(charId, skillId) { setActiveSkill(run, charId, skillId); render(); }, // 맵에서만 editable
   onEquip(charId, slot, itemId) { equipItem(run, charId, slot, itemId); render(); },
   onUnequip(charId, slot) { unequipItem(run, charId, slot); render(); },
   onClose() { ui.sheetCharId = null; render(); },
+};
+const partyViewHandlers: PartyViewHandlers = {
+  ...sheetHandlers,
+  onClose() { ui.partyOpen = false; ui.sheetCharId = null; render(); },
+  onSelect(charId) { ui.sheetCharId = charId; render(); }, // 우측 상세 전환(파티뷰 유지)
+  onMove(charId, to) { movePartyMember(run, charId, to); render(); }, // 진형 배치(맵 전용)
 };
 
 function buildSheetData(charId: string): SheetData | null {
@@ -112,11 +120,19 @@ function buildSheetData(charId: string): SheetData | null {
   };
 }
 
-function renderSheetIfOpen(): void {
-  if (!ui.sheetCharId) return;
-  const data = buildSheetData(ui.sheetCharId);
-  if (!data) { ui.sheetCharId = null; return; }
-  renderCharSheet(app, data, sheetHandlers);
+function renderOverlay(): void {
+  app.querySelector(".party-overlay")?.remove(); // stale 제거(닫힘/전환)
+  app.querySelector(".charsheet-overlay")?.remove();
+  if (run.phase === "map" && ui.partyOpen) {
+    const rv = getRunView(run);
+    const sel = buildSheetData(ui.sheetCharId ?? rv.party[0]?.charId ?? "");
+    if (!sel) return;
+    const members = rv.party.map((p) => ({ charId: p.charId, name: p.name, avatar: p.avatar, pos: p.pos, hp: p.hp, hpMax: p.maxHp, alive: p.alive }));
+    renderPartyView(app, { members, selected: sel }, partyViewHandlers);
+  } else if (ui.sheetCharId) {
+    const data = buildSheetData(ui.sheetCharId);
+    if (data) renderCharSheet(app, data, sheetHandlers); // 전투 단독 프로필
+  }
 }
 
 // ── 전투 진행 ──
@@ -244,7 +260,9 @@ const runHandlers: RunHandlers = {
     resetUi();
     render();
   },
-  onOpenSheet(charId) {
+  onOpenParty(charId) {
+    if (run.phase !== "map") return;
+    ui.partyOpen = true;
     ui.sheetCharId = charId;
     render();
   },
@@ -258,10 +276,11 @@ function newRun(s: number): void {
   render();
 }
 
-// Esc: 시트 열려있으면 닫기, 아니면 타겟팅 취소
+// Esc: 파티뷰/시트 열려있으면 닫기, 아니면 타겟팅 취소
 window.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
-  if (ui.sheetCharId) { ui.sheetCharId = null; render(); }
+  if (ui.partyOpen) { ui.partyOpen = false; ui.sheetCharId = null; render(); }
+  else if (ui.sheetCharId) { ui.sheetCharId = null; render(); }
   else if (ui.selectedSkillId) battleHandlers.onCancel();
 });
 

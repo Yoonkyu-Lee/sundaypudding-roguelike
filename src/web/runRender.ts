@@ -12,7 +12,7 @@ export interface RunHandlers {
   onBuy: (offerId: string) => void; // 상점 구매
   onLeaveShop: () => void; // 상점 나가기
   onEncounterChoice: (choiceId: string) => void; // 인카운터 선택
-  onOpenSheet: (charId: string) => void; // 캐릭터 시트 열기
+  onOpenParty: (charId: string) => void; // 파티 편성(통합 파티뷰) 열기 — 해당 캐릭 선택
 }
 
 const TYPE_ICON: Record<NodeType, string> = {
@@ -55,7 +55,8 @@ function partyPanel(view: RunView): string {
       </button>`;
     })
     .join("");
-  return `<div class="party"><h3>파티 <span class="goldtag">💰 ${view.gold}G</span></h3>${rows}</div>`;
+  const editBtn = view.party.length ? `<button class="party-edit" data-party-edit="${view.party[0].charId}">⚙ 파티 편성 ▸</button>` : "";
+  return `<div class="party"><h3>파티 <span class="goldtag">💰 ${view.gold}G</span></h3>${rows}${editBtn}</div>`;
 }
 
 function shopScreen(view: RunView): string {
@@ -155,7 +156,10 @@ export function renderRunScreen(app: HTMLElement, view: RunView, h: RunHandlers)
     b.addEventListener("click", () => h.onReward(b.dataset.reward!)),
   );
   app.querySelectorAll<HTMLButtonElement>(".pmember[data-sheet]").forEach((b) =>
-    b.addEventListener("click", () => h.onOpenSheet(b.dataset.sheet!)),
+    b.addEventListener("click", () => h.onOpenParty(b.dataset.sheet!)),
+  );
+  app.querySelector<HTMLButtonElement>("[data-party-edit]")?.addEventListener("click", (e) =>
+    h.onOpenParty((e.currentTarget as HTMLElement).dataset.partyEdit!),
   );
   app.querySelectorAll<HTMLButtonElement>("[data-buy]").forEach((b) =>
     b.addEventListener("click", () => h.onBuy(b.dataset.buy!)),

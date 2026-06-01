@@ -20,6 +20,7 @@ export function getRunView(run: RunState): RunView {
       name: CHARACTERS[m.charId].name,
       charId: m.charId,
       avatar: CHARACTERS[m.charId].avatar,
+      pos: { ...m.pos }, // 진형 보드 렌더용 (6장)
       hp: m.hp,
       maxHp: m.maxHp,
       alive: m.hp > 0,

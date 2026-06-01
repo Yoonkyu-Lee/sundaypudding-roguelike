@@ -357,3 +357,30 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .csbase { color: var(--dim); text-decoration: line-through; font-size: 11px; }
 .csarrow { color: var(--dim); margin: 0 2px; font-size: 10px; }
 .csval.up { color: var(--green); font-weight: 700; }
+
+/* ── 파티 편성 (통합 파티뷰: 진형 보드 + 캐릭터 상세) ── */
+.party-edit { margin-top: 4px; width: 100%; font-size: 12px; padding: 7px; border-radius: 8px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; font-weight: 600; }
+.party-edit:hover { background: rgba(255,209,102,.12); }
+.party-overlay { position: fixed; inset: 0; z-index: 120; display: flex; align-items: center; justify-content: center; background: rgba(10,12,16,.8); backdrop-filter: blur(3px); }
+.party-modal { position: relative; width: 920px; max-width: 95vw; max-height: 90vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+.pv-title { margin: 0 0 12px; font-size: 17px; }
+.party-grid { display: grid; grid-template-columns: minmax(360px, 1fr) minmax(380px, 1fr); gap: 18px; align-items: start; }
+.pv-board { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.pv-cols, .pv-cells { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.pv-collabel { text-align: center; font-size: 13px; color: var(--dim); padding-bottom: 4px; }
+.pv-cell { aspect-ratio: 1 / 1; border: 1px dashed var(--line); border-radius: 8px; display: flex; align-items: stretch; padding: 2px; }
+.pv-cell.over { border-color: var(--accent); border-style: solid; background: rgba(255,209,102,.1); }
+.pv-empty { color: #3a4150; margin: auto; font-size: 11px; }
+.pv-mem { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 3px; border-radius: 7px; background: var(--panel); border: 1px solid var(--line); cursor: grab; }
+.pv-mem:hover { border-color: var(--ally); }
+.pv-mem.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.pv-mem.dead { opacity: .4; }
+.pv-mem:active { cursor: grabbing; }
+.pv-nm { font-size: 11px; font-weight: 600; text-align: center; line-height: 1.1; }
+.pv-bonus { font-size: 9px; color: var(--accent); }
+.pv-hp { width: 100%; height: 5px; background: #11141b; border-radius: 3px; overflow: hidden; }
+.pv-hpf { height: 100%; background: var(--hp); }
+.pv-hint { font-size: 10px; color: var(--dim); margin-top: 10px; line-height: 1.4; }
+.pv-detail { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.pv-detail .cshead { margin-bottom: 12px; }
+@media (max-width: 820px) { .party-grid { grid-template-columns: 1fr; } }

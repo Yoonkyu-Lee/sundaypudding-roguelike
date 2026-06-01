@@ -19,7 +19,8 @@ export interface Ui {
   damaged: Set<string>;
   moved: Set<string>; // 직전 step에서 이동한 유닛 (이동 펄스 연출)
   seed: number;
-  sheetCharId: string | null; // 열린 캐릭터 시트(모달)의 charId, null=닫힘
+  sheetCharId: string | null; // 열린 캐릭터 시트의 charId(파티뷰 선택 캐릭 겸용), null=닫힘
+  partyOpen: boolean; // 파티 편성 오버레이(맵) 열림 여부
 }
 export interface Handlers {
   onSkill: (skillId: string) => void;

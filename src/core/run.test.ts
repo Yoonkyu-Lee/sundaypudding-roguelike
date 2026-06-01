@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRun, enterNode, resolveBattleEnd, chooseReward, buyShopOffer, leaveShop, chooseEncounterOption, getRunView } from "./run.ts";
-import { step } from "./engine.ts";
+import { createRun, enterNode, resolveBattleEnd, chooseReward, buyShopOffer, leaveShop, chooseEncounterOption, movePartyMember, getRunView } from "./run.ts";
+import { step, createBattle, getFormationBonus } from "./engine.ts";
 import { chooseAction } from "./ai.ts";
 import { ENCOUNTER_EVENTS } from "../data/events.ts";
 import type { MapGenConfig } from "./types.ts";
@@ -180,4 +180,34 @@ test("보스전은 적 진형 보너스 활성(6.3) — boss 노드 진입 시 e
   enterNode(run, bossId);
   assert.notEqual(run.battle, null);
   assert.notEqual(run.battle!.enemyFormation, null);
+});
+
+test("진형 편성: movePartyMember 이동/교대/같은칸 무시 (맵)", () => {
+  const run = createRun(5, ROSTER); // beef(1,0) pudding(2,1) jelly(2,2)
+  const beef = run.party.find((p) => p.charId === "beef")!;
+  const pud = run.party.find((p) => p.charId === "pudding")!;
+  // 빈 칸 이동
+  movePartyMember(run, "beef", { row: 0, col: 3 });
+  assert.deepEqual(beef.pos, { row: 0, col: 3 });
+  // 점유 칸 → 위치 교대 (beef ↔ pudding)
+  movePartyMember(run, "beef", { row: 2, col: 1 });
+  assert.deepEqual(beef.pos, { row: 2, col: 1 });
+  assert.deepEqual(pud.pos, { row: 0, col: 3 }); // pudding이 beef 직전 칸으로
+  // 같은 칸 무시
+  movePartyMember(run, "beef", { row: 2, col: 1 });
+  assert.deepEqual(beef.pos, { row: 2, col: 1 });
+});
+
+test("진형 편성: 배치 변경이 전투 진형 보너스(열 분배)에 반영", () => {
+  const run = createRun(5, ROSTER);
+  movePartyMember(run, "beef", { row: 0, col: 0 }); // 0열(공격)
+  movePartyMember(run, "pudding", { row: 1, col: 0 }); // 0열(공격) — 둘이 분배
+  movePartyMember(run, "jelly", { row: 0, col: 3 }); // 3열(방어) 혼자
+  const enc = { id: "t", name: "t", allies: [], enemies: [{ charId: "thug", pos: { row: 0, col: 0 } }], boss: false };
+  const g = createBattle(9, enc, run.party);
+  const ub = g.units.find((u) => u.charId === "beef")!;
+  const uj = g.units.find((u) => u.charId === "jelly")!;
+  assert.equal(ub.pos.col, 0);
+  assert.equal(getFormationBonus(g, ub, "attackPower"), 2); // 0열 총량4 ÷ 2명
+  assert.equal(getFormationBonus(g, uj, "defensePower"), 4); // 3열 총량4 ÷ 1명
 });

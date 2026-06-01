@@ -94,7 +94,7 @@ function statRows(d: SheetData): string {
   ].join("");
 }
 
-function slotBlock(d: SheetData, h: SheetHandlers, sl: { key: EquipSlot; label: string; locked?: boolean }): string {
+function slotBlock(d: SheetData, sl: { key: EquipSlot; label: string; locked?: boolean }): string {
   if (sl.locked) return `<div class="csslot locked"><span class="csslotname">${sl.label}</span><span class="csslotval">🔒 후속</span></div>`;
   const curId = d.equipped[sl.key];
   const cur = curId ? ITEMS[curId] : undefined;
@@ -126,29 +126,35 @@ function skillList(d: SheetData): string {
   return `<div class="cssection"><h4>보유 스킬 ${hint}</h4><div class="csk-list">${items}</div></div>`;
 }
 
+/** 시트 본문(머리+능력치/장착/스킬) — 단독 모달·파티뷰 상세 pane 공용. 닫기/오버레이 크롬 제외. */
+export function sheetBody(d: SheetData): string {
+  return `<div class="cshead">${avatarHtml(d.avatar, "avt")}<h3>${esc(d.name)}</h3></div>
+    <div class="csbody">
+      <div class="cssection"><h4>능력치</h4><div class="csstats">${statRows(d)}</div></div>
+      <div class="cssection"><h4>장착</h4><div class="csslots">${SLOTS.map((sl) => slotBlock(d, sl)).join("")}</div></div>
+      ${skillList(d)}
+    </div>`;
+}
+
+/** 시트 조작 와이어링 — scope 내 스킬 토글/장착/해제 (editable일 때만). */
+export function wireSheet(scope: HTMLElement, d: SheetData, h: SheetHandlers): void {
+  if (!d.editable) return;
+  scope.querySelectorAll<HTMLButtonElement>("[data-sheet-skill]").forEach((b) =>
+    b.addEventListener("click", () => h.onToggle(d.charId, b.dataset.sheetSkill!)));
+  scope.querySelectorAll<HTMLButtonElement>("[data-equip-item]").forEach((b) =>
+    b.addEventListener("click", () => h.onEquip(d.charId, b.dataset.equipSlot as EquipSlot, b.dataset.equipItem!)));
+  scope.querySelectorAll<HTMLButtonElement>("[data-unequip]").forEach((b) =>
+    b.addEventListener("click", () => h.onUnequip(d.charId, b.dataset.unequip as EquipSlot)));
+}
+
+/** 단독 캐릭터 시트 모달 (전투 아군 ℹ 프로필 조회용). */
 export function renderCharSheet(app: HTMLElement, d: SheetData, h: SheetHandlers): void {
   app.querySelector(".charsheet-overlay")?.remove(); // 중복 방지
   const ov = document.createElement("div");
   ov.className = "charsheet-overlay";
-  ov.innerHTML = `<div class="charsheet" role="dialog">
-    <button class="cs-close" title="닫기 (Esc)">✕</button>
-    <div class="cshead">${avatarHtml(d.avatar, "avt")}<h3>${esc(d.name)}</h3></div>
-    <div class="csbody">
-      <div class="cssection"><h4>능력치</h4><div class="csstats">${statRows(d)}</div></div>
-      <div class="cssection"><h4>장착</h4><div class="csslots">${SLOTS.map((sl) => slotBlock(d, h, sl)).join("")}</div></div>
-      ${skillList(d)}
-    </div>
-  </div>`;
+  ov.innerHTML = `<div class="charsheet" role="dialog"><button class="cs-close" title="닫기 (Esc)">✕</button>${sheetBody(d)}</div>`;
   app.appendChild(ov);
-
   ov.addEventListener("click", (e) => { if (e.target === ov) h.onClose(); }); // 백드롭
   ov.querySelector(".cs-close")!.addEventListener("click", () => h.onClose());
-  if (d.editable) {
-    ov.querySelectorAll<HTMLButtonElement>("[data-sheet-skill]").forEach((b) =>
-      b.addEventListener("click", () => h.onToggle(d.charId, b.dataset.sheetSkill!)));
-    ov.querySelectorAll<HTMLButtonElement>("[data-equip-item]").forEach((b) =>
-      b.addEventListener("click", () => h.onEquip(d.charId, b.dataset.equipSlot as EquipSlot, b.dataset.equipItem!)));
-    ov.querySelectorAll<HTMLButtonElement>("[data-unequip]").forEach((b) =>
-      b.addEventListener("click", () => h.onUnequip(d.charId, b.dataset.unequip as EquipSlot)));
-  }
+  wireSheet(ov, d, h);
 }
