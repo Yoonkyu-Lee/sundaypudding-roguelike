@@ -78,8 +78,9 @@ function invPanel(inventory: string[]): string {
     .map((id) => { const it = ITEMS[id]; return it ? `<div class="pv-inv-item" draggable="true" data-item="${id}">${it.icon ?? "📦"} <span>${esc(it.name)}</span></div>` : ""; })
     .join("");
   return `<div class="pv-inv">
-    <div class="pv-inv-items">${items || "<div class='cshint'>인벤토리 비어 있음 — 상점·보상에서 획득</div>"}</div>
-    <div class="pv-inv-detail" id="invDetail"><span class="cshint">아이템에 호버=상세 · 클릭=선택 캐릭 장착 · 드래그=장착/해제</span></div>
+    <div class="pv-inv-head">🎒 인벤토리<span class="cshint">드래그=장착/해제 · 클릭=선택 캐릭 장착</span></div>
+    <div class="pv-inv-items">${items || "<div class='cshint'>비어 있음 — 상점·보상에서 획득</div>"}</div>
+    <div class="pv-inv-detail" id="invDetail"><span class="cshint">아이템에 호버하면 상세</span></div>
   </div>`;
 }
 
@@ -107,8 +108,7 @@ export function renderPartyView(app: HTMLElement, d: PartyViewData, h: PartyView
   ov.innerHTML = `<div class="party-modal" role="dialog">
     <button class="cs-close" title="닫기 (Esc)">✕</button>
     <h3 class="pv-title">파티 편성</h3>
-    <div class="party-grid">${boardHtml(d.members, d.selected.charId)}<div class="pv-detail">${sheetBody(d.selected)}</div></div>
-    ${invPanel(d.inventory)}
+    <div class="party-grid">${boardHtml(d.members, d.selected.charId)}<div class="pv-detail">${sheetBody(d.selected)}</div>${invPanel(d.inventory)}</div>
   </div>`;
   app.appendChild(ov);
 
