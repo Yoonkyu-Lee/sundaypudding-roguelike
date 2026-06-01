@@ -47,6 +47,10 @@ function chip(s: UnitView["statuses"][number]): string {
   return `<button class="chip ${cls}" type="button" aria-label="${esc(def?.name ?? s.id)}">${s.icon}<sup>${s.stacks}</sup><sub>${s.duration}</sub>${pop}</button>`;
 }
 
+/** 상태 칩 묶음 — 분해된 statuses 배열에서 (유닛카드·캐릭터 시트 공용). */
+export function statusChipsList(statuses: UnitView["statuses"]): string {
+  return statuses.map(chip).join("");
+}
 export function statusChips(u: UnitView): string {
-  return u.statuses.map(chip).join("");
+  return statusChipsList(u.statuses);
 }

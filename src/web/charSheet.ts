@@ -1,8 +1,9 @@
 // 캐릭터 시트 (모달 오버레이). 맵·전투 공용 — 능력치·장착·보유 스킬을 펼쳐서 조회/관리.
 // 호출자가 baseStats·현재 HP·equipped·inventory·skills를 조립 → 시트는 장착 보정(현재값)·델타·픽커 렌더.
 // 장착 메커니즘(슬라이스2): 맵 editable이면 슬롯에 장착/교체/해제, 전투는 읽기전용.
-import type { EquipSlot, ItemDef } from "../core/types.ts";
+import type { EquipSlot, ItemDef, UnitView } from "../core/types.ts";
 import { ITEMS } from "../data/items.ts";
+import { statusChipsList } from "./battle/status.ts";
 import { avatarHtml, esc, r1 } from "./battle/shared.ts";
 
 export interface SheetBaseStats {
@@ -28,17 +29,21 @@ export interface SheetData {
   avatar?: string;
   hp: number; // 현재 HP
   hpMax: number; // 현재 maxHp (장착 반영)
+  shield: number; // 현재 쉴드 (전투만, 맵=0)
   base: SheetBaseStats; // 원본(장착 전)
   equipped: { weapon?: string; armor?: string; held?: string };
   inventory: string[]; // 미장착 보유 아이템
   skills: SheetSkill[];
+  statuses: UnitView["statuses"]; // 활성 상태이상 (전투만, 맵=[])
   activeCount: number;
   editable: boolean; // 맵=장착/활성4 조작, 전투=읽기전용
+  detail: boolean; // '자세히 보기' — ON이면 능력치에 원본+변화 병기
 }
 export interface SheetHandlers {
   onToggle: (charId: string, skillId: string) => void;
   onEquip: (charId: string, slot: EquipSlot, itemId: string) => void;
   onUnequip: (charId: string, slot: EquipSlot) => void;
+  onToggleDetail: () => void; // 자세히 보기 토글
   onClose: () => void;
 }
 
@@ -76,21 +81,39 @@ function effective(base: SheetBaseStats, eq: SheetData["equipped"]) {
   return s;
 }
 
-// 능력치 행 — 원본→현재 병기(0.2). 보정 있으면 강조.
+// 체력바 + 쉴드바 (머리 아래). 쉴드 0이면 쉴드바 숨김. 자세히 ON이면 HP 원본+변화 병기.
+function barsBlock(d: SheetData): string {
+  const hpPct = Math.max(0, (d.hp / d.hpMax) * 100);
+  const shPct = d.shield > 0 ? Math.min(100, (d.shield / d.hpMax) * 100) : 0;
+  const hpDelta = d.hpMax - d.base.hp; // 방어구 HP 보정
+  const hpBreak = d.detail && hpDelta !== 0 ? `<span class="csbreak">${d.base.hp} ${hpDelta >= 0 ? "+" : ""}${hpDelta}</span>` : "";
+  const shTxt = d.shield > 0 ? `<span class="csbar-sh">🛡 ${d.shield}</span>` : "";
+  return `<div class="cssbars">
+    <div class="bars">
+      <div class="shbar">${shPct > 0 ? `<div class="shfill" style="width:${shPct}%"></div>` : ""}</div>
+      <div class="hpbar"><div class="hp" style="width:${hpPct}%"></div></div>
+    </div>
+    <div class="csbar-text"><span>❤ ${d.hp}/${d.hpMax}</span>${hpBreak}${shTxt}</div>
+  </div>`;
+}
+
+// 능력치 행 — 기본=현재(effective)만. 자세히 ON이면 오른쪽에 [원본] [+변화] 병기(0.2).
 function statRows(d: SheetData): string {
   const b = d.base, e = effective(b, d.equipped);
-  const row = (label: string, baseV: string, curV: string, hint = "") => {
-    const changed = baseV !== curV;
-    const val = changed ? `<span class="csbase">${baseV}</span><span class="csarrow">→</span><span class="csval up">${curV}</span>` : `<span class="csval">${curV}</span>`;
+  const row = (label: string, cur: string, base: string, hint = "", delta?: number) => {
+    let val = `<span class="csval">${cur}</span>`;
+    if (d.detail && cur !== base) {
+      const dstr = delta !== undefined && delta !== 0 ? ` <span class="csdelta">${delta >= 0 ? "+" : ""}${r1(delta)}</span>` : "";
+      val += `<span class="csbreak">${base}${dstr}</span>`;
+    }
     return `<div class="csstat"><span class="cslabel">${label}</span>${val}${hint ? `<span class="cshint">${hint}</span>` : ""}</div>`;
   };
   return [
-    row("체력", `${b.hp}`, `${d.hp}/${d.hpMax}`),
-    row("속도", `${b.speedMin}~${b.speedMax}`, `${e.speedMin}~${e.speedMax}`, "라운드 주사위"),
-    row("회피", `${b.evasion}`, `${e.evasion}`, "명중에서 차감"),
-    row("명중", `${b.accuracy}`, `${e.accuracy}`, "기본 0 + 스킬"),
-    row("치명%", `${b.critChance}%`, `${e.critChance}%`),
-    row("치명배수", `×${r1(b.critMultiplier)}`, `×${r1(e.critMultiplier)}`),
+    row("속도", `${e.speedMin}~${e.speedMax}`, `${b.speedMin}~${b.speedMax}`, "라운드 주사위"),
+    row("회피", `${e.evasion}`, `${b.evasion}`, "명중에서 차감", e.evasion - b.evasion),
+    row("명중", `${e.accuracy}`, `${b.accuracy}`, "기본 0 + 스킬", e.accuracy - b.accuracy),
+    row("치명%", `${e.critChance}%`, `${b.critChance}%`, "", e.critChance - b.critChance),
+    row("치명배수", `×${r1(e.critMultiplier)}`, `×${r1(b.critMultiplier)}`, "", e.critMultiplier - b.critMultiplier),
   ].join("");
 }
 
@@ -126,18 +149,25 @@ function skillList(d: SheetData): string {
   return `<div class="cssection"><h4>보유 스킬 ${hint}</h4><div class="csk-list">${items}</div></div>`;
 }
 
-/** 시트 본문(머리+능력치/장착/스킬) — 단독 모달·파티뷰 상세 pane 공용. 닫기/오버레이 크롬 제외. */
+/** 시트 본문(머리+바+능력치/상태/장착/스킬) — 단독 모달·파티뷰 상세 pane 공용. 닫기/오버레이 크롬 제외. */
 export function sheetBody(d: SheetData): string {
+  const statusSec = d.statuses.length
+    ? `<div class="cssection"><h4>상태</h4><div class="chips csheet-chips">${statusChipsList(d.statuses)}</div></div>`
+    : "";
+  const toggle = `<button class="csdetail-toggle${d.detail ? " on" : ""}" data-toggle-detail>${d.detail ? "자세히 ✓" : "자세히 보기"}</button>`;
   return `<div class="cshead">${avatarHtml(d.avatar, "avt")}<h3>${esc(d.name)}</h3></div>
+    ${barsBlock(d)}
     <div class="csbody">
-      <div class="cssection"><h4>능력치</h4><div class="csstats">${statRows(d)}</div></div>
+      <div class="cssection"><h4>능력치 ${toggle}</h4><div class="csstats">${statRows(d)}</div></div>
+      ${statusSec}
       <div class="cssection"><h4>장착</h4><div class="csslots">${SLOTS.map((sl) => slotBlock(d, sl)).join("")}</div></div>
       ${skillList(d)}
     </div>`;
 }
 
-/** 시트 조작 와이어링 — scope 내 스킬 토글/장착/해제 (editable일 때만). */
+/** 시트 조작 와이어링 — 자세히 토글은 항상, 스킬/장착은 editable일 때만. */
 export function wireSheet(scope: HTMLElement, d: SheetData, h: SheetHandlers): void {
+  scope.querySelector<HTMLButtonElement>("[data-toggle-detail]")?.addEventListener("click", () => h.onToggleDetail());
   if (!d.editable) return;
   scope.querySelectorAll<HTMLButtonElement>("[data-sheet-skill]").forEach((b) =>
     b.addEventListener("click", () => h.onToggle(d.charId, b.dataset.sheetSkill!)));

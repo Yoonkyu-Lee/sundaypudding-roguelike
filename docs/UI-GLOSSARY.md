@@ -29,7 +29,7 @@
 
 | 도메인 이름 | 무엇 | 코드 | CSS 루트 |
 |---|---|---|---|
-| **캐릭터 시트** | 캐릭터 1명 상세(능력치 원본→현재 · 장착 3칸 · 보유 스킬). **전투=아군·적 단독 모달(읽기전용, uid 키, 유닛카드 ℹ)**, **파티 편성=우측 pane(편집)**(같은 `sheetBody`) | `charSheet.ts` (`sheetBody`/`wireSheet`/`renderCharSheet`) · 전투 데이터 `main.ts buildBattleSheet` | `.charsheet` |
+| **캐릭터 시트** | 캐릭터 1명 상세: **체력/쉴드바** · 능력치(**'자세히 보기' 토글** — 기본 현재값만, ON이면 `[원본]+변화` 병기) · **상태 섹션**(전투 중 상태이상 칩+팝오버) · 장착 3칸 · 보유 스킬. **전투=아군·적 단독 모달(읽기전용, uid 키, 유닛카드 ℹ)**, **파티 편성=우측 pane(편집)**(같은 `sheetBody`) | `charSheet.ts` (`sheetBody`/`wireSheet`/`renderCharSheet`) · 전투 데이터 `main.ts buildBattleSheet` | `.charsheet` |
 | **파티 편성** | 맵 전용 모달: 좌 **진형 보드** + 우 **캐릭터 시트** | `partyView.ts` `renderPartyView` | `.party-modal` |
 | └ **진형 보드** | 4×4 드래그앤드롭 배치(열 = 진형 보너스, 6장) | `partyView.ts` | `.pv-board` |
 

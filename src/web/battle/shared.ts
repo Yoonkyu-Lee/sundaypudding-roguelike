@@ -22,6 +22,7 @@ export interface Ui {
   sheetCharId: string | null; // 파티 편성(맵) 우측 상세에 선택된 캐릭 charId
   sheetUid: string | null; // 전투 단독 캐릭터 시트의 유닛 uid(아군/적, 중복 적 구분), null=닫힘
   partyOpen: boolean; // 파티 편성 오버레이(맵) 열림 여부
+  sheetDetail: boolean; // 시트 '자세히 보기'(능력치 원본+변화 병기) 토글
 }
 export interface Handlers {
   onSkill: (skillId: string) => void;

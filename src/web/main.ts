@@ -1,6 +1,6 @@
 // 웹 엔트리 — 런 컨트롤러. 맵 ↔ 전투 ↔ 보상 ↔ 결과를 run.phase로 분기.
 // 전투는 render.ts(renderApp) 재사용, 맵/보상/결과는 runRender.ts. (7장)
-import { step } from "../core/engine.ts";
+import { step, buildObservation } from "../core/engine.ts";
 import { chooseAction } from "../core/ai.ts";
 import { createRun, enterNode, resolveBattleEnd, chooseReward, setActiveSkill, movePartyMember, buyShopOffer, leaveShop, chooseEncounterOption, equipItem, unequipItem, getRunView, type RunState } from "../core/run.ts";
 import type { Action } from "../core/types.ts";
@@ -25,7 +25,7 @@ const ROSTER = [
 let run: RunState;
 let seed = 42;
 let busy = false;
-const ui: Ui = { selectedSkillId: null, hoverCell: null, pickedCells: [], damaged: new Set(), moved: new Set(), seed, sheetCharId: null, sheetUid: null, partyOpen: false };
+const ui: Ui = { selectedSkillId: null, hoverCell: null, pickedCells: [], damaged: new Set(), moved: new Set(), seed, sheetCharId: null, sheetUid: null, partyOpen: false, sheetDetail: false };
 
 function resetUi(): void {
   ui.selectedSkillId = null;
@@ -36,6 +36,7 @@ function resetUi(): void {
   ui.sheetCharId = null; // 노드 전환 시 시트/파티뷰 닫기
   ui.sheetUid = null;
   ui.partyOpen = false;
+  ui.sheetDetail = false;
 }
 function endTargeting(): void {
   ui.selectedSkillId = null;
@@ -86,6 +87,7 @@ const sheetHandlers: SheetHandlers = {
   onToggle(charId, skillId) { setActiveSkill(run, charId, skillId); render(); }, // 맵에서만 editable
   onEquip(charId, slot, itemId) { equipItem(run, charId, slot, itemId); render(); },
   onUnequip(charId, slot) { unequipItem(run, charId, slot); render(); },
+  onToggleDetail() { ui.sheetDetail = !ui.sheetDetail; render(); },
   onClose() { ui.sheetUid = null; ui.sheetCharId = null; render(); },
 };
 const partyViewHandlers: PartyViewHandlers = {
@@ -112,12 +114,15 @@ function buildSheetData(charId: string): SheetData | null {
     avatar: pv?.avatar ?? ch.avatar,
     hp,
     hpMax,
+    shield: 0, // 맵에선 쉴드 없음(전투 종료 시 휘발)
     base: { hp: ch.hp, speedMin: ch.speedMin, speedMax: ch.speedMax, evasion: ch.evasion, accuracy: ch.accuracy, critChance: ch.critChance, critMultiplier: ch.critMultiplier },
     equipped: m?.equipped ?? {},
     inventory: run.inventory,
     skills: pv?.skills ?? [],
+    statuses: [], // 맵엔 상태이상 없음
     activeCount: pv?.activeCount ?? 0,
     editable: run.phase === "map", // 장착·활성4 변경은 맵에서만
+    detail: ui.sheetDetail,
   };
 }
 
@@ -127,6 +132,8 @@ function buildBattleSheet(uid: string): SheetData | null {
   if (!u) return null;
   const ch = CHARACTERS[u.charId];
   if (!ch) return null;
+  const obs = buildObservation(run.battle!);
+  const view = [...obs.allies, ...obs.enemies].find((v) => v.uid === uid); // 상태이상·쉴드(분해 관측)
   const m = u.side === "ally" ? run.party.find((p) => p.charId === u.charId) : undefined;
   const ownedIds = m ? m.ownedSkillIds : ch.skillIds; // 적은 learnset 전체 노출
   const activeSet = new Set(u.activeSkillIds);
@@ -144,12 +151,15 @@ function buildBattleSheet(uid: string): SheetData | null {
     avatar: ch.avatar,
     hp: u.hp,
     hpMax: u.hpMax,
+    shield: view?.shield ?? u.shield,
     base: { hp: ch.hp, speedMin: ch.speedMin, speedMax: ch.speedMax, evasion: ch.evasion, accuracy: ch.accuracy, critChance: ch.critChance, critMultiplier: ch.critMultiplier },
     equipped: m?.equipped ?? {}, // 적은 장착 없음
     inventory: [], // 전투 중 장착 변경 없음
     skills,
+    statuses: view?.statuses ?? [], // 활성 상태이상(분해 관측)
     activeCount: u.activeSkillIds.length,
     editable: false, // 전투=읽기전용(아군·적)
+    detail: ui.sheetDetail,
   };
 }
 
