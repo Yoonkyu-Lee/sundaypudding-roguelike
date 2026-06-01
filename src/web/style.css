@@ -464,3 +464,12 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .pause-box { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px 26px; display: flex; flex-direction: column; gap: 10px; min-width: 260px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
 .pause-box h2 { margin: 0 0 8px; }
 .pause-box .act { font-size: 15px; padding: 11px; border-radius: 9px; border: 0; background: var(--accent); color: #1a1a1a; font-weight: 600; cursor: pointer; }
+
+/* 허브 숙련도 (슬라이스4) */
+.hub-mstlist { display: flex; flex-direction: column; gap: 8px; }
+.hub-mst { display: grid; grid-template-columns: 88px 48px 1fr 64px; align-items: center; gap: 10px; font-size: 12px; }
+.hub-mst-nm { font-weight: 600; }
+.hub-mst-lv { color: var(--accent); }
+.hub-mst-bar { height: 7px; background: #11141b; border-radius: 4px; overflow: hidden; }
+.hub-mst-fill { height: 100%; background: var(--accent); transition: width .3s ease; }
+.hub-mst-tier { color: var(--dim); text-align: right; }

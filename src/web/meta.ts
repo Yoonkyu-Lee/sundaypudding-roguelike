@@ -1,0 +1,46 @@
+// 영구 메타 — 숙련도(캐릭별 레벨/XP). 런 세이브와 분리(spr_meta_v1) → 런 포기·실패해도 유지(5.1).
+// XP는 전투 승리마다 소량(5.3 "소량") → 레벨↑ → 보상 스킬 tier 해금(4.4, unlockedTier는 코어).
+import { unlockedTier } from "../core/run.ts";
+
+const META_KEY = "spr_meta_v1";
+const XP_PER_WIN = 2; // 전투 승리당 생존 아군 1인 XP
+const XP_PER_LEVEL = 8; // 레벨업당 누적 XP (≈ 4승/레벨, 천천히)
+
+export interface MasteryEntry { level: number; xp: number; }
+export interface MetaState { mastery: Record<string, MasteryEntry>; }
+
+const levelOf = (xp: number) => Math.floor(xp / XP_PER_LEVEL);
+
+function loadMeta(): MetaState {
+  try {
+    const s = localStorage.getItem(META_KEY);
+    if (s) { const o = JSON.parse(s); if (o && typeof o === "object" && o.mastery) return o as MetaState; }
+  } catch { /* 무시 */ }
+  return { mastery: {} };
+}
+let meta: MetaState = loadMeta();
+function saveMeta(): void { try { localStorage.setItem(META_KEY, JSON.stringify(meta)); } catch { /* */ } }
+
+/** 런 시작용 — 캐릭별 숙련도 레벨 맵(createRun opts.mastery). */
+export function masteryMap(): Record<string, number> {
+  const m: Record<string, number> = {};
+  for (const id in meta.mastery) m[id] = meta.mastery[id].level;
+  return m;
+}
+
+/** 전투 승리 — 생존 아군에 소량 XP, 레벨 재계산, 저장. */
+export function grantWin(charIds: string[]): void {
+  for (const id of charIds) {
+    const e = meta.mastery[id] ?? { level: 0, xp: 0 };
+    e.xp += XP_PER_WIN;
+    e.level = levelOf(e.xp);
+    meta.mastery[id] = e;
+  }
+  saveMeta();
+}
+
+/** 허브 표시용: 레벨·레벨 내 진행·해금 tier. */
+export function masteryInfo(charId: string): { level: number; xpInLevel: number; xpPerLevel: number; tier: number } {
+  const e = meta.mastery[charId] ?? { level: 0, xp: 0 };
+  return { level: e.level, xpInLevel: e.xp % XP_PER_LEVEL, xpPerLevel: XP_PER_LEVEL, tier: unlockedTier(e.level) };
+}

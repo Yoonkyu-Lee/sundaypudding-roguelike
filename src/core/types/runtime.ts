@@ -60,6 +60,7 @@ export interface PartyMemberState {
   ownedSkillIds: string[]; // 보유 풀 (4.2): 강화=티어 교체, 새 스킬=추가
   activeSkillIds: string[]; // 전투 활성 ≤4 (보유 중 선택, 4.2)
   equipped: Equipped; // 장착 슬롯 (4.3)
+  masteryLevel: number; // 런 시작 시점 숙련도 레벨 스냅샷 (4.4 보상 tier 게이팅용)
 }
 
 // ── 턴 서열 & 행동 (2.2, 2.11) ─────────────────────────────────────────────

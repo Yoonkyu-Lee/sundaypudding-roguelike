@@ -23,6 +23,7 @@ export interface RunState {
   seed: number;
   act: number; // 현재 액트 (1-base, 7.3 다층)
   acts: MapGenConfig[]; // 액트별 맵 구성 (acts.length = 총 액트 수)
+  useMastery: boolean; // 숙련도 보상 게이팅 사용(4.4) — 모드 설정에서 옴
   rows: number; // 현재 액트 깊이 (보스 제외 선택 층 수, 7.3)
   nodes: RunNode[];
   party: PartyMemberState[];

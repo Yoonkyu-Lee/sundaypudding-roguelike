@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRun, enterNode, resolveBattleEnd, chooseReward, buyShopOffer, leaveShop, chooseEncounterOption, movePartyMember, serializeRun, deserializeRun, getRunView } from "./run.ts";
+import { createRun, enterNode, resolveBattleEnd, chooseReward, buyShopOffer, leaveShop, chooseEncounterOption, movePartyMember, serializeRun, deserializeRun, genRewards, unlockedTier, getRunView } from "./run.ts";
 import { step, createBattle, getFormationBonus } from "./engine.ts";
+import { SKILLS } from "../data/skills.ts";
 import { chooseAction } from "./ai.ts";
 import { ENCOUNTER_EVENTS } from "../data/events.ts";
 import type { MapGenConfig } from "./types.ts";
@@ -240,6 +241,22 @@ test("세이브 라운드트립: 전투 중 GameState·battle.rng 복원", () =>
   assert.equal(r.phase, "battle");
   assert.equal(r.battle!.units.length, run.battle!.units.length);
   assert.equal(r.battle!.rng.next(), a, "복원된 battle.rng 연속성");
+});
+
+test("숙련도(4.4): unlockedTier 곡선 + 낮은 숙련도면 상위 tier 보상 미출현", () => {
+  assert.equal(unlockedTier(0), 1);
+  assert.equal(unlockedTier(2), 2);
+  assert.equal(unlockedTier(5), 3);
+  // 김두한(kim_punch t1→kim_punch2 t2 체인) 단독, 숙련도 0 + useMastery → tier2 강화 미출현
+  const run = createRun(1, [{ charId: "kim", pos: { row: 0, col: 0 } }], undefined, { useMastery: true, mastery: { kim: 0 } });
+  assert.equal(run.party[0].masteryLevel, 0);
+  assert.equal(run.useMastery, true);
+  for (const r of genRewards(run)) {
+    if (r.kind === "upgradeSkill") assert.ok((SKILLS[r.toSkillId].tier ?? 1) <= 1, "숙련도0 → tier1 강화만");
+    if (r.kind === "learnSkill") assert.ok((SKILLS[r.skillId].tier ?? 1) <= 1, "숙련도0 → tier1 학습만");
+  }
+  // useMastery off(기본)면 게이팅 없음
+  assert.equal(createRun(1, [{ charId: "kim", pos: { row: 0, col: 0 } }]).useMastery, false);
 });
 
 test("다층(7.3): 액트 보스 격파→다음 액트(새 맵·파티 유지), 3액트 보스=게임 클리어", () => {

@@ -6,6 +6,8 @@ import { createRun, enterNode, resolveBattleEnd, chooseReward, setActiveSkill, b
 import type { Action } from "../core/types.ts";
 import { SKILLS } from "../data/skills.ts";
 import { CHARACTERS } from "../data/characters.ts";
+import { MODES } from "../data/modes.ts";
+import { masteryMap, grantWin, masteryInfo } from "./meta.ts";
 import { renderApp, type Handlers, type Ui } from "./render.ts";
 import { renderRunScreen, type RunHandlers } from "./runRender.ts";
 import { createTimelinePanel, type RollView } from "./battle/timelinePanel.ts";
@@ -15,12 +17,9 @@ import { renderTitle, renderHub, renderPause, type ShellHandlers, type HubData }
 const app = document.getElementById("app")!;
 const panel = createTimelinePanel(); // 행동서열 패널 — 주사위(rolling)↔전투(live) 한 컴포넌트, 전투 셸에 영속 마운트
 
-const ROSTER = [
-  { charId: "kim", pos: { row: 1, col: 0 } }, // 김두한 전방
-  { charId: "shin", pos: { row: 2, col: 0 } }, // 신영균 전방
-  { charId: "shanghai", pos: { row: 1, col: 2 } }, // 상하이 조 후방
-  { charId: "cho", pos: { row: 2, col: 2 } }, // 조병옥 후방
-];
+const mode = MODES.normal; // 현재 단일 모드(일반). 디자이너가 data/modes.ts에 추가하면 선택 UI로 확장.
+/** 모드 설정 + 영구 숙련도로 새 RunState 생성. */
+function makeRun(s: number) { return createRun(s, mode.roster, mode.acts, { mastery: masteryMap(), useMastery: mode.useMastery }); }
 
 let run: RunState;
 let seed = 42;
@@ -61,7 +60,7 @@ let introRound = 0; // 마지막으로 주사위 연출한 라운드 (라운드�
 
 function hubData(): HubData {
   return {
-    roster: ROSTER.map((m) => ({ charId: m.charId, name: CHARACTERS[m.charId].name, avatar: CHARACTERS[m.charId].avatar })),
+    roster: mode.roster.map((m) => ({ charId: m.charId, name: CHARACTERS[m.charId].name, avatar: CHARACTERS[m.charId].avatar, mastery: masteryInfo(m.charId) })),
     runActive,
     act: runActive ? run.act : undefined,
     totalActs: run.acts.length,
@@ -119,6 +118,8 @@ function renderBattle(): void {
 function driveBattle(): void {
   const b = run.battle!;
   if (b.phase !== "inProgress") {
+    // 전투 승리 — 생존 아군에 숙련도 XP(5.3 소량). 모드가 숙련도 사용할 때만.
+    if (b.phase === "allyWin" && run.useMastery) grantWin(b.units.filter((u) => u.side === "ally" && u.alive).map((u) => u.charId));
     // 전투 종료 — 결과를 잠깐 보여준 뒤 런으로 복귀
     busy = true;
     setTimeout(() => {
@@ -258,7 +259,7 @@ const runHandlers: RunHandlers = {
 function newRun(s: number): void {
   seed = s;
   ui.seed = s;
-  run = createRun(s, ROSTER);
+  run = makeRun(s);
   resetUi();
   runActive = true;
   pauseOpen = false;
@@ -289,5 +290,5 @@ window.addEventListener("keydown", (e) => {
 // 부팅: 저장된 런이 있으면 복원(이어하기 가능), 없으면 새 런 준비. 화면은 타이틀부터.
 const loaded = loadRun();
 if (loaded) { run = loaded; runActive = true; seed = run.seed; }
-else run = createRun(seed, ROSTER);
+else run = makeRun(seed);
 render();

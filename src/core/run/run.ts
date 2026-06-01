@@ -11,23 +11,24 @@ import { ENCOUNTER_EVENTS, type EncounterOutcome } from "../../data/events.ts";
 import { forwardIds, genMap } from "./map.ts";
 import type { RunNode } from "./map.ts";
 import type { RunState, ShopOffer } from "./types.ts";
-import { genRewards } from "./rewards.ts";
+import { genRewards, unlockedTier } from "./rewards.ts";
 import { genItemOffers } from "./items.ts";
 
-export function createRun(seed: number, roster: { charId: string; pos: Pos }[], acts: MapGenConfig[] = ACTS): RunState {
+export function createRun(seed: number, roster: { charId: string; pos: Pos }[], acts: MapGenConfig[] = ACTS, opts: { mastery?: Record<string, number>; useMastery?: boolean } = {}): RunState {
   const rng = new Rng(seed ^ 0x9e3779b9);
   const map = acts[0];
   const nodes = genMap(rng, map);
   const party: PartyMemberState[] = roster.map((m) => {
     const c = CHARACTERS[m.charId];
     const owned = c.skillIds.slice(0, 4); // 시작 보유 = learnset 앞 4 (나머지는 학습기, 보상으로 습득)
-    return { charId: m.charId, pos: { ...m.pos }, hp: c.hp, maxHp: c.hp, skillDmgBonus: {}, ownedSkillIds: owned, activeSkillIds: [...owned], equipped: {} };
+    return { charId: m.charId, pos: { ...m.pos }, hp: c.hp, maxHp: c.hp, skillDmgBonus: {}, ownedSkillIds: owned, activeSkillIds: [...owned], equipped: {}, masteryLevel: opts.mastery?.[m.charId] ?? 0 };
   });
   return {
     rng,
     seed,
     act: 1,
     acts,
+    useMastery: opts.useMastery ?? false,
     rows: map.rows,
     nodes,
     party,
@@ -143,15 +144,16 @@ function generateShop(run: RunState): ShopOffer[] {
   let k = 0;
   const mk = () => `shop${run.visited.length}_${k++}`;
   const pool: ShopOffer[] = [];
+  const tierOk = (m: PartyMemberState, sid: string) => !run.useMastery || (SKILLS[sid]?.tier ?? 1) <= unlockedTier(m.masteryLevel); // 숙련도 tier 게이팅(4.4)
   for (const m of run.party.filter((p) => p.hp > 0)) {
     const c = CHARACTERS[m.charId];
     for (const sid of m.ownedSkillIds) {
       const sk = SKILLS[sid];
       const to = sk?.nextTierId ? SKILLS[sk.nextTierId] : undefined;
-      if (sk && to) pool.push({ id: mk(), kind: "upgrade", cost: 25, charId: m.charId, fromSkillId: sid, toSkillId: sk.nextTierId!, label: `강화권: ${c.name} 「${sk.name}」→「${to.name}」` });
+      if (sk && to && tierOk(m, sk.nextTierId!)) pool.push({ id: mk(), kind: "upgrade", cost: 25, charId: m.charId, fromSkillId: sid, toSkillId: sk.nextTierId!, label: `강화권: ${c.name} 「${sk.name}」→「${to.name}」` });
     }
     for (const sid of c.skillIds) {
-      if (!m.ownedSkillIds.includes(sid) && !SKILLS[sid]?.exclusiveTo) pool.push({ id: mk(), kind: "learn", cost: 20, charId: m.charId, skillId: sid, label: `스킬: ${c.name} 「${SKILLS[sid].name}」(범용)` });
+      if (!m.ownedSkillIds.includes(sid) && !SKILLS[sid]?.exclusiveTo && tierOk(m, sid)) pool.push({ id: mk(), kind: "learn", cost: 20, charId: m.charId, skillId: sid, label: `스킬: ${c.name} 「${SKILLS[sid].name}」(범용)` });
     }
   }
   const picked: ShopOffer[] = [];

@@ -187,3 +187,13 @@ export interface MapGenConfig {
   /** 자식 분기 확률(%) — 각 부모가 다음 행에 만드는 자식 */
   branch: { keepQChance: number; extraSameChance: number; extraLeftChance: number };
 }
+
+// ── 게임 모드 (0.1/7.4) — 모드 = 런 베이스의 설정. 디자이너가 데이터로 캠페인/일반/챌린지 추가 ──
+export interface GameMode {
+  id: string;
+  name: string;
+  desc?: string;
+  roster: { charId: string; pos: Pos }[]; // 시작 파티
+  acts: MapGenConfig[]; // 액트별 맵 (다층 7.3)
+  useMastery: boolean; // 숙련도 보상 게이팅 사용 여부(4.4) — false면 전 tier 개방
+}

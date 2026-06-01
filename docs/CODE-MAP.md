@@ -84,6 +84,8 @@ src/core/
 | `src/data/events.ts` | data | 인카운터 이벤트(7.2) — 제목·텍스트·선택지(확정/도박)·결과(heal/hurt/gold/강화/학습) | `ENCOUNTER_EVENTS` · `EncounterEvent`/`EncounterOutcome` |
 | `src/data/maps.ts` | data | 맵 생성 값(7.1) + **3액트 맵 구성(7.3, 깊이·엘리트 램프)** (`NodeType`/`MapGenConfig`는 content.ts) | `ACTS` · `DEFAULT_MAP` |
 | `src/data/formations.ts` | data | 포메이션 열보너스 배치(총량보존, 6장) | `STANDARD_FORMATION` |
+| `src/data/modes.ts` | data | **게임 모드(0.1/7.4)** — `GameMode`(roster·acts·useMastery). '일반' 1개, 디자이너가 캠페인/챌린지 추가 | `MODES` · `DEFAULT_MODE` |
+| `src/web/meta.ts` | web | **영구 숙련도 메타**(레벨/XP, 별도 세이브 `spr_meta_v1`) — `grantWin`(전투 승리 XP)·`masteryMap`(런 주입)·`masteryInfo`(허브) | `grantWin` · `masteryMap` · `masteryInfo` |
 | `src/data/items.ts` | data | 장착 아이템(4.3) — 무기(dmgFlat·crit) / 방어구(hp·쉴드획득). `ItemDef`는 content.ts | `ITEMS` · `ITEM_POOL` |
 | `src/cli/play.ts` | cli | 대화형/`--demo` 터미널 드라이버 | (엔트리) |
 | `src/cli/ascii.ts` | cli | ASCII 보드 렌더(뷰 — core 아님) | `renderAscii` |

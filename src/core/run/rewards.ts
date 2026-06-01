@@ -9,6 +9,19 @@ export function damagingSkills(charId: string): string[] {
   return CHARACTERS[charId].skillIds.filter((id) => SKILLS[id]?.effects.some((e) => e.kind === "damage"));
 }
 
+/** 숙련도 레벨 → 보상에 출현 가능한 최대 스킬 tier (4.4). 디자이너 튜닝 곡선. */
+export function unlockedTier(level: number): number {
+  if (level >= 5) return 3;
+  if (level >= 2) return 2;
+  return 1;
+}
+
+/** 그 스킬이 멤버의 숙련도로 보상에 출현 가능한가 (useMastery off면 항상 true). */
+function tierOk(run: RunState, m: { masteryLevel: number }, skillId: string): boolean {
+  if (!run.useMastery) return true;
+  return (SKILLS[skillId]?.tier ?? 1) <= unlockedTier(m.masteryLevel);
+}
+
 /** 보상 후보 풀: 살아있는 파티원의 (강화 가능 스킬 + 학습 가능 스킬). 데미지=스킬로만(4.2). */
 export function genRewards(run: RunState): RewardOption[] {
   const living = run.party.filter((m) => m.hp > 0);
@@ -18,15 +31,15 @@ export function genRewards(run: RunState): RewardOption[] {
 
   for (const m of living) {
     const c = CHARACTERS[m.charId];
-    // (a) 강화: 보유 스킬 중 다음 티어가 있는 것
+    // (a) 강화: 보유 스킬 중 다음 티어가 있는 것 (숙련도가 그 tier 해금했을 때만, 4.4)
     for (const sid of m.ownedSkillIds) {
       const sk = SKILLS[sid];
       const to = sk?.nextTierId ? SKILLS[sk.nextTierId] : undefined;
-      if (sk && to) pool.push({ id: mk(), kind: "upgradeSkill", charId: m.charId, fromSkillId: sid, toSkillId: sk.nextTierId!, label: `${c.name}: 「${sk.name}」→「${to.name}」 강화` });
+      if (sk && to && tierOk(run, m, sk.nextTierId!)) pool.push({ id: mk(), kind: "upgradeSkill", charId: m.charId, fromSkillId: sid, toSkillId: sk.nextTierId!, label: `${c.name}: 「${sk.name}」→「${to.name}」 강화` });
     }
-    // (b) 새 스킬: 학습기 풀(캐릭 learnset) 중 아직 미보유
+    // (b) 새 스킬: 학습기 풀(캐릭 learnset) 중 아직 미보유 (숙련도 tier 내)
     for (const sid of c.skillIds) {
-      if (!m.ownedSkillIds.includes(sid)) pool.push({ id: mk(), kind: "learnSkill", charId: m.charId, skillId: sid, label: `${c.name}: 새 스킬 「${SKILLS[sid].name}」 습득` });
+      if (!m.ownedSkillIds.includes(sid) && tierOk(run, m, sid)) pool.push({ id: mk(), kind: "learnSkill", charId: m.charId, skillId: sid, label: `${c.name}: 새 스킬 「${SKILLS[sid].name}」 습득` });
     }
   }
   // (c) 장신구(4.5): 가끔 후보 진입 — 아이템 1개를 풀에 섞음

@@ -4,4 +4,5 @@ export type { RunPhase, RewardOption, ShopOffer, RunState, NodeStatus, RunView }
 export { createRun, enterNode, resolveBattleEnd, chooseReward, setActiveSkill, movePartyMember, buyShopOffer, leaveShop, chooseEncounterOption } from "./run.ts";
 export { equipItem, unequipItem } from "./items.ts";
 export { serializeRun, deserializeRun } from "./save.ts";
+export { unlockedTier, genRewards } from "./rewards.ts";
 export { getRunView } from "./view.ts";

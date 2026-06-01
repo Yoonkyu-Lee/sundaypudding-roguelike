@@ -10,8 +10,9 @@ export interface ShellHandlers {
   onResume: () => void; // 일시정지: 재개
   onToTitle: () => void; // → 타이틀
 }
+export interface HubMastery { level: number; xpInLevel: number; xpPerLevel: number; tier: number; }
 export interface HubData {
-  roster: { charId: string; name: string; avatar?: string }[];
+  roster: { charId: string; name: string; avatar?: string; mastery: HubMastery }[];
   runActive: boolean;
   act?: number;
   totalActs?: number;
@@ -32,6 +33,14 @@ export function renderHub(app: HTMLElement, d: HubData, h: ShellHandlers): void 
   const cards = d.roster
     .map((m) => `<div class="hub-mem">${avatarHtml(m.avatar, "avt")}<span class="hub-nm">${esc(m.name)}</span></div>`)
     .join("");
+  const mastery = d.roster
+    .map((m) => {
+      const pct = Math.round((m.mastery.xpInLevel / m.mastery.xpPerLevel) * 100);
+      return `<div class="hub-mst"><span class="hub-mst-nm">${esc(m.name)}</span><span class="hub-mst-lv">Lv ${m.mastery.level}</span>
+        <div class="hub-mst-bar"><div class="hub-mst-fill" style="width:${pct}%"></div></div>
+        <span class="hub-mst-tier" title="보상에 출현 가능한 최대 스킬 tier">해금 T${m.mastery.tier}</span></div>`;
+    })
+    .join("");
   const controls = d.runActive
     ? `<button class="act" id="resumebtn">▶ 이어하기${d.act ? ` (액트 ${d.act}/${d.totalActs})` : ""}</button><button class="act ghost" id="abandonbtn">런 포기</button>`
     : `<button class="act" id="newrunbtn">⚔ 새 런 시작</button>`;
@@ -39,7 +48,7 @@ export function renderHub(app: HTMLElement, d: HubData, h: ShellHandlers): void 
     <header><h1>🏠 본거지</h1><button class="hub-link" id="totitlebtn">타이틀로</button></header>
     <div class="hub-body">
       <section class="hub-sec"><h2>파티</h2><div class="hub-mems">${cards}</div></section>
-      <section class="hub-sec"><h2>숙련도</h2><div class="hint">준비 중 — 영구 성장(숙련도 tier 해금, 4.4)은 다음 업데이트</div></section>
+      <section class="hub-sec"><h2>숙련도 <span class="hint">전투 승리로 영구 성장 — 레벨이 보상 스킬 tier 해금(4.4)</span></h2><div class="hub-mstlist">${mastery}</div></section>
       <div class="hub-controls">${controls}</div>
     </div>
   </div>`;
