@@ -61,9 +61,16 @@ src/core/
   ai/
     policy.ts       chooseAction (결정론 휴리스틱; rng 미사용)
     index.ts        ▸배럴
-  engine.test.ts    전투 결정론·기능 단위 테스트
-  run.test.ts       런 결정론·헥스맵 연결성·완주 루프 테스트
+  testutil.ts       테스트 공용 헬퍼(playToEnd·forceTurn)
+  engine.test.ts    전투 흐름(결정론·종료·명중·합법·SPD·대기)
+  interrupt.test.ts 끼어들기(연격·버프출처·대상끼어들기·웹 경로)
+  status.test.ts    상태이상(빙결·공포·관통·불사·재생)
+  formation.test.ts 포메이션 총량보존·보스전 적용·데미지 미리보기
+  area.test.ts      면적/타겟팅(재배치·AoE 모양·자유선택·빈칸앵커·쉴드→HP)
+  run.test.ts       런 결정론·헥스맵 연결성·완주 루프·진형 편성
+  equip.test.ts     장착(스탯/데미지/쉴드 보정·equip 왕복)
 ```
+> 테스트는 `node --test` 자동 디스커버리(`*.test.ts`) — 새 파일은 목록 갱신 불필요.
 
 ## data / view 파일
 
