@@ -9,6 +9,7 @@ import { CHARACTERS } from "../data/characters.ts";
 import { renderApp, type Handlers, type Ui } from "./render.ts";
 import { renderRunScreen, type RunHandlers } from "./runRender.ts";
 import { createTimelinePanel, type RollView } from "./battle/timelinePanel.ts";
+import { renderCharSheet, type SheetData, type SheetHandlers } from "./charSheet.ts";
 
 const app = document.getElementById("app")!;
 const panel = createTimelinePanel(); // 행동서열 패널 — 주사위(rolling)↔전투(live) 한 컴포넌트, 전투 셸에 영속 마운트
@@ -23,7 +24,7 @@ const ROSTER = [
 let run: RunState;
 let seed = 42;
 let busy = false;
-const ui: Ui = { selectedSkillId: null, hoverCell: null, pickedCells: [], damaged: new Set(), moved: new Set(), seed };
+const ui: Ui = { selectedSkillId: null, hoverCell: null, pickedCells: [], damaged: new Set(), moved: new Set(), seed, sheetCharId: null };
 
 function resetUi(): void {
   ui.selectedSkillId = null;
@@ -31,6 +32,7 @@ function resetUi(): void {
   ui.pickedCells = [];
   ui.damaged = new Set();
   ui.moved = new Set();
+  ui.sheetCharId = null; // 노드 전환 시 시트 닫기
 }
 function endTargeting(): void {
   ui.selectedSkillId = null;
@@ -66,12 +68,48 @@ function render(): void {
   } else {
     introRound = 0; // 전투를 떠나면 리셋 → 다음 전투는 1라운드부터 연출
     renderRunScreen(app, getRunView(run), runHandlers);
+    renderSheetIfOpen();
   }
 }
 
 function renderBattle(): void {
   renderApp(app, run.battle!, ui, battleHandlers, panel);
+  renderSheetIfOpen();
   driveBattle();
+}
+
+// ── 캐릭터 시트(모달) — ui.sheetCharId 단일 출처, 매 렌더 후 재그림(통짜 재렌더에 파괴되지 않게) ──
+const sheetHandlers: SheetHandlers = {
+  onToggle(charId, skillId) { setActiveSkill(run, charId, skillId); render(); }, // 맵에서만 editable
+  onClose() { ui.sheetCharId = null; render(); },
+};
+
+function buildSheetData(charId: string): SheetData | null {
+  const ch = CHARACTERS[charId];
+  if (!ch) return null;
+  const pv = getRunView(run).party.find((p) => p.charId === charId); // 보유 스킬/활성/이름/아바타
+  let hp = pv?.hp ?? ch.hp;
+  let hpMax = pv?.maxHp ?? ch.hp;
+  if (run.phase === "battle" && run.battle) {
+    const u = run.battle.units.find((x) => x.side === "ally" && x.charId === charId);
+    if (u) { hp = u.hp; hpMax = u.hpMax; } // 전투 중 실시간 HP
+  }
+  return {
+    charId,
+    name: pv?.name ?? ch.name,
+    avatar: pv?.avatar ?? ch.avatar,
+    stats: { hp, hpMax, speedMin: ch.speedMin, speedMax: ch.speedMax, evasion: ch.evasion, accuracy: ch.accuracy, critChance: ch.critChance, critMultiplier: ch.critMultiplier },
+    skills: pv?.skills ?? [],
+    activeCount: pv?.activeCount ?? 0,
+    editable: run.phase === "map", // 활성4 변경은 맵에서만
+  };
+}
+
+function renderSheetIfOpen(): void {
+  if (!ui.sheetCharId) return;
+  const data = buildSheetData(ui.sheetCharId);
+  if (!data) { ui.sheetCharId = null; return; }
+  renderCharSheet(app, data, sheetHandlers);
 }
 
 // ── 전투 진행 ──
@@ -154,6 +192,10 @@ const battleHandlers: Handlers = {
   onNewBattle() {
     runHandlers.onRestart(); // 전투 화면의 '새 전투' = 런 재시작
   },
+  onOpenSheet(charId) {
+    ui.sheetCharId = charId;
+    render();
+  },
 };
 
 // ── 런 핸들러 ──
@@ -195,6 +237,10 @@ const runHandlers: RunHandlers = {
     resetUi();
     render();
   },
+  onOpenSheet(charId) {
+    ui.sheetCharId = charId;
+    render();
+  },
 };
 
 function newRun(s: number): void {
@@ -205,9 +251,11 @@ function newRun(s: number): void {
   render();
 }
 
-// Esc로 타겟팅 취소
+// Esc: 시트 열려있으면 닫기, 아니면 타겟팅 취소
 window.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && ui.selectedSkillId) battleHandlers.onCancel();
+  if (e.key !== "Escape") return;
+  if (ui.sheetCharId) { ui.sheetCharId = null; render(); }
+  else if (ui.selectedSkillId) battleHandlers.onCancel();
 });
 
 newRun(42);

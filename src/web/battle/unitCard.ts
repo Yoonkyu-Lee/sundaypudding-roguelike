@@ -30,9 +30,10 @@ export function unitCard(u: UnitView, isCurrent: boolean, damaged: boolean, tgt:
 
   const cls = ["card", u.side, isCurrent ? "current" : "", damaged ? "flash" : "", moved ? "moved" : "", inFoot ? "tgt" : ""].join(" ").replace(/\s+/g, " ").trim();
   const hitBadge = tgt.active && tgt.validHit.has(u.uid) ? `<div class="hitbadge">${tgt.validHit.get(u.uid)}%</div>` : "";
+  const info = u.side === "ally" ? `<button class="cs-info" data-sheet-uid="${u.uid}" title="프로필">ℹ</button>` : "";
 
   return `<div class="${cls}" data-uid="${u.uid}">
-    ${hitBadge}
+    ${hitBadge}${info}
     <div class="cardtop">${avatarHtml(u.avatar, "avt")}<span class="nm">${esc(u.name)}</span>${formationBadge(u)}</div>
     <div class="bars">
       <div class="shbar">${shPct > 0 ? `<div class="shfill" style="width:${shPct}%"></div><span class="shnum">${u.shield}</span>` : ""}</div>

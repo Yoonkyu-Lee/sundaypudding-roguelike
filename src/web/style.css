@@ -197,19 +197,19 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .runside { display: flex; flex-direction: column; gap: 12px; }
 .party { background: var(--panel); border-radius: 10px; padding: 10px 12px; }
 .party h3 { margin: 0 0 8px; font-size: 13px; color: var(--dim); }
-.pmember { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; font-size: 12px; }
+/* 파티 요약 — 멤버 전체가 클릭 버튼(상세=캐릭터 시트 모달) */
+.pmember { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; font-size: 12px; width: 100%; text-align: left; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; color: var(--txt); cursor: pointer; }
+.pmember:hover { border-color: var(--ally); }
 .pmember.dead { opacity: .4; text-decoration: line-through; }
-.prow { display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items: center; }
+.prow { display: grid; grid-template-columns: auto 1fr auto auto; gap: 6px; align-items: center; }
 .pname { font-weight: 600; }
-/* 로드아웃: 활성 스킬 토글 칩 (켜짐=초록) */
+.pmore { font-size: 10px; color: var(--accent); }
+/* 활성 스킬 요약 칩 (읽기 전용) */
 .lskills { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .lcount { font-size: 10px; color: var(--dim); margin-right: 2px; }
-.lskill { font-size: 10px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel2); color: var(--dim); cursor: pointer; }
-.lskill.on { background: #243528; border-color: var(--green); color: #cdeed8; }
-.lskill:hover { border-color: var(--ally); }
-.lskill sup { color: var(--accent); font-size: 8px; }
-/* 전용기 = 금색 점, 범용기 = 무표시 (4.6) */
-.lskill.sig::before { content: "★"; color: var(--accent); font-size: 8px; margin-right: 2px; }
+.lchip { font-size: 10px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--dim); }
+.lchip sup { color: var(--accent); font-size: 8px; }
+.lchip.sig::before { content: "★"; color: var(--accent); font-size: 8px; margin-right: 2px; }
 .phpbar { height: 8px; background: #11141b; border-radius: 4px; overflow: hidden; }
 .php { height: 100%; background: var(--hp); transition: width .35s ease; }
 .phptext { color: var(--dim); }
@@ -306,3 +306,38 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .ri-adj { width: 30px; text-align: center; font-size: 12px; color: var(--enemy); }
 .trow.ri-ranked { box-shadow: inset 0 0 0 1px rgba(255,209,102,.35); }
 .ri-skip { margin-top: 16px; text-align: center; font-size: 11px; color: var(--dim); }
+
+/* ── 캐릭터 시트 (모달 오버레이) — 맵·전투 공용 프로필 ── */
+.cs-info { position: absolute; top: -8px; right: -6px; z-index: 6; width: 18px; height: 18px; padding: 0; border-radius: 50%; border: 1px solid var(--line); background: var(--panel2); color: var(--dim); font-size: 10px; line-height: 1; cursor: pointer; }
+.cs-info:hover { border-color: var(--ally); color: var(--ally); }
+.charsheet-overlay { position: fixed; inset: 0; z-index: 120; display: flex; align-items: center; justify-content: center; background: rgba(10,12,16,.78); backdrop-filter: blur(3px); }
+.charsheet { position: relative; width: 460px; max-width: 92vw; max-height: 88vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+.cs-close { position: absolute; top: 12px; right: 12px; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel2); color: var(--dim); cursor: pointer; font-size: 13px; }
+.cs-close:hover { border-color: var(--enemy); color: var(--enemy); }
+.cshead { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.cshead h3 { margin: 0; font-size: 18px; }
+.csbody { display: flex; flex-direction: column; gap: 16px; }
+.cssection h4 { margin: 0 0 8px; font-size: 12px; color: var(--dim); display: flex; gap: 8px; align-items: baseline; }
+.csstats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; }
+.csstat { display: flex; align-items: baseline; gap: 6px; font-size: 13px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+.cslabel { color: var(--dim); width: 56px; flex: none; font-size: 11px; }
+.csval { font-weight: 600; }
+.cshint { color: var(--dim); font-size: 10px; font-weight: 400; }
+.csslots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.csslot { background: var(--panel2); border: 1px dashed var(--line); border-radius: 8px; padding: 10px 8px; text-align: center; }
+.csslot.locked { opacity: .55; }
+.csslotname { display: block; font-size: 11px; color: var(--dim); margin-bottom: 4px; }
+.csslotval { font-size: 12px; }
+.csk-list { display: flex; flex-direction: column; gap: 5px; }
+.csk-row { display: grid; grid-template-columns: 1fr auto auto auto; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 7px; background: var(--panel2); border: 1px solid var(--line); }
+.csk-row.active { border-color: var(--green); }
+.csk-name { font-size: 13px; }
+.csk-name sup { color: var(--accent); font-size: 9px; }
+.csk-tag { font-size: 9px; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--line); color: var(--dim); }
+.csk-tag.sig { color: var(--accent); border-color: rgba(255,209,102,.4); }
+.csk-up { color: var(--accent); font-size: 11px; }
+.csk-toggle { font-size: 10px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--dim); cursor: pointer; }
+.csk-toggle.on { background: #243528; border-color: var(--green); color: #cdeed8; }
+.csk-toggle:hover { border-color: var(--ally); }
+.csk-state { font-size: 10px; color: var(--dim); }
+.csk-state.on { color: var(--green); }

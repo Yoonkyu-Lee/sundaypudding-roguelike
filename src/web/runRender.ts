@@ -12,6 +12,7 @@ export interface RunHandlers {
   onBuy: (offerId: string) => void; // 상점 구매
   onLeaveShop: () => void; // 상점 나가기
   onEncounterChoice: (choiceId: string) => void; // 인카운터 선택
+  onOpenSheet: (charId: string) => void; // 캐릭터 시트 열기
 }
 
 const TYPE_ICON: Record<NodeType, string> = {
@@ -34,21 +35,24 @@ const TYPE_NAME: Record<NodeType, string> = {
 };
 
 function partyPanel(view: RunView): string {
+  // 요약만 — 상세(스탯·장착·활성4 관리)는 클릭 시 캐릭터 시트(모달)로. (slice1)
   const rows = view.party
     .map((m) => {
       const pct = Math.max(0, (m.hp / m.maxHp) * 100);
       const cls = m.alive ? "" : " dead";
-      const chips = m.skills
-        .map((s) => `<button class="lskill${s.active ? " on" : ""}${s.signature ? " sig" : " univ"}" data-char="${m.charId}" data-lskill="${s.id}" title="${esc(s.name)} · ${s.signature ? "전용기" : "범용기"}${s.canUpgrade ? " · 강화 가능" : ""}">${esc(s.name)}${s.tier > 1 ? `<sup>${s.tier}</sup>` : ""}</button>`)
+      const active = m.skills
+        .filter((s) => s.active)
+        .map((s) => `<span class="lchip${s.signature ? " sig" : " univ"}">${esc(s.name)}${s.tier > 1 ? `<sup>${s.tier}</sup>` : ""}</span>`)
         .join("");
-      return `<div class="pmember${cls}">
+      return `<button class="pmember${cls}" data-sheet="${m.charId}" title="${esc(m.name)} 상세 보기">
         <div class="prow">
           <span class="pname">${avatarHtml(m.avatar, "avt sm")}${esc(m.name)}</span>
           <div class="phpbar"><div class="php" style="width:${pct}%"></div></div>
           <span class="phptext">${m.hp}/${m.maxHp}</span>
+          <span class="pmore">자세히 ▸</span>
         </div>
-        <div class="lskills"><span class="lcount">활성 ${m.activeCount}/4</span>${chips}</div>
-      </div>`;
+        <div class="lskills"><span class="lcount">활성 ${m.activeCount}/4</span>${active}</div>
+      </button>`;
     })
     .join("");
   return `<div class="party"><h3>파티 <span class="goldtag">💰 ${view.gold}G</span></h3>${rows}</div>`;
@@ -150,8 +154,8 @@ export function renderRunScreen(app: HTMLElement, view: RunView, h: RunHandlers)
   app.querySelectorAll<HTMLButtonElement>("[data-reward]").forEach((b) =>
     b.addEventListener("click", () => h.onReward(b.dataset.reward!)),
   );
-  app.querySelectorAll<HTMLButtonElement>(".lskill[data-lskill]").forEach((b) =>
-    b.addEventListener("click", () => h.onToggleSkill(b.dataset.char!, b.dataset.lskill!)),
+  app.querySelectorAll<HTMLButtonElement>(".pmember[data-sheet]").forEach((b) =>
+    b.addEventListener("click", () => h.onOpenSheet(b.dataset.sheet!)),
   );
   app.querySelectorAll<HTMLButtonElement>("[data-buy]").forEach((b) =>
     b.addEventListener("click", () => h.onBuy(b.dataset.buy!)),

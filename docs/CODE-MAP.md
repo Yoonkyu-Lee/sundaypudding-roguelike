@@ -86,7 +86,8 @@ src/core/
 | `src/web/battle/actions.ts` | web | 행동 패널(균일 스킬 카드 4개 / 타겟팅 프롬프트) | `actionPanel` |
 | `src/web/battle/timelinePanel.ts` | web | **행동서열 패널(영속·모드)** — `rolling`(중앙 확장 SPD 주사위→±→서열) → `dock()`(같은 행 FLIP 슬라이드로 좌측 레일) → `live`(전투 타임라인: 완료✓/현재▶/끼어들기). roundIntro+timeline 통합. `.battleleft`에 영속 마운트 | `createTimelinePanel` · `RollView` |
 | `src/web/battle/{events,arrow}.ts` | web | 이벤트→로그 한 줄 / 캐스터→타겟 눈금 화살표 | `formatEvent` · `drawArrow` |
-| `src/web/runRender.ts` | web | **맵/보상/결과** 화면 렌더 + 헥스 노드 | `renderRunScreen` |
+| `src/web/runRender.ts` | web | **맵/보상/결과** 화면 렌더 + 헥스 노드 + 파티 요약(클릭→시트) | `renderRunScreen` |
+| `src/web/charSheet.ts` | web | **캐릭터 시트(모달 오버레이)** — 맵·전투 공용 프로필: 능력치표·3 장착칸(슬라이스1=플레이스홀더)·보유 스킬 목록(맵=활성4 토글, 전투=읽기전용). 호출자가 `SheetData` 조립 | `renderCharSheet` · `SheetData` |
 | `src/web/style.css` | web | 다크 테마 스타일 | — |
 | `index.html` · `vite.config.ts` | web | Vite 진입/설정 (`npm run dev`) | — |
 

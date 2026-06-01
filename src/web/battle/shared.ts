@@ -19,6 +19,7 @@ export interface Ui {
   damaged: Set<string>;
   moved: Set<string>; // 직전 step에서 이동한 유닛 (이동 펄스 연출)
   seed: number;
+  sheetCharId: string | null; // 열린 캐릭터 시트(모달)의 charId, null=닫힘
 }
 export interface Handlers {
   onSkill: (skillId: string) => void;
@@ -27,6 +28,7 @@ export interface Handlers {
   onCancel: () => void;
   onSkip: () => void;
   onNewBattle: (seed: number) => void;
+  onOpenSheet: (charId: string) => void; // 유닛 프로필 시트 열기
 }
 
 // ── 타겟팅 컨텍스트 (셀 기반) ──
