@@ -400,3 +400,12 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .detail-toggle.on { border-color: var(--accent); color: var(--accent); }
 .skbreak { display: block; margin-top: 5px; font-size: 9.5px; color: var(--dim); line-height: 1.4; }
 .skbreak b { color: var(--enemy); }
+
+/* 스킬 편성 행: 상단 라인(타입·이름·태그·토글) + 하단 스펙 줄 (#2) */
+.party-modal { width: 1080px; }
+.csk-row { display: flex; flex-direction: column; gap: 3px; }
+.csk-line { display: flex; align-items: center; gap: 6px; }
+.csk-line .csk-name { flex: 1; }
+.csk-line .sktype { flex: none; }
+.csk-spec { font-size: 10px; color: var(--dim); line-height: 1.35; padding-left: 2px; }
+.csk-toggle[disabled] { opacity: .35; cursor: not-allowed; }

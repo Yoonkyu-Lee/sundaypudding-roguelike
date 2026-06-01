@@ -3,7 +3,9 @@
 // 장착 메커니즘(슬라이스2): 맵 editable이면 슬롯에 장착/교체/해제, 전투는 읽기전용.
 import type { EquipSlot, ItemDef, UnitView } from "../core/types.ts";
 import { ITEMS } from "../data/items.ts";
+import { SKILLS } from "../data/skills.ts";
 import { statusChipsList } from "./battle/status.ts";
+import { skillInline, skillType } from "./battle/skillDesc.ts";
 import { avatarHtml, esc, r1 } from "./battle/shared.ts";
 
 export interface SheetBaseStats {
@@ -134,19 +136,31 @@ function slotBlock(d: SheetData, sl: { key: EquipSlot; label: string; locked?: b
   return `<div class="csslot${cur ? " filled" : ""}"><span class="csslotname">${sl.label}</span>${equippedHtml}${pick}</div>`;
 }
 
+// 스킬 한 행 — 타입칩·이름·티어·전용/범용·강화가능 + 스펙 한 줄(쿨·명중·피해·사정권·특징) + 출전 토글.
+function skillRow(s: SheetSkill, d: SheetData): string {
+  const sk = SKILLS[s.id];
+  const tk = sk ? skillType(sk).key : "attack";
+  const tag = s.signature ? `<span class="csk-tag sig">전용기</span>` : `<span class="csk-tag univ">범용기</span>`;
+  const up = s.canUpgrade ? `<span class="csk-up" title="강화 가능">⬆</span>` : "";
+  const spec = sk ? `<span class="csk-spec">${esc(skillInline(sk))}</span>` : "";
+  // 출전 토글: 활성=빼기(최소 1), 비활성=넣기(최대 4). setActiveSkill이 한도 처리.
+  const canAdd = !s.active && d.activeCount < 4;
+  const btn = d.editable
+    ? `<button class="csk-toggle${s.active ? " on" : ""}" data-sheet-skill="${s.id}"${!s.active && !canAdd ? " disabled" : ""}>${s.active ? "출전 ✓" : "출전"}</button>`
+    : "";
+  return `<div class="csk-row${s.active ? " active" : ""}">
+    <div class="csk-line"><span class="sktype t-${tk}">${sk ? skillType(sk).label : ""}</span><span class="csk-name">${esc(s.name)}${s.tier > 1 ? `<sup>T${s.tier}</sup>` : ""}</span>${tag}${up}${btn}</div>
+    ${spec}
+  </div>`;
+}
+
 function skillList(d: SheetData): string {
-  const items = d.skills
-    .map((s) => {
-      const tag = s.signature ? `<span class="csk-tag sig">전용기</span>` : `<span class="csk-tag univ">범용기</span>`;
-      const up = s.canUpgrade ? `<span class="csk-up" title="강화 가능">⬆</span>` : "";
-      const btn = d.editable
-        ? `<button class="csk-toggle${s.active ? " on" : ""}" data-sheet-skill="${s.id}">${s.active ? "활성" : "대기"}</button>`
-        : `<span class="csk-state${s.active ? " on" : ""}">${s.active ? "활성" : "대기"}</span>`;
-      return `<div class="csk-row${s.active ? " active" : ""}"><span class="csk-name">${esc(s.name)}${s.tier > 1 ? `<sup>T${s.tier}</sup>` : ""}</span>${tag}${up}${btn}</div>`;
-    })
-    .join("");
-  const hint = d.editable ? `<span class="cshint">최대 4개 활성 (현재 ${d.activeCount}/4)</span>` : `<span class="cshint">전투 중 — 변경은 맵에서</span>`;
-  return `<div class="cssection"><h4>보유 스킬 ${hint}</h4><div class="csk-list">${items}</div></div>`;
+  const active = d.skills.filter((s) => s.active);
+  const owned = d.skills.filter((s) => !s.active);
+  const sec = (title: string, sub: string, list: SheetSkill[]) =>
+    `<div class="cssection"><h4>${title} ${sub}</h4><div class="csk-list">${list.map((s) => skillRow(s, d)).join("") || "<div class='cshint'>없음</div>"}</div></div>`;
+  const ownedSub = d.editable ? `<span class="cshint">탭해 출전에 추가</span>` : (owned.length ? `<span class="cshint">전투 중 — 편성은 비전투에서</span>` : "");
+  return sec("⚔ 출전", `<span class="cshint">${d.activeCount}/4</span>`, active) + sec("보유", ownedSub, owned);
 }
 
 /** 시트 본문(머리+바+능력치/상태/장착/스킬) — 단독 모달·파티뷰 상세 pane 공용. 닫기/오버레이 크롬 제외. */
