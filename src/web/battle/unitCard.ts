@@ -30,7 +30,7 @@ export function unitCard(u: UnitView, isCurrent: boolean, damaged: boolean, tgt:
 
   const cls = ["card", u.side, isCurrent ? "current" : "", damaged ? "flash" : "", moved ? "moved" : "", inFoot ? "tgt" : ""].join(" ").replace(/\s+/g, " ").trim();
   const hitBadge = tgt.active && tgt.validHit.has(u.uid) ? `<div class="hitbadge">${tgt.validHit.get(u.uid)}%</div>` : "";
-  const info = u.side === "ally" ? `<button class="cs-info" data-sheet-uid="${u.uid}" title="프로필">ℹ</button>` : "";
+  const info = `<button class="cs-info" data-sheet-uid="${u.uid}" title="프로필">ℹ</button>`; // 아군·적 모두 열람(읽기전용)
 
   return `<div class="${cls}" data-uid="${u.uid}">
     ${hitBadge}${info}

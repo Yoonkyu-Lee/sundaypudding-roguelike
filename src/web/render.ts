@@ -136,12 +136,11 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
     el.addEventListener("mouseenter", () => h.onCellHover({ row, col }));
     el.addEventListener("mouseleave", () => h.onCellHover(null));
   });
-  // 프로필 버튼: 셀 클릭(타겟팅)으로 전파되지 않게 차단 후 시트 오픈
+  // 프로필 버튼: 셀 클릭(타겟팅)으로 전파되지 않게 차단 후 시트 오픈 (uid — 아군/적)
   mainEl.querySelectorAll<HTMLButtonElement>("[data-sheet-uid]").forEach((b) =>
     b.addEventListener("click", (e) => {
       e.stopPropagation();
-      const u = state.units.find((x) => x.uid === b.dataset.sheetUid);
-      if (u) h.onOpenSheet(u.charId);
+      h.onOpenSheet(b.dataset.sheetUid!);
     }),
   );
 

@@ -19,7 +19,8 @@ export interface Ui {
   damaged: Set<string>;
   moved: Set<string>; // 직전 step에서 이동한 유닛 (이동 펄스 연출)
   seed: number;
-  sheetCharId: string | null; // 열린 캐릭터 시트의 charId(파티뷰 선택 캐릭 겸용), null=닫힘
+  sheetCharId: string | null; // 파티 편성(맵) 우측 상세에 선택된 캐릭 charId
+  sheetUid: string | null; // 전투 단독 캐릭터 시트의 유닛 uid(아군/적, 중복 적 구분), null=닫힘
   partyOpen: boolean; // 파티 편성 오버레이(맵) 열림 여부
 }
 export interface Handlers {
@@ -29,7 +30,7 @@ export interface Handlers {
   onCancel: () => void;
   onSkip: () => void;
   onNewBattle: (seed: number) => void;
-  onOpenSheet: (charId: string) => void; // 유닛 프로필 시트 열기
+  onOpenSheet: (uid: string) => void; // 유닛 프로필 시트 열기(uid — 아군/적)
 }
 
 // ── 타겟팅 컨텍스트 (셀 기반) ──

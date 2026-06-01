@@ -25,7 +25,7 @@ const ROSTER = [
 let run: RunState;
 let seed = 42;
 let busy = false;
-const ui: Ui = { selectedSkillId: null, hoverCell: null, pickedCells: [], damaged: new Set(), moved: new Set(), seed, sheetCharId: null, partyOpen: false };
+const ui: Ui = { selectedSkillId: null, hoverCell: null, pickedCells: [], damaged: new Set(), moved: new Set(), seed, sheetCharId: null, sheetUid: null, partyOpen: false };
 
 function resetUi(): void {
   ui.selectedSkillId = null;
@@ -34,6 +34,7 @@ function resetUi(): void {
   ui.damaged = new Set();
   ui.moved = new Set();
   ui.sheetCharId = null; // 노드 전환 시 시트/파티뷰 닫기
+  ui.sheetUid = null;
   ui.partyOpen = false;
 }
 function endTargeting(): void {
@@ -85,7 +86,7 @@ const sheetHandlers: SheetHandlers = {
   onToggle(charId, skillId) { setActiveSkill(run, charId, skillId); render(); }, // 맵에서만 editable
   onEquip(charId, slot, itemId) { equipItem(run, charId, slot, itemId); render(); },
   onUnequip(charId, slot) { unequipItem(run, charId, slot); render(); },
-  onClose() { ui.sheetCharId = null; render(); },
+  onClose() { ui.sheetUid = null; ui.sheetCharId = null; render(); },
 };
 const partyViewHandlers: PartyViewHandlers = {
   ...sheetHandlers,
@@ -120,6 +121,38 @@ function buildSheetData(charId: string): SheetData | null {
   };
 }
 
+// 전투 단독 시트(uid 키) — 아군/적 모두 읽기전용. 스탯=라이브 Unit, 스킬=보유풀(아군)/learnset(적).
+function buildBattleSheet(uid: string): SheetData | null {
+  const u = run.battle?.units.find((x) => x.uid === uid);
+  if (!u) return null;
+  const ch = CHARACTERS[u.charId];
+  if (!ch) return null;
+  const m = u.side === "ally" ? run.party.find((p) => p.charId === u.charId) : undefined;
+  const ownedIds = m ? m.ownedSkillIds : ch.skillIds; // 적은 learnset 전체 노출
+  const activeSet = new Set(u.activeSkillIds);
+  const skills = ownedIds.map((sid) => ({
+    id: sid,
+    name: SKILLS[sid]?.name ?? sid,
+    tier: SKILLS[sid]?.tier ?? 1,
+    active: activeSet.has(sid),
+    canUpgrade: !!SKILLS[sid]?.nextTierId,
+    signature: !!SKILLS[sid]?.exclusiveTo,
+  }));
+  return {
+    charId: u.charId,
+    name: u.name,
+    avatar: ch.avatar,
+    hp: u.hp,
+    hpMax: u.hpMax,
+    base: { hp: ch.hp, speedMin: ch.speedMin, speedMax: ch.speedMax, evasion: ch.evasion, accuracy: ch.accuracy, critChance: ch.critChance, critMultiplier: ch.critMultiplier },
+    equipped: m?.equipped ?? {}, // 적은 장착 없음
+    inventory: [], // 전투 중 장착 변경 없음
+    skills,
+    activeCount: u.activeSkillIds.length,
+    editable: false, // 전투=읽기전용(아군·적)
+  };
+}
+
 function renderOverlay(): void {
   app.querySelector(".party-overlay")?.remove(); // stale 제거(닫힘/전환)
   app.querySelector(".charsheet-overlay")?.remove();
@@ -129,9 +162,9 @@ function renderOverlay(): void {
     if (!sel) return;
     const members = rv.party.map((p) => ({ charId: p.charId, name: p.name, avatar: p.avatar, pos: p.pos, hp: p.hp, hpMax: p.maxHp, alive: p.alive }));
     renderPartyView(app, { members, selected: sel }, partyViewHandlers);
-  } else if (ui.sheetCharId) {
-    const data = buildSheetData(ui.sheetCharId);
-    if (data) renderCharSheet(app, data, sheetHandlers); // 전투 단독 프로필
+  } else if (ui.sheetUid) {
+    const data = buildBattleSheet(ui.sheetUid); // 전투 단독 프로필(아군/적)
+    if (data) renderCharSheet(app, data, sheetHandlers);
   }
 }
 
@@ -215,8 +248,8 @@ const battleHandlers: Handlers = {
   onNewBattle() {
     runHandlers.onRestart(); // 전투 화면의 '새 전투' = 런 재시작
   },
-  onOpenSheet(charId) {
-    ui.sheetCharId = charId;
+  onOpenSheet(uid) {
+    ui.sheetUid = uid; // 전투 유닛 프로필(아군/적)
     render();
   },
 };
@@ -280,7 +313,7 @@ function newRun(s: number): void {
 window.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
   if (ui.partyOpen) { ui.partyOpen = false; ui.sheetCharId = null; render(); }
-  else if (ui.sheetCharId) { ui.sheetCharId = null; render(); }
+  else if (ui.sheetUid) { ui.sheetUid = null; render(); }
   else if (ui.selectedSkillId) battleHandlers.onCancel();
 });
 
