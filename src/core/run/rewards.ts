@@ -22,6 +22,19 @@ function tierOk(run: RunState, m: { masteryLevel: number }, skillId: string): bo
   return (SKILLS[skillId]?.tier ?? 1) <= unlockedTier(m.masteryLevel);
 }
 
+/** 베이스 스킬의 강화 라인(nextTierId 체인) 중 하나라도 보유 중이면 true.
+ *  강화로 베이스가 상위 티어로 교체된 뒤(예: 종로의 주먹→종로의 주먹+), 베이스가 '새 스킬'로 다시 학습 후보에 뜨는 다운그레이드 방지. */
+export function ownsUpgradeLine(ownedSkillIds: string[], baseSkillId: string): boolean {
+  let cur: string | undefined = baseSkillId;
+  const seen = new Set<string>();
+  while (cur && SKILLS[cur] && !seen.has(cur)) {
+    if (ownedSkillIds.includes(cur)) return true;
+    seen.add(cur);
+    cur = SKILLS[cur].nextTierId;
+  }
+  return false;
+}
+
 /** 보상 후보 풀: 살아있는 파티원의 (강화 가능 스킬 + 학습 가능 스킬). 데미지=스킬로만(4.2). */
 export function genRewards(run: RunState): RewardOption[] {
   const living = run.party.filter((m) => m.hp > 0);
@@ -37,9 +50,9 @@ export function genRewards(run: RunState): RewardOption[] {
       const to = sk?.nextTierId ? SKILLS[sk.nextTierId] : undefined;
       if (sk && to && tierOk(run, m, sk.nextTierId!)) pool.push({ id: mk(), kind: "upgradeSkill", charId: m.charId, fromSkillId: sid, toSkillId: sk.nextTierId!, label: `${c.name}: 「${sk.name}」→「${to.name}」 강화` });
     }
-    // (b) 새 스킬: 학습기 풀(캐릭 learnset) 중 아직 미보유 (숙련도 tier 내)
+    // (b) 새 스킬: 학습기 풀(캐릭 learnset) 중 강화 라인 미보유 (숙련도 tier 내). 라인 보유 시 베이스 재출현 안 함(다운그레이드 방지)
     for (const sid of c.skillIds) {
-      if (!m.ownedSkillIds.includes(sid) && tierOk(run, m, sid)) pool.push({ id: mk(), kind: "learnSkill", charId: m.charId, skillId: sid, label: `${c.name}: 새 스킬 「${SKILLS[sid].name}」 습득` });
+      if (!ownsUpgradeLine(m.ownedSkillIds, sid) && tierOk(run, m, sid)) pool.push({ id: mk(), kind: "learnSkill", charId: m.charId, skillId: sid, label: `${c.name}: 새 스킬 「${SKILLS[sid].name}」 습득` });
     }
   }
   // (c) 장신구(4.5): 가끔 후보 진입 — 아이템 1개를 풀에 섞음

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRun, enterNode, resolveBattleEnd, chooseReward, buyShopOffer, leaveShop, chooseEncounterOption, movePartyMember, serializeRun, deserializeRun, genRewards, unlockedTier, getRunView } from "./run.ts";
+import { createRun, enterNode, resolveBattleEnd, chooseReward, buyShopOffer, leaveShop, chooseEncounterOption, movePartyMember, serializeRun, deserializeRun, genRewards, unlockedTier, ownsUpgradeLine, getRunView } from "./run.ts";
 import { step, createBattle, getFormationBonus } from "./engine.ts";
 import { SKILLS } from "../data/skills.ts";
 import { chooseAction } from "./ai.ts";
@@ -107,6 +107,22 @@ test("보상 새 스킬: 미보유 스킬을 보유 풀에 추가 (4.5)", () => 
   chooseReward(run, "l");
   assert.ok(jelly.ownedSkillIds.includes(newId), "보유 풀 추가");
   assert.equal(jelly.ownedSkillIds.length, before + 1);
+});
+
+test("보상 학습(4.6): 강화로 베이스가 교체되면 베이스가 학습 후보로 재출현 안 함(다운그레이드 방지)", () => {
+  // ownsUpgradeLine 단위: 상위 티어 보유 = 라인 보유로 간주
+  assert.equal(ownsUpgradeLine(["kim_punch2"], "kim_punch"), true, "종로의 주먹+ 보유 → 종로의 주먹 라인 보유");
+  assert.equal(ownsUpgradeLine(["kim_punch"], "kim_punch"), true, "베이스 자체 보유");
+  assert.equal(ownsUpgradeLine(["kim_kick"], "kim_punch"), false, "다른 스킬은 무관");
+  // 통합: 종로의 주먹→종로의 주먹+ 강화 후 genRewards가 종로의 주먹(kim_punch)을 학습기로 제시하지 않음
+  for (let s = 1; s <= 40; s++) {
+    const run = createRun(s, [{ charId: "kim", pos: { row: 0, col: 0 } }]);
+    const kim = run.party[0];
+    kim.ownedSkillIds = kim.ownedSkillIds.map((id) => (id === "kim_punch" ? "kim_punch2" : id)); // 강화 시뮬레이션
+    for (const r of genRewards(run)) {
+      if (r.kind === "learnSkill") assert.notEqual(r.skillId, "kim_punch", `seed ${s}: 강화한 베이스가 학습 후보로 재출현`);
+    }
+  }
 });
 
 test("상점: 골드로 구매 → 적용 + 차감 + 항목 제거 (7.2)", () => {

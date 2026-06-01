@@ -11,7 +11,7 @@ import { ENCOUNTER_EVENTS, type EncounterOutcome } from "../../data/events.ts";
 import { forwardIds, genMap } from "./map.ts";
 import type { RunNode } from "./map.ts";
 import type { RunState, ShopOffer } from "./types.ts";
-import { genRewards, unlockedTier } from "./rewards.ts";
+import { genRewards, unlockedTier, ownsUpgradeLine } from "./rewards.ts";
 import { genItemOffers } from "./items.ts";
 
 export function createRun(seed: number, roster: { charId: string; pos: Pos }[], acts: MapGenConfig[] = ACTS, opts: { mastery?: Record<string, number>; useMastery?: boolean } = {}): RunState {
@@ -153,7 +153,7 @@ function generateShop(run: RunState): ShopOffer[] {
       if (sk && to && tierOk(m, sk.nextTierId!)) pool.push({ id: mk(), kind: "upgrade", cost: 25, charId: m.charId, fromSkillId: sid, toSkillId: sk.nextTierId!, label: `강화권: ${c.name} 「${sk.name}」→「${to.name}」` });
     }
     for (const sid of c.skillIds) {
-      if (!m.ownedSkillIds.includes(sid) && !SKILLS[sid]?.exclusiveTo && tierOk(m, sid)) pool.push({ id: mk(), kind: "learn", cost: 20, charId: m.charId, skillId: sid, label: `스킬: ${c.name} 「${SKILLS[sid].name}」(범용)` });
+      if (!ownsUpgradeLine(m.ownedSkillIds, sid) && !SKILLS[sid]?.exclusiveTo && tierOk(m, sid)) pool.push({ id: mk(), kind: "learn", cost: 20, charId: m.charId, skillId: sid, label: `스킬: ${c.name} 「${SKILLS[sid].name}」(범용)` });
     }
   }
   const picked: ShopOffer[] = [];
@@ -191,7 +191,7 @@ function applyOutcome(run: RunState, o: EncounterOutcome): void {
     const cand = run.party.filter((m) => m.hp > 0).flatMap((m) => m.ownedSkillIds.filter((sid) => SKILLS[sid]?.nextTierId).map((sid) => ({ m, sid })));
     if (cand.length) { const p = cand[run.rng.int(0, cand.length - 1)]; upgradeOwned(p.m, p.sid, SKILLS[p.sid].nextTierId!); run.log.push(`${CHARACTERS[p.m.charId].name} 「${SKILLS[p.sid].name}」 강화!`); }
   } else if (o.kind === "learnUniversal") {
-    const cand = run.party.filter((m) => m.hp > 0).flatMap((m) => CHARACTERS[m.charId].skillIds.filter((sid) => !m.ownedSkillIds.includes(sid) && !SKILLS[sid]?.exclusiveTo).map((sid) => ({ m, sid })));
+    const cand = run.party.filter((m) => m.hp > 0).flatMap((m) => CHARACTERS[m.charId].skillIds.filter((sid) => !ownsUpgradeLine(m.ownedSkillIds, sid) && !SKILLS[sid]?.exclusiveTo).map((sid) => ({ m, sid })));
     if (cand.length) { const p = cand[run.rng.int(0, cand.length - 1)]; learnOwned(p.m, p.sid); run.log.push(`${CHARACTERS[p.m.charId].name} 「${SKILLS[p.sid].name}」 습득!`); }
   }
 }
