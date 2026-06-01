@@ -126,7 +126,7 @@ src/core/
 | 상태이상 출처(유닛+스킬) (3.1) | `StatusInstance.sourceSkillId` → `combat/observation.ts` `viewStatuses`(via=스킬명) |
 | 포메이션 열보너스·총량보존 (6.1/6.3) | `combat/formation.ts`: `getFormationBonus` |
 | 면적(AoE) 모양→영향 칸/유닛 | `combat/targeting.ts`: `computeAreaCells`/`areaTargets` (웹 바닥 하이라이트 공유) |
-| 근접 동적 도달(reach, 2.4 교착방지) | `Skill.reach` · `combat/targeting.ts`: `reachableColumns`(최전열부터 연속 n칸) → `validTargets` 필터 · 웹 `render.ts` 동일 규칙 하이라이트 · 근접 단일타겟 스킬 전부 `reach:2`(data/skills.ts) |
+| 근접 동적 도달(reach, 2.4 교착방지) | `Skill.reach` · `combat/targeting.ts`: `reachableColumns`(최전열부터 연속 n칸) → `validTargets` 필터 · 웹 `render.ts` 동일 규칙 하이라이트 · 근접 단일타겟 스킬 전부 `reach:1`(최전열 적만, data/skills.ts) |
 | 승패 (7.3) | `combat/winCheck.ts`: `checkWin` |
 | 행동 1회 처리(턴 진행) | `combat/flow.ts`: `step` |
 | 관측 빌드(JSON) (8.2) | `combat/observation.ts`: `buildObservation` |

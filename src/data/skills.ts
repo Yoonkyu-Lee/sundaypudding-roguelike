@@ -10,7 +10,7 @@ export const SKILLS: Record<string, Skill> = {
     target: "enemy",
     cooldown: 0,
     accuracy: 90,
-    reach: 2, // 근접: 최전열부터 연속 2칸 동적 도달 (전열 비면 전진, 2.4)
+    reach: 1, // 근접: 최전열(전방 점유 열) 적만 타겟 — 전열 비면 다음 열로 전진 (2.4)
     effects: [{ kind: "damage", amount: 12 }],
   },
   milchigi: {
@@ -19,7 +19,7 @@ export const SKILLS: Record<string, Skill> = {
     target: "enemy",
     cooldown: 2,
     accuracy: 95,
-    reach: 2,
+    reach: 1,
     effects: [
       { kind: "damage", amount: 6 },
       { kind: "move", who: "target", deltaCol: 1 }, // 뒤로 밀기 (6.4)
@@ -31,7 +31,7 @@ export const SKILLS: Record<string, Skill> = {
     target: "enemy",
     cooldown: 4,
     accuracy: 90,
-    reach: 2,
+    reach: 1,
     grantsInterrupt: 1, // 끼어들기 1회 (스킬 출처, 2.11)
     effects: [{ kind: "damage", amount: 8 }],
   },
@@ -52,7 +52,7 @@ export const SKILLS: Record<string, Skill> = {
     target: "enemy",
     cooldown: 0,
     accuracy: 95,
-    reach: 2,
+    reach: 1,
     effects: [{ kind: "damage", amount: 10 }],
   },
   chulhyeolbegi: {
@@ -61,7 +61,7 @@ export const SKILLS: Record<string, Skill> = {
     target: "enemy",
     cooldown: 2,
     accuracy: 95,
-    reach: 2,
+    reach: 1,
     effects: [
       { kind: "damage", amount: 6 },
       { kind: "applyStatus", statusId: "bleed", stacks: 2, duration: 3 },
@@ -167,7 +167,7 @@ export const SKILLS: Record<string, Skill> = {
     target: "enemy",
     cooldown: 1,
     accuracy: 90,
-    reach: 2,
+    reach: 1,
     effects: [{ kind: "damage", amount: 5 }],
   },
   bingyeol: {
@@ -184,8 +184,8 @@ export const SKILLS: Record<string, Skill> = {
 
   // ══ 우익(대한민청) — 플레이어 ══
   // 김두한 (브루저/딜러, 높은 치명)
-  kim_punch: { id: "kim_punch", name: "종로의 주먹", exclusiveTo: "kim", target: "enemy", cooldown: 0, accuracy: 90, reach: 2, tier: 1, nextTierId: "kim_punch2", effects: [{ kind: "damage", amount: 14 }] },
-  kim_kick: { id: "kim_kick", name: "공중 이단 발차기", exclusiveTo: "kim", target: "enemy", cooldown: 2, accuracy: 90, reach: 2, effects: [{ kind: "move", who: "self", deltaCol: -3 }, { kind: "damage", amount: 12 }] },
+  kim_punch: { id: "kim_punch", name: "종로의 주먹", exclusiveTo: "kim", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, tier: 1, nextTierId: "kim_punch2", effects: [{ kind: "damage", amount: 14 }] },
+  kim_kick: { id: "kim_kick", name: "공중 이단 발차기", exclusiveTo: "kim", target: "enemy", cooldown: 2, accuracy: 90, reach: 1, effects: [{ kind: "move", who: "self", deltaCol: -3 }, { kind: "damage", amount: 12 }] },
   kim_oyabun: { id: "kim_oyabun", name: "오야붕의 위엄", exclusiveTo: "kim", target: "self", cooldown: 4, accuracy: 0, alwaysHit: true, effects: [{ kind: "cleanse" }, { kind: "applyStatus", statusId: "might", stacks: 1, duration: 3 }, { kind: "applyStatus", statusId: "edge", stacks: 1, duration: 3 }] },
   kim_4dollar: { id: "kim_4dollar", name: "4달러", exclusiveTo: "kim", target: "ally", cooldown: 5, accuracy: 0, alwaysHit: true, grantsInterrupt: 1, grantsInterruptTo: "target", effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 2 }] },
 
@@ -196,8 +196,8 @@ export const SKILLS: Record<string, Skill> = {
   sh_ult: { id: "sh_ult", name: "안 되겠소, 쏩니다!", exclusiveTo: "shanghai", target: "enemy", cooldown: 5, accuracy: 90, effects: [{ kind: "damage", amount: 16 }, { kind: "applyStatus", statusId: "freeze", stacks: 1, duration: 1 }] },
 
   // 신영균 (광전사)
-  shin_axe: { id: "shin_axe", name: "도끼 휘두르기", exclusiveTo: "shin", target: "enemy", cooldown: 0, accuracy: 90, reach: 2, tier: 1, nextTierId: "shin_axe2", effects: [{ kind: "damage", amount: 12 }, { kind: "applyStatus", statusId: "bleed", stacks: 2, duration: 3 }] },
-  shin_charge: { id: "shin_charge", name: "분노의 돌격", exclusiveTo: "shin", target: "enemy", cooldown: 3, accuracy: 90, reach: 2, effects: [{ kind: "move", who: "self", deltaCol: -3 }, { kind: "damage", amount: 8 }, { kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }, { kind: "applyStatusSelf", statusId: "weaken", stacks: 1, duration: 1 }] },
+  shin_axe: { id: "shin_axe", name: "도끼 휘두르기", exclusiveTo: "shin", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, tier: 1, nextTierId: "shin_axe2", effects: [{ kind: "damage", amount: 12 }, { kind: "applyStatus", statusId: "bleed", stacks: 2, duration: 3 }] },
+  shin_charge: { id: "shin_charge", name: "분노의 돌격", exclusiveTo: "shin", target: "enemy", cooldown: 3, accuracy: 90, reach: 1, effects: [{ kind: "move", who: "self", deltaCol: -3 }, { kind: "damage", amount: 8 }, { kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }, { kind: "applyStatusSelf", statusId: "weaken", stacks: 1, duration: 1 }] },
   shin_awaken: { id: "shin_awaken", name: "야수성 각성", exclusiveTo: "shin", target: "self", cooldown: 4, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 3 }, { kind: "applyStatus", statusId: "regen", stacks: 2, duration: 3 }] },
   shin_ult: { id: "shin_ult", name: "에이잇! 할아버지!", exclusiveTo: "shin", target: "enemy", area: { kind: "free", count: 4 }, cooldown: 4, accuracy: 85, effects: [{ kind: "damage", amount: 9 }, { kind: "applyStatus", statusId: "bleed", stacks: 1, duration: 2 }] },
 
@@ -216,7 +216,7 @@ export const SKILLS: Record<string, Skill> = {
   jung_ult: { id: "jung_ult", name: "이념의 이름으로", target: "ally", area: { kind: "all" }, cooldown: 5, accuracy: 0, alwaysHit: true, grantsInterrupt: 1, grantsInterruptTo: "self", effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 2 }] },
 
   // 김천호 (암살자)
-  chunho_stab: { id: "chunho_stab", name: "암습", target: "enemy", cooldown: 0, accuracy: 95, reach: 2, effects: [{ kind: "damage", amount: 8 }, { kind: "applyStatus", statusId: "bleed", stacks: 2, duration: 3 }] },
+  chunho_stab: { id: "chunho_stab", name: "암습", target: "enemy", cooldown: 0, accuracy: 95, reach: 1, effects: [{ kind: "damage", amount: 8 }, { kind: "applyStatus", statusId: "bleed", stacks: 2, duration: 3 }] },
   chunho_shadow: { id: "chunho_shadow", name: "그림자 걸음", target: "self", cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "move", who: "self", deltaCol: 3 }, { kind: "applyStatus", statusId: "ambush", stacks: 1, duration: 2 }] },
   chunho_dagger: { id: "chunho_dagger", name: "독바른 단검 투척", target: "enemy", cooldown: 3, accuracy: 90, effects: [{ kind: "damage", amount: 6 }, { kind: "applyStatus", statusId: "poison", stacks: 2, duration: 3 }] },
   chunho_ult: { id: "chunho_ult", name: "잔인한 처단", target: "enemy", cooldown: 4, accuracy: 90, effects: [{ kind: "damage", amount: 18 }] },
@@ -228,24 +228,24 @@ export const SKILLS: Record<string, Skill> = {
   shim_ult: { id: "shim_ult", name: "내가 고자라니!", target: "enemy", area: { kind: "all" }, cooldown: 5, accuracy: 90, effects: [{ kind: "applyStatus", statusId: "freeze", stacks: 1, duration: 1 }] },
 
   // 의사양반 (힐러)
-  doc_tap: { id: "doc_tap", name: "청진기 찰싹", target: "enemy", cooldown: 0, accuracy: 90, reach: 2, effects: [{ kind: "damage", amount: 3 }] },
+  doc_tap: { id: "doc_tap", name: "청진기 찰싹", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 3 }] },
   doc_heal: { id: "doc_heal", name: "안심하세요", target: "ally", cooldown: 2, accuracy: 0, alwaysHit: true, effects: [{ kind: "heal", amount: 16 }, { kind: "applyStatus", statusId: "regen", stacks: 2, duration: 3 }] },
   doc_cleanse: { id: "doc_cleanse", name: "치료", target: "ally", cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "cleanse" }] },
   doc_ult: { id: "doc_ult", name: "백병원 강제 입원", target: "ally", cooldown: 5, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "invincible", stacks: 1, duration: 1 }] },
 
   // ══ 잡몹(깡패) ══
-  thug_punch: { id: "thug_punch", name: "주먹질", target: "enemy", cooldown: 0, accuracy: 85, reach: 2, effects: [{ kind: "damage", amount: 6 }] },
-  thug_kick: { id: "thug_kick", name: "발길질", target: "enemy", cooldown: 1, accuracy: 85, reach: 2, effects: [{ kind: "damage", amount: 5 }] },
-  thug_club: { id: "thug_club", name: "각목 후려치기", target: "enemy", cooldown: 0, accuracy: 85, reach: 2, effects: [{ kind: "damage", amount: 8 }] },
+  thug_punch: { id: "thug_punch", name: "주먹질", target: "enemy", cooldown: 0, accuracy: 85, reach: 1, effects: [{ kind: "damage", amount: 6 }] },
+  thug_kick: { id: "thug_kick", name: "발길질", target: "enemy", cooldown: 1, accuracy: 85, reach: 1, effects: [{ kind: "damage", amount: 5 }] },
+  thug_club: { id: "thug_club", name: "각목 후려치기", target: "enemy", cooldown: 0, accuracy: 85, reach: 1, effects: [{ kind: "damage", amount: 8 }] },
   thug_throw: { id: "thug_throw", name: "벽돌 던지기", target: "enemy", cooldown: 2, accuracy: 80, effects: [{ kind: "damage", amount: 6 }] },
 
   // ══ 육성: 강화 티어 체인 (4.6) — 전용기 강화. 보상 "강화"로 nextTierId 교체. 보유 풀엔 직접 안 들어감 ══
-  kim_punch2: { id: "kim_punch2", name: "종로의 주먹+", exclusiveTo: "kim", target: "enemy", cooldown: 0, accuracy: 90, reach: 2, tier: 2, nextTierId: "kim_punch3", effects: [{ kind: "damage", amount: 18 }] },
-  kim_punch3: { id: "kim_punch3", name: "종로의 주먹++", exclusiveTo: "kim", target: "enemy", cooldown: 0, accuracy: 90, reach: 2, tier: 3, effects: [{ kind: "damage", amount: 22 }, { kind: "applyStatus", statusId: "bleed", stacks: 1, duration: 2 }] },
+  kim_punch2: { id: "kim_punch2", name: "종로의 주먹+", exclusiveTo: "kim", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, tier: 2, nextTierId: "kim_punch3", effects: [{ kind: "damage", amount: 18 }] },
+  kim_punch3: { id: "kim_punch3", name: "종로의 주먹++", exclusiveTo: "kim", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, tier: 3, effects: [{ kind: "damage", amount: 22 }, { kind: "applyStatus", statusId: "bleed", stacks: 1, duration: 2 }] },
   sh_pistol2: { id: "sh_pistol2", name: "권총 속사", exclusiveTo: "shanghai", target: "enemy", cooldown: 0, accuracy: 90, tier: 2, nextTierId: "sh_pistol3", effects: [{ kind: "damage", amount: 13 }] },
   sh_pistol3: { id: "sh_pistol3", name: "권총 난사", exclusiveTo: "shanghai", target: "enemy", cooldown: 0, accuracy: 90, tier: 3, effects: [{ kind: "damage", amount: 16 }, { kind: "applyStatus", statusId: "paralyze", stacks: 1, duration: 1 }] },
-  shin_axe2: { id: "shin_axe2", name: "도끼 강타", exclusiveTo: "shin", target: "enemy", cooldown: 0, accuracy: 90, reach: 2, tier: 2, nextTierId: "shin_axe3", effects: [{ kind: "damage", amount: 15 }, { kind: "applyStatus", statusId: "bleed", stacks: 2, duration: 3 }] },
-  shin_axe3: { id: "shin_axe3", name: "도끼 분쇄", exclusiveTo: "shin", target: "enemy", cooldown: 0, accuracy: 90, reach: 2, tier: 3, effects: [{ kind: "damage", amount: 18 }, { kind: "applyStatus", statusId: "bleed", stacks: 3, duration: 3 }] },
+  shin_axe2: { id: "shin_axe2", name: "도끼 강타", exclusiveTo: "shin", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, tier: 2, nextTierId: "shin_axe3", effects: [{ kind: "damage", amount: 15 }, { kind: "applyStatus", statusId: "bleed", stacks: 2, duration: 3 }] },
+  shin_axe3: { id: "shin_axe3", name: "도끼 분쇄", exclusiveTo: "shin", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, tier: 3, effects: [{ kind: "damage", amount: 18 }, { kind: "applyStatus", statusId: "bleed", stacks: 3, duration: 3 }] },
   cho_warn2: { id: "cho_warn2", name: "엄중 경고", exclusiveTo: "cho", target: "enemy", cooldown: 0, accuracy: 90, tier: 2, effects: [{ kind: "damage", amount: 6 }, { kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }] },
 
   // ══ 범용기 (4.6) — exclusiveTo 없음 = 여러 캐릭이 learnset에 가질 수 있는 공유 스킬. 중립 네이밍 ══
