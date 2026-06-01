@@ -8,7 +8,7 @@ import { esc } from "./shared.ts";
 export function rangeRule(sk: Skill): string {
   if (sk.target === "self") return "자신";
   if (sk.target === "ally") return "아군";
-  if (sk.reach !== undefined) return sk.reach <= 1 ? "근접 · 최전열 적" : `근접 · 전방 ${sk.reach}열`;
+  if (sk.reach !== undefined) return sk.reach <= 1 ? "근접" : `근접 · ${sk.reach}열`;
   if (sk.targetCells && sk.targetCells.length) return "근접 · 전방";
   return "원거리 · 아무 칸";
 }
