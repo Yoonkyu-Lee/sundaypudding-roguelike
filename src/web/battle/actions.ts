@@ -1,8 +1,15 @@
 // 행동 패널: 스킬 선택 모드(균일 카드 4개) vs 타겟팅 모드. 스킬 설명은 skillDesc(데이터).
-import type { GameState, Observation } from "../../core/types.ts";
+import type { GameState, Observation, Unit } from "../../core/types.ts";
+import { previewDamage } from "../../core/engine.ts";
 import { SKILLS } from "../../data/skills.ts";
 import { esc, type Ui } from "./shared.ts";
 import { skillCardBody, skillInline, skillType } from "./skillDesc.ts";
+
+/** 시전자 실피해(무기 dmgFlat·강화·포메이션 반영). 데미지 스킬만, 아니면 undefined. */
+function effDmgOf(state: GameState, actor: Unit, skillId: string): number | undefined {
+  const sk = SKILLS[skillId];
+  return sk?.effects.some((e) => e.kind === "damage") ? previewDamage(state, actor, sk) : undefined;
+}
 
 export function actionPanel(obs: Observation, state: GameState, ui: Ui): string {
   if (obs.phase !== "inProgress") {
@@ -23,7 +30,7 @@ export function actionPanel(obs: Observation, state: GameState, ui: Ui): string 
   if (ui.selectedSkillId) {
     const sk = SKILLS[ui.selectedSkillId];
     return `<div class="actions targeting">
-      <div class="prompt">🎯 「${esc(sk.name)}」 대상 선택 — 칸 클릭 <span class="skinline">${esc(skillInline(sk))}</span></div>
+      <div class="prompt">🎯 「${esc(sk.name)}」 대상 선택 — 칸 클릭 <span class="skinline">${esc(skillInline(sk, effDmgOf(state, actor, ui.selectedSkillId)))}</span></div>
       <button class="act cancel" id="cancelbtn">취소 (Esc)</button>
     </div>`;
   }
@@ -38,7 +45,7 @@ export function actionPanel(obs: Observation, state: GameState, ui: Ui): string 
     const attrs = disabled ? "disabled" : `data-skill="${id}"`;
     return `<button class="skcard t-${skillType(sk).key} ${disabled ? "disabled" : ""}" ${attrs}>
       <span class="skhead"><span class="skname">${esc(sk.name)}</span>${reason ? `<span class="skreason">${reason}</span>` : ""}</span>
-      ${skillCardBody(sk)}
+      ${skillCardBody(sk, effDmgOf(state, actor, id))}
     </button>`;
   }).join("");
   // 대기: 아무것도 안 하고 턴 넘기기 (항상 노출, 쿨 소모 없음)

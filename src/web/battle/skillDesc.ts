@@ -25,13 +25,17 @@ export function areaRule(area: AreaShape | undefined): string {
   }
 }
 
-/** 스탯 한 줄: 쿨 · 명중(또는 필중) · 피해. 라벨/값 구조화. */
-export function skillStats(sk: Skill): { label: string; value: string }[] {
+/** 스탯 한 줄: 쿨 · 명중(또는 필중) · 피해. effDmg 주면 시전자 실피해(무기/강화/포메이션 반영)를 원본→현재로 병기(0.2). */
+export function skillStats(sk: Skill, effDmg?: number): { label: string; value: string }[] {
   const dmg = sk.effects.find((e) => e.kind === "damage");
   const out: { label: string; value: string }[] = [{ label: "쿨", value: sk.cooldown === 0 ? "없음" : `${sk.cooldown}턴` }];
   if (sk.target === "enemy") out.push({ label: "명중", value: `${sk.accuracy >= 0 ? "+" : ""}${sk.accuracy}` });
   else if (sk.alwaysHit) out.push({ label: "명중", value: "필중" });
-  if (dmg && dmg.kind === "damage") out.push({ label: "피해", value: String(dmg.amount) });
+  if (dmg && dmg.kind === "damage") {
+    const base = dmg.amount;
+    const value = effDmg === undefined || effDmg === base ? String(base) : `${base}→${effDmg}`;
+    out.push({ label: "피해", value });
+  }
   return out;
 }
 
@@ -73,9 +77,9 @@ export function skillType(sk: Skill): { key: "attack" | "support" | "buff" | "de
 const STAT_ICON: Record<string, string> = { "쿨": "⏱", "명중": "🎯", "피해": "💥" };
 
 /** 스킬 카드 본문 HTML (선택 패널의 균일 카드용). 타입 칩 + 아이콘 스탯 + 사정권/면적 + 특징. */
-export function skillCardBody(sk: Skill): string {
+export function skillCardBody(sk: Skill, effDmg?: number): string {
   const t = skillType(sk);
-  const stats = skillStats(sk).map((s) => `<span class="skstat"><i>${STAT_ICON[s.label] ?? s.label}</i>${esc(s.value)}</span>`).join("");
+  const stats = skillStats(sk, effDmg).map((s) => `<span class="skstat"><i>${STAT_ICON[s.label] ?? s.label}</i>${esc(s.value)}</span>`).join("");
   const traits = skillTraits(sk).map((x) => `<span class="sktrait ${x.cls}">${esc(x.text)}</span>`).join("");
   const aoe = sk.area && sk.area.kind !== "single" ? ` · ${esc(areaRule(sk.area))}` : "";
   return `<span class="sktype t-${t.key}">${t.label}</span>
@@ -85,8 +89,8 @@ export function skillCardBody(sk: Skill): string {
 }
 
 /** 타겟팅 프롬프트용 한 줄 요약. */
-export function skillInline(sk: Skill): string {
-  const stats = skillStats(sk).map((s) => `${s.label} ${s.value}`).join(" · ");
+export function skillInline(sk: Skill, effDmg?: number): string {
+  const stats = skillStats(sk, effDmg).map((s) => `${s.label} ${s.value}`).join(" · ");
   const aoe = sk.area && sk.area.kind !== "single" ? ` · ${areaRule(sk.area)}` : "";
   return `${rangeRule(sk)} · ${stats}${aoe}`;
 }
