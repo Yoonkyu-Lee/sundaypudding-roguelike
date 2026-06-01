@@ -272,12 +272,18 @@ test("다층(7.3): 액트 보스 격파→다음 액트(새 맵·파티 유지),
     enterNode(run, bossId);
     assert.equal(run.phase, "battle");
     run.battle!.phase = "allyWin"; // 보스전 승리 강제(결정론)
+    const goldBefore = run.gold;
     resolveBattleEnd(run);
     assert.equal(run.party.length, partyN, "파티 유지");
-    if (expect === 1) assert.ok(run.party[0].hp > 0, "액트 전환 시 전투불능 멤버 부활");
     if (expect < 3) {
-      assert.equal(run.phase, "map", `액트${expect} 보스 후 다음 액트 맵`);
+      // 액트 보스 격파 = 골드 + 보상 선택 → 보상 후 다음 액트로
+      assert.equal(run.phase, "reward", `액트${expect} 보스 후 보상 선택`);
+      assert.ok(run.gold > goldBefore, "보스 격파 골드 보상");
+      assert.ok(run.rewards && run.rewards.length > 0, "보스 보상 선택지 제시");
+      chooseReward(run, run.rewards![0].id);
+      assert.equal(run.phase, "map", `보상 후 액트${expect + 1} 맵`);
       assert.equal(run.act, expect + 1, "다음 액트로 진행");
+      if (expect === 1) assert.ok(run.party[0].hp > 0, "액트 전환 시 전투불능 멤버 부활");
       assert.equal(Math.max(...run.nodes.map((n) => n.r)), run.acts[run.act - 1].rows, "새 액트 깊이 반영");
     } else {
       assert.equal(run.phase, "won", "3액트 보스 = 게임 클리어");

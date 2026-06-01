@@ -249,16 +249,18 @@ export function resolveBattleEnd(run: RunState): void {
   }
   // allyWin
   const n = node(run, run.activeNodeId!);
-  if (n.type === "boss") {
-    if (run.act < run.acts.length) { advanceAct(run); return; } // 다음 액트로
+  // 최종 액트 보스 = 게임 클리어 (보상 없음, 끝)
+  if (n.type === "boss" && run.act >= run.acts.length) {
     run.phase = "won";
     run.log.push("최종 보스 격파 — 게임 클리어!");
     return;
   }
-  run.gold += n.type === "elite" ? 16 : 8; // 전투 보상 골드(상점 통화)
+  // 그 외 승리(일반/엘리트/액트 보스) = 골드 + 보상 3택1. 보스는 가장 큰 골드. (보상 선택 후 chooseReward가 다음 액트로)
+  const goldGain = n.type === "boss" ? 24 : n.type === "elite" ? 16 : 8;
+  run.gold += goldGain;
   run.rewards = genRewards(run);
   run.phase = "reward";
-  run.log.push(`전투 승리 (+${n.type === "elite" ? 16 : 8}G) — 보상 선택`);
+  run.log.push(`${n.type === "boss" ? "보스 격파" : "전투 승리"} (+${goldGain}G) — 보상 선택`);
 }
 
 export function chooseReward(run: RunState, optionId: string): void {
@@ -278,6 +280,11 @@ export function chooseReward(run: RunState, optionId: string): void {
   }
   run.log.push(`보상: ${opt.label}`);
   run.rewards = null;
-  run.battle = null;
-  completeNode(run, run.activeNodeId!);
+  // 액트 보스 보상을 받은 뒤 다음 액트로 진입(+전투불능 부활·50% 회복). 그 외엔 같은 액트 맵으로 복귀.
+  if (node(run, run.activeNodeId!).type === "boss") {
+    advanceAct(run);
+  } else {
+    run.battle = null;
+    completeNode(run, run.activeNodeId!);
+  }
 }
