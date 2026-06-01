@@ -8,6 +8,7 @@
 |---|---|---|
 | [`docs/GAME-DESIGN.md`](docs/GAME-DESIGN.md) | **게임 시스템 명세 (SoT).** 모든 규칙·수치·설계 결정 | 게임 로직을 만들거나 바꿀 때 |
 | [`docs/CODE-MAP.md`](docs/CODE-MAP.md) | **코드 매핑.** 어떤 파일/함수가 무슨 역할인지 | 작업 시작 전, 어디를 고칠지 찾을 때 |
+| [`docs/UI-GLOSSARY.md`](docs/UI-GLOSSARY.md) | **GUI 도메인 명칭 (SoT).** 화면·패널·모달의 통일 이름 ↔ 코드 매핑 | GUI를 만들거나 부를 때 (이 이름으로 통일) |
 | [`README.md`](README.md) | 실행법·아키텍처 요약 | 돌려볼 때 |
 
 작업 시작 전: **CODE-MAP을 먼저 훑어** 해당 부분이 어디인지 잡고, 게임 규칙은 GAME-DESIGN을 진실로 삼는다.
