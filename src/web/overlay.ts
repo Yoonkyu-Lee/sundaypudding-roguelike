@@ -4,6 +4,7 @@ import { buildObservation } from "../core/engine.ts";
 import { setActiveSkill, movePartyMember, equipItem, unequipItem, getRunView, type RunState } from "../core/run.ts";
 import { SKILLS } from "../data/skills.ts";
 import { CHARACTERS } from "../data/characters.ts";
+import { ITEMS } from "../data/items.ts";
 import { renderCharSheet, type SheetData, type SheetHandlers } from "./charSheet.ts";
 import { renderPartyView, type PartyViewHandlers } from "./partyView.ts";
 import type { Ui } from "./battle/shared.ts";
@@ -27,6 +28,14 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     onToggle(charId, skillId) { setActiveSkill(deps.getRun(), charId, skillId); render(); }, // 맵에서만 editable
     onEquip(charId, slot, itemId) { equipItem(deps.getRun(), charId, slot, itemId); render(); },
     onUnequip(charId, slot) { unequipItem(deps.getRun(), charId, slot); render(); },
+    onEquipItem(toCharId, itemId, from) {
+      const run = deps.getRun();
+      const slot = ITEMS[itemId]?.slot;
+      if (!slot) return;
+      if (from) unequipItem(run, from.charId, from.slot); // 다른 칸에서 옮겨오면 먼저 해제→인벤
+      equipItem(run, toCharId, slot, itemId);
+      render();
+    },
     onToggleDetail() { ui.sheetDetail = !ui.sheetDetail; render(); },
     onClose() { ui.sheetUid = null; ui.sheetCharId = null; render(); },
   };
@@ -114,8 +123,11 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       const rv = getRunView(run);
       const sel = buildSheetData(ui.sheetCharId ?? rv.party[0]?.charId ?? "");
       if (!sel) return;
-      const members = rv.party.map((p) => ({ charId: p.charId, name: p.name, avatar: p.avatar, pos: p.pos, hp: p.hp, hpMax: p.maxHp, alive: p.alive }));
-      renderPartyView(app, { members, selected: sel }, partyViewHandlers);
+      const members = rv.party.map((p) => {
+        const m = run.party.find((x) => x.charId === p.charId);
+        return { charId: p.charId, name: p.name, avatar: p.avatar, pos: p.pos, hp: p.hp, hpMax: p.maxHp, alive: p.alive, equipped: m?.equipped ?? {} };
+      });
+      renderPartyView(app, { members, selected: sel, inventory: run.inventory }, partyViewHandlers);
     } else if (ui.sheetUid) {
       const data = buildBattleSheet(ui.sheetUid); // 전투 단독 프로필(아군/적)
       if (data) renderCharSheet(app, data, sheetHandlers);

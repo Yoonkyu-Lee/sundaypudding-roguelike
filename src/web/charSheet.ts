@@ -45,6 +45,8 @@ export interface SheetHandlers {
   onToggle: (charId: string, skillId: string) => void;
   onEquip: (charId: string, slot: EquipSlot, itemId: string) => void;
   onUnequip: (charId: string, slot: EquipSlot) => void;
+  /** 드래그앤드롭 장착: itemId를 toCharId의 (item.slot)에. from이 있으면 그 슬롯에서 옮겨오는 것(해제 후 장착). */
+  onEquipItem: (toCharId: string, itemId: string, from?: { charId: string; slot: EquipSlot }) => void;
   onToggleDetail: () => void; // 자세히 보기 토글
   onClose: () => void;
 }
@@ -55,8 +57,8 @@ const SLOTS: { key: EquipSlot; label: string; locked?: boolean }[] = [
   { key: "held", label: "지닌 물건", locked: true },
 ];
 
-/** 아이템 보정을 한 줄 설명으로 (무기/방어구 효과 투명 표기). */
-function itemDesc(it: ItemDef): string {
+/** 아이템 보정을 한 줄 설명으로 (무기/방어구 효과 투명 표기). 인벤토리 상세에서도 재사용. */
+export function itemDesc(it: ItemDef): string {
   const p: string[] = [];
   if (it.dmgFlat) p.push(`공격 +${it.dmgFlat}`);
   const m = it.mods;
@@ -119,21 +121,15 @@ function statRows(d: SheetData): string {
   ].join("");
 }
 
+// 장착칸 — 채워지면 아이템(드래그 가능 표식 data-item) + 해제 버튼. 슬롯=drop 타깃(data-slot). 장착은 인벤토리 DnD/클릭.
 function slotBlock(d: SheetData, sl: { key: EquipSlot; label: string; locked?: boolean }): string {
-  if (sl.locked) return `<div class="csslot locked"><span class="csslotname">${sl.label}</span><span class="csslotval">🔒 후속</span></div>`;
+  if (sl.locked) return `<div class="csslot locked" data-slot="${sl.key}"><span class="csslotname">${sl.label}</span><span class="csslotval">🔒 후속</span></div>`;
   const curId = d.equipped[sl.key];
   const cur = curId ? ITEMS[curId] : undefined;
   const equippedHtml = cur
-    ? `<div class="csslot-eq"><span class="csslot-item">${cur.icon ?? "📦"} ${esc(cur.name)}</span>${d.editable ? `<button class="csslot-off" data-unequip="${sl.key}">해제</button>` : ""}</div><div class="csslot-desc">${itemDesc(cur)}</div>`
+    ? `<div class="csslot-eq"><span class="csslot-item" data-item="${curId}">${cur.icon ?? "📦"} ${esc(cur.name)}</span>${d.editable ? `<button class="csslot-off" data-unequip="${sl.key}">해제</button>` : ""}</div><div class="csslot-desc">${itemDesc(cur)}</div>`
     : `<span class="csslotval">(없음)</span>`;
-  // 인벤토리에서 이 슬롯 장착 가능 후보 (editable일 때만)
-  const cands = d.editable
-    ? d.inventory.map((id) => ITEMS[id]).filter((it): it is ItemDef => !!it && it.slot === sl.key)
-    : [];
-  const pick = cands.length
-    ? `<div class="csslot-pick">${cands.map((it) => `<button class="csslot-cand" data-equip-slot="${sl.key}" data-equip-item="${it.id}" title="${itemDesc(it)}">${it.icon ?? "📦"} ${esc(it.name)}</button>`).join("")}</div>`
-    : "";
-  return `<div class="csslot${cur ? " filled" : ""}"><span class="csslotname">${sl.label}</span>${equippedHtml}${pick}</div>`;
+  return `<div class="csslot${cur ? " filled" : ""}" data-slot="${sl.key}"><span class="csslotname">${sl.label}</span>${equippedHtml}</div>`;
 }
 
 // 스킬 한 행 — 타입칩·이름·티어·전용/범용·강화가능 + 스펙 한 줄(쿨·명중·피해·사정권·특징) + 출전 토글.
