@@ -10,7 +10,7 @@ export const SKILLS: Record<string, Skill> = {
     target: "enemy",
     cooldown: 0,
     accuracy: 90,
-    reach: 2, // 근접: 전방 2개 점유 열까지 동적 도달 (후열만 남으면 전진, 2.4)
+    reach: 2, // 근접: 최전열부터 연속 2칸 동적 도달 (전열 비면 전진, 2.4)
     effects: [{ kind: "damage", amount: 12 }],
   },
   milchigi: {

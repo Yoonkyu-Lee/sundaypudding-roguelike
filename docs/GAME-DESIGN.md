@@ -566,7 +566,7 @@
 
 **☐ 미구현 (다음 슬라이스)**
 - **숙련도 tier 해금(4.4)** · 본산/메타/기억회랑(5장) · **다층(act, 7.3 기본 3층 — 현재 단일 맵)** · 적 전용 AI/패턴 · 웹 렌더러 고도화 · 밸런싱(골드 획득/가격·이벤트 풀·맵 가중치)
-  - (해소됨) ~~근접 도달불가 교착~~ → **`reach` 프리미티브**(동적 도달 열, 2.4): 근접 스킬은 정적 전방 마스크 대신 "살아있는 적의 전방 n개 점유 열"을 타격 → 후열만 남아도 그게 전열이 되어 항상 도달, 교착 불가.
+  - (해소됨) ~~근접 도달불가 교착~~ → **`reach` 프리미티브**(동적 도달, 2.4): 근접 스킬은 정적 전방 마스크 대신 "최전열(살아있는 적 최소 열)부터 연속 n칸"을 타격 → 후열만 남아도 그게 전열이 되어 항상 도달, 교착 불가. 빈 열을 건너뛰지 않음(근접=인접, 원거리화 방지).
 - `x`(보유 스킬 상한), DoT `x`(스택당 피해) 등 밸런스 수치 (현재 placeholder 값으로 동작 중)
 
 ### 8.8 데이터 ↔ 엔진 경계 + 프리미티브 카탈로그 (1급 원칙, 확정)
@@ -582,7 +582,7 @@
 - **SkillEffect 종류**: `damage`·`status`·`shield`·`heal`·`move`·`interrupt`(+`applyStatusSelf`/정화). 효과 디스패치는 `combat/skills.ts`.
 - **StatusDef 거동 필드**: DoT/HoT(틱 타이밍 turnStart/turnEnd/onAct)·SPD배율·주는뎀배율·받피해(쉴드잠식)·쉴드무시·1턴생존·crit±·공격±·도발·정화 등. 해석은 `combat/status.ts`+`util.ts`.
 - **AreaShape 종류**: 단일·열·행·십자·면적(앵커 기준). 계산은 `combat/targeting.ts`(`computeAreaCells`).
-- **Skill 필드**: `cooldown`·`accuracy`·사용가능칸/타겟칸 마스크·**`reach`(동적 도달 열 — 정적 마스크 대신 살아있는 적 전방 n개 점유 열, 교착 방지, `targeting.ts reachableColumns`)**·`area`·`grantsInterrupt(To)`·`alwaysHit`.
+- **Skill 필드**: `cooldown`·`accuracy`·사용가능칸/타겟칸 마스크·**`reach`(동적 도달 — 최전열부터 연속 n칸, 빈 열 건너뛰지 않음, 교착 방지, `targeting.ts reachableColumns`)**·`area`·`grantsInterrupt(To)`·`alwaysHit`.
 - **TurnOrderResolver**: 라운드제(상수/SPD 주사위 서열). `combat/turnOrder.ts`.
 - **런 노드 해소**: 전투생성·휴식/상점/인카운터·보상 3택1. `core/run/*`.
 

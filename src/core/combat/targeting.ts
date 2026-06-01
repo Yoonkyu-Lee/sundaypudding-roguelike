@@ -3,10 +3,14 @@ import type { AreaShape, GameState, LegalAction, Pos, Skill, Unit } from "../typ
 import { SKILLS } from "../../data/skills.ts";
 import { aliveUnits, clamp, isFrozen, samePos, unitById } from "../util.ts";
 
-/** 도달 가능 열(reach, 2.4): 그 진영 살아있는 적이 있는 열을 앞(col↑)부터 정렬해 앞 n개. 적이 있는 한 항상 ≥1열. */
+/** 도달 가능 열(reach, 2.4): **최전열(살아있는 적의 최소 열)부터 연속 n칸.** 근접은 전열에서 안쪽으로 인접 n칸만 닿음(빈 열을 건너뛰어 먼 열에 닿지 않음). 전열이 죽으면 다음 최전열로 전진 → 적이 있는 한 항상 ≥1열(교착 방지). */
 export function reachableColumns(state: GameState, side: "ally" | "enemy", reach: number): number[] {
-  const cols = [...new Set(aliveUnits(state, side).map((u) => u.pos.col))].sort((a, b) => a - b);
-  return cols.slice(0, Math.max(0, reach));
+  const occ = aliveUnits(state, side).map((u) => u.pos.col);
+  if (occ.length === 0 || reach <= 0) return [];
+  const front = Math.min(...occ);
+  const out: number[] = [];
+  for (let c = front; c < front + reach; c++) out.push(c); // 전열부터 연속(인접) n칸
+  return out;
 }
 
 export function validTargets(state: GameState, actor: Unit, skill: Skill): Unit[] {
