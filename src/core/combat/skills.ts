@@ -67,7 +67,7 @@ function applyTargetEffects(state: GameState, actor: Unit, skill: Skill, target:
       }
       case "shield": {
         const def = getFormationBonus(state, actor, "defensePower");
-        const amt = Math.round(eff.amount + def);
+        const amt = Math.round(eff.amount + def) + target.equipShieldGainAdd; // 방어구 쉴드 획득량 보정(받는 쪽, 4.3)
         target.shield += amt;
         state.log.push({ t: "shieldGain", targetUid: target.uid, amount: amt });
         break;

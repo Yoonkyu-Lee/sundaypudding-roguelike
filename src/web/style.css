@@ -341,3 +341,19 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .csk-toggle:hover { border-color: var(--ally); }
 .csk-state { font-size: 10px; color: var(--dim); }
 .csk-state.on { color: var(--green); }
+
+/* 장착 슬롯 채워진 상태 + 인벤토리 픽커 (슬라이스2) */
+.csslots { align-items: start; }
+.csslot.filled { border-style: solid; text-align: left; }
+.csslot-eq { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 2px; }
+.csslot-item { font-size: 12px; font-weight: 600; }
+.csslot-off { font-size: 9px; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--dim); cursor: pointer; }
+.csslot-off:hover { border-color: var(--enemy); color: var(--enemy); }
+.csslot-desc { font-size: 9.5px; color: var(--dim); margin-top: 3px; line-height: 1.35; }
+.csslot-pick { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; }
+.csslot-cand { font-size: 10px; padding: 3px 6px; border-radius: 6px; border: 1px dashed var(--line); background: var(--panel); color: var(--txt); cursor: pointer; text-align: left; }
+.csslot-cand:hover { border-color: var(--ally); border-style: solid; }
+/* 능력치 원본→현재 델타 */
+.csbase { color: var(--dim); text-decoration: line-through; font-size: 11px; }
+.csarrow { color: var(--dim); margin: 0 2px; font-size: 10px; }
+.csval.up { color: var(--green); font-weight: 700; }

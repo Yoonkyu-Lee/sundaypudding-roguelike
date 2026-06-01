@@ -12,6 +12,7 @@ import { forwardIds, genMap } from "./map.ts";
 import type { RunNode } from "./map.ts";
 import type { RunState, ShopOffer } from "./types.ts";
 import { genRewards } from "./rewards.ts";
+import { genItemOffers } from "./items.ts";
 
 export function createRun(seed: number, roster: { charId: string; pos: Pos }[], map: MapGenConfig = DEFAULT_MAP): RunState {
   const rng = new Rng(seed ^ 0x9e3779b9);
@@ -19,7 +20,7 @@ export function createRun(seed: number, roster: { charId: string; pos: Pos }[], 
   const party: PartyMemberState[] = roster.map((m) => {
     const c = CHARACTERS[m.charId];
     const owned = c.skillIds.slice(0, 4); // 시작 보유 = learnset 앞 4 (나머지는 학습기, 보상으로 습득)
-    return { charId: m.charId, pos: { ...m.pos }, hp: c.hp, maxHp: c.hp, skillDmgBonus: {}, ownedSkillIds: owned, activeSkillIds: [...owned] };
+    return { charId: m.charId, pos: { ...m.pos }, hp: c.hp, maxHp: c.hp, skillDmgBonus: {}, ownedSkillIds: owned, activeSkillIds: [...owned], equipped: {} };
   });
   return {
     rng,
@@ -35,6 +36,7 @@ export function createRun(seed: number, roster: { charId: string; pos: Pos }[], 
     battle: null,
     rewards: null,
     gold: 0,
+    inventory: ["wood_bat", "leather_vest"], // 시작 인벤토리(맛보기) — 시트에서 장착
     shop: null,
     encounterId: null,
     log: [`런 시작 (seed ${seed})`],
@@ -135,6 +137,7 @@ function generateShop(run: RunState): ShopOffer[] {
   }
   const picked: ShopOffer[] = [];
   while (picked.length < 3 && pool.length) picked.push(pool.splice(run.rng.int(0, pool.length - 1), 1)[0]);
+  picked.push(...genItemOffers(run, mk, 2)); // 장착 아이템 진열 (4.3)
   picked.push({ id: mk(), kind: "heal", cost: 15, pct: 0.5, label: "치료: 파티 50% 회복" });
   return picked;
 }
@@ -146,6 +149,7 @@ export function buyShopOffer(run: RunState, offerId: string): void {
   run.gold -= o.cost;
   if (o.kind === "upgrade") { const m = run.party.find((p) => p.charId === o.charId); if (m) upgradeOwned(m, o.fromSkillId, o.toSkillId); }
   else if (o.kind === "learn") { const m = run.party.find((p) => p.charId === o.charId); if (m) learnOwned(m, o.skillId); }
+  else if (o.kind === "buyItem") run.inventory.push(o.itemId); // 인벤토리에 추가 → 시트에서 장착
   else if (o.kind === "heal") healParty(run, o.pct);
   run.shop = run.shop.filter((x) => x.id !== offerId); // 구매한 항목 제거(재구매 방지)
   run.log.push(`구매: ${o.label} (−${o.cost}G)`);
@@ -229,6 +233,8 @@ export function chooseReward(run: RunState, optionId: string): void {
   } else if (opt.kind === "learnSkill") {
     const m = run.party.find((p) => p.charId === opt.charId);
     if (m) learnOwned(m, opt.skillId);
+  } else if (opt.kind === "item") {
+    run.inventory.push(opt.itemId); // 장신구 → 인벤토리(4.5)
   } else if (opt.kind === "heal") {
     healParty(run, opt.pct);
   }

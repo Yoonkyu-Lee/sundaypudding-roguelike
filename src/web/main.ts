@@ -2,7 +2,7 @@
 // 전투는 render.ts(renderApp) 재사용, 맵/보상/결과는 runRender.ts. (7장)
 import { step } from "../core/engine.ts";
 import { chooseAction } from "../core/ai.ts";
-import { createRun, enterNode, resolveBattleEnd, chooseReward, setActiveSkill, buyShopOffer, leaveShop, chooseEncounterOption, getRunView, type RunState } from "../core/run.ts";
+import { createRun, enterNode, resolveBattleEnd, chooseReward, setActiveSkill, buyShopOffer, leaveShop, chooseEncounterOption, equipItem, unequipItem, getRunView, type RunState } from "../core/run.ts";
 import type { Action } from "../core/types.ts";
 import { SKILLS } from "../data/skills.ts";
 import { CHARACTERS } from "../data/characters.ts";
@@ -81,6 +81,8 @@ function renderBattle(): void {
 // ── 캐릭터 시트(모달) — ui.sheetCharId 단일 출처, 매 렌더 후 재그림(통짜 재렌더에 파괴되지 않게) ──
 const sheetHandlers: SheetHandlers = {
   onToggle(charId, skillId) { setActiveSkill(run, charId, skillId); render(); }, // 맵에서만 editable
+  onEquip(charId, slot, itemId) { equipItem(run, charId, slot, itemId); render(); },
+  onUnequip(charId, slot) { unequipItem(run, charId, slot); render(); },
   onClose() { ui.sheetCharId = null; render(); },
 };
 
@@ -88,8 +90,9 @@ function buildSheetData(charId: string): SheetData | null {
   const ch = CHARACTERS[charId];
   if (!ch) return null;
   const pv = getRunView(run).party.find((p) => p.charId === charId); // 보유 스킬/활성/이름/아바타
-  let hp = pv?.hp ?? ch.hp;
-  let hpMax = pv?.maxHp ?? ch.hp;
+  const m = run.party.find((p) => p.charId === charId); // 장착/HP (raw)
+  let hp = m?.hp ?? ch.hp;
+  let hpMax = m?.maxHp ?? ch.hp;
   if (run.phase === "battle" && run.battle) {
     const u = run.battle.units.find((x) => x.side === "ally" && x.charId === charId);
     if (u) { hp = u.hp; hpMax = u.hpMax; } // 전투 중 실시간 HP
@@ -98,10 +101,14 @@ function buildSheetData(charId: string): SheetData | null {
     charId,
     name: pv?.name ?? ch.name,
     avatar: pv?.avatar ?? ch.avatar,
-    stats: { hp, hpMax, speedMin: ch.speedMin, speedMax: ch.speedMax, evasion: ch.evasion, accuracy: ch.accuracy, critChance: ch.critChance, critMultiplier: ch.critMultiplier },
+    hp,
+    hpMax,
+    base: { hp: ch.hp, speedMin: ch.speedMin, speedMax: ch.speedMax, evasion: ch.evasion, accuracy: ch.accuracy, critChance: ch.critChance, critMultiplier: ch.critMultiplier },
+    equipped: m?.equipped ?? {},
+    inventory: run.inventory,
     skills: pv?.skills ?? [],
     activeCount: pv?.activeCount ?? 0,
-    editable: run.phase === "map", // 활성4 변경은 맵에서만
+    editable: run.phase === "map", // 장착·활성4 변경은 맵에서만
   };
 }
 

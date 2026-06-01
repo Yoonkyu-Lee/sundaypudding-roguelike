@@ -2,4 +2,5 @@
 export type { NodeType, RunNode } from "./map.ts";
 export type { RunPhase, RewardOption, ShopOffer, RunState, NodeStatus, RunView } from "./types.ts";
 export { createRun, enterNode, resolveBattleEnd, chooseReward, setActiveSkill, buyShopOffer, leaveShop, chooseEncounterOption } from "./run.ts";
+export { equipItem, unequipItem } from "./items.ts";
 export { getRunView } from "./view.ts";

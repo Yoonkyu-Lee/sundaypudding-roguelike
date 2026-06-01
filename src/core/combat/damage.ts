@@ -4,9 +4,9 @@ import { STATUS_DEFS } from "../../data/statuses.ts";
 import { hasStatus, statusFlag, statusNumSum, totalStacks } from "../util.ts";
 import { getFormationBonus } from "./formation.ts";
 
-/** 데미지 계산: (스킬상수 + 합연산보정[공위증/약화]) × 전역배율(동상) × crit. (3.7 순서) */
+/** 데미지 계산: (스킬상수 + 무기보정 + 합연산보정[공위증/약화]) × 전역배율(동상) × crit. (3.7 순서) */
 export function computeDamage(actor: Unit, base: number, crit: boolean): number {
-  let dmg = base + statusNumSum(actor, "dmgDealtFlat"); // 공위증(+)/약화(-) 합연산
+  let dmg = base + actor.equipDmgFlat + statusNumSum(actor, "dmgDealtFlat"); // 무기 dmgFlat(4.3) + 공위증(+)/약화(-)
   if (hasStatus(actor, "frost")) dmg *= STATUS_DEFS["frost"].damageDealtMult ?? 1; // 곱연산(전역)
   if (crit) dmg *= actor.critMultiplier + statusNumSum(actor, "critMultiplierAdd");
   return Math.max(0, Math.round(dmg));

@@ -37,6 +37,17 @@ export interface Unit {
   alive: boolean;
   /** 런 보상으로 누적된 스킬별 데미지 보너스 (4.2: 데미지는 스킬 강화로만) */
   skillDmgBonus: Record<string, number>;
+  /** 장착 무기의 데미지 상수 보정 합 (4.3) — computeDamage에서 합산 */
+  equipDmgFlat: number;
+  /** 장착 방어구의 쉴드 획득량 보정 합 (4.3) — shield 효과에서 합산 */
+  equipShieldGainAdd: number;
+}
+
+/** 장착 슬롯별 아이템 id (4.3). */
+export interface Equipped {
+  weapon?: string;
+  armor?: string;
+  held?: string;
 }
 
 /** 런 중 파티원 상태(전투 사이 유지: HP·성장). core/run 에서 사용 */
@@ -44,10 +55,11 @@ export interface PartyMemberState {
   charId: string;
   pos: Pos;
   hp: number;
-  maxHp: number;
+  maxHp: number; // 기본 HP + 장착 방어구 HP 보정 (equipItem이 재계산)
   skillDmgBonus: Record<string, number>;
   ownedSkillIds: string[]; // 보유 풀 (4.2): 강화=티어 교체, 새 스킬=추가
   activeSkillIds: string[]; // 전투 활성 ≤4 (보유 중 선택, 4.2)
+  equipped: Equipped; // 장착 슬롯 (4.3)
 }
 
 // ── 턴 서열 & 행동 (2.2, 2.11) ─────────────────────────────────────────────

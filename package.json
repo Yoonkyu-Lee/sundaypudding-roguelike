@@ -10,7 +10,7 @@
   "scripts": {
     "play": "node src/cli/play.ts",
     "demo": "node src/cli/play.ts --demo --seed 42",
-    "test": "node --test src/core/engine.test.ts src/core/run.test.ts",
+    "test": "node --test src/core/engine.test.ts src/core/run.test.ts src/core/equip.test.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.web.json",
     "check": "node scripts/check.ts",
     "dev": "vite",

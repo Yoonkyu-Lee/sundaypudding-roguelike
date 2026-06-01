@@ -145,6 +145,32 @@ export interface Character {
   skillIds: string[]; // 보유 풀. 슬라이스에선 앞 4개를 활성으로 사용
 }
 
+// ── 장착 아이템 (4.3) ──────────────────────────────────────────────────────
+// 스탯은 오직 장착으로만 변동(4.2). 무기=공격 측, 방어구=생존 측, 지닌물건=후속.
+export type EquipSlot = "weapon" | "armor" | "held";
+
+/** 장착 아이템 = 능력치/데미지/쉴드획득 보정 묶음 (디자이너 데이터). */
+export interface ItemDef {
+  id: string;
+  name: string;
+  slot: EquipSlot;
+  icon?: string;
+  /** 기본 능력치 합산 보정 (장착/해제 시 적용). HP는 maxHp에 합산 */
+  mods?: Partial<{
+    hp: number;
+    evasion: number;
+    accuracy: number;
+    critChance: number;
+    critMultiplier: number;
+    speedMin: number;
+    speedMax: number;
+  }>;
+  dmgFlat?: number; // 무기: 데미지 스킬에 공격 상수 +N (合연산, 4.3)
+  shieldGainAdd?: number; // 방어구: 쉴드 획득량 +N (받는 쪽, 4.3)
+  tier?: number;
+  nextTierId?: string; // 강화 체인 (스킬 nextTierId와 동형)
+}
+
 // ── 런 맵 생성 (7장, 데이터 주도) ──────────────────────────────────────────
 // 노드 종류 (7.2). start/boss는 생성기가 자동 배치, 나머지는 nodeWeights로 추첨.
 export type NodeType = "start" | "battle" | "elite" | "shop" | "encounter" | "rest" | "boss";

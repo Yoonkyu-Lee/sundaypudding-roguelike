@@ -2,6 +2,7 @@
 import type { RewardOption, RunState } from "./types.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { SKILLS } from "../../data/skills.ts";
+import { itemRewardOptions } from "./items.ts";
 
 /** 캐릭이 보유한 데미지 스킬 id 목록 (강화 보상/인카운터 대상 선정용) */
 export function damagingSkills(charId: string): string[] {
@@ -28,6 +29,8 @@ export function genRewards(run: RunState): RewardOption[] {
       if (!m.ownedSkillIds.includes(sid)) pool.push({ id: mk(), kind: "learnSkill", charId: m.charId, skillId: sid, label: `${c.name}: 새 스킬 「${SKILLS[sid].name}」 습득` });
     }
   }
+  // (c) 장신구(4.5): 가끔 후보 진입 — 아이템 1개를 풀에 섞음
+  pool.push(...itemRewardOptions(run, mk, 1));
 
   // 3택1 결정론 추첨
   const chosen: RewardOption[] = [];
