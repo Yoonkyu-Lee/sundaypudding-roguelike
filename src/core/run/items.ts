@@ -20,9 +20,9 @@ function recomputeHp(m: PartyMemberState): void {
   if (m.hp > 0) m.hp = delta > 0 ? m.hp + delta : Math.min(m.hp, newMax); // 전투불능(0)은 부활 안 함
 }
 
-/** 인벤토리 아이템을 슬롯에 장착(맵에서만). 기존 장착은 인벤토리로 반환. */
+/** 인벤토리 아이템을 슬롯에 장착(비전투 중 언제나). 기존 장착은 인벤토리로 반환. */
 export function equipItem(run: RunState, charId: string, slot: EquipSlot, itemId: string): void {
-  if (run.phase !== "map") return;
+  if (run.phase === "battle") return;
   const m = run.party.find((p) => p.charId === charId);
   const it = ITEMS[itemId];
   if (!m || !it || it.slot !== slot) return; // 슬롯-아이템 불일치 거부
@@ -36,9 +36,9 @@ export function equipItem(run: RunState, charId: string, slot: EquipSlot, itemId
   run.log.push(`${m.charId ? CHARACTERS[m.charId].name : charId} 장착: 「${it.name}」`);
 }
 
-/** 장착 해제 → 인벤토리로(맵에서만). */
+/** 장착 해제 → 인벤토리로(비전투 중 언제나). */
 export function unequipItem(run: RunState, charId: string, slot: EquipSlot): void {
-  if (run.phase !== "map") return;
+  if (run.phase === "battle") return;
   const m = run.party.find((p) => p.charId === charId);
   if (!m) return;
   const cur = m.equipped[slot];

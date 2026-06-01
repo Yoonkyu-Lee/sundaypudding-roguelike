@@ -72,9 +72,9 @@ function healParty(run: RunState, pct: number): void {
   }
 }
 
-/** 진형 편성(6장): 아군 위치 변경 — 맵 단계에서만. 대상 칸이 비면 이동, 다른 아군이 있으면 위치 교대(swap). */
+/** 진형 편성(6장): 아군 위치 변경 — 비전투 중 언제나. 대상 칸이 비면 이동, 다른 아군이 있으면 위치 교대(swap). */
 export function movePartyMember(run: RunState, charId: string, to: Pos): void {
-  if (run.phase !== "map") return;
+  if (run.phase === "battle") return; // 전투 중엔 불가
   if (to.row < 0 || to.row > 3 || to.col < 0 || to.col > 3) return; // 4×4 그리드 밖 거부
   const m = run.party.find((p) => p.charId === charId);
   if (!m) return;
@@ -84,9 +84,9 @@ export function movePartyMember(run: RunState, charId: string, to: Pos): void {
   m.pos = { ...to };
 }
 
-/** 로드아웃(4.2): 활성 스킬 토글 — 보유 중에서 ≤4, 최소 1. 맵 단계에서만. */
+/** 로드아웃(4.2): 활성 스킬 토글 — 보유 중에서 ≤4, 최소 1. 비전투 중 언제나. */
 export function setActiveSkill(run: RunState, charId: string, skillId: string): void {
-  if (run.phase !== "map") return;
+  if (run.phase === "battle") return;
   const m = run.party.find((p) => p.charId === charId);
   if (!m || !m.ownedSkillIds.includes(skillId)) return;
   const i = m.activeSkillIds.indexOf(skillId);

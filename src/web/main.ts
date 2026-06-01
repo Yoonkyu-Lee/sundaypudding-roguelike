@@ -210,7 +210,7 @@ const runHandlers: RunHandlers = {
     render();
   },
   onOpenParty(charId) {
-    if (run.phase !== "map") return;
+    if (run.phase === "battle") return; // 비전투면 어디서나 편성
     ui.partyOpen = true;
     ui.sheetCharId = charId;
     render();

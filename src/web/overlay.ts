@@ -63,7 +63,7 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       skills: pv?.skills ?? [],
       statuses: [], // 맵엔 상태이상 없음
       activeCount: pv?.activeCount ?? 0,
-      editable: run.phase === "map", // 장착·활성4 변경은 맵에서만
+      editable: run.phase !== "battle", // 장착·활성4·진형 변경은 비전투면 어디서나
       detail: ui.sheetDetail,
     };
   }
@@ -110,7 +110,7 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     const run = deps.getRun();
     app.querySelector(".party-overlay")?.remove(); // stale 제거(닫힘/전환)
     app.querySelector(".charsheet-overlay")?.remove();
-    if (run.phase === "map" && ui.partyOpen) {
+    if (run.phase !== "battle" && ui.partyOpen) {
       const rv = getRunView(run);
       const sel = buildSheetData(ui.sheetCharId ?? rv.party[0]?.charId ?? "");
       if (!sel) return;
