@@ -76,9 +76,9 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
       for (const u of sideUnits.filter((x) => x.alive)) { rows = Math.max(rows, u.pos.row + 1); cols = Math.max(cols, u.pos.col + 1); }
       const region = new Set<string>();
       if (skill.reach !== undefined) {
-        // 동적 근접: 전방 reach개 점유 열만 하이라이트(코어와 동일 규칙)
+        // 동적 근접: 전방 reach 열의 **적 점유 칸만** 타겟 가능(빈 땅 제외, 코어 validTargets와 동일)
         const cols2 = new Set(reachableColumns(state, side, skill.reach));
-        for (let r = 0; r < rows; r++) for (const c of cols2) region.add(`${r},${c}`);
+        for (const u of sideUnits) if (u.alive && cols2.has(u.pos.col)) region.add(ck(u.pos));
       } else if (skill.targetCells?.length) for (const c of skill.targetCells) region.add(ck(c));
       else for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) region.add(`${r},${c}`);
       const area = skill.area;

@@ -4,11 +4,13 @@ import type { AreaShape, Skill } from "../../core/types.ts";
 import { STATUS_DEFS } from "../../data/statuses.ts";
 import { esc } from "./shared.ts";
 
-/** 사정권: 근접(전방 2열) vs 원거리(아무 칸) vs 아군/자신. 투명하게. */
+/** 사정권: 근접(reach=최전열) vs 원거리(아무 칸) vs 아군/자신. 투명하게. */
 export function rangeRule(sk: Skill): string {
   if (sk.target === "self") return "자신";
   if (sk.target === "ally") return "아군";
-  return sk.targetCells && sk.targetCells.length ? "근접 · 전방 2열" : "원거리 · 아무 칸";
+  if (sk.reach !== undefined) return sk.reach <= 1 ? "근접 · 최전열 적" : `근접 · 전방 ${sk.reach}열`;
+  if (sk.targetCells && sk.targetCells.length) return "근접 · 전방";
+  return "원거리 · 아무 칸";
 }
 
 /** 면적(AoE) 규칙을 앵커 기준으로 한 줄 설명. 범위 지정 법칙을 단순·투명하게. */
