@@ -10,6 +10,7 @@ import { renderApp, type Handlers, type Ui } from "./render.ts";
 import { renderRunScreen, type RunHandlers } from "./runRender.ts";
 import { createTimelinePanel, type RollView } from "./battle/timelinePanel.ts";
 import { createOverlay } from "./overlay.ts";
+import { renderTitle, renderHub, renderPause, type ShellHandlers, type HubData } from "./shell.ts";
 
 const app = document.getElementById("app")!;
 const panel = createTimelinePanel(); // 행동서열 패널 — 주사위(rolling)↔전투(live) 한 컴포넌트, 전투 셸에 영속 마운트
@@ -24,6 +25,9 @@ const ROSTER = [
 let run: RunState;
 let seed = 42;
 let busy = false;
+let appState: "title" | "hub" | "run" = "title"; // 게임 흐름 셸 (슬라이스2)
+let runActive = false; // 진행 중 런이 있나(이어하기 가능)
+let pauseOpen = false; // 런 중 일시정지 오버레이
 const ui: Ui = { selectedSkillId: null, hoverCell: null, pickedCells: [], damaged: new Set(), moved: new Set(), seed, sheetCharId: null, sheetUid: null, partyOpen: false, sheetDetail: false };
 
 function resetUi(): void {
@@ -48,7 +52,23 @@ const overlay = createOverlay({ app, ui, getRun: () => run, render });
 
 let introRound = 0; // 마지막으로 주사위 연출한 라운드 (라운드마다 1회)
 
+function hubData(): HubData {
+  return {
+    roster: ROSTER.map((m) => ({ charId: m.charId, name: CHARACTERS[m.charId].name, avatar: CHARACTERS[m.charId].avatar })),
+    runActive,
+    act: runActive ? run.act : undefined,
+    totalActs: run.acts.length,
+  };
+}
+
 function render(): void {
+  // 최상위: 타이틀/집은 런 바깥 (오버레이 제거 후 전환)
+  if (appState !== "run") {
+    app.querySelector(".pause-overlay")?.remove();
+    if (appState === "title") renderTitle(app, shellHandlers);
+    else renderHub(app, hubData(), shellHandlers);
+    return;
+  }
   if (run.phase === "battle" && run.battle) {
     const b = run.battle;
     // 새 라운드 시작 시 SPD 주사위 연출을 먼저 재생, 끝나면 전투 렌더 (8.5: 이벤트 재생)
@@ -76,6 +96,8 @@ function render(): void {
     renderRunScreen(app, getRunView(run), runHandlers);
     overlay.renderOverlay();
   }
+  if (pauseOpen) renderPause(app, shellHandlers);
+  else app.querySelector(".pause-overlay")?.remove();
 }
 
 function renderBattle(): void {
@@ -172,6 +194,7 @@ const battleHandlers: Handlers = {
     ui.sheetDetail = !ui.sheetDetail; // 전역 자세히(피해 분해/스탯 원본 병기)
     render();
   },
+  onPause() { pauseOpen = true; render(); },
 };
 
 // ── 런 핸들러 ──
@@ -219,6 +242,8 @@ const runHandlers: RunHandlers = {
     ui.sheetCharId = charId;
     render();
   },
+  onToHub() { shellHandlers.onToHub(); }, // 승패 화면 "집으로"
+  onPause() { pauseOpen = true; render(); }, // 헤더 ⏸
 };
 
 function newRun(s: number): void {
@@ -226,15 +251,32 @@ function newRun(s: number): void {
   ui.seed = s;
   run = createRun(s, ROSTER);
   resetUi();
+  runActive = true;
+  pauseOpen = false;
+  appState = "run";
   render();
 }
 
-// Esc: 파티뷰/시트 열려있으면 닫기, 아니면 타겟팅 취소
+// 게임 흐름 셸 핸들러 (타이틀/집/일시정지)
+const shellHandlers: ShellHandlers = {
+  onStart() { appState = "hub"; render(); },
+  onNewRun() { newRun(seed + 1); },
+  onResumeRun() { appState = "run"; pauseOpen = false; render(); },
+  onAbandonRun() { runActive = false; render(); },
+  onToHub() { appState = "hub"; pauseOpen = false; if (run.phase === "won" || run.phase === "lost") runActive = false; render(); },
+  onResume() { pauseOpen = false; render(); },
+  onToTitle() { appState = "title"; pauseOpen = false; runActive = false; render(); },
+};
+
+// Esc: 오버레이(파티뷰>시트>타겟팅)를 먼저 닫고, 런 중 다 닫혀 있으면 일시정지 토글
 window.addEventListener("keydown", (e) => {
-  if (e.key !== "Escape") return;
+  if (e.key !== "Escape" || appState !== "run") return;
   if (ui.partyOpen) { ui.partyOpen = false; ui.sheetCharId = null; render(); }
   else if (ui.sheetUid) { ui.sheetUid = null; render(); }
   else if (ui.selectedSkillId) battleHandlers.onCancel();
+  else { pauseOpen = !pauseOpen; render(); }
 });
 
-newRun(42);
+// 부팅: 런은 만들어 두되(상태 유효) 타이틀부터 시작
+run = createRun(seed, ROSTER);
+render();

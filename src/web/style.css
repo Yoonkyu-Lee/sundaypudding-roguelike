@@ -433,3 +433,34 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .pv-det-desc { color: var(--dim); font-size: 11px; line-height: 1.5; }
 .csslot.over { border-color: var(--accent); background: rgba(255,209,102,.12); }
 .csslot-item[data-item] { cursor: grab; }
+
+/* ── 게임 흐름 셸: 타이틀 / 집 / 일시정지 ── */
+.hdr-menu { background: var(--panel2); color: var(--dim); border: 1px solid var(--line); border-radius: 6px; padding: 3px 9px; cursor: pointer; font-size: 13px; }
+.hdr-menu:hover { border-color: var(--accent); color: var(--accent); }
+.act.ghost { background: transparent; border: 1px solid var(--line); color: var(--dim); }
+.act.ghost:hover { border-color: var(--enemy); color: var(--enemy); }
+
+.title-screen { display: flex; align-items: center; justify-content: center; min-height: 88vh; }
+.title-box { text-align: center; }
+.title-logo { font-size: 44px; font-weight: 800; color: var(--accent); line-height: 1.15; letter-spacing: .02em; }
+.title-sub { color: var(--dim); margin: 14px 0 28px; font-size: 14px; }
+.title-start { font-size: 18px; font-weight: 700; padding: 12px 40px; border-radius: 12px; border: 0; background: var(--accent); color: #1a1a1a; cursor: pointer; }
+.title-start:hover { filter: brightness(1.08); }
+
+.hub header { margin-bottom: 16px; }
+.hub h1 { color: var(--accent); }
+.hub-link { background: transparent; border: 1px solid var(--line); color: var(--dim); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+.hub-body { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+.hub-sec { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.hub-sec h2 { font-size: 14px; color: var(--dim); margin: 0 0 12px; }
+.hub-mems { display: flex; flex-wrap: wrap; gap: 14px; }
+.hub-mem { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 84px; }
+.hub-mem .avt { width: 52px; height: 52px; border-radius: 10px; font-size: 30px; }
+.hub-nm { font-size: 12px; }
+.hub-controls { display: flex; gap: 10px; justify-content: center; margin-top: 4px; }
+.hub-controls .act { font-size: 16px; padding: 12px 28px; border-radius: 10px; border: 0; background: var(--accent); color: #1a1a1a; font-weight: 700; cursor: pointer; }
+
+.pause-overlay { position: fixed; inset: 0; z-index: 130; display: flex; align-items: center; justify-content: center; background: rgba(10,12,16,.82); backdrop-filter: blur(3px); }
+.pause-box { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px 26px; display: flex; flex-direction: column; gap: 10px; min-width: 260px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+.pause-box h2 { margin: 0 0 8px; }
+.pause-box .act { font-size: 15px; padding: 11px; border-radius: 9px; border: 0; background: var(--accent); color: #1a1a1a; font-weight: 600; cursor: pointer; }

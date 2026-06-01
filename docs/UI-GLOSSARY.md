@@ -7,6 +7,8 @@
 
 | 도메인 이름 | 무엇 | 코드 | CSS 루트 |
 |---|---|---|---|
+| **타이틀 화면** | 부팅 스플래시 → '시작'(→본거지) | `shell.ts` `renderTitle` | `.title-screen` |
+| **본거지(집)** | 런 밖 허브 — 로스터·숙련도(준비중)·새 런/이어하기/포기 | `shell.ts` `renderHub` | `.hub` |
 | **전투 화면** | 전투 진행 전체(3열) | `render.ts` `renderApp` | `.battlelayout` |
 | **맵 화면** | 헥스 노드 경로 선택 | `runRender.ts` `mapScreen` | `.mapwrap` |
 | **상점 화면** | 골드 구매(강화권·범용기·아이템·회복) | `runRender.ts` `shopScreen` | `.shop` |
@@ -30,6 +32,7 @@
 | 도메인 이름 | 무엇 | 코드 | CSS 루트 |
 |---|---|---|---|
 | **캐릭터 시트** | 캐릭터 1명 상세: **체력/쉴드바** · 능력치(**'자세히 보기' 토글** — 기본 현재값만, ON이면 `[원본]+변화` 병기) · **상태 섹션**(전투 중 상태이상 칩+팝오버) · 장착 3칸 · **스킬 편성**(⚔출전 N/4 + 보유 분리, 스킬별 스펙줄(쿨·명중·피해·사정권·특징) + 출전 토글). **전투=아군·적 단독 모달(읽기전용, uid 키, 유닛카드 ℹ)**, **파티 편성=비전투 어디서나 편집(우측 pane)**(같은 `sheetBody`) | `charSheet.ts` (`sheetBody`/`wireSheet`/`renderCharSheet`) · 전투 데이터 `main.ts buildBattleSheet` | `.charsheet` |
+| **일시정지** | 런 중 오버레이(Esc/⏸) — 재개·집으로(진행 유지)·타이틀로 | `shell.ts` `renderPause` | `.pause-overlay` |
 | **파티 편성** | 비전투 모달: 좌 **진형 보드**(카드에 3 미니 장착칸) + 우 **캐릭터 시트** + 하 **장착 인벤토리 패널**(아이템 칩 + 공유 상세). 장착=**드래그앤드롭**(인벤토리↔캐릭터/슬롯↔해제) 주 + 클릭 폴백 | `partyView.ts` `renderPartyView` | `.party-modal` |
 | └ **진형 보드** | 4×4 드래그앤드롭 배치(열 = 진형 보너스, 6장) + 카드별 3 미니 장착칸(drop 타깃) | `partyView.ts` | `.pv-board` / `.pv-slot` |
 | └ **장착 인벤토리** | 파티 공유 아이템(드래그=장착, 클릭=선택 캐릭 장착, 호버=상세 갱신). 패널 drop=해제 | `partyView.ts` `invPanel` | `.pv-inv` |

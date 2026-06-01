@@ -33,6 +33,7 @@ export interface Handlers {
   onNewBattle: (seed: number) => void;
   onOpenSheet: (uid: string) => void; // 유닛 프로필 시트 열기(uid — 아군/적)
   onToggleDetail: () => void; // 자세히 보기(피해 분해) 토글
+  onPause: () => void; // 일시정지 메뉴 열기
 }
 
 // ── 타겟팅 컨텍스트 (셀 기반) ──

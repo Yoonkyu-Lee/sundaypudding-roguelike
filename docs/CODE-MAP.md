@@ -86,7 +86,8 @@ src/core/
 | `src/data/items.ts` | data | 장착 아이템(4.3) — 무기(dmgFlat·crit) / 방어구(hp·쉴드획득). `ItemDef`는 content.ts | `ITEMS` · `ITEM_POOL` |
 | `src/cli/play.ts` | cli | 대화형/`--demo` 터미널 드라이버 | (엔트리) |
 | `src/cli/ascii.ts` | cli | ASCII 보드 렌더(뷰 — core 아님) | `renderAscii` |
-| `src/web/main.ts` | web | 웹 엔트리·**런 컨트롤러**(맵↔전투↔보상↔결과 분기, 핸들러). 오버레이 조립은 `overlay.ts`에 위임 | (엔트리) |
+| `src/web/main.ts` | web | 웹 엔트리·**앱 상태기계**(title↔hub↔run, `appState`/`runActive`/`pauseOpen`)+런 컨트롤러. 오버레이 조립은 `overlay.ts` | (엔트리) |
+| `src/web/shell.ts` | web | **게임 흐름 셸** — 타이틀·본거지(집)·일시정지 화면. 런 바깥 | `renderTitle` · `renderHub` · `renderPause` · `ShellHandlers` |
 | `src/web/overlay.ts` | web | **오버레이 컨트롤러**(`createOverlay`) — 맵=파티 편성 / 전투=단독 캐릭터 시트. `buildSheetData`·`buildBattleSheet`·`renderOverlay` + 시트/파티뷰 핸들러. main이 `{app,ui,getRun,render}` 주입 | `createOverlay` |
 | `src/web/render.ts` | web | **전투 렌더** — 영속 셸(svg·header·battlelayout) 1회 생성 후 **존 갱신**(.battlemain/.battleside). **.battleleft는 TimelinePanel이 소유**(통짜 재렌더서 분리). 셀 타겟팅·SVG 화살표. renderApp(…, panel) | `renderApp` · `avatarHtml` |
 | `src/web/battle/shared.ts` | web | 공용 소도구(esc·r1·ck·avatarHtml) + UI 타입(Ui·Handlers·TgtCtx) | — |
