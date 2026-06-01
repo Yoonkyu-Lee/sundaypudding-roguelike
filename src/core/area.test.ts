@@ -1,7 +1,7 @@
 // 면적/타겟팅(6.4 재배치 · AoE 모양 · 자유선택 · 빈칸 앵커 · 쉴드→HP 순).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createBattle, step, computeAreaCells } from "./engine.ts";
+import { createBattle, step, computeAreaCells, reachableColumns, getLegalActions } from "./engine.ts";
 import { DEMO_ENCOUNTER } from "../data/encounters.ts";
 import { forceTurn } from "./testutil.ts";
 
@@ -87,6 +87,36 @@ test("빈 칸 앵커: 적 없는 칸을 앵커로 한 십자/행도 주변 유�
   // cho_police = row. 빈 칸 (row2,col1) 을 앵커로 → 2행 전체
   step(state, { type: "skill", skillId: "cho_police", targetCell: { row: 2, col: 1 } });
   assert.ok(e0.hp < h0 && e3.hp < h3, "빈 칸 앵커의 행 전체 타격");
+});
+
+test("reach: 점유 열을 앞에서부터 n개 (동적 근접 사정권, 2.4)", () => {
+  const enc = {
+    id: "t", name: "t",
+    allies: [{ charId: "kim", pos: { row: 0, col: 0 } }],
+    enemies: [{ charId: "slime", pos: { row: 0, col: 1 } }, { charId: "slime", pos: { row: 1, col: 3 } }],
+  };
+  const state = createBattle(1, enc); // 점유 열 = [1, 3] (0,2 비었음)
+  assert.deepEqual(reachableColumns(state, "enemy", 1), [1]); // 전방 1열
+  assert.deepEqual(reachableColumns(state, "enemy", 2), [1, 3]); // 전방 2열(빈 열 건너뜀)
+});
+
+test("reach 락 방지: 후열만 남아도 근접 스킬이 남은 최전열을 때린다 (2.4)", () => {
+  const enc = {
+    id: "t", name: "t",
+    allies: [{ charId: "kim", pos: { row: 0, col: 0 } }],
+    enemies: [{ charId: "thug", pos: { row: 0, col: 3 } }], // col 3만 점유, 전방 0~2 비었음
+  };
+  const state = createBattle(1, enc);
+  const kim = state.units.find((u) => u.name === "김두한")!;
+  const enemy = state.units.find((u) => u.side === "enemy")!;
+  kim.cooldowns = {};
+  forceTurn(state, kim.uid);
+  const legal = getLegalActions(state);
+  // 근접 kim_punch(reach 2)가 후열(=남은 최전열) 적을 타격 가능 → 교착 없음
+  assert.ok(
+    legal.some((a) => a.action.type === "skill" && a.action.skillId === "kim_punch" && a.targetUid === enemy.uid),
+    "후열 적도 근접으로 타격 가능(교착 없음)",
+  );
 });
 
 test("데미지는 쉴드부터 깎고 그다음 HP (2.9)", () => {

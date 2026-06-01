@@ -3,11 +3,21 @@ import type { AreaShape, GameState, LegalAction, Pos, Skill, Unit } from "../typ
 import { SKILLS } from "../../data/skills.ts";
 import { aliveUnits, clamp, isFrozen, samePos, unitById } from "../util.ts";
 
+/** 도달 가능 열(reach, 2.4): 그 진영 살아있는 적이 있는 열을 앞(col↑)부터 정렬해 앞 n개. 적이 있는 한 항상 ≥1열. */
+export function reachableColumns(state: GameState, side: "ally" | "enemy", reach: number): number[] {
+  const cols = [...new Set(aliveUnits(state, side).map((u) => u.pos.col))].sort((a, b) => a - b);
+  return cols.slice(0, Math.max(0, reach));
+}
+
 export function validTargets(state: GameState, actor: Unit, skill: Skill): Unit[] {
   if (skill.target === "self") return [actor];
   const side = skill.target === "enemy" ? (actor.side === "ally" ? "enemy" : "ally") : actor.side;
   let cands = aliveUnits(state, side);
-  if (skill.targetCells && skill.targetCells.length > 0) {
+  if (skill.reach !== undefined) {
+    // 동적 근접: 전방 reach개 점유 열만 (전방이 비면 다음 열이 전열 → 교착 방지)
+    const cols = new Set(reachableColumns(state, side, skill.reach));
+    cands = cands.filter((c) => cols.has(c.pos.col));
+  } else if (skill.targetCells && skill.targetCells.length > 0) {
     cands = cands.filter((c) => skill.targetCells!.some((cell) => samePos(cell, c.pos)));
   }
   return cands;

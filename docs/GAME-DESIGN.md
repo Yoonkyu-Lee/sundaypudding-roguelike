@@ -565,7 +565,8 @@
 - **장착 아이템(4.3)**: 무기(공격상수 dmgFlat·치명 보정)·방어구(HP·쉴드획득 보정), 지닌물건은 후속(슬롯 잠금). `ItemDef`(데이터)+`data/items.ts` / 엔진=makeUnit 비-HP 스탯 합산+`equipDmgFlat`/`equipShieldGainAdd` read훅, HP는 equipItem이 maxHp 재계산. **파티 공유 인벤토리**(`RunState.inventory`) — 상점 `buyItem`·보상 장신구로 획득, **맵에서만** 캐릭터 시트로 장착/교체/해제. 스탯=오직 장착(4.2) 준수. `[엔진 프리미티브 추가]`.
 
 **☐ 미구현 (다음 슬라이스)**
-- **숙련도 tier 해금(4.4)** · 본산/메타/기억회랑(5장) · **다층(act, 7.3 기본 3층 — 현재 단일 맵)** · 적 전용 AI/패턴 · 웹 렌더러 고도화 · 밸런싱(골드 획득/가격·이벤트 풀·맵 가중치) · **근접 도달불가 교착**(후열만 남으면 근접 적이 무한 스킵 — 도발/강제이동/타임아웃 등 보강 필요)
+- **숙련도 tier 해금(4.4)** · 본산/메타/기억회랑(5장) · **다층(act, 7.3 기본 3층 — 현재 단일 맵)** · 적 전용 AI/패턴 · 웹 렌더러 고도화 · 밸런싱(골드 획득/가격·이벤트 풀·맵 가중치)
+  - (해소됨) ~~근접 도달불가 교착~~ → **`reach` 프리미티브**(동적 도달 열, 2.4): 근접 스킬은 정적 전방 마스크 대신 "살아있는 적의 전방 n개 점유 열"을 타격 → 후열만 남아도 그게 전열이 되어 항상 도달, 교착 불가.
 - `x`(보유 스킬 상한), DoT `x`(스택당 피해) 등 밸런스 수치 (현재 placeholder 값으로 동작 중)
 
 ### 8.8 데이터 ↔ 엔진 경계 + 프리미티브 카탈로그 (1급 원칙, 확정)
@@ -581,7 +582,7 @@
 - **SkillEffect 종류**: `damage`·`status`·`shield`·`heal`·`move`·`interrupt`(+`applyStatusSelf`/정화). 효과 디스패치는 `combat/skills.ts`.
 - **StatusDef 거동 필드**: DoT/HoT(틱 타이밍 turnStart/turnEnd/onAct)·SPD배율·주는뎀배율·받피해(쉴드잠식)·쉴드무시·1턴생존·crit±·공격±·도발·정화 등. 해석은 `combat/status.ts`+`util.ts`.
 - **AreaShape 종류**: 단일·열·행·십자·면적(앵커 기준). 계산은 `combat/targeting.ts`(`computeAreaCells`).
-- **Skill 필드**: `cooldown`·`accuracy`·사용가능칸/타겟칸 마스크·`area`·`grantsInterrupt(To)`·`alwaysHit`.
+- **Skill 필드**: `cooldown`·`accuracy`·사용가능칸/타겟칸 마스크·**`reach`(동적 도달 열 — 정적 마스크 대신 살아있는 적 전방 n개 점유 열, 교착 방지, `targeting.ts reachableColumns`)**·`area`·`grantsInterrupt(To)`·`alwaysHit`.
 - **TurnOrderResolver**: 라운드제(상수/SPD 주사위 서열). `combat/turnOrder.ts`.
 - **런 노드 해소**: 전투생성·휴식/상점/인카운터·보상 3택1. `core/run/*`.
 

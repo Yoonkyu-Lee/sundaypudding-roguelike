@@ -2,7 +2,7 @@
 // .battleleft(행동서열 패널)는 TimelinePanel이 소유 → 통짜 재렌더에서 분리(주사위↔타임라인 연속성).
 import type { GameState, Observation } from "../core/types.ts";
 import { buildObservation } from "../core/observation.ts";
-import { previewHpLoss, predictInterruptSubjects, computeAreaCells } from "../core/engine.ts";
+import { previewHpLoss, predictInterruptSubjects, computeAreaCells, reachableColumns } from "../core/engine.ts";
 import { SKILLS } from "../data/skills.ts";
 import { ck, type Handlers, type TgtCtx, type Ui } from "./battle/shared.ts";
 import { unitCard } from "./battle/unitCard.ts";
@@ -75,7 +75,11 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
       let rows = 4; let cols = 4;
       for (const u of sideUnits.filter((x) => x.alive)) { rows = Math.max(rows, u.pos.row + 1); cols = Math.max(cols, u.pos.col + 1); }
       const region = new Set<string>();
-      if (skill.targetCells?.length) for (const c of skill.targetCells) region.add(ck(c));
+      if (skill.reach !== undefined) {
+        // 동적 근접: 전방 reach개 점유 열만 하이라이트(코어와 동일 규칙)
+        const cols2 = new Set(reachableColumns(state, side, skill.reach));
+        for (let r = 0; r < rows; r++) for (const c of cols2) region.add(`${r},${c}`);
+      } else if (skill.targetCells?.length) for (const c of skill.targetCells) region.add(ck(c));
       else for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) region.add(`${r},${c}`);
       const area = skill.area;
       if (area?.kind === "free") {

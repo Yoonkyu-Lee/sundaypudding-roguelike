@@ -98,6 +98,9 @@ export interface Skill {
   usableFrom?: Pos[];
   /** 타겟 가능 칸 마스크 (대상 그리드). 비어있으면 점유된 아무 칸 (2.4) */
   targetCells?: Pos[];
+  /** 도달 깊이(근접 사정권, 2.4): 대상 진영의 살아있는 적이 있는 열을 앞(col 0)부터 세어 **앞 n개 열**만 타격 가능.
+   *  정적 targetCells와 달리 적 분포에 따라 동적 — 전방 열이 비면 다음 열이 전열이 됨(후열만 남는 교착 방지). targetCells보다 우선. */
+  reach?: number;
   /** 이 스킬 사용 시 부여하는 끼어들기 횟수 (2.11). 끼어들기 출처의 하나일 뿐 — 버프 등 다른 출처도 있음 */
   grantsInterrupt?: number;
   /** 끼어들기 주체: "self"=시전자 본인 / "target"=대상 아군(서포트). 기본 self (2.11) */

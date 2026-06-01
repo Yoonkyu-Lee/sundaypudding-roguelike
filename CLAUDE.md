@@ -37,7 +37,7 @@
 **무엇이 디자이너의 '데이터'이고 무엇이 엔지니어의 '엔진'인지** 매 기능마다 명시적으로 판단한다 (상세: GAME-DESIGN 8.8).
 
 - **데이터**(디자이너) = `src/data/*` + `core/types/content.ts` 스키마로 표현되는 콘텐츠. **엔진**(엔지니어) = `src/core/*`의 해석 메커니즘 = **프리미티브**.
-- **프리미티브 카탈로그**(현재): SkillEffect 종류 · StatusDef 거동 필드 · AreaShape 종류 · Skill 필드(cooldown/accuracy/타겟마스크/area/grantsInterrupt(To)/alwaysHit) · TurnOrderResolver(라운드제) · 런 노드 해소. (목록은 GAME-DESIGN 8.8 유지)
+- **프리미티브 카탈로그**(현재): SkillEffect 종류 · StatusDef 거동 필드 · AreaShape 종류 · Skill 필드(cooldown/accuracy/타겟마스크/reach/area/grantsInterrupt(To)/alwaysHit) · TurnOrderResolver(라운드제) · 런 노드 해소. (목록은 GAME-DESIGN 8.8 유지)
 - **결정 프로토콜**: 새 기능 → ① 기존 프리미티브 조합으로 **원자적 표현 가능?** → ② 가능 = **데이터-온리**(`src/data`만) → ③ 불가 = **프리미티브 갭** → 엔진 변경 필요, **구현 전 사용자에게 형식대로 보고·승인**:
   > "이 기능은 새 엔진 프리미티브가 필요합니다 — **[무엇]**. 기존 [목록]으로는 원자적으로 불가(이유). 추가 위치: `types/content.ts` + `core/<module>`. 데이터-온리가 아닙니다."
 - **엔진 프리미티브를 말없이 늘리지 않는다.** 커밋/보고에 **`[데이터-온리]` 또는 `[엔진 프리미티브 추가]`** 분류를 명시.
