@@ -5,6 +5,35 @@
 
 > 작성 스키마(타입)의 진실은 [`src/core/types/content.ts`](../core/types/content.ts) — 각 필드의 정확한 의미가 주석으로 달려 있다. 규칙·수치 맥락은 [`docs/GAME-DESIGN.md`](../../docs/GAME-DESIGN.md).
 
+## 📑 목차
+
+**시작하기**
+- [파일별 무엇을 만드나](#파일별-무엇을-만드나)
+- [✅ 디자이너가 혼자 할 수 있는 것 (데이터-온리)](#-디자이너가-혼자-할-수-있는-것-데이터-온리)
+  - [현재 프리미티브 카탈로그](#현재-프리미티브-카탈로그-엔진이-이미-해석--이걸-조합한다)
+- [🔧 디자이너 혼자 못 하는 것 (엔진 요청)](#-디자이너-혼자-못-하는-것-엔진-개발-필요--엔지니어에게-요청)
+  - [요청하는 법 (프리미티브 갭)](#요청하는-법-프리미티브-갭)
+
+**📖 사전 — 필드·타입 레퍼런스** ([절 머리](#-사전--필드타입-레퍼런스))
+- [캐릭터 `characters.ts`](#캐릭터-charactersts--character)
+- [스킬 `skills.ts`](#스킬-skillsts--skill)
+- [스킬 효과 `SkillEffect`](#스킬-효과--원자-단위-skilleffects--skilleffect)
+- [면적 모양 `AreaShape`](#면적-모양-skillarea--areashape)
+- [상태이상 `statuses.ts`](#상태이상-statusests--statusdef)
+- [장착 아이템 `items.ts`](#장착-아이템-itemsts--itemdef)
+- [포메이션 `formations.ts`](#포메이션-formationsts--formationlayout)
+- [맵 생성 `maps.ts`](#맵-생성-mapsts--mapgenconfig-액트별-배열)
+- [게임 모드 `modes.ts`](#게임-모드-modests--gamemode)
+- [AI 프로파일 `ai.ts`](#ai-프로파일-aits--aiprofile)
+
+**🎛 효과 설계 — 액티브 · 패시브 · 특성** ([절 머리](#-효과-설계--액티브--패시브--특성))
+- [스코프: 전투 vs 모험 전체](#-스코프-하나의-전투-vs-모험-전체-반드시-구분)
+- [Trigger 카탈로그 (`when`)](#trigger-카탈로그-when)
+- [Condition 카탈로그 (`if`)](#condition-카탈로그-if--and-결합)
+- [Effect 카탈로그 (`then`)](#effect-카탈로그-then)
+
+- [작업 흐름](#작업-흐름)
+
 ## 파일별 무엇을 만드나
 
 | 파일 | 콘텐츠 |
