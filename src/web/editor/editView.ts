@@ -3,7 +3,7 @@
 import { esc } from "../battle/shared.ts";
 import type { NodeType } from "../../core/types.ts";
 import type { EditData, EditorHandlers } from "./editorRender.ts";
-import { SIZE, W, FW, FH, ccx, ccy, hexPoints, gridPathStr, pixelToAxial } from "./hexgeo.ts";
+import { SIZE, W, FW, FH, ccx, ccy, hexPoints, hexEdge, EDGE_DIRS, gridPathStr, pixelToAxial } from "./hexgeo.ts";
 
 const WALL_SW = 3.5; // 벽 선 두께(.ed-wallvis와 일치)
 
@@ -35,28 +35,43 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   }).join("");
 
   const dead = new Set(d.deadNodes);
-  // 노드 시각 = SVG 폴리곤(격자 셀과 동일 기하)
-  const nodePolys = d.nodes.map((n) => {
-    const cls = [n.type, n.id === d.sel ? "sel" : "", dead.has(n.id) ? "dead" : "", n.id === d.entryId ? "entry" : ""].filter(Boolean).join(" ");
-    return `<polygon class="ednode-poly ${cls}" points="${hexPoints(n.q, n.r)}"/>`;
-  }).join("");
+  const selSet = new Set(d.sel);
+  const cellId = new Map(d.nodes.map((n) => [`${n.q},${n.r}`, n.id])); // 셀→노드 id(선택 외곽 계산)
+
+  // 노드 시각 = SVG 폴리곤(채움만; 테두리는 하이라이트 레이어가 담당 → 클리핑 없음)
+  const nodePolys = d.nodes.map((n) =>
+    `<polygon class="ednode-poly ${n.type}${dead.has(n.id) ? " dead" : ""}" points="${hexPoints(n.q, n.r)}"/>`).join("");
   // 노드 상호작용/아이콘 = 투명 오버레이 div(드래그=이동, 클릭=선택)
   const nodeOverlays = d.nodes.map((n) => {
     const cxp = ccx(n.q, n.r), cyp = ccy(n.r);
-    return `<button class="ednode${n.id === d.sel ? " sel" : ""}" draggable="true" data-node="${n.id}" style="left:${(cxp - W / 2).toFixed(1)}px;top:${(cyp - SIZE).toFixed(1)}px;width:${W.toFixed(1)}px;height:${(2 * SIZE).toFixed(1)}px" aria-label="${n.name}${n.id === d.entryId ? " (입장)" : ""}">
+    return `<button class="ednode${selSet.has(n.id) ? " sel" : ""}" draggable="true" data-node="${n.id}" style="left:${(cxp - W / 2).toFixed(1)}px;top:${(cyp - SIZE).toFixed(1)}px;width:${W.toFixed(1)}px;height:${(2 * SIZE).toFixed(1)}px" aria-label="${n.name}${n.id === d.entryId ? " (입장)" : ""}">
       <span class="ednode-ico">${n.icon}</span><span class="ednode-lbl">${n.name}</span></button>`;
   }).join("");
 
+  // 하이라이트(테두리=부위 강조, 노드 위 레이어 → 클리핑 없음): 시작=파랑·클리어=초록 전체 윤곽, 선택=노랑 군집 외곽
+  const typeOutlines = d.nodes.filter((n) => n.type === "start" || n.type === "clear").map((n) =>
+    `<polygon class="hl-${n.type}" points="${hexPoints(n.q, n.r)}"/>`).join("");
+  const selLines = d.nodes.filter((n) => selSet.has(n.id)).flatMap((n) =>
+    EDGE_DIRS.map(([dq, dr], i) => {
+      if (selSet.has(cellId.get(`${n.q + dq},${n.r + dr}`) ?? "")) return ""; // 인접 선택끼리 = 내부 변, 생략
+      const [x1, y1, x2, y2] = hexEdge(n.q, n.r, i);
+      return `<line class="hl-sel" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+    })).join("");
+
   const gridSvg = `<svg class="ed-grid" width="${FW}" height="${FH}" viewBox="0 0 ${FW} ${FH}"><path d="${gridPathStr()}"/></svg>`;
   const nodesSvg = `<svg class="ed-nodes" width="${FW}" height="${FH}" viewBox="0 0 ${FW} ${FH}">${nodePolys}</svg>`;
+  const typeSvg = `<svg class="ed-hl-type" width="${FW}" height="${FH}" viewBox="0 0 ${FW} ${FH}">${typeOutlines}</svg>`;
   const wallsSvg = `<svg class="ed-walls" width="${FW}" height="${FH}" viewBox="0 0 ${FW} ${FH}">${wallSvg}</svg>`;
+  const selSvg = `<svg class="ed-hl-sel" width="${FW}" height="${FH}" viewBox="0 0 ${FW} ${FH}">${selLines}</svg>`;
 
   const catalog = d.catalog.map((c) =>
     `<div class="ed-chip" draggable="true" data-nt="${c.type}"><span class="mico">${c.icon}</span><span>${c.name}</span></div>`).join("");
-  const selInfo = d.sel
-    ? `<div class="ed-selinfo">선택: ${esc(d.nodes.find((n) => n.id === d.sel)!.name)}${d.sel === d.entryId ? " (입장 — 삭제 불가)" : ""}
-        ${d.sel !== d.entryId ? `<button class="ed-btn ghost" id="ed-delnode">🗑 노드 삭제 (Del)</button>` : ""}</div>`
-    : `<div class="ed-selinfo hint">카탈로그를 격자에 <b>드래그</b>해 배치 · 노드 <b>드래그</b>=이동 · <b>클릭</b>=선택(Del 삭제) · 두 칸 사이 변에 <b>호버→클릭</b>=벽/연결.</div>`;
+  const selN = d.sel.length;
+  const hasDeletable = d.sel.some((id) => id !== d.entryId);
+  const selInfo = selN === 0
+    ? `<div class="ed-selinfo hint">카탈로그를 격자에 <b>드래그</b>해 배치 · 노드 <b>드래그</b>=이동 · <b>클릭</b>=선택(<b>Ctrl</b>=다중, <b>Ctrl+A</b>=전체, 빈칸=해제) · 두 칸 사이 변 <b>호버→클릭</b>=벽/연결.</div>`
+    : `<div class="ed-selinfo">${selN === 1 ? `선택: ${esc(d.nodes.find((n) => n.id === d.sel[0])!.name)}` : `${selN}개 선택`}
+        ${hasDeletable ? `<button class="ed-btn ghost" id="ed-delnode">🗑 삭제 (Del)</button>` : " (입장 노드 — 삭제 불가)"}</div>`;
   const errs = d.valid ? `<div class="ed-ok">✓ 유효한 맵</div>` : `<div class="ed-bad">✗ ${d.errors.map(esc).join("<br>")}</div>`;
 
   app.innerHTML = `<div class="editor edit-mode">
@@ -65,7 +80,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
     <div class="ed-edit">
       <div class="ed-left">
         <div class="ed-viewport">
-          <div class="hexfield" id="ed-field" style="width:${FW}px;height:${FH}px">${gridSvg}${nodesSvg}${nodeOverlays}${wallsSvg}</div>
+          <div class="hexfield" id="ed-field" style="width:${FW}px;height:${FH}px">${gridSvg}${nodesSvg}${typeSvg}${nodeOverlays}${wallsSvg}${selSvg}</div>
           <div class="ed-zoom"><button id="ed-zin" aria-label="확대">＋</button><button id="ed-zout" aria-label="축소">－</button><button id="ed-zreset" aria-label="리셋">⤢</button></div>
           <div class="ed-vphint">휠=줌 · 휠(가운데) 드래그=이동</div>
         </div>
@@ -87,7 +102,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   app.querySelectorAll<HTMLElement>("[data-fdel]").forEach((b) => b.addEventListener("click", () => h.onDeleteFloor(Number(b.dataset.fdel))));
   app.querySelectorAll<HTMLElement>("[data-fmove]").forEach((b) => b.addEventListener("click", () => { const [i, dir] = b.dataset.fmove!.split(":").map(Number); h.onMoveFloor(i, dir); }));
   app.querySelectorAll<HTMLElement>(".ednode[data-node]").forEach((b) => {
-    b.addEventListener("click", () => h.onNodeClick(b.dataset.node!));
+    b.addEventListener("click", (e) => h.onNodeClick(b.dataset.node!, e.ctrlKey || e.metaKey));
     b.addEventListener("dragstart", (e) => e.dataTransfer!.setData("text/plain", `mv:${b.dataset.node}`));
   });
   app.querySelectorAll<SVGElement>(".ed-ehit[data-edge]").forEach((b) =>
@@ -108,6 +123,12 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
     const { q, r } = pixelToAxial((e.clientX - rect.left) / zoom, (e.clientY - rect.top) / zoom);
     if (data.startsWith("nt:")) h.onPlaceNode(data.slice(3) as NodeType, q, r);
     else if (data.startsWith("mv:")) h.onMoveNode(data.slice(3), q, r);
+  });
+  // 빈 격자 클릭 = 선택 해제(노드·벽 클릭은 제외)
+  field.addEventListener("click", (e) => {
+    const t = e.target as HTMLElement;
+    if (t.closest(".ednode") || t.tagName === "line") return;
+    h.onClearSel();
   });
 
   // ── 카메라(줌·팬) — translate 정수 스냅, 변경분만 영속. 첫 진입은 입장 노드 중앙 정렬 ──

@@ -2,7 +2,7 @@
 import { validateRun } from "../../core/run.ts";
 import type { FloorDef, RunDef } from "../../core/types.ts";
 import { listRuns, getRun, saveDraft, deleteDraft, blankRun, exportRun, isDraft, cloneAsDraft } from "./store.ts";
-import { addNode, moveNode, deleteNode, toggleEdge, adjacentPairs, addFloor, deleteFloor, moveFloor } from "./ops.ts";
+import { addNode, moveNode, moveNodes, deleteNode, toggleEdge, adjacentPairs, addFloor, deleteFloor, moveFloor } from "./ops.ts";
 
 const edgeKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 import { CATALOG_TYPES, TYPE_ICON, TYPE_NAME } from "../nodeMeta.ts";
@@ -18,7 +18,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
   let mode: "list" | "edit" = "list";
   let draft: RunDef | null = null;
   let floorIdx = 0;
-  let sel: string | null = null;
+  let sel: string[] = [];
   let camera = { zoom: 1, x: 0, y: 0 };
 
   const floor = (): FloorDef => draft!.floors[floorIdx];
@@ -29,7 +29,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
     if (!def) return;
     if (isDraft(id)) draft = def;
     else { draft = cloneAsDraft(def); saveDraft(draft); } // repo 런은 드래프트로 복제 후 편집
-    floorIdx = 0; sel = null; camera = { zoom: 1, x: NaN, y: NaN }; mode = "edit"; // NaN=뷰가 첫 진입 시 중앙 정렬
+    floorIdx = 0; sel = []; camera = { zoom: 1, x: NaN, y: NaN }; mode = "edit"; // NaN=뷰가 첫 진입 시 중앙 정렬
     deps.rerender();
   }
 
@@ -56,7 +56,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       errors: fv?.errors ?? [],
       deadNodes: fv?.deadNodes ?? [],
       entryId: f.entryNodeId,
-      sel,
+      sel: [...sel],
       floors: draft!.floors.map((fl, i) => ({ name: fl.name ?? `층 ${i + 1}`, valid: v.floors[i].ok })),
       floorIdx,
       nodes: f.nodes.map((n) => ({ id: n.id, type: n.type, q: n.q, r: n.r, icon: TYPE_ICON[n.type], name: TYPE_NAME[n.type] })),
@@ -76,19 +76,32 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       onDelete(id) { deleteDraft(id); deps.rerender(); },
       onEdit(id) { openEdit(id); },
       onBack() {
-        if (mode === "edit") { mode = "list"; draft = null; sel = null; deps.rerender(); }
+        if (mode === "edit") { mode = "list"; draft = null; sel = []; deps.rerender(); }
         else deps.toTitle();
       },
       onPlaceNode(type, q, r) { if (!draft) return; addNode(floor(), type, q, r); save(); deps.rerender(); },
-      onMoveNode(id, q, r) { if (!draft) return; moveNode(floor(), id, q, r); save(); deps.rerender(); },
-      onNodeClick(id) { if (!draft) return; sel = sel === id ? null : id; deps.rerender(); }, // 선택 전용
+      onMoveNode(id, q, r) {
+        if (!draft) return;
+        const n = floor().nodes.find((x) => x.id === id);
+        if (sel.includes(id) && sel.length > 1 && n) moveNodes(floor(), sel, q - n.q, r - n.r); // 선택군 일괄 이동
+        else moveNode(floor(), id, q, r);
+        save(); deps.rerender();
+      },
+      onNodeClick(id, additive) {
+        if (!draft) return;
+        if (additive) sel = sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id]; // Ctrl=토글
+        else sel = [id];
+        deps.rerender();
+      },
+      onSelectAll() { if (!draft) return; sel = floor().nodes.map((n) => n.id); deps.rerender(); },
+      onClearSel() { if (!sel.length) return; sel = []; deps.rerender(); },
       onToggleEdge(a, b) { if (!draft) return; toggleEdge(floor(), a, b); save(); deps.rerender(); }, // 변 클릭=연결/벽 토글
       onCamera(cam) { camera = cam; }, // 영속만(DOM은 호출자가 직접 갱신 — 재렌더 없음)
-      onDeleteSel() { if (!draft || !sel) return; deleteNode(floor(), sel); sel = null; save(); deps.rerender(); },
+      onDeleteSel() { if (!draft || !sel.length) return; for (const id of sel) if (id !== floor().entryNodeId) deleteNode(floor(), id); sel = []; save(); deps.rerender(); },
       onTestCurrent() { if (draft && validateRun(draft).ok) deps.testRun(draft); },
-      onAddFloor() { if (!draft) return; addFloor(draft); floorIdx = draft.floors.length - 1; sel = null; save(); deps.rerender(); },
-      onSelectFloor(i) { floorIdx = i; sel = null; deps.rerender(); },
-      onDeleteFloor(i) { if (!draft) return; deleteFloor(draft, i); if (floorIdx >= draft.floors.length) floorIdx = draft.floors.length - 1; sel = null; save(); deps.rerender(); },
+      onAddFloor() { if (!draft) return; addFloor(draft); floorIdx = draft.floors.length - 1; sel = []; save(); deps.rerender(); },
+      onSelectFloor(i) { floorIdx = i; sel = []; deps.rerender(); },
+      onDeleteFloor(i) { if (!draft) return; deleteFloor(draft, i); if (floorIdx >= draft.floors.length) floorIdx = draft.floors.length - 1; sel = []; save(); deps.rerender(); },
       onMoveFloor(i, dir) { if (!draft) return; moveFloor(draft, i, dir); if (i === floorIdx) floorIdx = Math.max(0, Math.min(draft.floors.length - 1, i + dir)); save(); deps.rerender(); },
     },
   };

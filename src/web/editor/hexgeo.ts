@@ -25,6 +25,14 @@ export function hexCorners(q: number, r: number): { x: number; y: number }[] {
 export const hexPoints = (q: number, r: number): string =>
   hexCorners(q, r).map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
 
+/** 변 i(꼭짓점 i→i+1)가 접한 이웃의 axial 방향. hexCorners 순서와 일치. */
+export const EDGE_DIRS = [[1, -1], [1, 0], [0, 1], [-1, 1], [-1, 0], [0, -1]] as const;
+/** 셀(q,r)의 변 i 선분 [x1,y1,x2,y2]. */
+export function hexEdge(q: number, r: number, i: number): [number, number, number, number] {
+  const c = hexCorners(q, r), a = c[i], b = c[(i + 1) % 6];
+  return [a.x, a.y, b.x, b.y];
+}
+
 /** 픽셀(필드 로컬)→axial 셀 (역변환 + 큐브 라운딩). */
 export function pixelToAxial(fx: number, fy: number): { q: number; r: number } {
   const x = fx - OX, y = fy - OY;

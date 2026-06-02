@@ -16,7 +16,7 @@ export interface EditData {
   errors: string[];
   deadNodes: string[];
   entryId: string;
-  sel: string | null;
+  sel: string[]; // 다중 선택
   floors: { name: string; valid: boolean }[]; // 층 그래프 패널(선형)
   floorIdx: number;
   nodes: EditNode[];
@@ -36,11 +36,13 @@ export interface EditorHandlers {
   onBack: () => void;
   // 편집 화면 (E2/E4)
   onPlaceNode: (type: NodeType, q: number, r: number) => void;
-  onMoveNode: (id: string, q: number, r: number) => void;
-  onNodeClick: (id: string) => void;
+  onMoveNode: (id: string, q: number, r: number) => void; // 선택군이면 일괄 이동
+  onNodeClick: (id: string, additive: boolean) => void; // additive=Ctrl(토글)
+  onSelectAll: () => void;
+  onClearSel: () => void;
   onToggleEdge: (a: string, b: string) => void;
   onCamera: (cam: { zoom: number; x: number; y: number }) => void; // 카메라 변경 영속(재렌더 없음)
-  onDeleteSel: () => void;
+  onDeleteSel: () => void; // 선택 전부 삭제(입장 제외)
   onTestCurrent: () => void;
   // 층 그래프 패널 (E3)
   onAddFloor: () => void;

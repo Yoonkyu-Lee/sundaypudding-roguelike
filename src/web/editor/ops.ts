@@ -44,6 +44,24 @@ export function moveNode(floor: FloorDef, id: string, q: number, r: number): voi
   for (const m of floor.nodes) if (m.id !== id && hexAdjacent(n, m) && !prevAdj.has(m.id) && !hasEdge(floor, id, m.id)) floor.edges.push({ from: id, to: m.id });
 }
 
+/** 여러 노드를 (dq,dr)만큼 일괄 이동. 비선택 노드와 충돌하면 취소(false). 군집 내부 변은 보존. */
+export function moveNodes(floor: FloorDef, ids: string[], dq: number, dr: number): boolean {
+  if (!ids.length || (dq === 0 && dr === 0)) return false;
+  const idSet = new Set(ids);
+  const moving = floor.nodes.filter((n) => idSet.has(n.id));
+  const staticOcc = new Set(floor.nodes.filter((n) => !idSet.has(n.id)).map((n) => `${n.q},${n.r}`));
+  if (moving.some((n) => staticOcc.has(`${n.q + dq},${n.r + dr}`))) return false; // 비선택과 충돌
+  moving.forEach((n) => { n.q += dq; n.r += dr; });
+  // 교차 변(이동↔고정)만 재계산, 군집/고정 내부 변(=벽 포함)은 보존
+  floor.edges = floor.edges.filter((e) => {
+    if (idSet.has(e.from) === idSet.has(e.to)) return true;
+    const na = floor.nodes.find((x) => x.id === e.from), nb = floor.nodes.find((x) => x.id === e.to);
+    return !!na && !!nb && hexAdjacent(na, nb);
+  });
+  for (const n of moving) for (const m of floor.nodes) if (!idSet.has(m.id) && hexAdjacent(n, m) && !hasEdge(floor, n.id, m.id)) floor.edges.push({ from: n.id, to: m.id });
+  return true;
+}
+
 /** 모든 무방향 인접쌍(연결 여부 무관). 벽(인접·미연결) 렌더 산출에 사용. */
 export function adjacentPairs(floor: FloorDef): { a: string; b: string }[] {
   const out: { a: string; b: string }[] = [];
