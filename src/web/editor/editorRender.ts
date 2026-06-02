@@ -17,6 +17,8 @@ export interface EditData {
   deadNodes: string[];
   entryId: string;
   sel: string | null;
+  floors: { name: string; valid: boolean }[]; // 층 그래프 패널(선형)
+  floorIdx: number;
   nodes: EditNode[];
   edges: { from: string; to: string }[];
   cells: { q: number; r: number; occupied: boolean }[];
@@ -37,6 +39,11 @@ export interface EditorHandlers {
   onNodeClick: (id: string) => void;
   onDeleteSel: () => void;
   onTestCurrent: () => void;
+  // 층 그래프 패널 (E3)
+  onAddFloor: () => void;
+  onSelectFloor: (idx: number) => void;
+  onDeleteFloor: (idx: number) => void;
+  onMoveFloor: (idx: number, dir: number) => void;
 }
 
 function card(r: EditorRunCard): string {

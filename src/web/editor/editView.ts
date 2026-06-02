@@ -10,6 +10,20 @@ const PAD = W;
 const cx = (q: number, r: number) => W * (q + r / 2);
 const cy = (r: number) => SIZE * 1.5 * r;
 
+// 층 그래프 패널(선형) — 선택/순서/삭제 + 추가.
+function floorBar(d: EditData): string {
+  const cards = d.floors.map((f, i) =>
+    `<div class="ed-floor${i === d.floorIdx ? " active" : ""}">
+      <button class="ed-fname" data-fsel="${i}">${esc(f.name)}${f.valid ? "" : ' <span class="ed-bad">✗</span>'}</button>
+      <span class="ed-fctl">
+        <button data-fmove="${i}:-1" title="앞으로">◀</button>
+        <button data-fmove="${i}:1" title="뒤로">▶</button>
+        ${d.floors.length > 1 ? `<button data-fdel="${i}" title="삭제">🗑</button>` : ""}
+      </span>
+    </div>`).join("");
+  return `${cards}<button class="ed-addfloor" id="ed-addfloor">＋ 층</button>`;
+}
+
 export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers): void {
   const xs = d.cells.map((c) => cx(c.q, c.r));
   const ys = d.cells.map((c) => cy(c.r));
@@ -56,7 +70,10 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
     <header><h1>🗺 ${esc(d.name)} <span class="dim">— ${esc(d.floorName)}</span></h1>
       <div><button class="ed-btn"${d.valid ? "" : " disabled"} id="ed-test">▶ 테스트플레이</button><button class="hub-link" id="ed-back">← 목록</button></div></header>
     <div class="ed-edit">
-      <div class="ed-canvas"><div class="mapwrap"><div class="hexfield" style="width:${fw}px;height:${fh}px">${edgesSvg}${slots}${nodes}</div></div></div>
+      <div class="ed-left">
+        <div class="ed-canvas"><div class="mapwrap"><div class="hexfield" style="width:${fw}px;height:${fh}px">${edgesSvg}${slots}${nodes}</div></div></div>
+        <div class="ed-floors">${floorBar(d)}</div>
+      </div>
       <aside class="ed-side">
         <section><h3>노드 카탈로그</h3><div class="ed-catalog">${catalog}</div></section>
         <section><h3>검증</h3>${errs}</section>
@@ -68,6 +85,10 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   app.querySelector("#ed-back")!.addEventListener("click", () => h.onBack());
   app.querySelector("#ed-test")!.addEventListener("click", () => h.onTestCurrent());
   app.querySelector("#ed-delnode")?.addEventListener("click", () => h.onDeleteSel());
+  app.querySelector("#ed-addfloor")?.addEventListener("click", () => h.onAddFloor());
+  app.querySelectorAll<HTMLElement>("[data-fsel]").forEach((b) => b.addEventListener("click", () => h.onSelectFloor(Number(b.dataset.fsel))));
+  app.querySelectorAll<HTMLElement>("[data-fdel]").forEach((b) => b.addEventListener("click", () => h.onDeleteFloor(Number(b.dataset.fdel))));
+  app.querySelectorAll<HTMLElement>("[data-fmove]").forEach((b) => b.addEventListener("click", () => { const [i, dir] = b.dataset.fmove!.split(":").map(Number); h.onMoveFloor(i, dir); }));
   app.querySelectorAll<HTMLElement>("[data-node]").forEach((b) => b.addEventListener("click", () => h.onNodeClick(b.dataset.node!)));
   // 드래그드롭(네이티브) — 카탈로그 칩 → 빈 슬롯
   app.querySelectorAll<HTMLElement>(".ed-chip").forEach((c) =>

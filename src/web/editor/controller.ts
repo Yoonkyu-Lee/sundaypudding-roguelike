@@ -2,7 +2,7 @@
 import { validateRun, hexAdjacent } from "../../core/run.ts";
 import type { FloorDef, RunDef } from "../../core/types.ts";
 import { listRuns, getRun, saveDraft, deleteDraft, blankRun, exportRun, isDraft, cloneAsDraft } from "./store.ts";
-import { addNode, deleteNode, toggleEdge, gridCells, nodeAt } from "./ops.ts";
+import { addNode, deleteNode, toggleEdge, gridCells, nodeAt, addFloor, deleteFloor, moveFloor } from "./ops.ts";
 import { CATALOG_TYPES, TYPE_ICON, TYPE_NAME } from "../nodeMeta.ts";
 import type { EditorData, EditorHandlers } from "./editorRender.ts";
 
@@ -54,6 +54,8 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       deadNodes: fv?.deadNodes ?? [],
       entryId: f.entryNodeId,
       sel,
+      floors: draft!.floors.map((fl, i) => ({ name: fl.name ?? `층 ${i + 1}`, valid: v.floors[i].ok })),
+      floorIdx,
       nodes: f.nodes.map((n) => ({ id: n.id, type: n.type, q: n.q, r: n.r, icon: TYPE_ICON[n.type], name: TYPE_NAME[n.type] })),
       edges: f.edges.map((e) => ({ from: e.from, to: e.to })),
       cells: gridCells(f).map((c) => ({ q: c.q, r: c.r, occupied: !!nodeAt(f, c.q, c.r) })),
@@ -87,6 +89,10 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       },
       onDeleteSel() { if (!draft || !sel) return; deleteNode(floor(), sel); sel = null; save(); deps.rerender(); },
       onTestCurrent() { if (draft && validateRun(draft).ok) deps.testRun(draft); },
+      onAddFloor() { if (!draft) return; addFloor(draft); floorIdx = draft.floors.length - 1; sel = null; save(); deps.rerender(); },
+      onSelectFloor(i) { floorIdx = i; sel = null; deps.rerender(); },
+      onDeleteFloor(i) { if (!draft) return; deleteFloor(draft, i); if (floorIdx >= draft.floors.length) floorIdx = draft.floors.length - 1; sel = null; save(); deps.rerender(); },
+      onMoveFloor(i, dir) { if (!draft) return; moveFloor(draft, i, dir); if (i === floorIdx) floorIdx = Math.max(0, Math.min(draft.floors.length - 1, i + dir)); save(); deps.rerender(); },
     },
   };
 }

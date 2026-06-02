@@ -107,7 +107,9 @@ src/core/
 | `src/data/items.ts` | data | 장착 아이템(4.3) — 무기(dmgFlat·crit) / 방어구(hp·쉴드획득). `ItemDef`는 content.ts | `ITEMS` · `ITEM_POOL` |
 | `src/cli/play.ts` | cli | 대화형/`--demo` 터미널 드라이버 | (엔트리) |
 | `src/cli/ascii.ts` | cli | ASCII 보드 렌더(뷰 — core 아님) | `renderAscii` |
-| `src/web/main.ts` | web | 웹 엔트리·**앱 상태기계**(title↔hub↔run, `appState`/`runActive`/`pauseOpen`)+런 컨트롤러·전투 루프·핸들러. 편성=`hub.ts`·영속=`save.ts`·오버레이=`overlay.ts` 위임 | (엔트리) |
+| `src/web/main.ts` | web | 웹 엔트리·**앱 상태기계**(title↔hub↔editor↔run, `appState`/`runActive`/`pauseOpen`)+런 컨트롤러·전투 루프·핸들러. 편성=`hub.ts`·영속=`save.ts`·오버레이=`overlay.ts`·에디터=`editor/`·테스트플레이=`testRun` | (엔트리) |
+| `src/web/nodeMeta.ts` | web | 노드 종류 표시(아이콘/이름) — 런렌더·에디터 공용 | `TYPE_ICON` · `TYPE_NAME` · `CATALOG_TYPES` |
+| `src/web/editor/` | web | **맵 에디터 GUI**(구조 에디터) — `store.ts`(드래프트 localStorage·repo 병합·blankRun·JSON 내보내기) · `ops.ts`(노드/변/층 순수 변이·gridCells) · `controller.ts`(목록↔편집 상태·핸들러) · `editorRender.ts`(목록) · `editView.ts`(단일 층 캔버스+카탈로그+층 패널). `validateRun`/`hexAdjacent` 재사용 | `createEditor` · `renderEditor` |
 | `src/web/hub.ts` | web | **본거지 편성 컨트롤러**(`createHub`) — playable 풀에서 1~4명 선택(영구) 캡슐화 + 선택 로스터로 런 생성. `makeRun`·`data`·`toggle` | `createHub` |
 | `src/web/save.ts` | web | **런 이어하기 영속화**(`spr_save_v1`) — 순수(run 인자). `saveRun`·`loadRun`·`clearSave` | `saveRun` · `loadRun` · `clearSave` |
 | `src/web/shell.ts` | web | **게임 흐름 셸** — 타이틀·본거지(집)·일시정지 화면. 본거지=캐릭터 편성 선택 그리드(playable 풀 1~4명 토글, 숙련도 표시) / 런 중=현재 파티+이어하기. 런 바깥 | `renderTitle` · `renderHub` · `renderPause` · `ShellHandlers` |
@@ -160,6 +162,7 @@ src/core/
 | 헥스 인접 무방향그래프 맵·도달성·검증 (7.1) | `run/graph.ts`: `hexAdjacent`·`neighborIds`·`liveReachable`(재방문 불가)·`validateRun` (메커니즘=엔진) |
 | 맵 데이터화(저작 런) (7.1) | `data/runs/*.json` `RunDef`/`FloorDef`/`MapNode`/`MapEdge`(`types/map.ts`) · `data/runs/index.ts RUNS` · `createRun(seed,roster,runDef)` |
 | 클리어 노드 = 층 종료 / 보스=길목 | `run/run.ts`: `enterNode`(clear→`completeFloor`) · 다중 보스/클리어 갈림길(아무 클리어 진입=완료) |
+| 맵 에디터(런 CRUD·헥스 편집·층 패널·검증·테스트플레이) | `web/editor/`(store·ops·controller·editorRender·editView) · 타이틀 진입(`shell.ts` onEditor) · `validateRun`/`hexAdjacent` 재사용 · `createRun(draft)` 테스트플레이 |
 | 노드 진입·해소·전투생성·승패 (7장) | `run/run.ts`: `enterNode`/`resolveBattleEnd` |
 | 런 이어하기 영속화 (셸) | `run/save.ts` `serializeRun`/`deserializeRun`(순수, Rng=state만) · 웹 `main.ts` localStorage(`spr_save_v1`, render마다 저장·승패/포기 시 삭제·부팅 복원) |
 | 다층(층 선형체인) 진행 (7.3) | `RunState.floor`/`runDef.floors` · `run/run.ts` `completeFloor`(클리어 노드 진입→다음 층·50%회복·최종층=won) · `RunView.floor`/`totalFloors` · 웹 "층 N/M" 표기 · 무방향 변 선(`runRender.ts mapScreen`, 활성 경로 강조) |
@@ -177,7 +180,7 @@ src/core/
 
 | 기능 | 예정 위치 |
 |---|---|
-| **맵 에디터 GUI** (런 CRUD·3패인·드래그드롭·헥스인접 제약·저장 검증) | 신규 `src/web/editor/` — `RunDef` JSON 저작/내보내기. `run/graph.ts validateRun` 재사용. 분기 층 그래프·노드 메타데이터는 그 다음 |
+| **맵 에디터 — 분기 층 그래프·노드 메타데이터** (구조 에디터 E1–E3는 구현됨, `src/web/editor/`) | 분기=`RunDef` 층 그래프 확장(스키마+런타임+UI), 메타=노드별 적 구성 override 등. dev-write 미들웨어(자동 repo 기록)도 후속 |
 | 메타/본산/기억회랑 (5장) | 신규 `core/meta/` (런 위 레이어) |
 | 상점/인카운터 본구현 (현재 즉시해소 stub) | `core/run/` (커지면 비전투 해소를 `run/nodes.ts`로 분리) |
 | 웹 렌더러 고도화(스프라이트/애니메이션) | `src/web/` (현재 v2: DOM 카드 + 피격 플래시 + 로그 재생) |

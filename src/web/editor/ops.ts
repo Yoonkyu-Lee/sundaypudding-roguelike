@@ -1,5 +1,5 @@
 // 맵 에디터 — 층 그래프 순수 변이 + 그리드 계산 (DOM/상태 없음). 컨트롤러가 호출.
-import type { FloorDef, MapNode, NodeType } from "../../core/types.ts";
+import type { FloorDef, MapNode, NodeType, RunDef } from "../../core/types.ts";
 import { hexAdjacent } from "../../core/run.ts";
 
 let counter = 0;
@@ -32,6 +32,27 @@ export function toggleEdge(floor: FloorDef, a: string, b: string): void {
   const i = floor.edges.findIndex((e) => (e.from === a && e.to === b) || (e.from === b && e.to === a));
   if (i >= 0) floor.edges.splice(i, 1);
   else floor.edges.push({ from: a, to: b });
+}
+
+/** 새 층 추가 — 입장 start + 목표 clear 시드(인접·연결, 바로 유효). 선형 체인 끝에. */
+export function addFloor(draft: RunDef): void {
+  const fid = `f${Date.now().toString(36)}${counter++}`;
+  const sid = `${fid}_start`, cid = `${fid}_clear`;
+  draft.floors.push({
+    id: fid, name: `층 ${draft.floors.length + 1}`, entryNodeId: sid,
+    nodes: [{ id: sid, type: "start", q: 0, r: 0 }, { id: cid, type: "clear", q: 0, r: 1 }],
+    edges: [{ from: sid, to: cid }],
+  });
+}
+/** 층 삭제(최소 1개 유지). */
+export function deleteFloor(draft: RunDef, idx: number): void {
+  if (draft.floors.length > 1) draft.floors.splice(idx, 1);
+}
+/** 층 순서 이동(dir=-1 앞 / +1 뒤). */
+export function moveFloor(draft: RunDef, idx: number, dir: number): void {
+  const j = idx + dir;
+  if (j < 0 || j >= draft.floors.length) return;
+  [draft.floors[idx], draft.floors[j]] = [draft.floors[j], draft.floors[idx]];
 }
 
 /** 드롭/렌더 셀 = 노드 바운딩박스 + 1링(빈 칸 = 드롭 슬롯). axial 사각 영역. */
