@@ -109,7 +109,7 @@ src/core/
 | `src/cli/ascii.ts` | cli | ASCII 보드 렌더(뷰 — core 아님) | `renderAscii` |
 | `src/web/main.ts` | web | 웹 엔트리·**앱 상태기계**(title↔hub↔editor↔run, `appState`/`runActive`/`pauseOpen`)+런 컨트롤러·전투 루프·핸들러. 편성=`hub.ts`·영속=`save.ts`·오버레이=`overlay.ts`·에디터=`editor/`·테스트플레이=`testRun` | (엔트리) |
 | `src/web/nodeMeta.ts` | web | 노드 종류 표시(아이콘/이름) — 런렌더·에디터 공용 | `TYPE_ICON` · `TYPE_NAME` · `CATALOG_TYPES` |
-| `src/web/editor/` | web | **맵 에디터 GUI**(구조 에디터) — `store.ts`(드래프트 localStorage·repo 병합·blankRun·JSON 내보내기) · `ops.ts`(노드/변/층 순수 변이·`addNode`/`moveNode`(드래그 이동)·`autoConnectAdjacent`(인접=기본 연결)·`adjacentPairs`(벽)·`gridCells`) · `controller.ts`(목록↔편집 상태·핸들러) · `editorRender.ts`(목록) · `editView.ts`(캔버스: 드래그 배치/이동·클릭 선택(Del 삭제)·변 점 클릭=연결/벽 토글·층 패널). `validateRun`/`hexAdjacent` 재사용 | `createEditor` · `renderEditor` |
+| `src/web/editor/` | web | **맵 에디터 GUI**(구조 에디터) — `store.ts`(드래프트 localStorage·repo 병합·blankRun·JSON 내보내기) · `ops.ts`(노드/변/층 순수 변이·`addNode`/`moveNode`(드래그 이동)·`autoConnectAdjacent`(인접=기본 연결)·`adjacentPairs`(벽)·`gridCells`) · `controller.ts`(목록↔편집 상태·핸들러) · `editorRender.ts`(목록) · `editView.ts`(고정 뷰포트+카메라(휠 줌·가운데드래그 팬)·드래그 배치/이동·클릭 선택(Del 삭제)·변 호버→클릭 연결/벽 토글·층 패널). `validateRun`/`hexAdjacent` 재사용 | `createEditor` · `renderEditor` |
 | `src/web/hub.ts` | web | **본거지 편성 컨트롤러**(`createHub`) — playable 풀에서 1~4명 선택(영구) 캡슐화 + 선택 로스터로 런 생성. `makeRun`·`data`·`toggle` | `createHub` |
 | `src/web/save.ts` | web | **런 이어하기 영속화**(`spr_save_v1`) — 순수(run 인자). `saveRun`·`loadRun`·`clearSave` | `saveRun` · `loadRun` · `clearSave` |
 | `src/web/shell.ts` | web | **게임 흐름 셸** — 타이틀·본거지(집)·일시정지 화면. 본거지=캐릭터 편성 선택 그리드(playable 풀 1~4명 토글, 숙련도 표시) / 런 중=현재 파티+이어하기. 런 바깥 | `renderTitle` · `renderHub` · `renderPause` · `ShellHandlers` |

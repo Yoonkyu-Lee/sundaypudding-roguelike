@@ -34,19 +34,22 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   const py = (r: number) => cy(r) - minY + PAD;
   const center = new Map(d.nodes.map((n) => [n.id, { x: px(n.q, n.r) + W / 2, y: py(n.r) + H / 2 }]));
 
-  // 변: 연결(실선) + 벽(인접·미연결, 점선). 중점에 클릭 점 → 토글.
+  // 변: 연결됨=장치 없이 선만, 벽=점선. 호버하면 반응(중간 투명 hit선) · 클릭하면 토글.
   const allEdges = [...d.edges.map((e) => ({ ...e, wall: false })), ...d.walls.map((w) => ({ ...w, wall: true }))];
-  const lines = allEdges.map((e) => {
+  const ekey = (a: string, b: string) => (a < b ? `${a}__${b}` : `${b}__${a}`);
+  const vis = allEdges.map((e) => {
     const a = center.get(e.a), b = center.get(e.b);
-    return a && b ? `<line class="medge${e.wall ? " wall" : ""}" x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}"/>` : "";
+    return a && b ? `<line id="ve_${ekey(e.a, e.b)}" class="medge${e.wall ? " wall" : ""}" x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}"/>` : "";
   }).join("");
-  const edgesSvg = `<svg class="ed-edges" width="${fw}" height="${fh}" viewBox="0 0 ${fw} ${fh}">${lines}</svg>`;
-  const edgeBtns = allEdges.map((e) => {
+  const hits = allEdges.map((e) => {
     const a = center.get(e.a), b = center.get(e.b);
     if (!a || !b) return "";
-    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-    return `<button class="ed-edgebtn${e.wall ? " wall" : ""}" data-edge="${e.a}|${e.b}" style="left:${(mx - 9).toFixed(1)}px;top:${(my - 9).toFixed(1)}px" title="${e.wall ? "차단됨 — 클릭해 연결" : "연결됨 — 클릭해 차단(벽)"}"></button>`;
+    const hx1 = a.x + (b.x - a.x) * 0.25, hy1 = a.y + (b.y - a.y) * 0.25;
+    const hx2 = a.x + (b.x - a.x) * 0.75, hy2 = a.y + (b.y - a.y) * 0.75;
+    return `<line class="ed-ehit" data-edge="${e.a}|${e.b}" data-key="${ekey(e.a, e.b)}" x1="${hx1.toFixed(1)}" y1="${hy1.toFixed(1)}" x2="${hx2.toFixed(1)}" y2="${hy2.toFixed(1)}"><title>${e.wall ? "차단됨 — 클릭해 연결" : "연결됨 — 클릭해 차단(벽)"}</title></line>`;
   }).join("");
+  const edgesSvg = `<svg class="ed-edges" width="${fw}" height="${fh}" viewBox="0 0 ${fw} ${fh}">${vis}</svg>`;
+  const hitsSvg = `<svg class="ed-hits" width="${fw}" height="${fh}" viewBox="0 0 ${fw} ${fh}">${hits}</svg>`;
 
   // 빈 드롭 슬롯
   const slots = d.cells.filter((c) => !c.occupied).map((c) =>
@@ -76,7 +79,11 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
       <div><button class="ed-btn"${d.valid ? "" : " disabled"} id="ed-test">▶ 테스트플레이</button><button class="hub-link" id="ed-back">← 목록</button></div></header>
     <div class="ed-edit">
       <div class="ed-left">
-        <div class="ed-canvas"><div class="mapwrap"><div class="hexfield" style="width:${fw}px;height:${fh}px">${edgesSvg}${slots}${nodes}${edgeBtns}</div></div></div>
+        <div class="ed-canvas"><div class="ed-viewport">
+          <div class="hexfield" id="ed-field" style="width:${fw}px;height:${fh}px">${edgesSvg}${slots}${nodes}${hitsSvg}</div>
+          <div class="ed-zoom"><button id="ed-zin" title="확대">＋</button><button id="ed-zout" title="축소">－</button><button id="ed-zreset" title="리셋">⤢</button></div>
+          <div class="ed-vphint">휠=줌 · 휠(가운데) 드래그=이동</div>
+        </div></div>
         <div class="ed-floors">${floorBar(d)}</div>
       </div>
       <aside class="ed-side">
@@ -99,9 +106,13 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
     b.addEventListener("click", () => h.onNodeClick(b.dataset.node!));
     b.addEventListener("dragstart", (e) => e.dataTransfer!.setData("text/plain", `mv:${b.dataset.node}`));
   });
-  // 변의 점: 클릭=연결/벽 토글
-  app.querySelectorAll<HTMLElement>(".ed-edgebtn[data-edge]").forEach((b) =>
-    b.addEventListener("click", () => { const [a, c] = b.dataset.edge!.split("|"); h.onToggleEdge(a, c); }));
+  // 변: 호버 반응(시각선 하이라이트) · 클릭=연결/벽 토글
+  app.querySelectorAll<SVGElement>(".ed-ehit[data-edge]").forEach((b) => {
+    const ve = () => app.querySelector(`#ve_${b.dataset.key}`);
+    b.addEventListener("mouseenter", () => ve()?.classList.add("hot"));
+    b.addEventListener("mouseleave", () => ve()?.classList.remove("hot"));
+    b.addEventListener("click", () => { const [a, c] = b.dataset.edge!.split("|"); h.onToggleEdge(a, c); });
+  });
   // 카탈로그 칩 드래그(nt:)
   app.querySelectorAll<HTMLElement>(".ed-chip").forEach((c) =>
     c.addEventListener("dragstart", (e) => e.dataTransfer!.setData("text/plain", `nt:${c.dataset.nt}`)));
@@ -117,4 +128,38 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
       else if (data.startsWith("mv:")) h.onMoveNode(data.slice(3), q, r);
     });
   });
+
+  // ── 카메라(줌·팬) — DOM 직접 변환(부드럽게), 변경분만 영속 ──
+  const vp = app.querySelector<HTMLElement>(".ed-viewport");
+  const field = app.querySelector<HTMLElement>("#ed-field");
+  if (!vp || !field) return;
+  const cam = { ...d.camera };
+  const clamp = (z: number) => Math.max(0.4, Math.min(2.5, z));
+  const apply = () => { field.style.transformOrigin = "0 0"; field.style.transform = `translate(${cam.x}px,${cam.y}px) scale(${cam.zoom})`; };
+  apply();
+  const zoomAt = (mx: number, my: number, factor: number) => {
+    const nz = clamp(cam.zoom * factor);
+    const k = nz / cam.zoom;
+    cam.x = mx - (mx - cam.x) * k; cam.y = my - (my - cam.y) * k; cam.zoom = nz;
+    apply(); h.onCamera({ ...cam });
+  };
+  vp.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const rect = vp.getBoundingClientRect();
+    zoomAt(e.clientX - rect.left, e.clientY - rect.top, e.deltaY < 0 ? 1.1 : 1 / 1.1);
+  }, { passive: false });
+  let panning = false, lastX = 0, lastY = 0;
+  vp.addEventListener("pointerdown", (e) => {
+    if (e.button !== 1) return; // 휠(가운데) 버튼
+    e.preventDefault(); panning = true; lastX = e.clientX; lastY = e.clientY; vp.setPointerCapture(e.pointerId);
+  });
+  vp.addEventListener("pointermove", (e) => {
+    if (!panning) return;
+    cam.x += e.clientX - lastX; cam.y += e.clientY - lastY; lastX = e.clientX; lastY = e.clientY; apply();
+  });
+  vp.addEventListener("pointerup", () => { if (panning) { panning = false; h.onCamera({ ...cam }); } });
+  const center2 = () => { const r = vp.getBoundingClientRect(); return [r.width / 2, r.height / 2] as const; };
+  app.querySelector("#ed-zin")!.addEventListener("click", () => { const [mx, my] = center2(); zoomAt(mx, my, 1.2); });
+  app.querySelector("#ed-zout")!.addEventListener("click", () => { const [mx, my] = center2(); zoomAt(mx, my, 1 / 1.2); });
+  app.querySelector("#ed-zreset")!.addEventListener("click", () => { cam.zoom = 1; cam.x = 0; cam.y = 0; apply(); h.onCamera({ ...cam }); });
 }

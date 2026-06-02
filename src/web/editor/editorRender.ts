@@ -24,6 +24,7 @@ export interface EditData {
   walls: { a: string; b: string }[]; // 인접·미연결(점선 고스트)
   cells: { q: number; r: number; occupied: boolean }[];
   catalog: { type: NodeType; icon: string; name: string }[];
+  camera: { zoom: number; x: number; y: number }; // 뷰포트 카메라(줌·팬) — 편집 중 보존
 }
 export type EditorData = ListData | EditData;
 
@@ -39,6 +40,7 @@ export interface EditorHandlers {
   onMoveNode: (id: string, q: number, r: number) => void;
   onNodeClick: (id: string) => void;
   onToggleEdge: (a: string, b: string) => void;
+  onCamera: (cam: { zoom: number; x: number; y: number }) => void; // 카메라 변경 영속(재렌더 없음)
   onDeleteSel: () => void;
   onTestCurrent: () => void;
   // 층 그래프 패널 (E3)

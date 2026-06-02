@@ -19,6 +19,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
   let draft: RunDef | null = null;
   let floorIdx = 0;
   let sel: string | null = null;
+  let camera = { zoom: 1, x: 0, y: 0 };
 
   const floor = (): FloorDef => draft!.floors[floorIdx];
   const save = () => { if (draft) saveDraft(draft); };
@@ -28,7 +29,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
     if (!def) return;
     if (isDraft(id)) draft = def;
     else { draft = cloneAsDraft(def); saveDraft(draft); } // repo 런은 드래프트로 복제 후 편집
-    floorIdx = 0; sel = null; mode = "edit";
+    floorIdx = 0; sel = null; camera = { zoom: 1, x: 0, y: 0 }; mode = "edit";
     deps.rerender();
   }
 
@@ -63,6 +64,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       walls: adjacentPairs(f).filter((p) => !connected.has(edgeKey(p.a, p.b))), // 인접·미연결(점선)
       cells: gridCells(f).map((c) => ({ q: c.q, r: c.r, occupied: !!nodeAt(f, c.q, c.r) })),
       catalog: CATALOG_TYPES.map((t) => ({ type: t, icon: TYPE_ICON[t], name: TYPE_NAME[t] })),
+      camera: { ...camera },
     };
   }
 
@@ -82,6 +84,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       onMoveNode(id, q, r) { if (!draft) return; moveNode(floor(), id, q, r); save(); deps.rerender(); },
       onNodeClick(id) { if (!draft) return; sel = sel === id ? null : id; deps.rerender(); }, // 선택 전용
       onToggleEdge(a, b) { if (!draft) return; toggleEdge(floor(), a, b); save(); deps.rerender(); }, // 변 클릭=연결/벽 토글
+      onCamera(cam) { camera = cam; }, // 영속만(DOM은 호출자가 직접 갱신 — 재렌더 없음)
       onDeleteSel() { if (!draft || !sel) return; deleteNode(floor(), sel); sel = null; save(); deps.rerender(); },
       onTestCurrent() { if (draft && validateRun(draft).ok) deps.testRun(draft); },
       onAddFloor() { if (!draft) return; addFloor(draft); floorIdx = draft.floors.length - 1; sel = null; save(); deps.rerender(); },
