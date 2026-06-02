@@ -59,7 +59,10 @@ src/core/
     map.ts          헥스 타일맵 생성: hid · pickType · forwardIds · genMap (axial q,r·좌표인접=간선·프루닝)
     types.ts        런 도메인 타입(leaf): RunPhase·RewardOption·RunState·NodeStatus·RunView
     rewards.ts      genRewards(강화/학습 3택1) · damagingSkills (순수 생성; 적용은 run.ts)
-    run.ts          createRun · enterNode · resolveBattleEnd · chooseReward · setActiveSkill(로드아웃) · movePartyMember(진형 배치/교대, 맵전용) · buyShopOffer/leaveShop(상점) · chooseEncounterOption(인카운터) (+ node/completeNode/healParty/generateShop/applyOutcome)
+    run.ts          오케스트레이터: createRun · enterNode · advanceAct · resolveBattleEnd · chooseReward · setActiveSkill(로드아웃) · movePartyMember(진형 배치/교대, 맵전용)
+    helpers.ts      공유 변이(leaf): node · healParty(+partyHpChange) · completeNode(+nodeClear) · upgradeOwned · learnOwned
+    shop.ts         상점(7.2): generateShop · buyShopOffer · leaveShop
+    encounter.ts    인카운터(7.2): applyOutcome · chooseEncounterOption
     items.ts        장착(4.3): equipItem/unequipItem(maxHp 재계산) · genItemOffers(상점)/itemRewardOptions(보상) · 인벤토리 왕복
     save.ts         런 이어하기 직렬화(순수): serializeRun/deserializeRun (Rng→{__rng:state} 치환·복원)
     passives.ts     모험(run) 스코프 특성/패시브 디스패처: fireRunTrigger(노드/골드/파티HP 트리거·재진입 가드). compileRules 재사용
