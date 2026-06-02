@@ -98,7 +98,9 @@ src/core/
 | `src/data/items.ts` | data | 장착 아이템(4.3) — 무기(dmgFlat·crit) / 방어구(hp·쉴드획득). `ItemDef`는 content.ts | `ITEMS` · `ITEM_POOL` |
 | `src/cli/play.ts` | cli | 대화형/`--demo` 터미널 드라이버 | (엔트리) |
 | `src/cli/ascii.ts` | cli | ASCII 보드 렌더(뷰 — core 아님) | `renderAscii` |
-| `src/web/main.ts` | web | 웹 엔트리·**앱 상태기계**(title↔hub↔run, `appState`/`runActive`/`pauseOpen`)+런 컨트롤러. 오버레이 조립은 `overlay.ts` | (엔트리) |
+| `src/web/main.ts` | web | 웹 엔트리·**앱 상태기계**(title↔hub↔run, `appState`/`runActive`/`pauseOpen`)+런 컨트롤러·전투 루프·핸들러. 편성=`hub.ts`·영속=`save.ts`·오버레이=`overlay.ts` 위임 | (엔트리) |
+| `src/web/hub.ts` | web | **본거지 편성 컨트롤러**(`createHub`) — playable 풀에서 1~4명 선택(영구) 캡슐화 + 선택 로스터로 런 생성. `makeRun`·`data`·`toggle` | `createHub` |
+| `src/web/save.ts` | web | **런 이어하기 영속화**(`spr_save_v1`) — 순수(run 인자). `saveRun`·`loadRun`·`clearSave` | `saveRun` · `loadRun` · `clearSave` |
 | `src/web/shell.ts` | web | **게임 흐름 셸** — 타이틀·본거지(집)·일시정지 화면. 본거지=캐릭터 편성 선택 그리드(playable 풀 1~4명 토글, 숙련도 표시) / 런 중=현재 파티+이어하기. 런 바깥 | `renderTitle` · `renderHub` · `renderPause` · `ShellHandlers` |
 | `src/web/overlay.ts` | web | **오버레이 컨트롤러**(`createOverlay`) — 맵=파티 편성 / 전투=단독 캐릭터 시트. `buildSheetData`·`buildBattleSheet`·`renderOverlay` + 시트/파티뷰 핸들러. main이 `{app,ui,getRun,render}` 주입 | `createOverlay` |
 | `src/web/render.ts` | web | **전투 렌더** — 영속 셸(svg·header·battlelayout) 1회 생성 후 **존 갱신**(.battlemain/.battleside). **.battleleft는 TimelinePanel이 소유**(통짜 재렌더서 분리). 셀 타겟팅·SVG 화살표. renderApp(…, panel) | `renderApp` · `avatarHtml` |

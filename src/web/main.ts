@@ -2,29 +2,24 @@
 // 전투는 render.ts(renderApp) 재사용, 맵/보상/결과는 runRender.ts. (7장)
 import { step } from "../core/engine.ts";
 import { chooseAction } from "../core/ai.ts";
-import { createRun, enterNode, resolveBattleEnd, chooseReward, setActiveSkill, buyShopOffer, leaveShop, chooseEncounterOption, serializeRun, deserializeRun, getRunView, type RunState } from "../core/run.ts";
+import { enterNode, resolveBattleEnd, chooseReward, setActiveSkill, buyShopOffer, leaveShop, chooseEncounterOption, getRunView, type RunState } from "../core/run.ts";
 import type { Action } from "../core/types.ts";
 import { SKILLS } from "../data/skills.ts";
 import { CHARACTERS } from "../data/characters.ts";
-import { MODES, rosterFromIds } from "../data/modes.ts";
-import { masteryMap, grantWin, masteryInfo, getRoster, setRoster } from "./meta.ts";
+import { grantWin } from "./meta.ts";
 import { renderApp, type Handlers, type Ui } from "./render.ts";
 import { renderRunScreen, type RunHandlers } from "./runRender.ts";
 import { createTimelinePanel, type RollView } from "./battle/timelinePanel.ts";
 import { createOverlay } from "./overlay.ts";
-import { renderTitle, renderHub, renderPause, type ShellHandlers, type HubData } from "./shell.ts";
+import { renderTitle, renderHub, renderPause, type ShellHandlers } from "./shell.ts";
+import { createHub } from "./hub.ts";
+import { saveRun, clearSave, loadRun } from "./save.ts";
 
 const app = document.getElementById("app")!;
 const panel = createTimelinePanel(); // 행동서열 패널 — 주사위(rolling)↔전투(live) 한 컴포넌트, 전투 셸에 영속 마운트
 
-const mode = MODES.normal; // 현재 단일 모드(일반). 디자이너가 data/modes.ts에 추가하면 선택 UI로 확장.
-const MAX_ROSTER = 4;
-const PLAYABLE = Object.values(CHARACTERS).filter((c) => c.playable); // 본거지 편성 가능 풀(playable 플래그)
-// 본거지 편성 선택(영구 저장, 기본=모드 로스터). 1~4명.
-let selectedRoster: string[] = getRoster(mode.roster.map((m) => m.charId)).filter((id) => CHARACTERS[id]?.playable).slice(0, MAX_ROSTER);
-if (selectedRoster.length === 0) selectedRoster = mode.roster.map((m) => m.charId).slice(0, MAX_ROSTER);
-/** 모드 설정 + 영구 숙련도로 새 RunState 생성. 선택한 로스터를 기본 포메이션에 배치. */
-function makeRun(s: number) { return createRun(s, rosterFromIds(selectedRoster), mode.acts, { mastery: masteryMap(), useMastery: mode.useMastery }); }
+const hub = createHub(); // 본거지 편성 컨트롤러(선택 로스터·런 생성)
+const makeRun = (s: number) => hub.makeRun(s);
 
 let run: RunState;
 let seed = 42;
@@ -33,12 +28,8 @@ let appState: "title" | "hub" | "run" = "title"; // 게임 흐름 셸 (슬라이
 let runActive = false; // 진행 중 런이 있나(이어하기 가능)
 let pauseOpen = false; // 런 중 일시정지 오버레이
 
-// ── 런 이어하기 영속화 (localStorage, 슬라이스3) ──
-const SAVE_KEY = "spr_save_v1"; // 스키마 변경 시 버전 bump → 구세이브 자연 폐기
-function saveRun(): void { try { localStorage.setItem(SAVE_KEY, serializeRun(run)); } catch { /* 용량/비활성 무시 */ } }
-function clearSave(): void { try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } }
-function loadRun(): RunState | null { try { const s = localStorage.getItem(SAVE_KEY); return s ? deserializeRun(s) : null; } catch { return null; } }
-function persist(): void { if (appState === "run" && runActive) saveRun(); } // 런 진행 중인 상태만 저장
+// 런 이어하기 영속화는 web/save.ts. 런 진행 중인 상태만 저장.
+function persist(): void { if (appState === "run" && runActive) saveRun(run); }
 const ui: Ui = { selectedSkillId: null, hoverCell: null, pickedCells: [], damaged: new Set(), moved: new Set(), seed, sheetCharId: null, sheetUid: null, partyOpen: false, sheetDetail: false };
 
 function resetUi(): void {
@@ -63,24 +54,12 @@ const overlay = createOverlay({ app, ui, getRun: () => run, render });
 
 let introRound = 0; // 마지막으로 주사위 연출한 라운드 (라운드마다 1회)
 
-function hubData(): HubData {
-  return {
-    pool: PLAYABLE.map((c) => ({ charId: c.id, name: c.name, avatar: c.avatar, mastery: masteryInfo(c.id), selected: selectedRoster.includes(c.id) })),
-    selectedCount: selectedRoster.length,
-    maxRoster: MAX_ROSTER,
-    party: run.party.map((m) => ({ charId: m.charId, name: CHARACTERS[m.charId].name, avatar: CHARACTERS[m.charId].avatar })),
-    runActive,
-    act: runActive ? run.act : undefined,
-    totalActs: run.acts.length,
-  };
-}
-
 function render(): void {
   // 최상위: 타이틀/집은 런 바깥 (오버레이 제거 후 전환)
   if (appState !== "run") {
     app.querySelector(".pause-overlay")?.remove();
     if (appState === "title") renderTitle(app, shellHandlers);
-    else renderHub(app, hubData(), shellHandlers);
+    else renderHub(app, hub.data(run, runActive), shellHandlers);
     return;
   }
   if (run.phase === "battle" && run.battle) {
@@ -286,10 +265,7 @@ const shellHandlers: ShellHandlers = {
   onToTitle() { appState = "title"; pauseOpen = false; runActive = false; clearSave(); render(); },
   onToggleChar(charId) {
     if (runActive) return; // 런 중엔 편성 잠금
-    const i = selectedRoster.indexOf(charId);
-    if (i >= 0) { if (selectedRoster.length > 1) selectedRoster.splice(i, 1); } // 최소 1명 유지
-    else if (selectedRoster.length < MAX_ROSTER) selectedRoster.push(charId); // 최대 4명
-    setRoster(selectedRoster);
+    hub.toggle(charId);
     render();
   },
 };
