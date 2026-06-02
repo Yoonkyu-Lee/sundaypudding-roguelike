@@ -1,8 +1,10 @@
 // 맵 에디터 컨트롤러 — 목록↔편집 모드 상태 + 핸들러. main은 run 수명주기 콜백만 주입.
-import { validateRun, hexAdjacent } from "../../core/run.ts";
+import { validateRun } from "../../core/run.ts";
 import type { FloorDef, RunDef } from "../../core/types.ts";
 import { listRuns, getRun, saveDraft, deleteDraft, blankRun, exportRun, isDraft, cloneAsDraft } from "./store.ts";
-import { addNode, deleteNode, toggleEdge, gridCells, nodeAt, addFloor, deleteFloor, moveFloor } from "./ops.ts";
+import { addNode, moveNode, deleteNode, toggleEdge, gridCells, nodeAt, adjacentPairs, addFloor, deleteFloor, moveFloor } from "./ops.ts";
+
+const edgeKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 import { CATALOG_TYPES, TYPE_ICON, TYPE_NAME } from "../nodeMeta.ts";
 import type { EditorData, EditorHandlers } from "./editorRender.ts";
 
@@ -44,7 +46,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
     const f = floor();
     const v = validateRun(draft!);
     const fv = v.floors[floorIdx];
-    const selNode = sel ? f.nodes.find((n) => n.id === sel) : null;
+    const connected = new Set(f.edges.map((e) => edgeKey(e.from, e.to)));
     return {
       mode: "edit",
       name: draft!.name,
@@ -57,9 +59,9 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       floors: draft!.floors.map((fl, i) => ({ name: fl.name ?? `층 ${i + 1}`, valid: v.floors[i].ok })),
       floorIdx,
       nodes: f.nodes.map((n) => ({ id: n.id, type: n.type, q: n.q, r: n.r, icon: TYPE_ICON[n.type], name: TYPE_NAME[n.type] })),
-      edges: f.edges.map((e) => ({ from: e.from, to: e.to })),
+      edges: f.edges.map((e) => ({ a: e.from, b: e.to })), // 연결(실선)
+      walls: adjacentPairs(f).filter((p) => !connected.has(edgeKey(p.a, p.b))), // 인접·미연결(점선)
       cells: gridCells(f).map((c) => ({ q: c.q, r: c.r, occupied: !!nodeAt(f, c.q, c.r) })),
-      connectable: selNode ? f.nodes.filter((n) => n.id !== sel && hexAdjacent(selNode, n)).map((n) => n.id) : [],
       catalog: CATALOG_TYPES.map((t) => ({ type: t, icon: TYPE_ICON[t], name: TYPE_NAME[t] })),
     };
   }
@@ -77,16 +79,9 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
         else deps.toTitle();
       },
       onPlaceNode(type, q, r) { if (!draft) return; addNode(floor(), type, q, r); save(); deps.rerender(); },
-      onNodeClick(id) {
-        if (!draft) return;
-        const f = floor();
-        if (sel && sel !== id) {
-          const a = f.nodes.find((n) => n.id === sel), b = f.nodes.find((n) => n.id === id);
-          if (a && b && hexAdjacent(a, b)) { toggleEdge(f, sel, id); save(); deps.rerender(); return; } // 인접 → 변 토글(선택 유지)
-        }
-        sel = sel === id ? null : id;
-        deps.rerender();
-      },
+      onMoveNode(id, q, r) { if (!draft) return; moveNode(floor(), id, q, r); save(); deps.rerender(); },
+      onNodeClick(id) { if (!draft) return; sel = sel === id ? null : id; deps.rerender(); }, // 선택 전용
+      onToggleEdge(a, b) { if (!draft) return; toggleEdge(floor(), a, b); save(); deps.rerender(); }, // 변 클릭=연결/벽 토글
       onDeleteSel() { if (!draft || !sel) return; deleteNode(floor(), sel); sel = null; save(); deps.rerender(); },
       onTestCurrent() { if (draft && validateRun(draft).ok) deps.testRun(draft); },
       onAddFloor() { if (!draft) return; addFloor(draft); floorIdx = draft.floors.length - 1; sel = null; save(); deps.rerender(); },

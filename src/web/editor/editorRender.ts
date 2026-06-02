@@ -20,9 +20,9 @@ export interface EditData {
   floors: { name: string; valid: boolean }[]; // 층 그래프 패널(선형)
   floorIdx: number;
   nodes: EditNode[];
-  edges: { from: string; to: string }[];
+  edges: { a: string; b: string }[]; // 연결된 변(실선)
+  walls: { a: string; b: string }[]; // 인접·미연결(점선 고스트)
   cells: { q: number; r: number; occupied: boolean }[];
-  connectable: string[];
   catalog: { type: NodeType; icon: string; name: string }[];
 }
 export type EditorData = ListData | EditData;
@@ -34,9 +34,11 @@ export interface EditorHandlers {
   onDelete: (id: string) => void;
   onEdit: (id: string) => void;
   onBack: () => void;
-  // 편집 화면 (E2)
+  // 편집 화면 (E2/E4)
   onPlaceNode: (type: NodeType, q: number, r: number) => void;
+  onMoveNode: (id: string, q: number, r: number) => void;
   onNodeClick: (id: string) => void;
+  onToggleEdge: (a: string, b: string) => void;
   onDeleteSel: () => void;
   onTestCurrent: () => void;
   // 층 그래프 패널 (E3)
