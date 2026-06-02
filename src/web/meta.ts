@@ -7,7 +7,7 @@ const XP_PER_WIN = 2; // 전투 승리당 생존 아군 1인 XP
 const XP_PER_LEVEL = 8; // 레벨업당 누적 XP (≈ 4승/레벨, 천천히)
 
 export interface MasteryEntry { level: number; xp: number; }
-export interface MetaState { mastery: Record<string, MasteryEntry>; }
+export interface MetaState { mastery: Record<string, MasteryEntry>; roster?: string[]; }
 
 const levelOf = (xp: number) => Math.floor(xp / XP_PER_LEVEL);
 
@@ -44,3 +44,9 @@ export function masteryInfo(charId: string): { level: number; xpInLevel: number;
   const e = meta.mastery[charId] ?? { level: 0, xp: 0 };
   return { level: e.level, xpInLevel: e.xp % XP_PER_LEVEL, xpPerLevel: XP_PER_LEVEL, tier: unlockedTier(e.level) };
 }
+
+/** 본거지 편성: 저장된 선택 로스터(없으면 fallback). 다음 세션·런에도 기억. */
+export function getRoster(fallback: string[]): string[] {
+  return meta.roster && meta.roster.length > 0 ? meta.roster : fallback;
+}
+export function setRoster(charIds: string[]): void { meta.roster = [...charIds]; saveMeta(); }

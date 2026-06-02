@@ -86,13 +86,13 @@ src/core/
 | `src/data/events.ts` | data | 인카운터 이벤트(7.2) — 제목·텍스트·선택지(확정/도박)·결과(heal/hurt/gold/강화/학습) | `ENCOUNTER_EVENTS` · `EncounterEvent`/`EncounterOutcome` |
 | `src/data/maps.ts` | data | 맵 생성 값(7.1) + **3액트 맵 구성(7.3, 깊이·엘리트 램프)** (`NodeType`/`MapGenConfig`는 content.ts) | `ACTS` · `DEFAULT_MAP` |
 | `src/data/formations.ts` | data | 포메이션 열보너스 배치(총량보존, 6장) | `STANDARD_FORMATION` |
-| `src/data/modes.ts` | data | **게임 모드(0.1/7.4)** — `GameMode`(roster·acts·useMastery). '일반' 1개, 디자이너가 캠페인/챌린지 추가 | `MODES` · `DEFAULT_MODE` |
-| `src/web/meta.ts` | web | **영구 숙련도 메타**(레벨/XP, 별도 세이브 `spr_meta_v1`) — `grantWin`(전투 승리 XP)·`masteryMap`(런 주입)·`masteryInfo`(허브) | `grantWin` · `masteryMap` · `masteryInfo` |
+| `src/data/modes.ts` | data | **게임 모드(0.1/7.4)** — `GameMode`(roster·acts·useMastery). '일반' 1개, 디자이너가 캠페인/챌린지 추가. `rosterFromIds`=선택 캐릭→기본 포메이션 배치 | `MODES` · `DEFAULT_MODE` · `rosterFromIds` |
+| `src/web/meta.ts` | web | **영구 메타**(레벨/XP + 편성 로스터, 별도 세이브 `spr_meta_v1`) — `grantWin`(전투 승리 XP)·`masteryMap`/`masteryInfo`(허브)·`getRoster`/`setRoster`(편성 선택 영구) | `grantWin` · `masteryMap` · `masteryInfo` · `getRoster` · `setRoster` |
 | `src/data/items.ts` | data | 장착 아이템(4.3) — 무기(dmgFlat·crit) / 방어구(hp·쉴드획득). `ItemDef`는 content.ts | `ITEMS` · `ITEM_POOL` |
 | `src/cli/play.ts` | cli | 대화형/`--demo` 터미널 드라이버 | (엔트리) |
 | `src/cli/ascii.ts` | cli | ASCII 보드 렌더(뷰 — core 아님) | `renderAscii` |
 | `src/web/main.ts` | web | 웹 엔트리·**앱 상태기계**(title↔hub↔run, `appState`/`runActive`/`pauseOpen`)+런 컨트롤러. 오버레이 조립은 `overlay.ts` | (엔트리) |
-| `src/web/shell.ts` | web | **게임 흐름 셸** — 타이틀·본거지(집)·일시정지 화면. 런 바깥 | `renderTitle` · `renderHub` · `renderPause` · `ShellHandlers` |
+| `src/web/shell.ts` | web | **게임 흐름 셸** — 타이틀·본거지(집)·일시정지 화면. 본거지=캐릭터 편성 선택 그리드(playable 풀 1~4명 토글, 숙련도 표시) / 런 중=현재 파티+이어하기. 런 바깥 | `renderTitle` · `renderHub` · `renderPause` · `ShellHandlers` |
 | `src/web/overlay.ts` | web | **오버레이 컨트롤러**(`createOverlay`) — 맵=파티 편성 / 전투=단독 캐릭터 시트. `buildSheetData`·`buildBattleSheet`·`renderOverlay` + 시트/파티뷰 핸들러. main이 `{app,ui,getRun,render}` 주입 | `createOverlay` |
 | `src/web/render.ts` | web | **전투 렌더** — 영속 셸(svg·header·battlelayout) 1회 생성 후 **존 갱신**(.battlemain/.battleside). **.battleleft는 TimelinePanel이 소유**(통짜 재렌더서 분리). 셀 타겟팅·SVG 화살표. renderApp(…, panel) | `renderApp` · `avatarHtml` |
 | `src/web/battle/shared.ts` | web | 공용 소도구(esc·r1·ck·avatarHtml) + UI 타입(Ui·Handlers·TgtCtx) | — |

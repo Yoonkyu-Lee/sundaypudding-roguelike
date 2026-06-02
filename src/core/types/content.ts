@@ -146,6 +146,8 @@ export interface Character {
   critChance: number; // 치명 확률 %, 기본 10 (2.6)
   critMultiplier: number; // 치명 배수, 기본 1.5 (2.6)
   skillIds: string[]; // 보유 풀. 슬라이스에선 앞 4개를 활성으로 사용
+  /** 플레이어가 본거지에서 편성 가능한 아군 후보인가. 적/잡몹은 false/미설정. (엔진 미해석 — 허브 선택 풀 카테고리화) */
+  playable?: boolean;
 }
 
 // ── 장착 아이템 (4.3) ──────────────────────────────────────────────────────

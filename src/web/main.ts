@@ -6,8 +6,8 @@ import { createRun, enterNode, resolveBattleEnd, chooseReward, setActiveSkill, b
 import type { Action } from "../core/types.ts";
 import { SKILLS } from "../data/skills.ts";
 import { CHARACTERS } from "../data/characters.ts";
-import { MODES } from "../data/modes.ts";
-import { masteryMap, grantWin, masteryInfo } from "./meta.ts";
+import { MODES, rosterFromIds } from "../data/modes.ts";
+import { masteryMap, grantWin, masteryInfo, getRoster, setRoster } from "./meta.ts";
 import { renderApp, type Handlers, type Ui } from "./render.ts";
 import { renderRunScreen, type RunHandlers } from "./runRender.ts";
 import { createTimelinePanel, type RollView } from "./battle/timelinePanel.ts";
@@ -18,8 +18,13 @@ const app = document.getElementById("app")!;
 const panel = createTimelinePanel(); // 행동서열 패널 — 주사위(rolling)↔전투(live) 한 컴포넌트, 전투 셸에 영속 마운트
 
 const mode = MODES.normal; // 현재 단일 모드(일반). 디자이너가 data/modes.ts에 추가하면 선택 UI로 확장.
-/** 모드 설정 + 영구 숙련도로 새 RunState 생성. */
-function makeRun(s: number) { return createRun(s, mode.roster, mode.acts, { mastery: masteryMap(), useMastery: mode.useMastery }); }
+const MAX_ROSTER = 4;
+const PLAYABLE = Object.values(CHARACTERS).filter((c) => c.playable); // 본거지 편성 가능 풀(playable 플래그)
+// 본거지 편성 선택(영구 저장, 기본=모드 로스터). 1~4명.
+let selectedRoster: string[] = getRoster(mode.roster.map((m) => m.charId)).filter((id) => CHARACTERS[id]?.playable).slice(0, MAX_ROSTER);
+if (selectedRoster.length === 0) selectedRoster = mode.roster.map((m) => m.charId).slice(0, MAX_ROSTER);
+/** 모드 설정 + 영구 숙련도로 새 RunState 생성. 선택한 로스터를 기본 포메이션에 배치. */
+function makeRun(s: number) { return createRun(s, rosterFromIds(selectedRoster), mode.acts, { mastery: masteryMap(), useMastery: mode.useMastery }); }
 
 let run: RunState;
 let seed = 42;
@@ -60,7 +65,10 @@ let introRound = 0; // 마지막으로 주사위 연출한 라운드 (라운드�
 
 function hubData(): HubData {
   return {
-    roster: mode.roster.map((m) => ({ charId: m.charId, name: CHARACTERS[m.charId].name, avatar: CHARACTERS[m.charId].avatar, mastery: masteryInfo(m.charId) })),
+    pool: PLAYABLE.map((c) => ({ charId: c.id, name: c.name, avatar: c.avatar, mastery: masteryInfo(c.id), selected: selectedRoster.includes(c.id) })),
+    selectedCount: selectedRoster.length,
+    maxRoster: MAX_ROSTER,
+    party: run.party.map((m) => ({ charId: m.charId, name: CHARACTERS[m.charId].name, avatar: CHARACTERS[m.charId].avatar })),
     runActive,
     act: runActive ? run.act : undefined,
     totalActs: run.acts.length,
@@ -276,6 +284,14 @@ const shellHandlers: ShellHandlers = {
   onToHub() { appState = "hub"; pauseOpen = false; if (run.phase === "won" || run.phase === "lost") { runActive = false; clearSave(); } render(); },
   onResume() { pauseOpen = false; render(); },
   onToTitle() { appState = "title"; pauseOpen = false; runActive = false; clearSave(); render(); },
+  onToggleChar(charId) {
+    if (runActive) return; // 런 중엔 편성 잠금
+    const i = selectedRoster.indexOf(charId);
+    if (i >= 0) { if (selectedRoster.length > 1) selectedRoster.splice(i, 1); } // 최소 1명 유지
+    else if (selectedRoster.length < MAX_ROSTER) selectedRoster.push(charId); // 최대 4명
+    setRoster(selectedRoster);
+    render();
+  },
 };
 
 // Esc: 오버레이(파티뷰>시트>타겟팅)를 먼저 닫고, 런 중 다 닫혀 있으면 일시정지 토글

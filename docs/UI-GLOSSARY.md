@@ -8,7 +8,7 @@
 | 도메인 이름 | 무엇 | 코드 | CSS 루트 |
 |---|---|---|---|
 | **타이틀 화면** | 부팅 스플래시 → '시작'(→본거지) | `shell.ts` `renderTitle` | `.title-screen` |
-| **본거지(집)** | 런 밖 허브 — 로스터·숙련도(준비중)·새 런/이어하기/포기 | `shell.ts` `renderHub` | `.hub` |
+| **본거지(집)** | 런 밖 허브. 편성 중=**캐릭터 선택 그리드**(playable 풀에서 1~4명 토글, 카드에 숙련도 Lv·해금T·XP바)+새 런 / 런 중=현재 원정대(읽기전용)+이어하기/포기 | `shell.ts` `renderHub` | `.hub` · `.hub-pickgrid` / `.hub-pick` |
 | **전투 화면** | 전투 진행 전체(3열) | `render.ts` `renderApp` | `.battlelayout` |
 | **맵 화면** | 헥스 노드 경로 선택 | `runRender.ts` `mapScreen` | `.mapwrap` |
 | **상점 화면** | 골드 구매(강화권·범용기·아이템·회복) | `runRender.ts` `shopScreen` | `.shop` |

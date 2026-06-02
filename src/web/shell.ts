@@ -9,10 +9,15 @@ export interface ShellHandlers {
   onToHub: () => void; // 일시정지/승패 → 집으로(진행 유지)
   onResume: () => void; // 일시정지: 재개
   onToTitle: () => void; // → 타이틀
+  onToggleChar: (charId: string) => void; // 집: 편성 선택 토글
 }
 export interface HubMastery { level: number; xpInLevel: number; xpPerLevel: number; tier: number; }
+export interface HubChar { charId: string; name: string; avatar?: string; mastery: HubMastery; selected: boolean; }
 export interface HubData {
-  roster: { charId: string; name: string; avatar?: string; mastery: HubMastery }[];
+  pool: HubChar[]; // 선택 가능(playable) 캐릭 + 선택 여부
+  selectedCount: number;
+  maxRoster: number;
+  party: { charId: string; name: string; avatar?: string }[]; // runActive 시 현재 파티(읽기전용)
   runActive: boolean;
   act?: number;
   totalActs?: number;
@@ -28,34 +33,41 @@ export function renderTitle(app: HTMLElement, h: ShellHandlers): void {
   app.querySelector("#startbtn")!.addEventListener("click", () => h.onStart());
 }
 
-/** 집(허브) — 플레이어의 본거지. 로스터·숙련도(준비 중)·런 시작/이어하기. */
+// 편성 선택 카드 (playable 캐릭) — 클릭=토글. 숙련도 Lv/해금 tier 표시.
+function poolCard(m: HubChar): string {
+  const pct = Math.round((m.mastery.xpInLevel / m.mastery.xpPerLevel) * 100);
+  return `<button class="hub-pick${m.selected ? " on" : ""}" data-pick="${m.charId}" title="${m.selected ? "편성 해제" : "편성에 추가"}">
+    <span class="hub-pick-check">${m.selected ? "✓" : ""}</span>
+    ${avatarHtml(m.avatar, "avt")}<span class="hub-nm">${esc(m.name)}</span>
+    <span class="hub-pick-lv">Lv ${m.mastery.level} · 해금 T${m.mastery.tier}</span>
+    <span class="hub-mst-bar"><span class="hub-mst-fill" style="width:${pct}%"></span></span>
+  </button>`;
+}
+
+/** 집(허브) — 플레이어의 본거지. 편성 중 = 캐릭터 선택(1~max), 런 중 = 현재 파티+이어하기. */
 export function renderHub(app: HTMLElement, d: HubData, h: ShellHandlers): void {
-  const cards = d.roster
-    .map((m) => `<div class="hub-mem">${avatarHtml(m.avatar, "avt")}<span class="hub-nm">${esc(m.name)}</span></div>`)
-    .join("");
-  const mastery = d.roster
-    .map((m) => {
-      const pct = Math.round((m.mastery.xpInLevel / m.mastery.xpPerLevel) * 100);
-      return `<div class="hub-mst"><span class="hub-mst-nm">${esc(m.name)}</span><span class="hub-mst-lv">Lv ${m.mastery.level}</span>
-        <div class="hub-mst-bar"><div class="hub-mst-fill" style="width:${pct}%"></div></div>
-        <span class="hub-mst-tier" title="보상에 출현 가능한 최대 스킬 tier">해금 T${m.mastery.tier}</span></div>`;
-    })
-    .join("");
-  const controls = d.runActive
-    ? `<button class="act" id="resumebtn">▶ 이어하기${d.act ? ` (액트 ${d.act}/${d.totalActs})` : ""}</button><button class="act ghost" id="abandonbtn">런 포기</button>`
-    : `<button class="act" id="newrunbtn">⚔ 새 런 시작</button>`;
+  let body: string;
+  if (d.runActive) {
+    const cards = d.party.map((m) => `<div class="hub-mem">${avatarHtml(m.avatar, "avt")}<span class="hub-nm">${esc(m.name)}</span></div>`).join("");
+    body = `<section class="hub-sec"><h2>현재 원정대 <span class="hint">런 진행 중 — 편성 잠금</span></h2><div class="hub-mems">${cards}</div></section>
+      <div class="hub-controls"><button class="act" id="resumebtn">▶ 이어하기${d.act ? ` (액트 ${d.act}/${d.totalActs})` : ""}</button><button class="act ghost" id="abandonbtn">런 포기</button></div>`;
+  } else {
+    const grid = d.pool.map(poolCard).join("");
+    const ok = d.selectedCount >= 1;
+    body = `<section class="hub-sec"><h2>편성 <span class="hint">최소 1 · 최대 ${d.maxRoster}명 선택 — 숙련도는 전투 승리로 영구 성장(4.4)</span></h2>
+        <div class="hub-pickgrid">${grid}</div>
+        <div class="hub-pickcount">선택 ${d.selectedCount}/${d.maxRoster}</div></section>
+      <div class="hub-controls"><button class="act" id="newrunbtn"${ok ? "" : " disabled"}>⚔ 새 런 시작</button></div>`;
+  }
   app.innerHTML = `<div class="hub">
     <header><h1>🏠 본거지</h1><button class="hub-link" id="totitlebtn">타이틀로</button></header>
-    <div class="hub-body">
-      <section class="hub-sec"><h2>파티</h2><div class="hub-mems">${cards}</div></section>
-      <section class="hub-sec"><h2>숙련도 <span class="hint">전투 승리로 영구 성장 — 레벨이 보상 스킬 tier 해금(4.4)</span></h2><div class="hub-mstlist">${mastery}</div></section>
-      <div class="hub-controls">${controls}</div>
-    </div>
+    <div class="hub-body">${body}</div>
   </div>`;
   app.querySelector("#newrunbtn")?.addEventListener("click", () => h.onNewRun());
   app.querySelector("#resumebtn")?.addEventListener("click", () => h.onResumeRun());
   app.querySelector("#abandonbtn")?.addEventListener("click", () => h.onAbandonRun());
   app.querySelector("#totitlebtn")!.addEventListener("click", () => h.onToTitle());
+  app.querySelectorAll<HTMLElement>(".hub-pick[data-pick]").forEach((el) => el.addEventListener("click", () => h.onToggleChar(el.dataset.pick!)));
 }
 
 /** 일시정지 오버레이 (런 화면 위에 덧댐). */

@@ -476,3 +476,16 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .hub-mst-bar { height: 7px; background: #11141b; border-radius: 4px; overflow: hidden; }
 .hub-mst-fill { height: 100%; background: var(--accent); transition: width .3s ease; }
 .hub-mst-tier { color: var(--dim); text-align: right; }
+
+/* 허브 편성 선택 그리드 (캐릭터 1~4명 고르기) */
+.hub-pickgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 10px; }
+.hub-pick { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 12px 8px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel2); color: inherit; cursor: pointer; transition: border-color .15s, box-shadow .15s, transform .1s; }
+.hub-pick:hover { border-color: var(--ally); transform: translateY(-1px); }
+.hub-pick.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent), 0 0 0 1px var(--accent); background: rgba(255,209,102,.07); }
+.hub-pick .avt { width: 52px; height: 52px; border-radius: 10px; font-size: 30px; }
+.hub-pick-check { position: absolute; top: 6px; right: 8px; width: 18px; height: 18px; border-radius: 50%; font-size: 12px; line-height: 18px; text-align: center; color: #1a1a1a; background: transparent; }
+.hub-pick.on .hub-pick-check { background: var(--accent); font-weight: 700; }
+.hub-pick-lv { font-size: 10.5px; color: var(--dim); }
+.hub-pick .hub-mst-bar { width: 100%; display: block; }
+.hub-pickcount { margin-top: 12px; text-align: center; font-size: 12px; color: var(--accent); }
+.hub-controls .act[disabled] { opacity: .4; cursor: not-allowed; }
