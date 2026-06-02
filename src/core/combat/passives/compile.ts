@@ -8,11 +8,11 @@ function mk(rule: PassiveRule, via: { kind: "skill" | "trait"; id: string }, idx
   return { rule, via, idx, firedThisTurn: 0, firedThisBattle: 0 };
 }
 
-/** 패시브 = 보유 기준. 적은 ownedSkillIds 미제공 시 캐릭터 skillIds 전체를 보유로 간주. 특성은 항상 적용. */
-export function compileRules(charId: string, ownedSkillIds: string[]): CompiledRule[] {
+/** 스킬 패시브 = 활성(출전) 기준 — `skillIds`는 그 유닛의 활성 스킬. 특성(traitIds)은 항상 적용. */
+export function compileRules(charId: string, skillIds: string[]): CompiledRule[] {
   const out: CompiledRule[] = [];
   let idx = 0;
-  for (const sid of ownedSkillIds) {
+  for (const sid of skillIds) {
     const sk = SKILLS[sid];
     if (!sk?.passives) continue;
     for (const rule of sk.passives) out.push(mk(rule, { kind: "skill", id: sid }, idx++));

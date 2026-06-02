@@ -14,10 +14,13 @@ function ally(charId: string, pos: { row: number; col: number }, owned: string[]
 }
 const enemy1: Encounter = { id: "t", name: "t", allies: [], enemies: [{ charId: "thug", pos: { row: 0, col: 0 } }], boss: false };
 
-test("패시브(보유 기준): u_toughness 보유 → 전투 시작 쉴드 6 (active:false, 편성 무관)", () => {
-  const g = createBattle(1, enemy1, [ally("kim", { row: 0, col: 0 }, ["kim_punch", "u_toughness"], ["kim_punch"])]);
-  const kim = g.units.find((u) => u.charId === "kim")!;
-  assert.equal(kim.shield, 6, "battleStart 패시브로 쉴드 부여");
+test("패시브(활성 기준): u_toughness는 출전(활성)해야 발동 — 보유만으론 미발동", () => {
+  // 보유하지만 미편성(활성 X) → 패시브 미발동
+  const g0 = createBattle(1, enemy1, [ally("kim", { row: 0, col: 0 }, ["kim_punch", "u_toughness"], ["kim_punch"])]);
+  assert.equal(g0.units.find((u) => u.charId === "kim")!.shield, 0, "보유만으론 미발동");
+  // 출전(활성 슬롯에 편성) → battleStart 패시브로 쉴드
+  const g1 = createBattle(1, enemy1, [ally("kim", { row: 0, col: 0 }, ["kim_punch", "u_toughness"], ["kim_punch", "u_toughness"])]);
+  assert.equal(g1.units.find((u) => u.charId === "kim")!.shield, 6, "출전 시 발동");
 });
 
 test("active:false 스킬은 전투 스킬창에 안 뜸", () => {
@@ -78,7 +81,7 @@ test("모험 특성: 전의(김두한) 보스 진입 → 다음 전투 계승 + 
   assert.ok(pend.some((s) => s.statusId === "might"), "보스 진입 → pending might");
   // 계승 주입: startStatuses → 전투 시작 시 아군 상태로
   const enc: Encounter = { id: "t", name: "t", allies: [], enemies: [{ charId: "thug", pos: { row: 0, col: 0 } }], boss: false };
-  const g = createBattle(1, enc, [{ charId: "kim", pos: { row: 0, col: 0 }, hp: 46, maxHp: 46, skillDmgBonus: {}, activeSkillIds: ["kim_punch"], ownedSkillIds: ["kim_punch"], startStatuses: run.pendingStatuses["kim"] }]);
+  const g = createBattle(1, enc, [{ charId: "kim", pos: { row: 0, col: 0 }, hp: 46, maxHp: 46, skillDmgBonus: {}, activeSkillIds: ["kim_punch"], startStatuses: run.pendingStatuses["kim"] }]);
   assert.ok(g.units.find((u) => u.charId === "kim")!.statuses.some((s) => s.defId === "might"), "계승 상태 전투 주입");
 });
 

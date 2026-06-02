@@ -47,7 +47,8 @@ export function fireRunTrigger(run: RunState, ctx: RunTriggerCtx): void {
   try {
     for (const m of run.party) {
       if (m.hp <= 0) continue;
-      const rules = compileRules(m.charId, m.ownedSkillIds);
+      const rules = compileRules(m.charId, m.activeSkillIds); // 스킬 패시브=활성(출전) 기준, 특성=항상
+
       for (const cr of rules) {
         const w = cr.rule.when;
         if (w.on !== ctx.on) continue;

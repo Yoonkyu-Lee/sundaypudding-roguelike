@@ -200,26 +200,37 @@
 
 ---
 
-## 🎛 특성(trait) / 패시브(passive) — when/if/then 룰 언어
+## 🎛 효과 설계 — 액티브 · 패시브 · 특성
 
-**상시 효과**(플레이어가 전투 중 발동하지 않는 효과)를 만드는 미니 언어. 둘 다 같은 룰 형식을 쓴다:
+게임의 효과는 **세 자리** 중 하나에 들어간다. 효과 어휘(피해/회복/상태부여…)는 공유하지만 **작동 방식·적용 조건**이 다르다:
+
+| 종류 | 어디에 | 언제 발동 | 형식 |
+|---|---|---|---|
+| **액티브** | `skills.ts` `effects[]` | 플레이어가 전투 스킬창에서 **선택** | `SkillEffect`(타겟·명중·치명·면적은 스킬이 입힘) |
+| **패시브** | `skills.ts` `passives[]` | 그 스킬을 **출전(활성 4)**하면 상시 | `PassiveRule`(when/if/then) |
+| **특성(trait)** | `traits.ts` + `characters.ts traitIds` | 캐릭터가 가지면 **항상** | `PassiveRule`(when/if/then) |
+
+- **액티브**는 **무조건 피해/명중·쿨타임·타겟팅 정보**가 있어야 함(스킬 파이프라인이 명중·치명·면적 처리). **패시브/특성**은 트리거에 반응하며 효과가 **스스로 target을 지정**.
+- **`active` 태그**: 스킬 기본 `active`(스킬창 노출). `active:false`=순수 패시브(스킬창 비노출, 출전 슬롯엔 편성 가능). `effects`+`passives` 둘 다 = **하이브리드**.
+- **패시브 발동 = 출전 기준**(중요): 스킬을 활성 4슬롯에 **편성해야** 그 패시브가 작동(보유만으론 X). 순수 패시브 스킬도 슬롯을 차지. **특성은 편성 무관, 항상.**
 
 ```ts
 PassiveRule = { when: Trigger, if?: Condition[], then: Effect[], maxPerTurn?, maxPerBattle? }
-```
-> `when` 시점에, `if` 조건이 **모두** 참이면(없으면 항상), `then` 효과를 순서대로 실행.
+// when 시점에, if 조건이 모두 참이면(없으면 항상), then 효과를 순서대로 실행.
 
-- **특성(trait)** = 캐릭터를 정의. `traits.ts`에 `TraitDef { id, name, icon?, desc?, rules: PassiveRule[] }`를 만들고, `characters.ts`의 `traitIds: ["..."]`로 부여. **여러 개 가능**.
-- **패시브(passive)** = 스킬을 **보유**하면(편성/출전 무관) 작동. `skills.ts`의 스킬에 `passives: PassiveRule[]`.
-- **능동기 태그**: 스킬은 기본 `active`(전투 스킬창에서 발동). 순수 패시브 스킬은 `active: false`(스킬창에 안 뜸). 한 스킬에 `effects`(능동)와 `passives`(상시)를 **둘 다** 넣으면 **하이브리드**.
-
-```ts
-// 하이브리드 예: 능동 강타 + "크리 시 출혈" 패시브
+// 하이브리드 예: 능동 강타 + "크리 시 출혈" 패시브 (출전해야 패시브 작동)
 { id:"kim_punch", name:"종로의 주먹", target:"enemy", cooldown:0, accuracy:90, effects:[{kind:"damage",amount:14}],
   passives:[{ when:{on:"onHit",as:"attacker",crit:true}, then:[{do:"applyStatus",statusId:"bleed",stacks:1,duration:2,target:"subject"}] }] }
-// 특성 예(traits.ts): 적 처치 시 자가 회복
+// 특성 예(traits.ts, 항상 작동): 적 처치 시 자가 회복
 { id:"bloodlust", name:"피의 갈망", rules:[{ when:{on:"kill"}, then:[{do:"heal",amount:8,target:"self"}] }] }
 ```
+
+### ⏱ 스코프: 하나의 전투 vs 모험 전체 (반드시 구분)
+when/if/then 룰은 **두 스코프**로 갈린다 — 트리거가 스코프를 결정하고, 한 룰은 한 스코프에만 속한다:
+- **전투 스코프(한 전투 안)** — 턴/라운드/주사위/명중/피해/회복/상태/이동/사망. 소유자=전투 유닛.
+- **모험 스코프(런 전체)** — 노드 진입/클리어·액트 시작·골드 획득·파티 HP·다음 전투 계승. 소유자=파티원.
+
+> 디자인 적절성은 디자이너 판단: 스킬 패시브는 **웬만하면 전투 스코프**(출전해야 켜지므로), 모험 전반 효과는 주로 **특성**으로.
 
 ### Trigger 카탈로그 (`when`)
 **전투 스코프**(소유자=전투 유닛). `self`=룰 소유자 / `subject`=이벤트 상대(피격자·턴 주체 등) / `target`=현재 행동 대상.

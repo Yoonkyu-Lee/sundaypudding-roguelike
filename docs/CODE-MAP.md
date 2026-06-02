@@ -138,7 +138,7 @@ src/core/
 | 상태이상 원장 부여/틱(DoT+HoT) (3.1/3.5) | `combat/status.ts`: `applyStatusInstance`/`tickPeriodic` |
 | 상태 QUERY(스택합·플래그·crit%) | `util.ts`: `totalStacks`/`statusNumSum`/`statusFlag`/`critPctOf` |
 | 스킬 효과 디스패치(뎀/상태/쉴드/힐/이동/끼어들기) (3.9) | `combat/skills.ts`: `applyTargetEffects`/`applySelfEffects` |
-| 특성/패시브 룰 발동(when/if/then) | **전투**: `combat/passives/`(각 전투 훅이 `fireTrigger` 인라인 → `Unit.rules`). **모험**: `run/passives.ts fireRunTrigger`(enterNode=nodeEnter·completeNode=nodeClear·advanceAct=actStart·resolveBattleEnd=goldGain·healParty=partyHpChange). 보유 스킬 passives + 캐릭 traitIds = 양쪽 공통(`compileRules`). 결정론·재진입 가드 |
+| 특성/패시브 룰 발동(when/if/then) | **전투**: `combat/passives/`(각 전투 훅이 `fireTrigger` 인라인 → `Unit.rules`). **모험**: `run/passives.ts fireRunTrigger`(enterNode=nodeEnter·completeNode=nodeClear·advanceAct=actStart·resolveBattleEnd=goldGain·healParty=partyHpChange). **활성(출전) 스킬 passives + 캐릭 traitIds(항상)** = 양쪽 공통(`compileRules`). 결정론·재진입 가드 |
 | 모험 패시브 버프 계승 | `Effect grantRunStatus` → `RunState.pendingStatuses[charId]` → 다음 `enterNode` 전투 생성 시 `combat/state.ts` allyStates `startStatuses`로 주입 후 1회 소비 |
 | 동적 재배치 (6.4) | `combat/skills.ts`: `moveUnit` |
 | 끼어들기 주체 예측(스킬+버프+특성) (2.11) | `combat/interrupt.ts`: `predictInterruptSubjects` (실행·미리보기 공유) |

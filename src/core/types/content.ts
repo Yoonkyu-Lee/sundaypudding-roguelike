@@ -118,7 +118,7 @@ export interface Skill {
   exclusiveTo?: string;
   /** 능동기 여부. 기본 true(=플레이어가 전투 스킬창에서 발동). false=순수 패시브 → 스킬창 비노출, passives만 작동 */
   active?: boolean;
-  /** 보유 시 상시 작동하는 패시브 룰(편성/출전 무관). 능동 effects와 공존 가능(하이브리드) */
+  /** 출전(활성 4)해야 작동하는 패시브 룰. 능동 effects와 공존 가능(하이브리드). 특성(traits)은 편성 무관 항상 */
   passives?: PassiveRule[];
 }
 
