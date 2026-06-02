@@ -20,9 +20,8 @@ export interface EditData {
   floors: { name: string; valid: boolean }[]; // 층 그래프 패널(선형)
   floorIdx: number;
   nodes: EditNode[];
-  edges: { a: string; b: string }[]; // 연결된 변(실선)
-  walls: { a: string; b: string }[]; // 인접·미연결(점선 고스트)
-  cells: { q: number; r: number; occupied: boolean }[];
+  edges: { a: string; b: string }[]; // 연결된 인접쌍
+  walls: { a: string; b: string }[]; // 인접·미연결 = 세워진 벽
   catalog: { type: NodeType; icon: string; name: string }[];
   camera: { zoom: number; x: number; y: number }; // 뷰포트 카메라(줌·팬) — 편집 중 보존
 }

@@ -90,14 +90,3 @@ export function moveFloor(draft: RunDef, idx: number, dir: number): void {
   if (j < 0 || j >= draft.floors.length) return;
   [draft.floors[idx], draft.floors[j]] = [draft.floors[j], draft.floors[idx]];
 }
-
-/** 드롭/렌더 셀 = 노드 바운딩박스 + 1링(빈 칸 = 드롭 슬롯). axial 사각 영역. */
-export function gridCells(floor: FloorDef): { q: number; r: number }[] {
-  if (floor.nodes.length === 0) return [{ q: 0, r: 0 }];
-  const qs = floor.nodes.map((n) => n.q);
-  const rs = floor.nodes.map((n) => n.r);
-  const out: { q: number; r: number }[] = [];
-  for (let q = Math.min(...qs) - 1; q <= Math.max(...qs) + 1; q++)
-    for (let r = Math.min(...rs) - 1; r <= Math.max(...rs) + 1; r++) out.push({ q, r });
-  return out;
-}

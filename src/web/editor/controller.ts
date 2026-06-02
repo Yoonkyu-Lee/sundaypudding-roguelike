@@ -2,7 +2,7 @@
 import { validateRun } from "../../core/run.ts";
 import type { FloorDef, RunDef } from "../../core/types.ts";
 import { listRuns, getRun, saveDraft, deleteDraft, blankRun, exportRun, isDraft, cloneAsDraft } from "./store.ts";
-import { addNode, moveNode, deleteNode, toggleEdge, gridCells, nodeAt, adjacentPairs, addFloor, deleteFloor, moveFloor } from "./ops.ts";
+import { addNode, moveNode, deleteNode, toggleEdge, adjacentPairs, addFloor, deleteFloor, moveFloor } from "./ops.ts";
 
 const edgeKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 import { CATALOG_TYPES, TYPE_ICON, TYPE_NAME } from "../nodeMeta.ts";
@@ -29,7 +29,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
     if (!def) return;
     if (isDraft(id)) draft = def;
     else { draft = cloneAsDraft(def); saveDraft(draft); } // repo 런은 드래프트로 복제 후 편집
-    floorIdx = 0; sel = null; camera = { zoom: 1, x: 0, y: 0 }; mode = "edit";
+    floorIdx = 0; sel = null; camera = { zoom: 1, x: NaN, y: NaN }; mode = "edit"; // NaN=뷰가 첫 진입 시 중앙 정렬
     deps.rerender();
   }
 
@@ -61,8 +61,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       floorIdx,
       nodes: f.nodes.map((n) => ({ id: n.id, type: n.type, q: n.q, r: n.r, icon: TYPE_ICON[n.type], name: TYPE_NAME[n.type] })),
       edges: f.edges.map((e) => ({ a: e.from, b: e.to })), // 연결(실선)
-      walls: adjacentPairs(f).filter((p) => !connected.has(edgeKey(p.a, p.b))), // 인접·미연결(점선)
-      cells: gridCells(f).map((c) => ({ q: c.q, r: c.r, occupied: !!nodeAt(f, c.q, c.r) })),
+      walls: adjacentPairs(f).filter((p) => !connected.has(edgeKey(p.a, p.b))), // 인접·미연결 = 세워진 벽
       catalog: CATALOG_TYPES.map((t) => ({ type: t, icon: TYPE_ICON[t], name: TYPE_NAME[t] })),
       camera: { ...camera },
     };
