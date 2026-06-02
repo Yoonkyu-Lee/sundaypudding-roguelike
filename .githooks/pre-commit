@@ -1,9 +1,0 @@
-#!/bin/sh
-# 슬라이스 커밋 게이트 — npm run check(줄수캡·코어순수성·배럴·tsc·test·데모회귀).
-# 통과: 활성화 `git config core.hooksPath .githooks` (clone마다 1회). 우회: `git commit --no-verify`.
-npm run check || {
-  echo ""
-  echo "❌ check 게이트 실패 — 커밋 중단. 고치고 다시 커밋."
-  echo "   의도한 동작변경이면: npm run check -- --update (골든 해시 갱신)"
-  exit 1
-}
