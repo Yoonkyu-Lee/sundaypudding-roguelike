@@ -5,6 +5,7 @@ import type { NodeType } from "../../core/types.ts";
 import type { EditData, EditorHandlers } from "./editorRender.ts";
 
 const SIZE = 34;                 // 헥스 중심→꼭짓점
+const WALL_SW = 3.5;             // 벽 선 두께(.ed-wallvis와 일치) — 둥근 캡 보정용
 const W = Math.sqrt(3) * SIZE;   // 헥스 폭
 const R = 14;                    // 격자 반경(±R 셀)
 const OX = W * 1.5 * R + W;      // 원점 오프셋(모든 셀 양수 좌표)
@@ -61,10 +62,13 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
     if (!a || !b) return "";
     const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
     const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
-    const pxu = -dy / len, pyu = dx / len, half = SIZE / 2; // 공유 변 = 중점에서 수직 ±half
-    const x1 = (mx - pxu * half).toFixed(1), y1 = (my - pyu * half).toFixed(1), x2 = (mx + pxu * half).toFixed(1), y2 = (my + pyu * half).toFixed(1);
-    return `<line class="ed-ehit" data-edge="${p.a}|${p.b}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"><title>${p.built ? "벽 — 클릭해 연결" : "연결됨 — 클릭해 벽 세우기"}</title></line>`
-      + `<line class="ed-wallvis${p.built ? " built" : ""}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+    const pxu = -dy / len, pyu = dx / len; // 공유 변 = 중점에서 수직
+    const seg = (half: number) => [mx - pxu * half, my - pyu * half, mx + pxu * half, my + pyu * half].map((v) => v.toFixed(1));
+    const [hx1, hy1, hx2, hy2] = seg(SIZE / 2); // 히트선: 변 전체(호버 영역 넓게)
+    // 시각선: 둥근 캡(WALL_SW/2)이 꼭짓점에 정확히 닿도록 길이를 두께만큼 줄임 → 세로/사선 모두 모서리 균일
+    const [vx1, vy1, vx2, vy2] = seg((SIZE - WALL_SW) / 2);
+    return `<line class="ed-ehit" data-edge="${p.a}|${p.b}" x1="${hx1}" y1="${hy1}" x2="${hx2}" y2="${hy2}"><title>${p.built ? "벽 — 클릭해 연결" : "연결됨 — 클릭해 벽 세우기"}</title></line>`
+      + `<line class="ed-wallvis${p.built ? " built" : ""}" x1="${vx1}" y1="${vy1}" x2="${vx2}" y2="${vy2}"/>`;
   }).join("");
 
   const dead = new Set(d.deadNodes);
