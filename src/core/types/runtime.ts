@@ -57,6 +57,8 @@ export interface Unit {
   statMods: Partial<Record<StatKey, number>>;
   /** 소유자 정규 턴 카운터 (everyNTurns/selfTurnCount 조건용) */
   turnCount: number;
+  /** AI 행동결정 정책 id (data/ai.ts). 없으면 공유 그리디. makeUnit이 charDef에서 복사 */
+  aiProfileId?: string;
 }
 
 /** 장착 슬롯별 아이템 id (4.3). */

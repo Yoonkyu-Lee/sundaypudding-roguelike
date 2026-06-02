@@ -63,6 +63,7 @@ function makeUnit(
     rules: compileRules(c.id, activeIds),
     statMods: {},
     turnCount: 0,
+    aiProfileId: c.aiProfileId,
   };
 }
 

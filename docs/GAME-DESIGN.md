@@ -568,7 +568,8 @@
 - **장착 아이템(4.3)**: 무기(공격상수 dmgFlat·치명 보정)·방어구(HP·쉴드획득 보정), 지닌물건은 후속(슬롯 잠금). `ItemDef`(데이터)+`data/items.ts` / 엔진=makeUnit 비-HP 스탯 합산+`equipDmgFlat`/`equipShieldGainAdd` read훅, HP는 equipItem이 maxHp 재계산. **파티 공유 인벤토리**(`RunState.inventory`) — 상점 `buyItem`·보상 장신구로 획득, **맵에서만** 캐릭터 시트로 장착/교체/해제. 스탯=오직 장착(4.2) 준수. `[엔진 프리미티브 추가]`.
 
 **☐ 미구현 (다음 슬라이스)**
-- 본산 메타 재화·추가 해금(5.3 다, 5장 일부 — 숙련도 XP/tier 해금은 구현) · 여러 모드(캠페인/챌린지) 데이터·모드 선택 UI · 적 전용 AI/패턴 · 적 스탯 액트 스케일링 · 웹 렌더러 고도화 · 밸런싱(골드/가격·이벤트 풀·맵 가중치·숙련도 곡선)
+- **적 전용 AI/패턴(엔진 프리미티브 추가)**: 우선순위 룰 프로파일(`AiProfile`)을 데이터(`data/ai.ts`)로, 캐릭터가 `aiProfileId`로 참조. 엔진 `ai/profile.ts`가 해석(매 턴 합법행동을 prefer/target/weight로 스코어→최고점, 미적용 시 공유 그리디 fallback). 좌익 4명에 healer/assassin/guardian/skirmisher 배정. 결정론(rng 미사용)·데모 골든 불변(데모=잡몹, 프로파일 없음). 카탈로그·작성법=`src/data/README.md`.
+- 본산 메타 재화·추가 해금(5.3 다, 5장 일부 — 숙련도 XP/tier 해금은 구현) · 여러 모드(캠페인/챌린지) 데이터·모드 선택 UI · 적 스탯 액트 스케일링 · 웹 렌더러 고도화 · 밸런싱(골드/가격·이벤트 풀·맵 가중치·숙련도 곡선)
   - (해소됨) ~~근접 도달불가 교착~~ → **`reach` 프리미티브**(동적 도달, 2.4): 근접 스킬은 정적 전방 마스크 대신 "최전열(살아있는 적 최소 열)부터 연속 n칸"을 타격 → 후열만 남아도 그게 전열이 되어 항상 도달, 교착 불가. 빈 열을 건너뛰지 않음(근접=인접, 원거리화 방지).
 - `x`(보유 스킬 상한), DoT `x`(스택당 피해) 등 밸런스 수치 (현재 placeholder 값으로 동작 중)
 
@@ -589,6 +590,7 @@
 - **TurnOrderResolver**: 라운드제(상수/SPD 주사위 서열). `combat/turnOrder.ts`.
 - **특성/패시브 룰 엔진(when/if/then)**: 상시 효과의 디자이너 언어. `PassiveRule = {when:Trigger, if?:Condition[], then:Effect[]}`. **특성**=캐릭터(`data/traits.ts` `TraitDef`+`Character.traitIds`, 항상), **패시브**=스킬 **출전(활성 4)**(`Skill.passives`, `active` 태그로 능동/하이브리드 구분). 전투 훅이 `combat/passives/`의 `fireTrigger`를 인라인 호출(결정론 정렬·재진입 가드). **Trigger**(battleStart/round/turn/everyN/speedRoll/hit/miss/damage/heal/shield/status/move/kill/death/battleEnd…) · **Condition**(hpPct/round/everyN/hasStatus/위치/진영수/chance…) · **Effect**(damage/heal/shield/applyStatus/cleanse/removeStatus/move/grantInterrupt/statMod/modCooldown/modSpeedRoll/rerollSpeed/healByDamage(흡혈)/reflectByDamage(비율반사)/castSkill(액티브 자동시전; **leaf 스킬만**=passives 없는, `validateCastSkill`가 check 게이트서 강제·재귀 방지) · EffTarget other*=자신/대상 제외 광역). 적도 같은 엔진(skillIds passives + traitIds) — 적 특성 콘텐츠 가능. 카탈로그·작성법 = `src/data/README.md`. **모험(run) 스코프**: `run/passives.ts`가 `nodeEnter`/`nodeClear`/`actStart`/`goldGain`/`partyHpChange` 트리거 + `goldDelta`/`healParty`/`grantRunStatus`(계승) 효과 + `nodeTypeIs`/`goldAtLeast` 조건 해석. 전투/모험 같은 `PassiveRule` 스키마 공유.
 - **런 노드 해소**: 전투생성·휴식/상점/인카운터·보상 3택1. `core/run/*`.
+- **AI 행동결정 정책(우선순위 룰)**: "턴이 왔을 때 합법 행동 중 무엇을 고를지"의 디자이너 언어(반응형 패시브와 별개의 *능동* 결정). `AiProfile = { rules: AiRule[] }`, `AiRule = {if?:AiCondition[], prefer?:SkillKindPref, target?:TargetPref, weight?}`. 위→아래 첫 적용가능(조건 참 AND 합법행동 존재) 룰이 결정, 없으면 **공유 그리디 fallback**(도발 우선·최저 HP·최고 명중). **prefer**(damage/heal/shield/applyStatus/cleanse/any) · **target**(lowest/highestHpEnemy·lowestHpAlly·front/backmostEnemy·self·anyEnemy/Ally) · **AiCondition**(selfHpPct·ally/enemyHpPctBelow·self/enemy HasStatus·selfMissingStatus·round·outnumbered·allyCount) · **weight**(backline/frontlineTarget·lowHpTarget·hitChance·critChance, 보조 정렬). 캐릭터가 `aiProfileId`로 참조(없으면 그리디=기존 동작). 결정론(rng 미사용, 동점=인덱스). 스키마=`core/types/ai.ts`, 해석=`ai/profile.ts`, 콘텐츠=`data/ai.ts`. 작성법=`src/data/README.md`.
 
 **프리미티브-갭 결정 프로토콜 (필수·사용자에게 명시):**
 새 기능 요청 → ① 기존 프리미티브 **조합으로 원자적으로 표현 가능한가?** → ② **가능 = 데이터-온리**(`src/data`만 수정, 엔진 불변) → ③ **불가 = 프리미티브 갭**: 엔진 변경 필요. 이때 **구현 전 사용자에게 정해진 형식으로 보고하고 승인받는다**:

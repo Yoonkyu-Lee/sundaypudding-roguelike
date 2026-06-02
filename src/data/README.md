@@ -12,6 +12,7 @@
 | `characters.ts` | 캐릭터 — 스탯(HP/속도/회피/명중/치명)·`skillIds`(learnset)·`avatar`·`playable` |
 | `skills.ts` | 스킬 — 타겟·쿨타임·명중·사정권·면적·**능동 효과(`effects[]`)** + **패시브(`passives[]`)**·`active` 태그·강화 티어 체인 |
 | `traits.ts` | **특성** — 캐릭터를 정의하는 상시 패시브 룰 묶음(`TraitDef`). 캐릭터가 `traitIds`로 참조 |
+| `ai.ts` | **AI 프로파일** — 적/자동플레이의 행동결정 정책(우선순위 룰, `AiProfile`). 캐릭터가 `aiProfileId`로 참조 |
 | `statuses.ts` | 상태이상 — 표준 거동 필드 조합(지속피해/회복·행동봉쇄·배율 등) |
 | `items.ts` | 장착 아이템 — 능력치 보정·무기 데미지·방어구 쉴드 |
 | `formations.ts` | 포메이션 — 열별 보너스 총량(공격/방어) |
@@ -28,6 +29,7 @@
 - **아이템·포메이션·맵·모드·적 배치·인카운터**: 각 스키마대로 값만.
 - **밸런싱**: 모든 수치(데미지·HP·명중·쿨타임·가중치·보상 등)는 데이터라 자유 조정.
 - **learnset / 강화 트리 / 전용기·범용기 구분**: `skillIds`·`nextTierId`·`exclusiveTo`로.
+- **적 AI 성향 제작**: `ai.ts`에 `AiProfile`(우선순위 룰) 추가 → 캐릭터에 `aiProfileId` 지정. 힐러/암살자/탱커 등 패턴을 코드 없이.
 
 ### 현재 프리미티브 카탈로그 (엔진이 이미 해석 — 이걸 조합한다)
 
@@ -37,6 +39,7 @@
 - **StatusDef 거동**: `dot`(지속피해) · `hot`(재생) · `actionDenial`(행동봉쇄) · `damageDealtMult` · `dmgDealtFlat` · `critChanceAdd`/`critMultiplierAdd` · `shieldShred`(쉴드 잠식) · `pierce`(쉴드 무시) · `undying`(불사) · `invincible`(무적) · `taunt`(도발) · `speedMod`(SPD 보정, +상승/−하락) · `grantsInterrupt`
 - **ItemDef**: 능력치 `mods`(hp/회피/명중/치명/속도) · `dmgFlat`(무기) · `shieldGainAdd`(방어구)
 - **맵**: `MapGenConfig`(rows·startWidth·firstRowType·nodeWeights·branch)
+- **AiProfile**(`ai.ts`): `rules[]` 우선순위 룰 — `if`(조건) · `prefer`(스킬 종류) · `target`(타겟 선호) · `weight`(보조 가중치). 캐릭터 `aiProfileId`로 연결
 
 ## 🔧 디자이너 혼자 못 하는 것 (엔진 개발 필요 → 엔지니어에게 요청)
 
@@ -46,7 +49,8 @@
 - **새 상태이상 거동** — 위 StatusDef 필드로 못 만드는 것(예: "맞을 때마다 반사 피해", "턴마다 스택 증가", "특정 효과 면역").
 - **새 면적/타겟팅 규칙** — `AreaShape`·`reach`·칸 마스크로 표현 안 되는 것(예: 대각선, 관통 직선, 사거리 기반 원거리).
 - **새 턴 순서 규칙** — 라운드제 SPD 외(예: 콤보·연계 턴, 행동값 ATB).
-- **새 노드/맵 거동, 적 전용 AI 패턴, 사운드** 등 시스템 레벨.
+- **AI 정책 어휘 확장** — `AiProfile`의 기존 `prefer`/`target`/`AiCondition`/`weight` 목록으로 표현 안 되는 새 결정 기준(예: "쉴드 가진 적 회피", "특정 스킬 콤보 순서"). 목록에 있으면 데이터-온리.
+- **새 노드/맵 거동, 사운드** 등 시스템 레벨.
 
 ### 요청하는 법 (프리미티브 갭)
 
@@ -196,7 +200,30 @@
 
 > **좌표 `Pos`** = `{ row: number, col: number }`. **열(col) 0 = 최전방**, 열이 클수록 후방.
 
----
+### AI 프로파일 (`ai.ts` → `AiProfile`)
+
+적(과 자동플레이)이 **턴마다 합법 행동 중 무엇을 고를지** 정하는 우선순위 룰. 캐릭터에 `aiProfileId: "healer"`처럼 지정하면 작동(없으면 공유 그리디 = 최저 HP·최고 명중·도발 우선).
+
+```ts
+healer: {
+  id: "healer", name: "헌신",
+  rules: [
+    { if: [{ c: "allyHpPctBelow", v: 60 }], prefer: "heal", target: "lowestHpAlly" }, // 위급 아군 치료
+    { prefer: "damage", target: "lowestHpEnemy" },                                    // 아니면 공격(fallback)
+  ],
+},
+```
+
+**해석 규칙**: 룰을 **위→아래** 본다. `if` 조건이 모두 참이고 그 `prefer` 종류의 합법 행동이 실제로 있으면 → 그 룰로 결정(끝). 아니면 다음 룰. 끝까지 안 맞으면 **공유 그리디**로 떨어진다. (결정론 — 무작위 없음, 동점은 행동 인덱스 앞)
+
+| 자리 | 값 |
+|---|---|
+| `prefer` | `damage` · `heal` · `shield` · `applyStatus` · `cleanse` · `any` (스킬 `effects`에 그 종류가 있으면 매칭) |
+| `target` | `lowestHpEnemy` · `highestHpEnemy` · `lowestHpAlly` · `frontmostEnemy` · `backmostEnemy` · `self` · `anyEnemy` · `anyAlly` |
+| `if` (`AiCondition`, AND) | `selfHpPct{cmp,v}` · `allyHpPctBelow{v}` · `enemyHpPctBelow{v}` · `selfHasStatus{statusId}` · `selfMissingStatus{statusId}` · `enemyHasStatus{statusId}` · `round{cmp,v}` · `outnumbered` · `allyCount{cmp,v}` |
+| `weight` (보조 정렬) | `backlineTarget` · `frontlineTarget` · `lowHpTarget` · `hitChance` · `critChance` (각 숫자 — 클수록 그 성향↑) |
+
+> 예) 암살자 = `{ prefer:"damage", target:"lowestHpEnemy", weight:{ backlineTarget:6, lowHpTarget:2 } }` → 뒷열·저체력 적을 우선 저격. 탱커 = `{ if:[{c:"selfHpPct",cmp:"lt",v:45}], prefer:"shield", target:"self" }`를 1순위로.
 
 ---
 

@@ -2,4 +2,5 @@
 // 기존 `from "../core/types.ts"` import 호환 유지. (8.6 타입 스키마 = 명세서)
 export type * from "./types/content.ts";
 export type * from "./types/passives.ts";
+export type * from "./types/ai.ts";
 export type * from "./types/runtime.ts";

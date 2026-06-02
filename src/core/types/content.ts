@@ -156,6 +156,8 @@ export interface Character {
   playable?: boolean;
   /** 이 캐릭터를 정의하는 특성(상시 패시브). data/traits.ts의 TraitDef id 참조. 여러 개 가능 */
   traitIds?: string[];
+  /** 적/자동플레이 시 행동결정 정책. data/ai.ts의 AiProfile id 참조. 없으면 공유 그리디 fallback */
+  aiProfileId?: string;
 }
 
 // ── 장착 아이템 (4.3) ──────────────────────────────────────────────────────

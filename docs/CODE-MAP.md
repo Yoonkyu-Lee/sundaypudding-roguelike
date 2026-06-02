@@ -29,8 +29,9 @@ src/core/
   types.ts          ▸배럴: export * from types/{content,runtime}
   types/
     content.ts      디자이너 스키마(데이터 계약): Side·Pos·StatusDef(+거동필드)·SkillEffect·
-                    AreaShape·SkillTarget·Skill(+active/passives)·FormationLayout·Character(+traitIds)
+                    AreaShape·SkillTarget·Skill(+active/passives)·FormationLayout·Character(+traitIds/aiProfileId)
     passives.ts     특성/패시브 룰 스키마: PassiveRule·Trigger·Condition·Effect·TraitDef·EffTarget·StatKey
+    ai.ts           AI 행동결정 정책 스키마: AiProfile·AiRule·AiCondition·SkillKindPref·TargetPref·AiWeightKey
     runtime.ts      엔진 상태: StatusInstance·Unit·PartyMemberState·TurnKind·QueueEntry·
                     Action·Phase·GameEvent·GameState·UnitView·LegalAction·Observation
   engine.ts         ▸배럴(파사드): export * from combat/index
@@ -71,7 +72,8 @@ src/core/
     index.ts        ▸배럴
   ai.ts             ▸배럴(파사드): export * from ai/index
   ai/
-    policy.ts       chooseAction (결정론 휴리스틱; rng 미사용)
+    policy.ts       chooseAction (프로파일 우선 → 공유 그리디 fallback; 결정론, rng 미사용)
+    profile.ts      applyProfile (AiProfile 우선순위 룰 해석: skillKinds·evalCond·baseScore·weightBonus)
     index.ts        ▸배럴
   testutil.ts       테스트 공용 헬퍼(playToEnd·forceTurn)
   engine.test.ts    전투 흐름(결정론·종료·명중·합법·SPD·대기)
@@ -94,6 +96,7 @@ src/core/
 | `src/data/skills.ts` | data | 스킬(위치마스크·쿨타임·명중·효과) | `SKILLS` |
 | `src/data/characters.ts` | data | 캐릭터(고유 스탯 + learnset + `traitIds`) | `CHARACTERS` |
 | `src/data/traits.ts` | data | **특성(상시 패시브 룰 묶음)** — `TraitDef`. 캐릭터가 traitIds로 참조 | `TRAITS` |
+| `src/data/ai.ts` | data | **AI 행동결정 정책(우선순위 룰)** — `AiProfile`. 캐릭터가 aiProfileId로 참조(적/자동플레이) | `AI_PROFILES` |
 | `src/data/encounters.ts` | data | 전투 배치 + **노드 타입별 적 구성(`NODE_ROSTERS`)** + 보스/포메이션 override | `DEMO_ENCOUNTER` · `NODE_ROSTERS` · `Encounter`/`Placement` |
 | `src/data/events.ts` | data | 인카운터 이벤트(7.2) — 제목·텍스트·선택지(확정/도박)·결과(heal/hurt/gold/강화/학습) | `ENCOUNTER_EVENTS` · `EncounterEvent`/`EncounterOutcome` |
 | `src/data/maps.ts` | data | 맵 생성 값(7.1) + **3액트 맵 구성(7.3, 깊이·엘리트 램프)** (`NodeType`/`MapGenConfig`는 content.ts) | `ACTS` · `DEFAULT_MAP` |
@@ -165,7 +168,8 @@ src/core/
 | 아군 진형 편성 (6장) | `PartyMemberState.pos`(열=진형 보너스) · `run/run.ts` `movePartyMember`(맵전용 이동/교대) · `combat/formation.ts` 열 총량÷인원 분배 · 웹=`partyView.ts` 드래그앤드롭 보드 |
 | 상점·인카운터 + 골드 (7.2) | `RunState.gold`(전투승리/인카운터 획득) · 상점=`generateShop`+`buyShopOffer`(강화권/범용기/회복, 골드)·`leaveShop` · 인카운터=`data/events.ts` 이벤트 추첨+`chooseEncounterOption`(확정/도박, 생존보장) · 웹: runRender `shopScreen`/`encounterScreen` |
 | 적 구성(노드별, 데이터) | `data/encounters.ts`: `NODE_ROSTERS` (run.ts가 키로 조회) |
-| 결정론 휴리스틱 AI | `ai/policy.ts`: `chooseAction` |
+| 결정론 휴리스틱 AI (그리디 fallback) | `ai/policy.ts`: `chooseAction`/`greedy` |
+| 적 전용 AI 패턴(우선순위 룰 프로파일) | `data/ai.ts` `AI_PROFILES` + `Character.aiProfileId` → `ai/profile.ts` `applyProfile`(인터프리터) · `core/types/ai.ts` 스키마 |
 
 ## 미구현 → 들어갈 자리 (☐, 부록 B)
 
@@ -173,5 +177,4 @@ src/core/
 |---|---|
 | 메타/본산/기억회랑 (5장) | 신규 `core/meta/` (런 위 레이어) |
 | 상점/인카운터 본구현 (현재 즉시해소 stub) | `core/run/` (커지면 비전투 해소를 `run/nodes.ts`로 분리) |
-| **적 전용 AI/패턴** | `core/ai/` (현재는 아군과 공유 정책 — 패턴 추가 시 모듈 확장) |
 | 웹 렌더러 고도화(스프라이트/애니메이션) | `src/web/` (현재 v2: DOM 카드 + 피격 플래시 + 로그 재생) |
