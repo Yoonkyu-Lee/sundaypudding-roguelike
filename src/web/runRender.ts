@@ -89,22 +89,47 @@ function logPanel(view: RunView): string {
 }
 
 function mapScreen(view: RunView, h: RunHandlers): string {
-  // axial(q,r) → 픽셀 (pointy-top): x=W*(q+r/2), y=1.5*size*r. 진짜 벌집 테셀레이션.
+  // axial(q,r) → 픽셀 (pointy-top): x=W*(q+r/2), y=1.5*size*r. 자유 방향그래프 — 간선은 화살표로 명시.
   const SIZE = 46;
   const W = Math.sqrt(3) * SIZE; // 헥스 폭
   const H = 2 * SIZE; // 헥스 높이
+  const PAD = W; // 가장자리 여백(음수 좌표 노드도 잘리지 않게)
   const pos = view.nodes.map((n) => ({ n, x: W * (n.q + n.r / 2), y: SIZE * 1.5 * n.r }));
   const minX = Math.min(...pos.map((p) => p.x));
   const minY = Math.min(...pos.map((p) => p.y));
-  const cw = Math.max(...pos.map((p) => p.x)) - minX + W;
-  const ch = Math.max(...pos.map((p) => p.y)) - minY + H;
+  const cw = Math.max(...pos.map((p) => p.x)) - minX + W + PAD * 2;
+  const ch = Math.max(...pos.map((p) => p.y)) - minY + H + PAD * 2;
+  const px = (x: number) => x - minX + PAD;
+  const py = (y: number) => y - minY + PAD;
+
+  // 노드 id → 중심좌표·상태
+  const ctr = new Map(pos.map((p) => [p.n.id, { x: px(p.x) + W / 2, y: py(p.y) + H / 2 }]));
+  const statusOf = new Map(view.nodes.map((n) => [n.id, n.status]));
+
+  // 방향 간선: 출발 헥스 밖→도착 헥스 직전까지 선 + 화살촉. 현재 위치에서 나가는 활성 경로는 강조.
+  const edges = view.edges
+    .map((e) => {
+      const a = ctr.get(e.from);
+      const b = ctr.get(e.to);
+      if (!a || !b) return "";
+      const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
+      const ux = dx / len, uy = dy / len;
+      const x1 = a.x + ux * SIZE * 0.85, y1 = a.y + uy * SIZE * 0.85;
+      const x2 = b.x - ux * SIZE * 0.95, y2 = b.y - uy * SIZE * 0.95;
+      const hot = statusOf.get(e.from) === "current" && statusOf.get(e.to) === "reachable";
+      return `<line class="medge${hot ? " hot" : ""}" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" marker-end="url(#mah)"/>`;
+    })
+    .join("");
+  const edgesSvg = `<svg class="mapedges" width="${cw}" height="${ch}" viewBox="0 0 ${cw} ${ch}">
+    <defs><marker id="mah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" class="mah"/></marker></defs>
+    ${edges}</svg>`;
 
   const hexes = pos
     .map(({ n, x, y }) => {
       const clickable = n.status === "reachable";
       const attrs = clickable ? `data-node="${n.id}"` : "disabled";
       return `<button class="mnode ${n.status} ${n.type}"
-        style="left:${x - minX}px;top:${y - minY}px;width:${W}px;height:${H}px"
+        style="left:${px(x)}px;top:${py(y)}px;width:${W}px;height:${H}px"
         ${attrs} data-uid="${n.id}" title="${TYPE_NAME[n.type]}">
         <span class="mhex">
           <span class="mico">${TYPE_ICON[n.type]}</span>
@@ -115,8 +140,8 @@ function mapScreen(view: RunView, h: RunHandlers): string {
       </button>`;
     })
     .join("");
-  return `<div class="mapwrap"><div class="hexfield" style="width:${cw}px;height:${ch}px">${hexes}</div></div>
-  <div class="hint">위쪽이 시작, 아래쪽이 보스. 빛나는 육각 셀을 클릭해 전진하세요.</div>`;
+  return `<div class="mapwrap"><div class="hexfield" style="width:${cw}px;height:${ch}px">${edgesSvg}${hexes}</div></div>
+  <div class="hint">화살표(→) 방향으로 전진해 클리어(🚩) 노드에 도달하면 층 완료. 빛나는 육각 셀을 클릭하세요.</div>`;
 }
 
 function rewardScreen(view: RunView, h: RunHandlers): string {

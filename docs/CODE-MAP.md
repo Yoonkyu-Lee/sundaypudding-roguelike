@@ -32,6 +32,7 @@ src/core/
                     AreaShape·SkillTarget·Skill(+active/passives)·FormationLayout·Character(+traitIds/aiProfileId)
     passives.ts     특성/패시브 룰 스키마: PassiveRule·Trigger·Condition·Effect·TraitDef·EffTarget·StatKey
     ai.ts           AI 행동결정 정책 스키마: AiProfile·AiRule·AiCondition·SkillKindPref·TargetPref·AiWeightKey
+    map.ts          자유 방향그래프 맵 스키마: RunDef(층 선형체인)·FloorDef·MapNode·MapEdge(방향). NodeType는 content(+clear)
     runtime.ts      엔진 상태: StatusInstance·Unit·PartyMemberState·TurnKind·QueueEntry·
                     Action·Phase·GameEvent·GameState·UnitView·LegalAction·Observation
   engine.ts         ▸배럴(파사드): export * from combat/index
@@ -58,11 +59,11 @@ src/core/
   observation.ts    ▸배럴(파사드): export { buildObservation } from combat/observation
   run.ts            ▸배럴(파사드): export * from run/index
   run/
-    map.ts          헥스 타일맵 생성: hid · pickType · forwardIds · genMap (axial q,r·좌표인접=간선·프루닝)
+    graph.ts        자유 방향그래프 엔진(메커니즘): outgoingIds · nodesReachingClear(역BFS) · reachableFromEntry · validateFloor/validateRun(도달성 불변식·고립노드). 순수·결정론. (구 map.ts genMap 폐기)
     types.ts        런 도메인 타입(leaf): RunPhase·RewardOption·RunState·NodeStatus·RunView
     rewards.ts      genRewards(강화/학습 3택1) · damagingSkills (순수 생성; 적용은 run.ts)
-    run.ts          오케스트레이터: createRun · enterNode · advanceAct · resolveBattleEnd · chooseReward · setActiveSkill(로드아웃) · movePartyMember(진형 배치/교대, 맵전용)
-    helpers.ts      공유 변이(leaf): node · healParty(+partyHpChange) · completeNode(+nodeClear) · upgradeOwned · learnOwned
+    run.ts          오케스트레이터: createRun(seed,roster,runDef) · enterNode(clear→completeFloor) · completeFloor(층종료/다음층, 구 advanceAct) · resolveBattleEnd · chooseReward · setActiveSkill · movePartyMember
+    helpers.ts      공유 변이(leaf): curFloor(현재 층 그래프) · node · healParty(+partyHpChange) · completeNode(방향전진∩클리어도달) · upgradeOwned · learnOwned
     shop.ts         상점(7.2): generateShop · buyShopOffer · leaveShop
     encounter.ts    인카운터(7.2): applyOutcome · chooseEncounterOption
     items.ts        장착(4.3): equipItem/unequipItem(maxHp 재계산) · genItemOffers(상점)/itemRewardOptions(보상) · 인벤토리 왕복
@@ -99,9 +100,9 @@ src/core/
 | `src/data/ai.ts` | data | **AI 행동결정 정책(우선순위 룰)** — `AiProfile`. 캐릭터가 aiProfileId로 참조(적/자동플레이) | `AI_PROFILES` |
 | `src/data/encounters.ts` | data | 전투 배치 + **노드 타입별 적 구성(`NODE_ROSTERS`)** + 보스/포메이션 override | `DEMO_ENCOUNTER` · `NODE_ROSTERS` · `Encounter`/`Placement` |
 | `src/data/events.ts` | data | 인카운터 이벤트(7.2) — 제목·텍스트·선택지(확정/도박)·결과(heal/hurt/gold/강화/학습) | `ENCOUNTER_EVENTS` · `EncounterEvent`/`EncounterOutcome` |
-| `src/data/maps.ts` | data | 맵 생성 값(7.1) + **3액트 맵 구성(7.3, 깊이·엘리트 램프)** (`NodeType`/`MapGenConfig`는 content.ts) | `ACTS` · `DEFAULT_MAP` |
+| `src/data/runs/*.json` | data | **저작 런(7장)** — 자유 방향그래프 맵. 진실=레포 JSON(에디터가 편집·내보내기). `RunDef`(층 선형체인) | (JSON) |
+| `src/data/runs/index.ts` | data | 런 레지스트리 — JSON import → `RUNS`. 본거지 편성 배치 `rosterFromIds` | `RUNS` · `DEFAULT_RUN` · `rosterFromIds` |
 | `src/data/formations.ts` | data | 포메이션 열보너스 배치(총량보존, 6장) | `STANDARD_FORMATION` |
-| `src/data/modes.ts` | data | **게임 모드(0.1/7.4)** — `GameMode`(roster·acts·useMastery). '일반' 1개, 디자이너가 캠페인/챌린지 추가. `rosterFromIds`=선택 캐릭→기본 포메이션 배치 | `MODES` · `DEFAULT_MODE` · `rosterFromIds` |
 | `src/web/meta.ts` | web | **영구 메타**(레벨/XP + 편성 로스터, 별도 세이브 `spr_meta_v1`) — `grantWin`(전투 승리 XP)·`masteryMap`/`masteryInfo`(허브)·`getRoster`/`setRoster`(편성 선택 영구) | `grantWin` · `masteryMap` · `masteryInfo` · `getRoster` · `setRoster` |
 | `src/data/items.ts` | data | 장착 아이템(4.3) — 무기(dmgFlat·crit) / 방어구(hp·쉴드획득). `ItemDef`는 content.ts | `ITEMS` · `ITEM_POOL` |
 | `src/cli/play.ts` | cli | 대화형/`--demo` 터미널 드라이버 | (엔트리) |
@@ -156,11 +157,12 @@ src/core/
 | 승패 (7.3) | `combat/winCheck.ts`: `checkWin` |
 | 행동 1회 처리(턴 진행) | `combat/flow.ts`: `step` |
 | 관측 빌드(JSON) (8.2) | `combat/observation.ts`: `buildObservation` |
-| 헥스 타일맵 생성·전진 인접·프루닝 (7.1) | `run/map.ts`: `genMap(cfg)`/`forwardIds` (메커니즘=엔진) |
-| 맵 생성 값 데이터화 (7.1) | `data/maps.ts` `DEFAULT_MAP` (가중치·분기·깊이) · `content.ts` `MapGenConfig`/`NodeType` · `createRun(seed,roster,map?)` |
+| 자유 방향그래프 맵·도달성·검증 (7.1) | `run/graph.ts`: `outgoingIds`·`nodesReachingClear`·`validateRun` (메커니즘=엔진) |
+| 맵 데이터화(저작 런) (7.1) | `data/runs/*.json` `RunDef`/`FloorDef`/`MapNode`/`MapEdge`(`types/map.ts`) · `data/runs/index.ts RUNS` · `createRun(seed,roster,runDef)` |
+| 클리어 노드 = 층 종료 / 보스=길목 | `run/run.ts`: `enterNode`(clear→`completeFloor`) · 다중 보스/클리어 갈림길(아무 클리어 진입=완료) |
 | 노드 진입·해소·전투생성·승패 (7장) | `run/run.ts`: `enterNode`/`resolveBattleEnd` |
 | 런 이어하기 영속화 (셸) | `run/save.ts` `serializeRun`/`deserializeRun`(순수, Rng=state만) · 웹 `main.ts` localStorage(`spr_save_v1`, render마다 저장·승패/포기 시 삭제·부팅 복원) |
-| 다층 3액트 진행 (7.3) | `RunState.act`/`acts`(`data/maps.ts ACTS`) · `run/run.ts` `advanceAct`(보스→다음 액트 맵·50%회복, 결정론) · `resolveBattleEnd`(최종 액트 보스=won) · `RunView.act`/`totalActs` · 웹 "액트 N/3" 표기 |
+| 다층(층 선형체인) 진행 (7.3) | `RunState.floor`/`runDef.floors` · `run/run.ts` `completeFloor`(클리어 노드 진입→다음 층·50%회복·최종층=won) · `RunView.floor`/`totalFloors` · 웹 "층 N/M" 표기 · 방향 간선 화살표(`runRender.ts mapScreen`) |
 | 보상 3택1 생성·적용 (4.5) | `run/rewards.ts`: `genRewards` · `run/run.ts`: `chooseReward` |
 | 육성: 스킬 보유풀/활성선택/강화티어 (4.2/4.6) | `PartyMemberState.ownedSkillIds`/`activeSkillIds` · `Skill.nextTierId`(데이터 티어) · `run/run.ts`: `setActiveSkill`·`chooseReward`(강화=id교체/학습=풀추가) · `combat/state.ts` makeUnit가 활성 4 사용 |
 | 전용기/범용기 + learnset (4.6) | `Skill.exclusiveTo`(전용기 소유자, 없으면 범용기 `u_*`) · `Character.skillIds`=learnset(포켓몬식, 학습 가능 여부) · 범용기는 여러 learnset 공유(예 `u_guard`=kim·shin·cho) · 게이팅=`run/rewards.ts` genRewards가 learnset에서 추첨 |
@@ -175,6 +177,7 @@ src/core/
 
 | 기능 | 예정 위치 |
 |---|---|
+| **맵 에디터 GUI** (런 CRUD·3패인·드래그드롭·헥스인접 제약·저장 검증) | 신규 `src/web/editor/` — `RunDef` JSON 저작/내보내기. `run/graph.ts validateRun` 재사용. 분기 층 그래프·노드 메타데이터는 그 다음 |
 | 메타/본산/기억회랑 (5장) | 신규 `core/meta/` (런 위 레이어) |
 | 상점/인카운터 본구현 (현재 즉시해소 stub) | `core/run/` (커지면 비전투 해소를 `run/nodes.ts`로 분리) |
 | 웹 렌더러 고도화(스프라이트/애니메이션) | `src/web/` (현재 v2: DOM 카드 + 피격 플래시 + 로그 재생) |

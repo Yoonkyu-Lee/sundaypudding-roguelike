@@ -219,10 +219,15 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .mapwrap { background: var(--panel); border-radius: 10px; padding: 20px 12px; overflow-x: auto; }
 .hexfield { position: relative; margin: 0 auto; }
 .mnode {
-  position: absolute; padding: 0; border: 0; cursor: default;
+  position: absolute; padding: 0; border: 0; cursor: default; z-index: 1;
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
   background: var(--line);
 }
+/* 방향 간선(화살표) — 헥스 버튼 뒤(z-index 0). */
+.mapedges { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 0; }
+.medge { stroke: var(--line); stroke-width: 2; opacity: .5; }
+.medge.hot { stroke: var(--accent); stroke-width: 3; opacity: 1; }
+.mah { fill: var(--dim); }
 .mhex {
   position: absolute; inset: 3px;
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
@@ -248,6 +253,9 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .mnode.reachable:hover .mhex { background: #343b4d; }
 .mnode.boss .mhex { background: #3a2424; }
 .mnode.boss.reachable { background: var(--enemy); }
+.mnode.clear .mhex { background: #233a2b; }
+.mnode.clear { background: var(--green); }
+.mnode.clear.reachable { background: var(--green); filter: drop-shadow(0 0 8px rgba(80,200,120,.7)); }
 @keyframes hexpulse { 50% { filter: drop-shadow(0 0 11px rgba(255,209,102,.9)); } }
 .hint { color: var(--dim); font-size: 12px; margin-top: 14px; text-align: center; }
 

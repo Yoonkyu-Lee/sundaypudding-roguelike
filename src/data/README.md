@@ -22,8 +22,7 @@
 - [상태이상 `statuses.ts`](#상태이상-statusests--statusdef)
 - [장착 아이템 `items.ts`](#장착-아이템-itemsts--itemdef)
 - [포메이션 `formations.ts`](#포메이션-formationsts--formationlayout)
-- [맵 생성 `maps.ts`](#맵-생성-mapsts--mapgenconfig-액트별-배열)
-- [게임 모드 `modes.ts`](#게임-모드-modests--gamemode)
+- [런 / 맵 `runs/*.json`](#런--맵-runsjson--rundef)
 - [AI 프로파일 `ai.ts`](#ai-프로파일-aits--aiprofile)
 
 **🎛 효과 설계 — 액티브 · 패시브 · 특성** ([절 머리](#-효과-설계--액티브--패시브--특성))
@@ -45,8 +44,7 @@
 | `statuses.ts` | 상태이상 — 표준 거동 필드 조합(지속피해/회복·행동봉쇄·배율 등) |
 | `items.ts` | 장착 아이템 — 능력치 보정·무기 데미지·방어구 쉴드 |
 | `formations.ts` | 포메이션 — 열별 보너스 총량(공격/방어) |
-| `maps.ts` | 맵 생성 설정(`MapGenConfig`)·액트 구성(`ACTS`) — 깊이·노드 가중치·분기 |
-| `modes.ts` | 게임 모드(`GameMode`) — 시작 로스터·액트·숙련도 사용 여부 |
+| `runs/*.json` | **런/맵**(`RunDef`) — 시작 파티 + 층(floor) 그래프(노드 + 방향 간선). 맵 에디터 GUI로 저작(곧) |
 | `encounters.ts` | 노드별 적 배치(전투 구성) |
 | `events.ts` | 인카운터 이벤트(선택지·결과) |
 
@@ -67,7 +65,7 @@
 - **Skill 필드**: `cooldown` · `accuracy` · `alwaysHit` · `usableFrom`(시전 칸) · `targetCells`(타겟 칸) · `reach`(근접 사정권) · `grantsInterrupt`/`grantsInterruptTo`(끼어들기 부여) · `tier`/`nextTierId` · `exclusiveTo`
 - **StatusDef 거동**: `dot`(지속피해) · `hot`(재생) · `actionDenial`(행동봉쇄) · `damageDealtMult` · `dmgDealtFlat` · `critChanceAdd`/`critMultiplierAdd` · `shieldShred`(쉴드 잠식) · `pierce`(쉴드 무시) · `undying`(불사) · `invincible`(무적) · `taunt`(도발) · `speedMod`(SPD 보정, +상승/−하락) · `grantsInterrupt`
 - **ItemDef**: 능력치 `mods`(hp/회피/명중/치명/속도) · `dmgFlat`(무기) · `shieldGainAdd`(방어구)
-- **맵**: `MapGenConfig`(rows·startWidth·firstRowType·nodeWeights·branch)
+- **맵/런**: `RunDef`(floors[] = 층 선형체인) · `FloorDef`(nodes + 방향 edges) · `MapNode`(type·q·r) · `MapEdge`(from→to) · `clear` 노드=목표
 - **AiProfile**(`ai.ts`): `rules[]` 우선순위 룰 — `if`(조건) · `prefer`(스킬 종류) · `target`(타겟 선호) · `weight`(보조 가중치). 캐릭터 `aiProfileId`로 연결
 
 ## 🔧 디자이너 혼자 못 하는 것 (엔진 개발 필요 → 엔지니어에게 요청)
@@ -205,27 +203,24 @@
 
 `ColumnBonus` = `{ attackPower?: number, defensePower?: number }`.
 
-### 맵 생성 (`maps.ts` → `MapGenConfig`, 액트별 배열)
+### 런 / 맵 (`runs/*.json` → `RunDef`)
+
+런 하나 = 시작 파티 + **층(floor)의 선형 체인**. 각 층은 **자유 방향그래프**(노드 + 방향 간선). 맵은 손으로 짠 JSON이 진실 — **맵 에디터 GUI(곧 제공)**로 만들고 내보낸다. (절차생성 `MapGenConfig`/`genMap`은 폐기)
 
 | 필드 | 타입 | 의미 |
 |---|---|---|
-| `rows` | number | 선택 층 깊이(보스 제외) |
-| `startWidth` | `[min, max]` | 시작 행 너비 범위 |
-| `firstRowType` | `NodeType` | 첫 행 고정 타입(보통 `"battle"`) |
-| `nodeWeights` | `Partial<Record<NodeType, number>>` | 행1+ 노드 타입 추첨 가중치 |
-| `branch` | `{ keepQChance, extraSameChance, extraLeftChance }` | 자식 분기 확률 %(각 부모) |
-
-**`NodeType`**: `"start"` · `"battle"` · `"elite"` · `"shop"` · `"encounter"` · `"rest"` · `"boss"`. (`start`·`boss`는 생성기가 자동 배치, 나머지는 `nodeWeights`로 추첨)
-
-### 게임 모드 (`modes.ts` → `GameMode`)
-
-| 필드 | 타입 | 의미 |
-|---|---|---|
-| `id` / `name` | string | ID / 이름 |
-| `desc?` | string | 설명 |
+| `id` / `name` / `desc?` | string | ID / 이름 / 설명 |
+| `useMastery` | boolean | 숙련도 보상 게이팅. `false`면 전 tier 개방 |
 | `roster` | `{ charId, pos }[]` | 기본 시작 파티(`pos` = `{ row, col }`) |
-| `acts` | `MapGenConfig[]` | 액트별 맵(다층) |
-| `useMastery` | boolean | 숙련도 보상 게이팅 사용. `false`면 전 tier 개방 |
+| `floors` | `FloorDef[]` | 층 선형 체인(순서대로 진행) |
+
+**`FloorDef`** = `{ id, name?, entryNodeId, nodes: MapNode[], edges: MapEdge[] }`
+**`MapNode`** = `{ id, type: NodeType, q, r }` — `q,r`은 **렌더 위치**(위상 아님)
+**`MapEdge`** = `{ from, to }` — **방향 있는 변**(from→to, 복귀 불가)
+
+**`NodeType`**: `"start"`(입장) · `"battle"` · `"elite"` · `"boss"`(길목) · `"shop"` · `"encounter"` · `"rest"` · `"clear"`(목표 마커 — 진입 시 층 종료).
+
+규칙: ① 입장(`entryNodeId`)에서 방향 간선을 따라 **클리어 노드**에 도달하면 층 완료(보스는 강적이지만 길목). ② 갈림길로 보스/클리어 여러 개 → **아무 클리어든 진입하면 완료**. ③ **모든 노드는 어떤 클리어 노드로 도달 가능해야**(엔진 `validateRun`이 저장 시 검증, 고립 노드 거부).
 
 > **좌표 `Pos`** = `{ row: number, col: number }`. **열(col) 0 = 최전방**, 열이 클수록 후방.
 
