@@ -26,7 +26,7 @@ export interface HubData {
 /** 타이틀 스플래시. */
 export function renderTitle(app: HTMLElement, h: ShellHandlers): void {
   app.innerHTML = `<div class="title-screen"><div class="title-box">
-    <div class="title-logo">🍮 Sunday Pudding<br>Roguelike</div>
+    <div class="title-logo">🍮 Sundaypudding<br>Roguelike</div>
     <div class="title-sub">야인시대 로스터로 3개 액트를 돌파하라</div>
     <button class="title-start" id="startbtn">▶ 시작</button>
   </div></div>`;

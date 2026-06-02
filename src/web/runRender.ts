@@ -142,7 +142,7 @@ export function renderRunScreen(app: HTMLElement, view: RunView, h: RunHandlers)
 
   app.innerHTML = `
     <header>
-      <h1>🍮 Sunday Pudding Roguelike</h1>
+      <h1>🍮 Sundaypudding Roguelike</h1>
       <div class="meta">${view.phase === "won" || view.phase === "lost" ? "" : `액트 ${view.act}/${view.totalActs} · `}${view.phase === "map" ? "맵 — 경로 선택" : view.phase}${view.phase === "won" || view.phase === "lost" ? "" : ` <button class="hdr-menu" id="pausebtn" title="메뉴 (Esc)">⏸</button>`}</div>
     </header>
     <div class="runlayout">
