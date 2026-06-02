@@ -187,8 +187,8 @@ export interface ItemDef {
 }
 
 // ── 런 맵 생성 (7장, 데이터 주도) ──────────────────────────────────────────
-// 노드 종류 (7.2). start/boss는 생성기가 자동 배치, 나머지는 nodeWeights로 추첨.
-export type NodeType = "start" | "battle" | "elite" | "shop" | "encounter" | "rest" | "boss";
+// 노드 종류 (7.2). start=입장 노드, clear=목표 마커(전투 없음, 진입=층 종료). boss는 길목(일반 전투).
+export type NodeType = "start" | "battle" | "elite" | "shop" | "encounter" | "rest" | "boss" | "clear";
 
 /** 맵 생성 설정 — 디자이너 편집. 메커니즘(genMap)=엔진, 값=여기. (다층은 후속: 이 형태의 배열로 확장) */
 export interface MapGenConfig {

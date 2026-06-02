@@ -25,6 +25,7 @@ const TYPE_ICON: Record<NodeType, string> = {
   encounter: "❓",
   rest: "🏕️",
   boss: "👑",
+  clear: "🚩",
 };
 const TYPE_NAME: Record<NodeType, string> = {
   start: "시작",
@@ -34,6 +35,7 @@ const TYPE_NAME: Record<NodeType, string> = {
   encounter: "인카운터",
   rest: "휴식",
   boss: "보스",
+  clear: "클리어",
 };
 
 function partyPanel(view: RunView): string {

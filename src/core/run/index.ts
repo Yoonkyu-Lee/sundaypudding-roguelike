@@ -9,3 +9,4 @@ export { serializeRun, deserializeRun } from "./save.ts";
 export { unlockedTier, genRewards, ownsUpgradeLine } from "./rewards.ts";
 export { getRunView } from "./view.ts";
 export { fireRunTrigger, type RunTriggerCtx } from "./passives.ts";
+export { mapNode, outgoingIds, clearNodeIds, reachableFromEntry, nodesReachingClear, validateFloor, validateRun, type FloorValidation, type RunValidation } from "./graph.ts";

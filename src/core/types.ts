@@ -3,4 +3,5 @@
 export type * from "./types/content.ts";
 export type * from "./types/passives.ts";
 export type * from "./types/ai.ts";
+export type * from "./types/map.ts";
 export type * from "./types/runtime.ts";
