@@ -9,9 +9,9 @@ import { ENCOUNTER_EVENTS } from "../data/events.ts";
 import type { MapGenConfig } from "./types.ts";
 
 const ROSTER = [
-  { charId: "beef", pos: { row: 1, col: 0 } },
-  { charId: "pudding", pos: { row: 2, col: 1 } },
-  { charId: "jelly", pos: { row: 2, col: 2 } },
+  { charId: "kim", pos: { row: 1, col: 0 } },
+  { charId: "shanghai", pos: { row: 2, col: 1 } },
+  { charId: "cho", pos: { row: 2, col: 2 } },
 ];
 
 function autoRun(seed: number): string {
@@ -107,30 +107,30 @@ test("보스전은 적 진형 보너스 활성(6.3) — boss 노드 진입 시 e
 });
 
 test("진형 편성: movePartyMember 이동/교대/같은칸 무시 (맵)", () => {
-  const run = createRun(5, ROSTER); // beef(1,0) pudding(2,1) jelly(2,2)
-  const beef = run.party.find((p) => p.charId === "beef")!;
-  const pud = run.party.find((p) => p.charId === "pudding")!;
+  const run = createRun(5, ROSTER); // kim(1,0) shanghai(2,1) cho(2,2)
+  const kim = run.party.find((p) => p.charId === "kim")!;
+  const pud = run.party.find((p) => p.charId === "shanghai")!;
   // 빈 칸 이동
-  movePartyMember(run, "beef", { row: 0, col: 3 });
-  assert.deepEqual(beef.pos, { row: 0, col: 3 });
-  // 점유 칸 → 위치 교대 (beef ↔ pudding)
-  movePartyMember(run, "beef", { row: 2, col: 1 });
-  assert.deepEqual(beef.pos, { row: 2, col: 1 });
-  assert.deepEqual(pud.pos, { row: 0, col: 3 }); // pudding이 beef 직전 칸으로
+  movePartyMember(run, "kim", { row: 0, col: 3 });
+  assert.deepEqual(kim.pos, { row: 0, col: 3 });
+  // 점유 칸 → 위치 교대 (kim ↔ shanghai)
+  movePartyMember(run, "kim", { row: 2, col: 1 });
+  assert.deepEqual(kim.pos, { row: 2, col: 1 });
+  assert.deepEqual(pud.pos, { row: 0, col: 3 }); // pudding이 kim 직전 칸으로
   // 같은 칸 무시
-  movePartyMember(run, "beef", { row: 2, col: 1 });
-  assert.deepEqual(beef.pos, { row: 2, col: 1 });
+  movePartyMember(run, "kim", { row: 2, col: 1 });
+  assert.deepEqual(kim.pos, { row: 2, col: 1 });
 });
 
 test("진형 편성: 배치 변경이 전투 진형 보너스(열 분배)에 반영", () => {
   const run = createRun(5, ROSTER);
-  movePartyMember(run, "beef", { row: 0, col: 0 }); // 0열(공격)
-  movePartyMember(run, "pudding", { row: 1, col: 0 }); // 0열(공격) — 둘이 분배
-  movePartyMember(run, "jelly", { row: 0, col: 3 }); // 3열(방어) 혼자
+  movePartyMember(run, "kim", { row: 0, col: 0 }); // 0열(공격)
+  movePartyMember(run, "shanghai", { row: 1, col: 0 }); // 0열(공격) — 둘이 분배
+  movePartyMember(run, "cho", { row: 0, col: 3 }); // 3열(방어) 혼자
   const enc = { id: "t", name: "t", allies: [], enemies: [{ charId: "thug", pos: { row: 0, col: 0 } }], boss: false };
   const g = createBattle(9, enc, run.party);
-  const ub = g.units.find((u) => u.charId === "beef")!;
-  const uj = g.units.find((u) => u.charId === "jelly")!;
+  const ub = g.units.find((u) => u.charId === "kim")!;
+  const uj = g.units.find((u) => u.charId === "cho")!;
   assert.equal(ub.pos.col, 0);
   assert.equal(getFormationBonus(g, ub, "attackPower"), 2); // 0열 총량4 ÷ 2명
   assert.equal(getFormationBonus(g, uj, "defensePower"), 4); // 3열 총량4 ÷ 1명

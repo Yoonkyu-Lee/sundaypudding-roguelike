@@ -96,8 +96,8 @@ export interface SpeedRoll {
   speedMin: number;
   speedMax: number;
   roll: number; // speedMin~speedMax 주사위 결과
-  speedDown: number; // 마비/둔화 합 (3.5)
-  speed: number; // 최종 = max(1, roll − speedDown)
+  speedMod: number; // SPD 보정 합(부호 있음: +상승/−하락) (3.5)
+  speed: number; // 최종 = max(1, roll + speedMod)
 }
 
 export type Action =

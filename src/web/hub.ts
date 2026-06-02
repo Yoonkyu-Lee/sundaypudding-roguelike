@@ -29,7 +29,7 @@ export function createHub(mode: GameMode = MODES.normal): Hub {
         pool: playable.map((c) => ({ charId: c.id, name: c.name, avatar: c.avatar, mastery: masteryInfo(c.id), selected: selected.includes(c.id) })),
         selectedCount: selected.length,
         maxRoster: MAX_ROSTER,
-        party: run.party.map((m) => ({ charId: m.charId, name: CHARACTERS[m.charId].name, avatar: CHARACTERS[m.charId].avatar })),
+        party: run.party.filter((m) => CHARACTERS[m.charId]).map((m) => ({ charId: m.charId, name: CHARACTERS[m.charId].name, avatar: CHARACTERS[m.charId].avatar })),
         runActive,
         act: runActive ? run.act : undefined,
         totalActs: run.acts.length,

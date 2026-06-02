@@ -2,7 +2,7 @@
 import type { Character } from "../core/types.ts";
 
 export const CHARACTERS: Record<string, Character> = {
-  //테스트 캐릭터 소생
+  // 시험 캐릭터(엘프) — 디자이너 테스트용. playable이라 본거지 편성에 등장
   elf: {
     id: "elf",
     name: "엘프",
@@ -11,76 +11,11 @@ export const CHARACTERS: Record<string, Character> = {
     hp: 40,
     speedMin: 7,
     speedMax: 7,
-    evasion: 5, // 회피 낮음(둔함)
+    evasion: 5,
     accuracy: 0,
     critChance: 10,
     critMultiplier: 1.5,
-    skillIds: ["nimble", "enemy_suck", "slide", "gangta"], // 활성 4
-  },
-
-
-  beef: {
-    id: "beef",
-    name: "비프",
-    hp: 40,
-    speedMin: 3,
-    speedMax: 6,
-    evasion: 5, // 회피 낮음(둔함)
-    accuracy: 0,
-    critChance: 10,
-    critMultiplier: 1.5,
-    skillIds: ["gangta", "milchigi", "yeongyeok", "suho"], // 활성 4
-  },
-  pudding: {
-    id: "pudding",
-    name: "푸딩",
-    hp: 24,
-    speedMin: 6,
-    speedMax: 9,
-    evasion: 12, // 회피 높음(날쌤)
-    accuracy: 0,
-    critChance: 20,
-    critMultiplier: 1.5,
-    skillIds: ["begi", "chulhyeolbegi", "dokchim", "hwayeomtan"],
-  },
-
-  jelly: {
-    id: "jelly",
-    name: "젤리",
-    hp: 22,
-    speedMin: 5,
-    speedMax: 8,
-    evasion: 9,
-    accuracy: 0,
-    critChance: 10,
-    critMultiplier: 1.5,
-    skillIds: ["jaesaeng", "jaechok", "gasok", "gongpo", "gwantongbuyeo", "gaho"], // 활성 4 + 보유
-  },
-
-  // 적
-  slime: {
-    id: "slime",
-    name: "슬라임",
-    hp: 16,
-    speedMin: 2,
-    speedMax: 5,
-    evasion: 6,
-    accuracy: 0,
-    critChance: 5,
-    critMultiplier: 1.5,
-    skillIds: ["jump", "bodytackle"],
-  },
-  frostspirit: {
-    id: "frostspirit",
-    name: "서리정령",
-    hp: 18,
-    speedMin: 4,
-    speedMax: 7,
-    evasion: 10,
-    accuracy: 5,
-    critChance: 10,
-    critMultiplier: 1.5,
-    skillIds: ["bingyeol", "jump"],
+    skillIds: ["nimble", "enemy_suck", "slide", "u_aimed_shot"], // gangta 삭제됨 → u_aimed_shot로 교체
   },
 
   // ══ 우익(대한민청) — 플레이어 파티 ══

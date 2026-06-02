@@ -5,17 +5,17 @@ import { createBattle, step, computeAreaCells, reachableColumns, getLegalActions
 import { DEMO_ENCOUNTER } from "../data/encounters.ts";
 import { forceTurn } from "./testutil.ts";
 
-test("동적 재배치: 밀치기가 대상을 뒤 열로 이동 (6.4)", () => {
-  const state = createBattle(42, DEMO_ENCOUNTER);
-  const beef = state.units.find((u) => u.name === "비프")!;
-  const slime = state.units.find((u) => u.side === "enemy" && u.pos.col === 0)!;
-  slime.evasion = -100;
-  beef.cooldowns = {};
-  const col0 = slime.pos.col;
-  forceTurn(state, beef.uid);
-
-  step(state, { type: "skill", skillId: "milchigi", targetUid: slime.uid });
-  assert.equal(slime.pos.col, col0 + 1); // 한 칸 뒤로
+test("동적 재배치: 넉백(thug_throw)이 대상을 뒤 열로 이동 (6.4)", () => {
+  const enc = { id: "t", name: "t", allies: [{ charId: "kim", pos: { row: 1, col: 0 } }], enemies: [{ charId: "thug2", pos: { row: 1, col: 0 } }] };
+  const state = createBattle(42, enc);
+  const thug2 = state.units.find((u) => u.side === "enemy")!;
+  const kim = state.units.find((u) => u.side === "ally")!;
+  kim.evasion = -100; // 명중 보장
+  thug2.cooldowns = {};
+  const col0 = kim.pos.col;
+  forceTurn(state, thug2.uid);
+  step(state, { type: "skill", skillId: "thug_throw", targetUid: kim.uid });
+  assert.equal(kim.pos.col, col0 + 1); // 한 칸 뒤로(넉백)
 });
 
 test("면적 모양: computeAreaCells (single/row/col/square/cross/all + 클램프)", () => {
@@ -32,7 +32,7 @@ test("면적 row: 같은 행의 적 다수를 한 번에 타격", () => {
   const enc = {
     id: "t", name: "t",
     allies: [{ charId: "cho", pos: { row: 1, col: 0 } }],
-    enemies: [{ charId: "slime", pos: { row: 1, col: 0 } }, { charId: "slime", pos: { row: 1, col: 2 } }, { charId: "slime", pos: { row: 3, col: 0 } }],
+    enemies: [{ charId: "thug", pos: { row: 1, col: 0 } }, { charId: "thug", pos: { row: 1, col: 2 } }, { charId: "thug", pos: { row: 3, col: 0 } }],
   };
   const state = createBattle(1, enc);
   const cho = state.units.find((u) => u.name === "조병옥")!;
@@ -53,7 +53,7 @@ test("면적 free: 자유 선택한 칸들의 적을 타격, 그 외는 무사",
   const enc = {
     id: "t", name: "t",
     allies: [{ charId: "shin", pos: { row: 1, col: 0 } }],
-    enemies: [{ charId: "slime", pos: { row: 0, col: 0 } }, { charId: "slime", pos: { row: 2, col: 3 } }, { charId: "slime", pos: { row: 3, col: 3 } }],
+    enemies: [{ charId: "thug", pos: { row: 0, col: 0 } }, { charId: "thug", pos: { row: 2, col: 3 } }, { charId: "thug", pos: { row: 3, col: 3 } }],
   };
   const state = createBattle(1, enc);
   const shin = state.units.find((u) => u.name === "신영균")!;
@@ -74,7 +74,7 @@ test("빈 칸 앵커: 적 없는 칸을 앵커로 한 십자/행도 주변 유�
   const enc = {
     id: "t", name: "t",
     allies: [{ charId: "cho", pos: { row: 0, col: 0 } }],
-    enemies: [{ charId: "slime", pos: { row: 2, col: 0 } }, { charId: "slime", pos: { row: 2, col: 3 } }],
+    enemies: [{ charId: "thug", pos: { row: 2, col: 0 } }, { charId: "thug", pos: { row: 2, col: 3 } }],
   };
   const state = createBattle(1, enc);
   const cho = state.units.find((u) => u.name === "조병옥")!;
@@ -93,7 +93,7 @@ test("reach: 최전열부터 연속 n칸 — 빈 열 건너뛰지 않음 (동적
   const enc = {
     id: "t", name: "t",
     allies: [{ charId: "kim", pos: { row: 0, col: 0 } }],
-    enemies: [{ charId: "slime", pos: { row: 0, col: 1 } }, { charId: "slime", pos: { row: 1, col: 3 } }],
+    enemies: [{ charId: "thug", pos: { row: 0, col: 1 } }, { charId: "thug", pos: { row: 1, col: 3 } }],
   };
   const state = createBattle(1, enc); // 최전열 = col 1, 뒤 적은 col 3(사이 2열 비었음)
   assert.deepEqual(reachableColumns(state, "enemy", 1), [1]); // 전열 1칸

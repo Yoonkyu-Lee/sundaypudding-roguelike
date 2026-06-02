@@ -10,14 +10,13 @@ const ACTION_CONST = 10000; // 행동 서열 = ACTION_CONST / SPD (2.2)
 
 export function startRound(state: GameState): void {
   state.round++;
-  // 라운드마다 SPD 주사위 (2.2) − 마비/둔화(speedDown)로 뒤로 밀림 (3.5). 분해값을 연출용으로 포착(rng 호출 불변).
+  // 라운드마다 SPD 주사위 (2.2) + 가속/둔화(speedMod, 부호 있음)로 서열 보정 (3.5). 분해값을 연출용으로 포착(rng 호출 불변).
   const rolls: SpeedRoll[] = aliveUnits(state).map((u) => {
     const sMin = u.speedMin + statMod(u, "speedMin");
     const sMax = Math.max(sMin, u.speedMax + statMod(u, "speedMax"));
     const roll = state.rng.int(sMin, sMax);
-    const speedDown = statusNumSum(u, "speedDown");
-    const speedUp = statusNumSum(u, "speedUp"); // 가속 효과 계산
-    return { uid: u.uid, speedMin: sMin, speedMax: sMax, roll, speedDown, speedUp, speed: Math.max(1, roll - speedDown + speedUp) }; // 가속 효과만큼 속도 sum +
+    const speedMod = statusNumSum(u, "speedMod");
+    return { uid: u.uid, speedMin: sMin, speedMax: sMax, roll, speedMod, speed: Math.max(1, roll + speedMod) };
   });
   applySpeedRollPassives(state, rolls); // speedRoll 패시브(modSpeedRoll/rerollSpeed)가 주사위 조작
   const entries: QueueEntry[] = rolls.map((r) => ({ uid: r.uid, kind: "normal" as const, speed: r.speed }));

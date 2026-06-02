@@ -5,16 +5,16 @@ import { createRun, enterNode, resolveBattleEnd, chooseReward, movePartyMember, 
 import { SKILLS } from "../data/skills.ts";
 
 const ROSTER = [
-  { charId: "beef", pos: { row: 1, col: 0 } },
-  { charId: "pudding", pos: { row: 2, col: 1 } },
-  { charId: "jelly", pos: { row: 2, col: 2 } },
+  { charId: "kim", pos: { row: 1, col: 0 } },
+  { charId: "shanghai", pos: { row: 2, col: 1 } },
+  { charId: "cho", pos: { row: 2, col: 2 } },
 ];
 
 test("세이브 라운드트립: 상태·rng 연속성 보존 (이어하기)", () => {
   const run = createRun(11, ROSTER);
   run.gold = 42;
   run.inventory.push("iron_plate");
-  movePartyMember(run, "beef", { row: 3, col: 3 });
+  movePartyMember(run, "kim", { row: 3, col: 3 });
   const json = serializeRun(run);
   const a = run.rng.next(); // 직렬화 시점 이후 원본의 다음 난수
   const r = deserializeRun(json)!;
@@ -22,7 +22,7 @@ test("세이브 라운드트립: 상태·rng 연속성 보존 (이어하기)", (
   assert.equal(r.gold, 42);
   assert.deepEqual(r.inventory, run.inventory);
   assert.equal(r.party.length, run.party.length);
-  assert.deepEqual(r.party.find((p) => p.charId === "beef")!.pos, { row: 3, col: 3 });
+  assert.deepEqual(r.party.find((p) => p.charId === "kim")!.pos, { row: 3, col: 3 });
   assert.equal(r.rng.next(), a, "복원된 rng가 같은 다음 값 (결정론 보존)");
 });
 

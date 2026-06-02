@@ -4,21 +4,21 @@ import assert from "node:assert/strict";
 import { createRun, chooseReward, buyShopOffer, chooseEncounterOption, genRewards, ownsUpgradeLine, getRunView } from "./run.ts";
 
 const ROSTER = [
-  { charId: "beef", pos: { row: 1, col: 0 } },
-  { charId: "pudding", pos: { row: 2, col: 1 } },
-  { charId: "jelly", pos: { row: 2, col: 2 } },
+  { charId: "kim", pos: { row: 1, col: 0 } },
+  { charId: "shanghai", pos: { row: 2, col: 1 } },
+  { charId: "cho", pos: { row: 2, col: 2 } },
 ];
 
 test("보상 강화: 보유·활성 스킬을 다음 티어로 교체 + map 복귀 (4.6)", () => {
   const run = createRun(1, ROSTER);
   run.phase = "reward";
   run.activeNodeId = run.nodes[0].id;
-  const beef = run.party.find((m) => m.charId === "beef")!;
-  assert.ok(beef.ownedSkillIds.includes("gangta") && beef.activeSkillIds.includes("gangta"));
-  run.rewards = [{ id: "u", kind: "upgradeSkill", charId: "beef", fromSkillId: "gangta", toSkillId: "gangta_x", label: "t" }];
+  const kim = run.party.find((m) => m.charId === "kim")!;
+  assert.ok(kim.ownedSkillIds.includes("kim_punch") && kim.activeSkillIds.includes("kim_punch"));
+  run.rewards = [{ id: "u", kind: "upgradeSkill", charId: "kim", fromSkillId: "kim_punch", toSkillId: "kim_punch2", label: "t" }];
   chooseReward(run, "u");
-  assert.ok(!beef.ownedSkillIds.includes("gangta") && beef.ownedSkillIds.includes("gangta_x"), "보유 티어 교체");
-  assert.ok(beef.activeSkillIds.includes("gangta_x"), "활성도 강화 버전으로");
+  assert.ok(!kim.ownedSkillIds.includes("kim_punch") && kim.ownedSkillIds.includes("kim_punch2"), "보유 티어 교체");
+  assert.ok(kim.activeSkillIds.includes("kim_punch2"), "활성도 강화 버전으로");
   assert.equal(run.phase, "map");
 });
 
@@ -26,14 +26,14 @@ test("보상 새 스킬: 미보유 스킬을 보유 풀에 추가 (4.5)", () => 
   const run = createRun(1, ROSTER);
   run.phase = "reward";
   run.activeNodeId = run.nodes[0].id;
-  const jelly = run.party.find((m) => m.charId === "jelly")!; // learnset 6, 보유=앞4
-  const newId = "gwantongbuyeo"; // 미보유 학습기
-  assert.ok(!jelly.ownedSkillIds.includes(newId));
-  const before = jelly.ownedSkillIds.length;
-  run.rewards = [{ id: "l", kind: "learnSkill", charId: "jelly", skillId: newId, label: "t" }];
+  const cho = run.party.find((m) => m.charId === "cho")!; // learnset 6, 보유=앞4
+  const newId = "u_guard"; // 미보유 학습기
+  assert.ok(!cho.ownedSkillIds.includes(newId));
+  const before = cho.ownedSkillIds.length;
+  run.rewards = [{ id: "l", kind: "learnSkill", charId: "cho", skillId: newId, label: "t" }];
   chooseReward(run, "l");
-  assert.ok(jelly.ownedSkillIds.includes(newId), "보유 풀 추가");
-  assert.equal(jelly.ownedSkillIds.length, before + 1);
+  assert.ok(cho.ownedSkillIds.includes(newId), "보유 풀 추가");
+  assert.equal(cho.ownedSkillIds.length, before + 1);
 });
 
 test("보상 학습(4.6): 강화로 베이스가 교체되면 베이스가 학습 후보로 재출현 안 함(다운그레이드 방지)", () => {
@@ -93,7 +93,8 @@ test("RunView: 상점/인카운터/골드 화면 데이터 노출 (웹 렌더 �
 });
 
 test("인카운터: 선택지 결과 적용 후 map 복귀 (7.2)", () => {
-  const run = createRun(1, ROSTER);
+  // 조병옥(수전노=nodeClear 골드) 트레잇 간섭 피하려 골드 트레잇 없는 단독 파티로 정확값 검증
+  const run = createRun(1, [{ charId: "kim", pos: { row: 1, col: 0 } }]);
   run.phase = "encounter";
   run.activeNodeId = run.nodes[0].id;
   run.encounterId = "cache"; // 안전 선택(loot=골드 +25)

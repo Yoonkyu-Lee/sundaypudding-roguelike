@@ -69,8 +69,8 @@ export const STATUS_DEFS: Record<StatusDefId, StatusDef> = {
     grantsInterrupt: true, // 정규 턴 행동 시 끼어들기 (끼어들기 출처가 스킬이 아닌 예: 버프)
   },
 
-  accelerate: { id: "accelerate", name: "가속", icon: "➵", buff: true, speedUp: 1 }, // 속도 증가 => 위력만큼 속도값 +보정
-  strength: { id: "strength", name: "힘", icon: "🔼", buff: true, dmgDealtFlat: 1 }, // 공위증 1
+  accelerate: { id: "accelerate", name: "가속", icon: "➵", buff: true, speedMod: 1 }, // SPD +1(서열 앞으로). 스택 곱: 3스택=+3
+  strength: { id: "strength", name: "힘", icon: "🔼", buff: true, dmgDealtFlat: 1 }, // 공위증 1(약한 might)
 
   // ── 공격/치명 보정 (3.6 공위증류) ──
   might: { id: "might", name: "투지", icon: "💪", buff: true, dmgDealtFlat: 6 }, // 공격력↑(공위증)
@@ -79,5 +79,5 @@ export const STATUS_DEFS: Record<StatusDefId, StatusDef> = {
   ambush: { id: "ambush", name: "은신", icon: "🥷", buff: true, critChanceAdd: 100 }, // 다음 공격 무조건 치명
   invincible: { id: "invincible", name: "무적", icon: "💠", buff: true, invincible: true }, // 모든 피해 0
   taunt: { id: "taunt", name: "도발", icon: "📣", taunt: true }, // 적 공격 집중 유도(AI 참조)
-  paralyze: { id: "paralyze", name: "마비", icon: "💫", speedDown: 3 }, // 속도↓ → 서열 밀림 (3.5)
+  paralyze: { id: "paralyze", name: "마비", icon: "💫", speedMod: -3 }, // 속도↓(음수) → 서열 밀림 (3.5)
 };
