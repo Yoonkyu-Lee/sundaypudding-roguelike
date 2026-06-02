@@ -44,7 +44,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   // 노드 상호작용/아이콘 = 투명 오버레이 div(드래그=이동, 클릭=선택)
   const nodeOverlays = d.nodes.map((n) => {
     const cxp = ccx(n.q, n.r), cyp = ccy(n.r);
-    return `<button class="ednode${selSet.has(n.id) ? " sel" : ""}" draggable="true" data-node="${n.id}" style="left:${(cxp - W / 2).toFixed(1)}px;top:${(cyp - SIZE).toFixed(1)}px;width:${W.toFixed(1)}px;height:${(2 * SIZE).toFixed(1)}px" aria-label="${n.name}${n.id === d.entryId ? " (입장)" : ""}">
+    return `<button class="ednode${selSet.has(n.id) ? " sel" : ""}" data-node="${n.id}" style="left:${(cxp - W / 2).toFixed(1)}px;top:${(cyp - SIZE).toFixed(1)}px;width:${W.toFixed(1)}px;height:${(2 * SIZE).toFixed(1)}px" aria-label="${n.name}${n.id === d.entryId ? " (입장)" : ""}">
       <span class="ednode-ico">${n.icon}</span><span class="ednode-lbl">${n.name}</span></button>`;
   }).join("");
 
@@ -65,7 +65,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   const selSvg = `<svg class="ed-hl-sel" width="${FW}" height="${FH}" viewBox="0 0 ${FW} ${FH}">${selLines}</svg>`;
 
   const catalog = d.catalog.map((c) =>
-    `<div class="ed-chip" draggable="true" data-nt="${c.type}"><span class="mico">${c.icon}</span><span>${c.name}</span></div>`).join("");
+    `<div class="ed-chip" data-nt="${c.type}"><span class="mico">${c.icon}</span><span>${c.name}</span></div>`).join("");
   const selN = d.sel.length;
   const hasDeletable = d.sel.some((id) => id !== d.entryId);
   const selInfo = selN === 0
@@ -101,35 +101,55 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   app.querySelectorAll<HTMLElement>("[data-fsel]").forEach((b) => b.addEventListener("click", () => h.onSelectFloor(Number(b.dataset.fsel))));
   app.querySelectorAll<HTMLElement>("[data-fdel]").forEach((b) => b.addEventListener("click", () => h.onDeleteFloor(Number(b.dataset.fdel))));
   app.querySelectorAll<HTMLElement>("[data-fmove]").forEach((b) => b.addEventListener("click", () => { const [i, dir] = b.dataset.fmove!.split(":").map(Number); h.onMoveFloor(i, dir); }));
-  app.querySelectorAll<HTMLElement>(".ednode[data-node]").forEach((b) => {
-    b.addEventListener("click", (e) => h.onNodeClick(b.dataset.node!, e.ctrlKey || e.metaKey));
-    b.addEventListener("dragstart", (e) => e.dataTransfer!.setData("text/plain", `mv:${b.dataset.node}`));
-  });
   app.querySelectorAll<SVGElement>(".ed-ehit[data-edge]").forEach((b) =>
     b.addEventListener("click", () => { const [a, c] = b.dataset.edge!.split("|"); h.onToggleEdge(a, c); }));
-  app.querySelectorAll<HTMLElement>(".ed-chip").forEach((c) =>
-    c.addEventListener("dragstart", (e) => e.dataTransfer!.setData("text/plain", `nt:${c.dataset.nt}`)));
 
   const vp = app.querySelector<HTMLElement>(".ed-viewport");
   const field = app.querySelector<HTMLElement>("#ed-field");
   if (!vp || !field) return;
 
-  field.addEventListener("dragover", (e) => e.preventDefault());
-  field.addEventListener("drop", (e) => {
-    e.preventDefault();
-    const data = e.dataTransfer!.getData("text/plain");
-    const rect = field.getBoundingClientRect();
-    const zoom = rect.width / field.offsetWidth || 1;
-    const { q, r } = pixelToAxial((e.clientX - rect.left) / zoom, (e.clientY - rect.top) / zoom);
-    if (data.startsWith("nt:")) h.onPlaceNode(data.slice(3) as NodeType, q, r);
-    else if (data.startsWith("mv:")) h.onMoveNode(data.slice(3), q, r);
+  // ── 포인터 기반 드래그(네이티브 DnD·브라우저 고스트 이미지 제거 → 게임 오브젝트 이동 느낌) ──
+  type Drag = { kind: "place" | "move" | "empty"; id?: string; type?: string; icon?: string; ctrl?: boolean; sx: number; sy: number; moved: boolean };
+  let drag: Drag | null = null;
+  let avatar: HTMLElement | null = null;
+  const endDrag = () => { avatar?.remove(); avatar = null; document.body.classList.remove("ed-dragging"); drag = null; };
+  const cellAt = (cx: number, cy: number) => { const r = field.getBoundingClientRect(); const z = r.width / field.offsetWidth || 1; return pixelToAxial((cx - r.left) / z, (cy - r.top) / z); };
+  const overField = (cx: number, cy: number) => { const r = vp.getBoundingClientRect(); return cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom; };
+  const onMove = (e: PointerEvent) => {
+    if (!drag) return;
+    if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 5) {
+      drag.moved = true;
+      if (drag.kind !== "empty") { avatar = document.createElement("div"); avatar.className = "ed-dragavatar"; avatar.textContent = drag.icon ?? ""; document.body.appendChild(avatar); document.body.classList.add("ed-dragging"); }
+    }
+    if (avatar) { avatar.style.left = `${e.clientX}px`; avatar.style.top = `${e.clientY}px`; }
+  };
+  const onUp = (e: PointerEvent) => {
+    if (!drag) return;
+    const cur = drag; endDrag();
+    if (cur.kind === "place") { if (cur.moved && overField(e.clientX, e.clientY)) { const { q, r } = cellAt(e.clientX, e.clientY); h.onPlaceNode(cur.type as NodeType, q, r); } }
+    else if (cur.kind === "move") {
+      if (cur.moved) { if (overField(e.clientX, e.clientY)) { const { q, r } = cellAt(e.clientX, e.clientY); h.onMoveNode(cur.id!, q, r); } }
+      else h.onNodeClick(cur.id!, !!cur.ctrl); // 안 움직이면 클릭=선택
+    } else if (cur.kind === "empty" && !cur.moved) h.onClearSel(); // 빈칸 클릭=해제
+  };
+  // 카탈로그 칩에서 끌어 배치
+  app.querySelectorAll<HTMLElement>(".ed-chip").forEach((c) => {
+    c.addEventListener("pointerdown", (e) => { if (e.button !== 0) return; e.preventDefault(); c.setPointerCapture(e.pointerId); drag = { kind: "place", type: c.dataset.nt, icon: c.querySelector(".mico")?.textContent ?? "", sx: e.clientX, sy: e.clientY, moved: false }; });
+    c.addEventListener("pointermove", onMove);
+    c.addEventListener("pointerup", onUp);
   });
-  // 빈 격자 클릭 = 선택 해제(노드·벽 클릭은 제외)
-  field.addEventListener("click", (e) => {
+  // 격자: 노드=이동/선택, 빈칸=해제 (벽은 click이 처리). 좌클릭만; 가운데(팬)는 vp가 처리.
+  field.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return;
     const t = e.target as HTMLElement;
-    if (t.closest(".ednode") || t.tagName === "line") return;
-    h.onClearSel();
+    const nodeEl = t.closest<HTMLElement>(".ednode");
+    if (nodeEl) drag = { kind: "move", id: nodeEl.dataset.node, ctrl: e.ctrlKey || e.metaKey, icon: nodeEl.querySelector(".ednode-ico")?.textContent ?? "", sx: e.clientX, sy: e.clientY, moved: false };
+    else if (t.closest(".ed-ehit")) return; // 벽 클릭
+    else drag = { kind: "empty", sx: e.clientX, sy: e.clientY, moved: false };
+    field.setPointerCapture(e.pointerId);
   });
+  field.addEventListener("pointermove", onMove);
+  field.addEventListener("pointerup", onUp);
 
   // ── 카메라(줌·팬) — translate 정수 스냅, 변경분만 영속. 첫 진입은 입장 노드 중앙 정렬 ──
   const cam = { ...d.camera };

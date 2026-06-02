@@ -18,7 +18,16 @@ body {
   background: var(--bg);
   color: var(--txt);
   font: 14px/1.5 "Segoe UI", system-ui, sans-serif;
+  user-select: none; -webkit-user-select: none; /* 게임 톤: 텍스트 드래그선택 금지 */
 }
+/* 예외: 전투 로그와 입력은 선택 가능 */
+.loginner, .loginner * { user-select: text; -webkit-user-select: text; cursor: text; }
+input, textarea { user-select: text; -webkit-user-select: text; }
+/* 드래그 중 커서 + 커서를 따라오는 게임 오브젝트(네이티브 고스트 대체) */
+body.ed-dragging, body.ed-dragging * { cursor: grabbing !important; }
+.ed-dragavatar { position: fixed; transform: translate(-50%, -50%); pointer-events: none; z-index: 1000; font-size: 24px;
+  width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%;
+  background: var(--panel2); border: 2px solid var(--accent); box-shadow: 0 3px 10px rgba(0,0,0,.5); opacity: .92; }
 #app { max-width: 1820px; margin: 0 auto; padding: 16px; }
 
 header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
