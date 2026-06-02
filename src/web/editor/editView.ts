@@ -142,7 +142,8 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   // ── 카메라(줌·팬) — DOM 직접 변환, 변경분만 영속. 첫 진입은 입장 노드 중앙 정렬 ──
   const cam = { ...d.camera };
   const clamp = (z: number) => Math.max(0.3, Math.min(2.5, z));
-  const apply = () => { field.style.transformOrigin = "0 0"; field.style.transform = `translate(${cam.x}px,${cam.y}px) scale(${cam.zoom})`; };
+  // translate는 정수 픽셀로 스냅(소수 픽셀 AA로 인한 비대칭 느낌 완화). 줌 누적은 float 유지.
+  const apply = () => { field.style.transformOrigin = "0 0"; field.style.transform = `translate(${Math.round(cam.x)}px,${Math.round(cam.y)}px) scale(${cam.zoom})`; };
   if (Number.isNaN(cam.x)) {
     const e0 = d.nodes.find((n) => n.id === d.entryId) ?? d.nodes[0];
     const r0 = vp.getBoundingClientRect();

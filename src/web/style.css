@@ -516,7 +516,7 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .ed-grid { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 0; }
 .ed-grid path { fill: none; stroke: var(--line); stroke-width: 1; opacity: .16; }
 .ed-walls { position: absolute; left: 0; top: 0; z-index: 2; }
-.ed-walls .ed-wallvis { stroke: var(--accent); stroke-width: 4; stroke-linecap: round; visibility: hidden; pointer-events: none; }
+.ed-walls .ed-wallvis { stroke: var(--accent); stroke-width: 3.5; stroke-linecap: butt; visibility: hidden; pointer-events: none; }
 .ed-walls .ed-wallvis.built { visibility: visible; }                                   /* 세워진 벽 = 실선 */
 .ed-walls .ed-ehit { stroke: transparent; stroke-width: 14; pointer-events: stroke; cursor: pointer; }
 .ed-walls .ed-ehit:hover + .ed-wallvis { visibility: visible; stroke-dasharray: 5 4; opacity: .85; } /* 호버 = 점선 미리보기 */
