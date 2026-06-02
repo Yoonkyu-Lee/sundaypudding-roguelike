@@ -13,6 +13,7 @@ import type { RunNode } from "./map.ts";
 import type { RunState, ShopOffer } from "./types.ts";
 import { genRewards, unlockedTier, ownsUpgradeLine } from "./rewards.ts";
 import { genItemOffers } from "./items.ts";
+import { fireRunTrigger } from "./passives.ts";
 
 export function createRun(seed: number, roster: { charId: string; pos: Pos }[], acts: MapGenConfig[] = ACTS, opts: { mastery?: Record<string, number>; useMastery?: boolean } = {}): RunState {
   const rng = new Rng(seed ^ 0x9e3779b9);
@@ -43,6 +44,7 @@ export function createRun(seed: number, roster: { charId: string; pos: Pos }[], 
     inventory: ["wood_bat", "leather_vest"], // 시작 인벤토리(맛보기) — 시트에서 장착
     shop: null,
     encounterId: null,
+    pendingStatuses: {},
     log: [`런 시작 (seed ${seed})`],
   };
 }
@@ -75,6 +77,7 @@ function healParty(run: RunState, pct: number, revive = false): void {
     }
     m.hp = Math.min(m.maxHp, m.hp + Math.round(m.maxHp * pct));
   }
+  fireRunTrigger(run, { on: "partyHpChange", dir: "heal" });
 }
 
 /** 진형 편성(6장): 아군 위치 변경 — 비전투 중 언제나. 대상 칸이 비면 이동, 다른 아군이 있으면 위치 교대(swap). */
@@ -104,11 +107,15 @@ export function enterNode(run: RunState, nodeId: string): void {
   if (run.phase !== "map" || !run.reachable.includes(nodeId)) return;
   const n = node(run, nodeId);
   run.activeNodeId = nodeId;
+  fireRunTrigger(run, { on: "nodeEnter", nodeType: n.type });
 
   if (n.type === "battle" || n.type === "elite" || n.type === "boss") {
     const battleSeed = run.rng.int(0, 2_000_000_000);
     const enc = { id: n.type, name: n.type, allies: [], enemies: NODE_ROSTERS[n.type] ?? NODE_ROSTERS.battle, boss: n.type === "boss" };
-    run.battle = createBattle(battleSeed, enc, run.party.filter((m) => m.hp > 0));
+    // 모험 패시브 계승(pendingStatuses) 주입 후 1회 소비
+    const allyStates = run.party.filter((m) => m.hp > 0).map((m) => ({ ...m, startStatuses: run.pendingStatuses[m.charId] }));
+    run.battle = createBattle(battleSeed, enc, allyStates);
+    run.pendingStatuses = {};
     run.phase = "battle";
     run.log.push(`${n.type} 진입`);
     return;
@@ -185,7 +192,7 @@ export function leaveShop(run: RunState): void {
 // ── 인카운터 (7.2) — 선택지/도박. 생존 보장(피해는 최소 HP1) ──
 function applyOutcome(run: RunState, o: EncounterOutcome): void {
   if (o.kind === "heal") { healParty(run, o.pct); run.log.push(`파티 ${Math.round(o.pct * 100)}% 회복`); }
-  else if (o.kind === "hurt") { for (const m of run.party) if (m.hp > 0) m.hp = Math.max(1, m.hp - Math.round(m.maxHp * o.pct)); run.log.push(`파티 ${Math.round(o.pct * 100)}% 피해`); }
+  else if (o.kind === "hurt") { for (const m of run.party) if (m.hp > 0) m.hp = Math.max(1, m.hp - Math.round(m.maxHp * o.pct)); run.log.push(`파티 ${Math.round(o.pct * 100)}% 피해`); fireRunTrigger(run, { on: "partyHpChange", dir: "hurt" }); }
   else if (o.kind === "gold") { run.gold = Math.max(0, run.gold + o.amount); run.log.push(`골드 ${o.amount >= 0 ? "+" : ""}${o.amount}`); }
   else if (o.kind === "upgradeRandom") {
     const cand = run.party.filter((m) => m.hp > 0).flatMap((m) => m.ownedSkillIds.filter((sid) => SKILLS[sid]?.nextTierId).map((sid) => ({ m, sid })));
@@ -215,6 +222,7 @@ function completeNode(run: RunState, nodeId: string): void {
   run.reachable = forwardIds(run.nodes, n); // 전진(r+1) 인접 셀 (좌표로 계산)
   run.activeNodeId = null;
   run.phase = "map";
+  fireRunTrigger(run, { on: "nodeClear", nodeType: n.type });
 }
 
 /** 다음 액트로 (7.3 다층): 새 맵 생성·진행 초기화·파티 50% 회복(숨돌리기). 결정론(run.rng). */
@@ -231,6 +239,7 @@ function advanceAct(run: RunState): void {
   healParty(run, 0.5, true); // 액트 전환: 전투불능 부활 + 50% 회복
   run.phase = "map";
   run.log.push(`액트 ${run.act} 진입 — 전투불능 부활 + 파티 50% 회복`);
+  fireRunTrigger(run, { on: "actStart" });
 }
 
 /** run.battle.phase가 종료 상태일 때 호출 — HP 반영, 승=보상/보스승=다음 액트(최종 보스=클리어), 패=실패. */
@@ -258,6 +267,7 @@ export function resolveBattleEnd(run: RunState): void {
   // 그 외 승리(일반/엘리트/액트 보스) = 골드 + 보상 3택1. 보스는 가장 큰 골드. (보상 선택 후 chooseReward가 다음 액트로)
   const goldGain = n.type === "boss" ? 24 : n.type === "elite" ? 16 : 8;
   run.gold += goldGain;
+  fireRunTrigger(run, { on: "goldGain" });
   run.rewards = genRewards(run);
   run.phase = "reward";
   run.log.push(`${n.type === "boss" ? "보스 격파" : "전투 승리"} (+${goldGain}G) — 보상 선택`);

@@ -24,4 +24,15 @@ export const TRAITS: Record<string, TraitDef> = {
     id: "thorns", name: "가시", icon: "🌵", desc: "피격 시 50% 확률로 공격자에게 3 피해(턴당 2회).",
     rules: [{ when: { on: "damaged" }, if: [{ c: "chance", pct: 50 }], then: [{ do: "damage", amount: 3, target: "subject" }], maxPerTurn: 2 }],
   },
+  // ── 모험(run) 스코프 특성 ──
+  // 노드를 클리어할 때마다 골드 +3 (전투 밖 사건 반응).
+  miser: {
+    id: "miser", name: "수전노", icon: "💰", desc: "노드를 클리어할 때마다 골드 +3.",
+    rules: [{ when: { on: "nodeClear" }, then: [{ do: "goldDelta", amount: 3 }] }],
+  },
+  // 보스 노드 진입 시 다음 전투에 파티 전원 공위증 1 계승.
+  warspirit: {
+    id: "warspirit", name: "전의", icon: "⚔", desc: "보스 노드 진입 시 다음 전투에 파티 전원 공위증.",
+    rules: [{ when: { on: "nodeEnter", nodeType: "boss" }, then: [{ do: "grantRunStatus", statusId: "might", stacks: 1, duration: 99, target: "allAllies" }] }],
+  },
 };

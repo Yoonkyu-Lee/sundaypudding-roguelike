@@ -43,5 +43,6 @@ export function applyEffect(state: GameState, rctx: RuleCtx, eff: Effect): void 
     case "statMod": for (const tgt of resolveTargets(state, rctx, eff.target)) tgt.statMods[eff.stat] = (tgt.statMods[eff.stat] ?? 0) + eff.delta; break;
     case "modCooldown": for (const tgt of resolveTargets(state, rctx, eff.target)) { const ids = eff.skillId ? [eff.skillId] : Object.keys(tgt.cooldowns); for (const id of ids) tgt.cooldowns[id] = Math.max(0, (tgt.cooldowns[id] ?? 0) + eff.delta); } break;
     case "modSpeedRoll": case "rerollSpeed": break; // speedRoll 트리거에서 turnOrder가 처리
+    case "goldDelta": case "healParty": case "grantRunStatus": break; // 모험 스코프 효과 — run/passives.ts가 처리
   }
 }

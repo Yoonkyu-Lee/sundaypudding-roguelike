@@ -3,7 +3,7 @@
 // 엔진(core/combat/passives)이 이걸 "해석"만 한다. (8.6 / 8.8 데이터·엔진 경계)
 // 트리거는 현재 전투 스코프 전체. 모험 스코프(노드/골드/파티HP)는 후속 슬라이스.
 // ─────────────────────────────────────────────────────────────────────────
-import type { Side } from "./content.ts";
+import type { NodeType, Side } from "./content.ts";
 
 export type Comparator = "lt" | "lte" | "eq" | "gte" | "gt";
 
@@ -39,7 +39,13 @@ export type Trigger =
   | { on: "statusTick"; statusId?: string } // on-bleed 등 (지속 피해/회복 발동 시)
   | { on: "kill" } // 소유자가 처치
   | { on: "death"; who?: TriggerWho }
-  | { on: "battleEnd"; result?: "win" | "lose" };
+  | { on: "battleEnd"; result?: "win" | "lose" }
+  // ── 모험(run) 스코프 — core/run/passives.ts가 해석 ──
+  | { on: "nodeEnter"; nodeType?: NodeType }
+  | { on: "nodeClear"; nodeType?: NodeType }
+  | { on: "actStart" }
+  | { on: "goldGain" }
+  | { on: "partyHpChange"; dir?: "heal" | "hurt" };
 
 /** 조건 평가 대상. self=소유자 / subject=이벤트 1차 대상(피격자 등) / target=소유자 현재 행동 대상 */
 export type CondWho = "self" | "subject" | "target";
@@ -64,7 +70,10 @@ export type Condition =
   | { c: "wasCrit" }
   | { c: "damageAtLeast"; v: number }
   | { c: "skillIs"; skillId: string }
-  | { c: "chance"; pct: number }; // state.rng만 사용
+  | { c: "chance"; pct: number } // state.rng만 사용
+  // ── 모험(run) 스코프 조건 ──
+  | { c: "nodeTypeIs"; nodeType: NodeType }
+  | { c: "goldAtLeast"; v: number };
 
 /** 효과 대상. */
 export type EffTarget = "self" | "subject" | "target" | "allAllies" | "allEnemies" | "randomEnemy" | "randomAlly";
@@ -85,7 +94,11 @@ export type Effect =
   | { do: "modSpeedRoll"; delta: number } // speedRoll 트리거 전용(소유자 주사위에 가산, rng 호출 없음)
   | { do: "rerollSpeed" } // speedRoll 트리거 전용(소유자 주사위 재굴림, state.rng)
   | { do: "statMod"; stat: StatKey; delta: number; target: EffTarget } // 전투 동안 누적 스탯 보정
-  | { do: "modCooldown"; skillId?: string; delta: number; target: EffTarget }; // 쿨다운 가감(음수=감소)
+  | { do: "modCooldown"; skillId?: string; delta: number; target: EffTarget } // 쿨다운 가감(음수=감소)
+  // ── 모험(run) 스코프 효과 ──
+  | { do: "goldDelta"; amount: number } // 골드 가감
+  | { do: "healParty"; pct: number } // 파티 비율 회복
+  | { do: "grantRunStatus"; statusId: string; stacks: number; duration: number; target: EffTarget }; // 다음 전투 시작 시 부여(계승)
 
 /** 디자이너 룰: when 시점에, if 모두 참이면, then 순서대로 실행. */
 export interface PassiveRule {

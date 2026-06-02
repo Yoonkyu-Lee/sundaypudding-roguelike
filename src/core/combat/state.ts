@@ -27,7 +27,7 @@ function makeUnit(
   p: Placement,
   side: "ally" | "enemy",
   idx: number,
-  growth?: { hp?: number; maxHp?: number; skillDmgBonus?: Record<string, number>; activeSkillIds?: string[]; ownedSkillIds?: string[]; equipped?: Equipped },
+  growth?: { hp?: number; maxHp?: number; skillDmgBonus?: Record<string, number>; activeSkillIds?: string[]; ownedSkillIds?: string[]; equipped?: Equipped; startStatuses?: { statusId: string; stacks: number; duration: number }[] },
 ): Unit {
   const c = CHARACTERS[p.charId];
   if (!c) throw new Error(`character not found: ${p.charId}`);
@@ -35,8 +35,11 @@ function makeUnit(
   const eb = equipBonus(growth?.equipped);
   // 패시브 = 보유 기준. 아군=ownedSkillIds, 적/기본=캐릭터 skillIds 전체. + 캐릭 특성(traitIds).
   const owned = growth?.ownedSkillIds ?? c.skillIds;
+  const uid = `${side[0]}${idx}_${c.id}`;
+  // 모험 패시브 계승 상태(pendingStatuses) — 전투 시작 전 부여(라운드1부터 반영)
+  const startStatuses = (growth?.startStatuses ?? []).map((s) => ({ defId: s.statusId, stacks: s.stacks, duration: s.duration, sourceUid: uid }));
   return {
-    uid: `${side[0]}${idx}_${c.id}`,
+    uid,
     side,
     charId: c.id,
     name: c.name,
@@ -52,7 +55,7 @@ function makeUnit(
     critMultiplier: c.critMultiplier + eb.critMultiplier,
     activeSkillIds: growth?.activeSkillIds ?? c.skillIds.slice(0, 4), // 런 선택 활성 4 (없으면 기본 앞 4)
     cooldowns: {},
-    statuses: [],
+    statuses: startStatuses,
     alive: true,
     skillDmgBonus: { ...(growth?.skillDmgBonus ?? {}) },
     equipDmgFlat: eb.dmgFlat,
@@ -67,11 +70,11 @@ function makeUnit(
 export function createBattle(
   seed: number,
   enc: Encounter,
-  allyStates?: { charId: string; pos: Pos; hp: number; maxHp: number; skillDmgBonus: Record<string, number>; activeSkillIds?: string[]; ownedSkillIds?: string[]; equipped?: Equipped }[],
+  allyStates?: { charId: string; pos: Pos; hp: number; maxHp: number; skillDmgBonus: Record<string, number>; activeSkillIds?: string[]; ownedSkillIds?: string[]; equipped?: Equipped; startStatuses?: { statusId: string; stacks: number; duration: number }[] }[],
 ): GameState {
   const allyUnits = allyStates
     ? allyStates.map((m, i) =>
-        makeUnit({ charId: m.charId, pos: m.pos }, "ally", i, { hp: m.hp, maxHp: m.maxHp, skillDmgBonus: m.skillDmgBonus, activeSkillIds: m.activeSkillIds, ownedSkillIds: m.ownedSkillIds, equipped: m.equipped }),
+        makeUnit({ charId: m.charId, pos: m.pos }, "ally", i, { hp: m.hp, maxHp: m.maxHp, skillDmgBonus: m.skillDmgBonus, activeSkillIds: m.activeSkillIds, ownedSkillIds: m.ownedSkillIds, equipped: m.equipped, startStatuses: m.startStatuses }),
       )
     : enc.allies.map((p, i) => makeUnit(p, "ally", i));
   const units: Unit[] = [...allyUnits, ...enc.enemies.map((p, i) => makeUnit(p, "enemy", i))];

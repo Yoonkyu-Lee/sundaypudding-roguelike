@@ -38,6 +38,8 @@ export interface RunState {
   inventory: string[]; // 미장착 보유 장착 아이템 id (4.3, 파티 공유 — 시트에서 장착)
   shop: ShopOffer[] | null; // 상점 진열(방문 시 생성, 구매하면 제거)
   encounterId: string | null; // 진행 중 인카운터 이벤트 id (data/events)
+  /** 모험 패시브 grantRunStatus 계승분 — charId별, 다음 전투 시작 시 1회 주입 후 비움 */
+  pendingStatuses: Record<string, { statusId: string; stacks: number; duration: number }[]>;
   log: string[];
 }
 

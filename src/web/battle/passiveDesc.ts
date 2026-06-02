@@ -8,6 +8,8 @@ const TGT: Record<EffTarget, string> = { self: "자신", subject: "상대", targ
 const STAT: Record<string, string> = { accuracy: "명중", evasion: "회피", critChance: "치명%", critMultiplier: "치명배수", speedMin: "속도하한", speedMax: "속도상한" };
 const sName = (id: string) => STATUS_DEFS[id]?.name ?? id;
 const who = (w: string) => (w === "self" ? "자신" : w === "subject" ? "상대" : "대상");
+const NODE: Record<string, string> = { start: "시작", battle: "전투", elite: "정예", shop: "상점", encounter: "이벤트", rest: "휴식", boss: "보스" };
+const node = (t?: string) => (t ? NODE[t] ?? t : "노드");
 
 function whenText(t: Trigger): string {
   switch (t.on) {
@@ -34,6 +36,11 @@ function whenText(t: Trigger): string {
     case "kill": return "적 처치 시";
     case "death": return t.who === "ally" ? "아군이 쓰러질 때" : t.who === "enemy" ? "적이 쓰러질 때" : "쓰러질 때";
     case "battleEnd": return t.result === "win" ? "승리 시" : t.result === "lose" ? "패배 시" : "전투 종료 시";
+    case "nodeEnter": return `${node(t.nodeType)} 진입 시`;
+    case "nodeClear": return `${node(t.nodeType)} 클리어 시`;
+    case "actStart": return "액트 시작 시";
+    case "goldGain": return "골드 획득 시";
+    case "partyHpChange": return t.dir === "heal" ? "파티 회복 시" : t.dir === "hurt" ? "파티 피해 시" : "파티 HP 변화 시";
   }
 }
 
@@ -58,6 +65,8 @@ function ifText(c: Condition): string {
     case "damageAtLeast": return `피해 ≥${c.v}`;
     case "skillIs": return `「${SKILLS[c.skillId]?.name ?? c.skillId}」`;
     case "chance": return `${c.pct}% 확률`;
+    case "nodeTypeIs": return `${node(c.nodeType)} 노드`;
+    case "goldAtLeast": return `골드 ≥${c.v}`;
   }
 }
 
@@ -74,6 +83,9 @@ function thenText(e: Effect): string {
     case "modCooldown": return `${TGT[e.target]} 쿨다운 ${e.delta >= 0 ? "+" : ""}${e.delta}`;
     case "modSpeedRoll": return `주사위 ${e.delta >= 0 ? "+" : ""}${e.delta}`;
     case "rerollSpeed": return "주사위 재굴림";
+    case "goldDelta": return `골드 ${e.amount >= 0 ? "+" : ""}${e.amount}`;
+    case "healParty": return `파티 ${Math.round(e.pct * 100)}% 회복`;
+    case "grantRunStatus": return `${TGT[e.target]} ${sName(e.statusId)} ${e.stacks}×${e.duration}턴(다음 전투)`;
   }
 }
 

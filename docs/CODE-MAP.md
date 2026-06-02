@@ -62,6 +62,7 @@ src/core/
     run.ts          createRun · enterNode · resolveBattleEnd · chooseReward · setActiveSkill(로드아웃) · movePartyMember(진형 배치/교대, 맵전용) · buyShopOffer/leaveShop(상점) · chooseEncounterOption(인카운터) (+ node/completeNode/healParty/generateShop/applyOutcome)
     items.ts        장착(4.3): equipItem/unequipItem(maxHp 재계산) · genItemOffers(상점)/itemRewardOptions(보상) · 인벤토리 왕복
     save.ts         런 이어하기 직렬화(순수): serializeRun/deserializeRun (Rng→{__rng:state} 치환·복원)
+    passives.ts     모험(run) 스코프 특성/패시브 디스패처: fireRunTrigger(노드/골드/파티HP 트리거·재진입 가드). compileRules 재사용
     view.ts         getRunView (RunState → RunView; party[].pos 노출)
     index.ts        ▸배럴
   ai.ts             ▸배럴(파사드): export * from ai/index
@@ -134,7 +135,8 @@ src/core/
 | 상태이상 원장 부여/틱(DoT+HoT) (3.1/3.5) | `combat/status.ts`: `applyStatusInstance`/`tickPeriodic` |
 | 상태 QUERY(스택합·플래그·crit%) | `util.ts`: `totalStacks`/`statusNumSum`/`statusFlag`/`critPctOf` |
 | 스킬 효과 디스패치(뎀/상태/쉴드/힐/이동/끼어들기) (3.9) | `combat/skills.ts`: `applyTargetEffects`/`applySelfEffects` |
-| 특성/패시브 룰 발동(when/if/then) | `combat/passives/`: 각 전투 훅(state/turnOrder/flow/skills/damage/status/winCheck)이 `fireTrigger` 인라인 호출 → 매칭·조건·효과. 보유 스킬 passives + 캐릭 traitIds = `Unit.rules`(makeUnit 컴파일). 결정론 정렬·재진입 가드 |
+| 특성/패시브 룰 발동(when/if/then) | **전투**: `combat/passives/`(각 전투 훅이 `fireTrigger` 인라인 → `Unit.rules`). **모험**: `run/passives.ts fireRunTrigger`(enterNode=nodeEnter·completeNode=nodeClear·advanceAct=actStart·resolveBattleEnd=goldGain·healParty=partyHpChange). 보유 스킬 passives + 캐릭 traitIds = 양쪽 공통(`compileRules`). 결정론·재진입 가드 |
+| 모험 패시브 버프 계승 | `Effect grantRunStatus` → `RunState.pendingStatuses[charId]` → 다음 `enterNode` 전투 생성 시 `combat/state.ts` allyStates `startStatuses`로 주입 후 1회 소비 |
 | 동적 재배치 (6.4) | `combat/skills.ts`: `moveUnit` |
 | 끼어들기 주체 예측(스킬+버프+특성) (2.11) | `combat/interrupt.ts`: `predictInterruptSubjects` (실행·미리보기 공유) |
 | 끼어들기 대상 앵커 해소(웹 targetCell→유닛) (2.11) | `combat/skills.ts`: `resolveAnchorUid` (flow가 끼어들기 주체에 사용) |

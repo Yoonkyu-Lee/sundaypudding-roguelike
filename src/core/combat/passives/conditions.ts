@@ -33,5 +33,6 @@ function evalOne(state: GameState, tctx: TriggerCtx, rctx: RuleCtx, c: Condition
     case "damageAtLeast": return (tctx.damage ?? 0) >= c.v;
     case "skillIs": return tctx.skillId === c.skillId;
     case "chance": return state.rng.chance(c.pct);
+    case "nodeTypeIs": case "goldAtLeast": return false; // 모험 스코프 조건 — 전투에선 미충족
   }
 }

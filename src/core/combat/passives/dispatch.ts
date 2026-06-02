@@ -82,6 +82,8 @@ function match(state: GameState, tctx: TriggerCtx, owner: Unit, w: Trigger): Rul
       if (w.statusId && tctx.statusId !== w.statusId) return null;
       return subj?.uid === owner.uid ? { owner } : null;
     case "speedRoll": return null; // applySpeedRollPassives가 따로 처리
+    // 모험(run) 스코프 트리거 — 전투에선 발동 안 함(run/passives.ts가 처리)
+    case "nodeEnter": case "nodeClear": case "actStart": case "goldGain": case "partyHpChange": return null;
   }
   return null;
 }

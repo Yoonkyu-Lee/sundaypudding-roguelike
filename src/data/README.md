@@ -221,8 +221,8 @@ PassiveRule = { when: Trigger, if?: Condition[], then: Effect[], maxPerTurn?, ma
 { id:"bloodlust", name:"피의 갈망", rules:[{ when:{on:"kill"}, then:[{do:"heal",amount:8,target:"self"}] }] }
 ```
 
-### Trigger 카탈로그 (`when` — 전투 스코프)
-`self`=룰 소유자 / `subject`=이벤트 상대(피격자·턴 주체 등) / `target`=현재 행동 대상.
+### Trigger 카탈로그 (`when`)
+**전투 스코프**(소유자=전투 유닛). `self`=룰 소유자 / `subject`=이벤트 상대(피격자·턴 주체 등) / `target`=현재 행동 대상.
 
 | `on` | 발동 시점 | 옵션 |
 |---|---|---|
@@ -240,8 +240,18 @@ PassiveRule = { when: Trigger, if?: Condition[], then: Effect[], maxPerTurn?, ma
 | `statusApplied` · `statusTick` | 상태 부여 / 지속 발동(on-bleed) | `statusId?` · `as?` |
 | `battleEnd` | 전투 종료 | `result?: win\|lose` |
 
+**모험(run) 스코프**(소유자=파티원, 전투 밖 사건). `self`=룰 소유 파티원 / `allAllies`=파티 전체.
+
+| `on` | 발동 시점 | 옵션 |
+|---|---|---|
+| `nodeEnter` · `nodeClear` | 노드 진입 / 클리어 | `nodeType?`(battle/elite/boss/shop/rest/encounter) |
+| `actStart` | 액트 시작(다음 층) | — |
+| `goldGain` | 골드 획득(전투 승리 등) | — |
+| `partyHpChange` | 파티 회복/피해 | `dir?: heal\|hurt` |
+
 ### Condition 카탈로그 (`if` — AND 결합)
-`hpPct(who,cmp,v)` · `round(cmp,v)` · `selfTurnCount(cmp,v)` · `everyN(n,of)` · `firstTurn` · `hasStatus(who,statusId,minStacks?)` · `missingStatus(who,statusId)` · `atColumn/atRow(who,cmp,v)` · `atCell(who,row,col)` · `isFrontline(who)` · `sideCount(side,cmp,v)` · `outnumbered` · `subjectCharId(charId)` · `subjectSide(side)` · `wasCrit` · `damageAtLeast(v)` · `skillIs(skillId)` · `chance(pct)`.
+전투 스코프: `hpPct(who,cmp,v)` · `round(cmp,v)` · `selfTurnCount(cmp,v)` · `everyN(n,of)` · `firstTurn` · `hasStatus(who,statusId,minStacks?)` · `missingStatus(who,statusId)` · `atColumn/atRow(who,cmp,v)` · `atCell(who,row,col)` · `isFrontline(who)` · `sideCount(side,cmp,v)` · `outnumbered` · `subjectCharId(charId)` · `subjectSide(side)` · `wasCrit` · `damageAtLeast(v)` · `skillIs(skillId)` · `chance(pct)`.
+모험 스코프: `nodeTypeIs(nodeType)` · `goldAtLeast(v)` · `hpPct(self)` · `chance(pct)`.
 `cmp` = `lt`·`lte`·`eq`·`gte`·`gt`.
 
 ### Effect 카탈로그 (`then`)
@@ -256,11 +266,14 @@ PassiveRule = { when: Trigger, if?: Condition[], then: Effect[], maxPerTurn?, ma
 | `statMod {stat,delta,target}` | 전투 동안 스탯 누적 보정(accuracy/evasion/critChance/critMultiplier/speedMin/speedMax) |
 | `modCooldown {skillId?,delta,target}` | 쿨다운 가감 |
 | `modSpeedRoll {delta}` · `rerollSpeed` | 주사위 가산 / 재굴림 (`speedRoll` 트리거 전용) |
+| `goldDelta {amount}` | (모험) 골드 가감 |
+| `healParty {pct}` | (모험) 파티 비율 회복 |
+| `grantRunStatus {statusId,stacks,duration,target}` | (모험) **다음 전투 시작 시** 부여(계승, 1회) |
 
 > **주의**: `statMod`은 누적되고 자동 만료가 없다 → **`battleStart` 1회**나 `maxPerBattle:1`로만 쓰고, 매 턴 갱신형 버프는 **`applyStatus`(버프 상태이상)**로. 무한 연쇄(피격→피해→피격…)는 엔진이 깊이·재진입으로 막지만, `maxPerTurn`/`maxPerBattle`로 의도된 한도를 두는 게 좋다.
 
 ### 못 하는 것 → 엔진 요청
-위 카탈로그에 없는 시점·조건·효과(예: 흡혈=가한 피해 비례 회복, 반사 비율, 특정 효과 면역, 모험 스코프 노드/골드 트리거)는 **새 엔진 프리미티브**가 필요 → "요청하는 법"대로 엔지니어에게.
+위 카탈로그에 없는 시점·조건·효과(예: 흡혈=가한 피해 비례 회복, 반사 비율, 특정 효과 면역, 진영 광역 브로드캐스트)는 **새 엔진 프리미티브**가 필요 → "요청하는 법"대로 엔지니어에게.
 
 ---
 
