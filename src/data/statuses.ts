@@ -69,6 +69,9 @@ export const STATUS_DEFS: Record<StatusDefId, StatusDef> = {
     grantsInterrupt: true, // 정규 턴 행동 시 끼어들기 (끼어들기 출처가 스킬이 아닌 예: 버프)
   },
 
+  accelerate: { id: "accelerate", name: "가속", icon: "➵", buff: true, speedUp: 1 }, // 속도 증가 => 위력만큼 속도값 +보정
+  strength: { id: "strength", name: "힘", icon: "🔼", buff: true, dmgDealtFlat: 1 }, // 공위증 1
+
   // ── 공격/치명 보정 (3.6 공위증류) ──
   might: { id: "might", name: "투지", icon: "💪", buff: true, dmgDealtFlat: 6 }, // 공격력↑(공위증)
   weaken: { id: "weaken", name: "약화", icon: "📉", dmgDealtFlat: -5 }, // 공격력↓

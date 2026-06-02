@@ -2,6 +2,23 @@
 import type { Character } from "../core/types.ts";
 
 export const CHARACTERS: Record<string, Character> = {
+  //테스트 캐릭터 소생
+  elf: {
+    id: "elf",
+    name: "엘프",
+    avatar: "/avatars/elf.webp",
+    playable: true,
+    hp: 40,
+    speedMin: 7,
+    speedMax: 7,
+    evasion: 5, // 회피 낮음(둔함)
+    accuracy: 0,
+    critChance: 10,
+    critMultiplier: 1.5,
+    skillIds: ["nimble", "enemy_suck", "slide", "gangta"], // 활성 4
+  },
+
+
   beef: {
     id: "beef",
     name: "비프",

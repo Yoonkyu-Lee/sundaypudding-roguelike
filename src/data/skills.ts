@@ -182,6 +182,38 @@ export const SKILLS: Record<string, Skill> = {
     ],
   },
 
+  nimble: {
+    id: "nimble",
+    name: "신속",
+    exclusiveTo: "elf",
+    target: "self",
+    cooldown: 3,
+    accuracy: 0,
+    alwaysHit: true,
+    effects: [{kind: "applyStatus", statusId: "accelerate", stacks: 1, duration: 3}],
+  },
+
+  enemy_suck: {
+    id: "enemy_suck",
+    name: "적 억빠",
+    exclusiveTo: "elf",
+    target: "enemy",
+    cooldown: 3,
+    accuracy: 0,
+    alwaysHit: true,
+    effects: [{kind: "applyStatus", statusId: "accelerate", stacks: 3, duration: 3}],
+  },
+
+  slide: {
+    id: "slide",
+    name: "갈기",
+    target: "self",
+    cooldown: 0,
+    accuracy: 0,
+    alwaysHit: true,
+    effects: [{ kind: "applyStatus", statusId: "strength", stacks: 3, duration: 3 }],
+  },
+
   // ══ 우익(대한민청) — 플레이어 ══
   // 김두한 (브루저/딜러, 높은 치명)
   kim_punch: { id: "kim_punch", name: "종로의 주먹", exclusiveTo: "kim", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, tier: 1, nextTierId: "kim_punch2", effects: [{ kind: "damage", amount: 14 }], passives: [{ when: { on: "onHit", as: "attacker", crit: true }, then: [{ do: "applyStatus", statusId: "bleed", stacks: 1, duration: 2, target: "subject" }] }] }, // 하이브리드: 능동 강타 + 크리 시 출혈 패시브

@@ -16,7 +16,8 @@ export function startRound(state: GameState): void {
     const sMax = Math.max(sMin, u.speedMax + statMod(u, "speedMax"));
     const roll = state.rng.int(sMin, sMax);
     const speedDown = statusNumSum(u, "speedDown");
-    return { uid: u.uid, speedMin: sMin, speedMax: sMax, roll, speedDown, speed: Math.max(1, roll - speedDown) };
+    const speedUp = statusNumSum(u, "speedUp"); // 가속 효과 계산
+    return { uid: u.uid, speedMin: sMin, speedMax: sMax, roll, speedDown, speedUp, speed: Math.max(1, roll - speedDown + speedUp) }; // 가속 효과만큼 속도 sum +
   });
   applySpeedRollPassives(state, rolls); // speedRoll 패시브(modSpeedRoll/rerollSpeed)가 주사위 조작
   const entries: QueueEntry[] = rolls.map((r) => ({ uid: r.uid, kind: "normal" as const, speed: r.speed }));

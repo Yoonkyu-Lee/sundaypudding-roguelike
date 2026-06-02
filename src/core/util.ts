@@ -30,7 +30,7 @@ export function totalStacks(unit: Unit, defId: string): number {
 }
 
 /** 상태이상 정의의 수치 필드를 스택 가중 합산 (dmgDealtFlat/critChanceAdd/critMultiplierAdd/speedDown) */
-export function statusNumSum(unit: Unit, key: "dmgDealtFlat" | "critChanceAdd" | "critMultiplierAdd" | "speedDown"): number {
+export function statusNumSum(unit: Unit, key: "dmgDealtFlat" | "critChanceAdd" | "critMultiplierAdd" | "speedDown" | "speedUp"): number {
   let sum = 0;
   for (const s of unit.statuses) {
     const v = STATUS_DEFS[s.defId][key];
