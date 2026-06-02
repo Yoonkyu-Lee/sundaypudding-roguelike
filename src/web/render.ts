@@ -39,7 +39,7 @@ function ensureShell(app: HTMLElement, ui: Ui, h: Handlers, panel: TimelinePanel
   if (app.querySelector(".battlelayout")) return;
   app.innerHTML = `<svg class="arrows"></svg>
     <header><h1>🍮 Sundaypudding Roguelike</h1>
-      <div class="meta"><span id="roundmeta"></span> seed <input id="seed" type="number" value="${ui.seed}" /> <button id="newb">새 전투</button> <button class="hdr-menu" id="pausebtn" title="메뉴 (Esc)">⏸</button></div>
+      <div class="meta"><span id="roundmeta"></span> seed <input id="seed" type="number" value="${ui.seed}" /> <button id="newb">새 전투</button> <button class="hdr-menu" id="pausebtn" aria-label="메뉴 (Esc)">⏸</button></div>
     </header>
     <div class="battlelayout"><aside class="battleleft"></aside><div class="battlemain"></div><aside class="battleside"></aside></div>`;
   app.querySelector(".battleleft")!.appendChild(panel.root);

@@ -39,7 +39,7 @@ export function renderTitle(app: HTMLElement, h: ShellHandlers): void {
 // 편성 선택 카드 (playable 캐릭) — 클릭=토글. 숙련도 Lv/해금 tier 표시.
 function poolCard(m: HubChar): string {
   const pct = Math.round((m.mastery.xpInLevel / m.mastery.xpPerLevel) * 100);
-  return `<button class="hub-pick${m.selected ? " on" : ""}" data-pick="${m.charId}" title="${m.selected ? "편성 해제" : "편성에 추가"}">
+  return `<button class="hub-pick${m.selected ? " on" : ""}" data-pick="${m.charId}" aria-label="${m.selected ? "편성 해제" : "편성에 추가"}">
     <span class="hub-pick-check">${m.selected ? "✓" : ""}</span>
     ${avatarHtml(m.avatar, "avt")}<span class="hub-nm">${esc(m.name)}</span>
     <span class="hub-pick-lv">Lv ${m.mastery.level} · 해금 T${m.mastery.tier}</span>

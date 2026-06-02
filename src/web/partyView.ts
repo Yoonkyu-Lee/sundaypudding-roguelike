@@ -46,7 +46,7 @@ function miniSlot(m: PartyBoardMember, slot: EquipSlot): string {
   const it = id ? ITEMS[id] : undefined;
   const inner = locked ? "🔒" : it ? (it.icon ?? "📦") : "·";
   const drag = it && !locked ? ` draggable="true" data-item="${id}"` : "";
-  return `<div class="pv-slot${it ? " filled" : ""}${locked ? " locked" : ""}" data-char="${m.charId}" data-slot="${slot}"${drag} title="${SLOT_LABEL[slot]}${it ? `: ${esc(it.name)}` : ""}">${inner}</div>`;
+  return `<div class="pv-slot${it ? " filled" : ""}${locked ? " locked" : ""}" data-char="${m.charId}" data-slot="${slot}"${drag} aria-label="${SLOT_LABEL[slot]}${it ? `: ${esc(it.name)}` : ""}">${inner}</div>`;
 }
 
 function boardHtml(members: PartyBoardMember[], selChar: string): string {
@@ -106,7 +106,7 @@ export function renderPartyView(app: HTMLElement, d: PartyViewData, h: PartyView
   const ov = document.createElement("div");
   ov.className = "party-overlay";
   ov.innerHTML = `<div class="party-modal" role="dialog">
-    <button class="cs-close" title="닫기 (Esc)">✕</button>
+    <button class="cs-close" aria-label="닫기 (Esc)">✕</button>
     <h3 class="pv-title">파티 편성</h3>
     <div class="party-grid">${boardHtml(d.members, d.selected.charId)}<div class="pv-detail">${sheetBody(d.selected)}</div>${invPanel(d.inventory)}</div>
   </div>`;

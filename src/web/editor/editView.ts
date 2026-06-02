@@ -11,7 +11,7 @@ function floorBar(d: EditData): string {
   const cards = d.floors.map((f, i) =>
     `<div class="ed-floor${i === d.floorIdx ? " active" : ""}">
       <button class="ed-fname" data-fsel="${i}">${esc(f.name)}${f.valid ? "" : ' <span class="ed-bad">✗</span>'}</button>
-      <span class="ed-fctl"><button data-fmove="${i}:-1" title="앞으로">◀</button><button data-fmove="${i}:1" title="뒤로">▶</button>${d.floors.length > 1 ? `<button data-fdel="${i}" title="삭제">🗑</button>` : ""}</span>
+      <span class="ed-fctl"><button data-fmove="${i}:-1" aria-label="앞으로">◀</button><button data-fmove="${i}:1" aria-label="뒤로">▶</button>${d.floors.length > 1 ? `<button data-fdel="${i}" aria-label="삭제">🗑</button>` : ""}</span>
     </div>`).join("");
   return `${cards}<button class="ed-addfloor" id="ed-addfloor">＋ 층</button>`;
 }
@@ -30,7 +30,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
     const seg = (half: number) => [mx - px * half, my - py * half, mx + px * half, my + py * half].map((v) => v.toFixed(1));
     const [hx1, hy1, hx2, hy2] = seg(SIZE / 2);
     const [vx1, vy1, vx2, vy2] = seg((SIZE - WALL_SW) / 2);
-    return `<line class="ed-ehit" data-edge="${p.a}|${p.b}" x1="${hx1}" y1="${hy1}" x2="${hx2}" y2="${hy2}"><title>${p.built ? "벽 — 클릭해 연결" : "연결됨 — 클릭해 벽 세우기"}</title></line>`
+    return `<line class="ed-ehit" data-edge="${p.a}|${p.b}" x1="${hx1}" y1="${hy1}" x2="${hx2}" y2="${hy2}"/>`
       + `<line class="ed-wallvis${p.built ? " built" : ""}" x1="${vx1}" y1="${vy1}" x2="${vx2}" y2="${vy2}"/>`;
   }).join("");
 
@@ -43,7 +43,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   // 노드 상호작용/아이콘 = 투명 오버레이 div(드래그=이동, 클릭=선택)
   const nodeOverlays = d.nodes.map((n) => {
     const cxp = ccx(n.q, n.r), cyp = ccy(n.r);
-    return `<button class="ednode${n.id === d.sel ? " sel" : ""}" draggable="true" data-node="${n.id}" style="left:${(cxp - W / 2).toFixed(1)}px;top:${(cyp - SIZE).toFixed(1)}px;width:${W.toFixed(1)}px;height:${(2 * SIZE).toFixed(1)}px" title="${n.icon} ${n.name}${n.id === d.entryId ? " (입장)" : ""}">
+    return `<button class="ednode${n.id === d.sel ? " sel" : ""}" draggable="true" data-node="${n.id}" style="left:${(cxp - W / 2).toFixed(1)}px;top:${(cyp - SIZE).toFixed(1)}px;width:${W.toFixed(1)}px;height:${(2 * SIZE).toFixed(1)}px" aria-label="${n.name}${n.id === d.entryId ? " (입장)" : ""}">
       <span class="ednode-ico">${n.icon}</span><span class="ednode-lbl">${n.name}</span></button>`;
   }).join("");
 
@@ -52,7 +52,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   const wallsSvg = `<svg class="ed-walls" width="${FW}" height="${FH}" viewBox="0 0 ${FW} ${FH}">${wallSvg}</svg>`;
 
   const catalog = d.catalog.map((c) =>
-    `<div class="ed-chip" draggable="true" data-nt="${c.type}" title="드래그해서 격자에 놓기"><span class="mico">${c.icon}</span><span>${c.name}</span></div>`).join("");
+    `<div class="ed-chip" draggable="true" data-nt="${c.type}"><span class="mico">${c.icon}</span><span>${c.name}</span></div>`).join("");
   const selInfo = d.sel
     ? `<div class="ed-selinfo">선택: ${esc(d.nodes.find((n) => n.id === d.sel)!.name)}${d.sel === d.entryId ? " (입장 — 삭제 불가)" : ""}
         ${d.sel !== d.entryId ? `<button class="ed-btn ghost" id="ed-delnode">🗑 노드 삭제 (Del)</button>` : ""}</div>`
@@ -66,7 +66,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
       <div class="ed-left">
         <div class="ed-viewport">
           <div class="hexfield" id="ed-field" style="width:${FW}px;height:${FH}px">${gridSvg}${nodesSvg}${nodeOverlays}${wallsSvg}</div>
-          <div class="ed-zoom"><button id="ed-zin" title="확대">＋</button><button id="ed-zout" title="축소">－</button><button id="ed-zreset" title="리셋">⤢</button></div>
+          <div class="ed-zoom"><button id="ed-zin" aria-label="확대">＋</button><button id="ed-zout" aria-label="축소">－</button><button id="ed-zreset" aria-label="리셋">⤢</button></div>
           <div class="ed-vphint">휠=줌 · 휠(가운데) 드래그=이동</div>
         </div>
         <div class="ed-floors">${floorBar(d)}</div>

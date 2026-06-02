@@ -144,10 +144,10 @@ function skillRow(s: SheetSkill, d: SheetData): string {
   const sk = SKILLS[s.id];
   const tk = sk ? skillType(sk).key : "attack";
   const tag = s.signature ? `<span class="csk-tag sig">전용기</span>` : `<span class="csk-tag univ">범용기</span>`;
-  const up = s.canUpgrade ? `<span class="csk-up" title="강화 가능">⬆</span>` : "";
+  const up = s.canUpgrade ? `<span class="csk-up" aria-label="강화 가능">⬆</span>` : "";
   const spec = sk && s.isActiveSkill !== false ? `<span class="csk-spec">${esc(skillInline(sk))}</span>` : "";
   const traits = sk && s.isActiveSkill !== false && skillTraits(sk).length ? `<div class="csk-traits">${traitsHtml(sk)}</div>` : ""; // 능동 효과 칩(호버=설명)
-  const passive = s.passives && s.passives.length ? `<div class="csk-passive">${s.passives.map((p) => `<span class="csk-pchip" title="패시브 — 보유 시 상시">🔄 ${esc(p)}</span>`).join("")}</div>` : "";
+  const passive = s.passives && s.passives.length ? `<div class="csk-passive">${s.passives.map((p) => `<span class="csk-pchip">🔄 ${esc(p)}</span>`).join("")}</div>` : "";
   // 출전 토글: 활성=빼기(최소 1), 비활성=넣기(최대 4). setActiveSkill이 한도 처리.
   const canAdd = !s.active && d.activeCount < 4;
   const btn = d.editable
@@ -212,7 +212,7 @@ export function renderCharSheet(app: HTMLElement, d: SheetData, h: SheetHandlers
   app.querySelector(".charsheet-overlay")?.remove(); // 중복 방지
   const ov = document.createElement("div");
   ov.className = "charsheet-overlay";
-  ov.innerHTML = `<div class="charsheet" role="dialog"><button class="cs-close" title="닫기 (Esc)">✕</button>${sheetBody(d)}</div>`;
+  ov.innerHTML = `<div class="charsheet" role="dialog"><button class="cs-close" aria-label="닫기 (Esc)">✕</button>${sheetBody(d)}</div>`;
   app.appendChild(ov);
   ov.addEventListener("click", (e) => { if (e.target === ov) h.onClose(); }); // 백드롭
   ov.querySelector(".cs-close")!.addEventListener("click", () => h.onClose());

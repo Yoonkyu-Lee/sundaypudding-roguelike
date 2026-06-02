@@ -29,7 +29,7 @@ function partyPanel(view: RunView): string {
         .filter((s) => s.active)
         .map((s) => `<span class="lchip${s.signature ? " sig" : " univ"}">${esc(s.name)}${s.tier > 1 ? `<sup>${s.tier}</sup>` : ""}</span>`)
         .join("");
-      return `<button class="pmember${cls}" data-sheet="${m.charId}" title="${esc(m.name)} 상세 보기">
+      return `<button class="pmember${cls}" data-sheet="${m.charId}" aria-label="${esc(m.name)} 상세 보기">
         <div class="prow">
           <span class="pname">${avatarHtml(m.avatar, "avt sm")}${esc(m.name)}</span>
           <div class="phpbar"><div class="php" style="width:${pct}%"></div></div>
@@ -106,7 +106,7 @@ function mapScreen(view: RunView, h: RunHandlers): string {
       const attrs = clickable ? `data-node="${n.id}"` : "disabled";
       return `<button class="mnode ${n.status} ${n.type}"
         style="left:${px(x)}px;top:${py(y)}px;width:${W}px;height:${H}px"
-        ${attrs} data-uid="${n.id}" title="${TYPE_NAME[n.type]}">
+        ${attrs} data-uid="${n.id}" aria-label="${TYPE_NAME[n.type]}">
         <span class="mhex">
           <span class="mico">${TYPE_ICON[n.type]}</span>
           <span class="mlabel">${TYPE_NAME[n.type]}</span>
@@ -146,7 +146,7 @@ export function renderRunScreen(app: HTMLElement, view: RunView, h: RunHandlers)
   app.innerHTML = `
     <header>
       <h1>🍮 Sundaypudding Roguelike</h1>
-      <div class="meta">${view.phase === "won" || view.phase === "lost" ? "" : `층 ${view.floor}/${view.totalFloors} · `}${view.phase === "map" ? "맵 — 경로 선택" : view.phase}${view.phase === "won" || view.phase === "lost" ? "" : ` <button class="hdr-menu" id="pausebtn" title="메뉴 (Esc)">⏸</button>`}</div>
+      <div class="meta">${view.phase === "won" || view.phase === "lost" ? "" : `층 ${view.floor}/${view.totalFloors} · `}${view.phase === "map" ? "맵 — 경로 선택" : view.phase}${view.phase === "won" || view.phase === "lost" ? "" : ` <button class="hdr-menu" id="pausebtn" aria-label="메뉴 (Esc)">⏸</button>`}</div>
     </header>
     <div class="runlayout">
       <div class="runmain">${body}</div>
