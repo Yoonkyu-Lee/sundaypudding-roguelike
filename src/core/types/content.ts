@@ -3,6 +3,8 @@
 // 엔진은 이걸 "해석"만 한다. (GAME-DESIGN 8.6 / 8.8 데이터·엔진 경계)
 // ─────────────────────────────────────────────────────────────────────────
 
+import type { PassiveRule } from "./passives.ts";
+
 export type Side = "ally" | "enemy";
 
 /** 그리드 좌표 (행, 열). 열 0 = 최전방. (2.1) */
@@ -114,6 +116,10 @@ export interface Skill {
   nextTierId?: string;
   /** 전용기 소유 charId(4.6). 있으면 그 캐릭 고유기, 없으면 범용기(여러 learnset 공유). 학습 가능 여부는 learnset이 결정 — 이 필드는 UI/의미용(전투 엔진 무관) */
   exclusiveTo?: string;
+  /** 능동기 여부. 기본 true(=플레이어가 전투 스킬창에서 발동). false=순수 패시브 → 스킬창 비노출, passives만 작동 */
+  active?: boolean;
+  /** 보유 시 상시 작동하는 패시브 룰(편성/출전 무관). 능동 effects와 공존 가능(하이브리드) */
+  passives?: PassiveRule[];
 }
 
 // ── 포메이션 (6장) ─────────────────────────────────────────────────────────
@@ -148,6 +154,8 @@ export interface Character {
   skillIds: string[]; // 보유 풀. 슬라이스에선 앞 4개를 활성으로 사용
   /** 플레이어가 본거지에서 편성 가능한 아군 후보인가. 적/잡몹은 false/미설정. (엔진 미해석 — 허브 선택 풀 카테고리화) */
   playable?: boolean;
+  /** 이 캐릭터를 정의하는 특성(상시 패시브). data/traits.ts의 TraitDef id 참조. 여러 개 가능 */
+  traitIds?: string[];
 }
 
 // ── 장착 아이템 (4.3) ──────────────────────────────────────────────────────

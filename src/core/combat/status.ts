@@ -2,6 +2,7 @@
 import type { GameState, StatusInstance, Unit } from "../types.ts";
 import { STATUS_DEFS } from "../../data/statuses.ts";
 import { dealRawDamage } from "./damage.ts";
+import { fireTrigger } from "./passives/index.ts";
 
 export function applyStatusInstance(
   state: GameState,
@@ -15,6 +16,7 @@ export function applyStatusInstance(
   const inst: StatusInstance = { defId, stacks, duration, sourceUid: source.uid, sourceSkillId };
   target.statuses.push(inst); // 인스턴스 합치지 않고 추가 (3.1 원장)
   state.log.push({ t: "statusApplied", targetUid: target.uid, statusId: defId, stacks, duration });
+  fireTrigger(state, { on: "statusApplied", subjectUid: target.uid, attackerUid: source.uid, statusId: defId });
 }
 
 /** 같은 트리거의 DoT/HoT를 defId별 합산해 적용 (3.5). */
@@ -37,12 +39,14 @@ export function tickPeriodic(state: GameState, u: Unit, trigger: "turnStart" | "
     const before = u.hp;
     u.hp = Math.min(u.hpMax, u.hp + amt);
     state.log.push({ t: "heal", targetUid: u.uid, amount: u.hp - before });
+    fireTrigger(state, { on: "onHeal", subjectUid: u.uid });
   }
   // 지속 피해
   for (const [defId, dmg] of dmgByDef) {
     if (dmg <= 0) continue;
     dealRawDamage(state, u, dmg);
     state.log.push({ t: "statusTick", targetUid: u.uid, statusId: defId, dmg });
+    fireTrigger(state, { on: "statusTick", subjectUid: u.uid, statusId: defId });
     if (!u.alive) break;
   }
 }

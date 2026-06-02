@@ -5,6 +5,16 @@
 
 import type { Rng } from "../rng.ts";
 import type { Side, Pos, StatusDefId, FormationLayout } from "./content.ts";
+import type { PassiveRule, StatKey } from "./passives.ts";
+
+/** 컴파일된 패시브 룰(전투 한정) — 룰 + 출처 + 발동 카운터. makeUnit이 매 전투 생성. */
+export interface CompiledRule {
+  rule: PassiveRule;
+  via: { kind: "skill" | "trait"; id: string }; // 어디서 왔나(스킬 보유 / 캐릭 특성)
+  idx: number; // 안정 정렬용 인덱스
+  firedThisTurn: number;
+  firedThisBattle: number;
+}
 
 /** 상태이상 인스턴스(원장 1건) — 출처/만료 보존 (3.1) */
 export interface StatusInstance {
@@ -41,6 +51,12 @@ export interface Unit {
   equipDmgFlat: number;
   /** 장착 방어구의 쉴드 획득량 보정 합 (4.3) — shield 효과에서 합산 */
   equipShieldGainAdd: number;
+  /** 특성/패시브 컴파일 룰 (보유 스킬 passives + 캐릭 traitIds). makeUnit이 생성, 디스패처가 발동 */
+  rules: CompiledRule[];
+  /** 패시브 statMod 누적 보정 (전투 동안). 명중/회피/치명/SPD 계산 시 합산 */
+  statMods: Partial<Record<StatKey, number>>;
+  /** 소유자 정규 턴 카운터 (everyNTurns/selfTurnCount 조건용) */
+  turnCount: number;
 }
 
 /** 장착 슬롯별 아이템 id (4.3). */

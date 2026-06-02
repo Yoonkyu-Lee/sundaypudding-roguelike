@@ -6,6 +6,7 @@ import { ITEMS } from "../../data/items.ts";
 import { STANDARD_FORMATION } from "../../data/formations.ts";
 import type { Encounter, Placement } from "../../data/encounters.ts";
 import { startRound } from "./turnOrder.ts";
+import { compileRules, fireTrigger } from "./passives/index.ts";
 
 /** 장착 3칸의 비-HP 스탯 보정 + 무기 dmgFlat·방어구 쉴드획득 합산 (4.3). HP는 maxHp에 이미 반영(equipItem). */
 function equipBonus(eq?: Equipped) {
@@ -26,12 +27,14 @@ function makeUnit(
   p: Placement,
   side: "ally" | "enemy",
   idx: number,
-  growth?: { hp?: number; maxHp?: number; skillDmgBonus?: Record<string, number>; activeSkillIds?: string[]; equipped?: Equipped },
+  growth?: { hp?: number; maxHp?: number; skillDmgBonus?: Record<string, number>; activeSkillIds?: string[]; ownedSkillIds?: string[]; equipped?: Equipped },
 ): Unit {
   const c = CHARACTERS[p.charId];
   if (!c) throw new Error(`character not found: ${p.charId}`);
   const maxHp = growth?.maxHp ?? c.hp; // party.maxHp가 방어구 HP 보정을 이미 포함
   const eb = equipBonus(growth?.equipped);
+  // 패시브 = 보유 기준. 아군=ownedSkillIds, 적/기본=캐릭터 skillIds 전체. + 캐릭 특성(traitIds).
+  const owned = growth?.ownedSkillIds ?? c.skillIds;
   return {
     uid: `${side[0]}${idx}_${c.id}`,
     side,
@@ -54,6 +57,9 @@ function makeUnit(
     skillDmgBonus: { ...(growth?.skillDmgBonus ?? {}) },
     equipDmgFlat: eb.dmgFlat,
     equipShieldGainAdd: eb.shieldGainAdd,
+    rules: compileRules(c.id, owned),
+    statMods: {},
+    turnCount: 0,
   };
 }
 
@@ -61,11 +67,11 @@ function makeUnit(
 export function createBattle(
   seed: number,
   enc: Encounter,
-  allyStates?: { charId: string; pos: Pos; hp: number; maxHp: number; skillDmgBonus: Record<string, number>; activeSkillIds?: string[]; equipped?: Equipped }[],
+  allyStates?: { charId: string; pos: Pos; hp: number; maxHp: number; skillDmgBonus: Record<string, number>; activeSkillIds?: string[]; ownedSkillIds?: string[]; equipped?: Equipped }[],
 ): GameState {
   const allyUnits = allyStates
     ? allyStates.map((m, i) =>
-        makeUnit({ charId: m.charId, pos: m.pos }, "ally", i, { hp: m.hp, maxHp: m.maxHp, skillDmgBonus: m.skillDmgBonus, activeSkillIds: m.activeSkillIds, equipped: m.equipped }),
+        makeUnit({ charId: m.charId, pos: m.pos }, "ally", i, { hp: m.hp, maxHp: m.maxHp, skillDmgBonus: m.skillDmgBonus, activeSkillIds: m.activeSkillIds, ownedSkillIds: m.ownedSkillIds, equipped: m.equipped }),
       )
     : enc.allies.map((p, i) => makeUnit(p, "ally", i));
   const units: Unit[] = [...allyUnits, ...enc.enemies.map((p, i) => makeUnit(p, "enemy", i))];
@@ -82,6 +88,7 @@ export function createBattle(
     allyFormation: enc.allyFormation ?? STANDARD_FORMATION,
     enemyFormation: enc.boss ? (enc.enemyFormation ?? STANDARD_FORMATION) : null,
   };
+  fireTrigger(state, { on: "battleStart" });
   startRound(state);
   return state;
 }

@@ -1,7 +1,7 @@
 // 타겟팅·면적·합법행동 (2.4/2.7/8.2). 위치 마스크, 면적 모양, 명중, 행동 공간 열거.
 import type { AreaShape, GameState, LegalAction, Pos, Skill, Unit } from "../types.ts";
 import { SKILLS } from "../../data/skills.ts";
-import { aliveUnits, clamp, isFrozen, samePos, unitById } from "../util.ts";
+import { aliveUnits, clamp, isFrozen, samePos, statMod, unitById } from "../util.ts";
 
 /** 도달 가능 열(reach, 2.4): **최전열(살아있는 적의 최소 열)부터 연속 n칸.** 근접은 전열에서 안쪽으로 인접 n칸만 닿음(빈 열을 건너뛰어 먼 열에 닿지 않음). 전열이 죽으면 다음 최전열로 전진 → 적이 있는 한 항상 ≥1열(교착 방지). */
 export function reachableColumns(state: GameState, side: "ally" | "enemy", reach: number): number[] {
@@ -85,7 +85,7 @@ export function areaTargets(state: GameState, actor: Unit, skill: Skill, anchor:
 
 export function computeHitChance(actor: Unit, skill: Skill, target: Unit): number {
   if (skill.alwaysHit || skill.target !== "enemy") return 100;
-  return clamp(Math.round(actor.accuracy + skill.accuracy - target.evasion), 0, 100);
+  return clamp(Math.round(actor.accuracy + statMod(actor, "accuracy") + skill.accuracy - (target.evasion + statMod(target, "evasion"))), 0, 100);
 }
 
 export function getLegalActions(state: GameState): LegalAction[] {
@@ -100,6 +100,7 @@ export function getLegalActions(state: GameState): LegalAction[] {
   for (const skillId of actor.activeSkillIds) {
     const skill = SKILLS[skillId];
     if (!skill) continue;
+    if (skill.active === false) continue; // 순수 패시브(능동 파트 없음)는 스킬창에 안 뜸
     if ((actor.cooldowns[skillId] ?? 0) > 0) continue; // 쿨다운 중 (2.10)
     if (skill.usableFrom && skill.usableFrom.length > 0) {
       if (!skill.usableFrom.some((c) => samePos(c, actor.pos))) continue;

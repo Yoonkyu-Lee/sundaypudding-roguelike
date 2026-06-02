@@ -335,7 +335,15 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .csk-name sup { color: var(--accent); font-size: 9px; }
 .csk-tag { font-size: 9px; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--line); color: var(--dim); }
 .csk-tag.sig { color: var(--accent); border-color: rgba(255,209,102,.4); }
+.csk-tag.pas { color: #c7b3ff; border-color: rgba(167,139,250,.45); }
 .csk-up { color: var(--accent); font-size: 11px; }
+/* 패시브 파트 줄(스킬 행 안) + 특성 섹션 */
+.csk-passive { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.csk-pchip { font-size: 10px; padding: 1px 7px; border-radius: 6px; border: 1px solid rgba(167,139,250,.4); color: #c7b3ff; background: rgba(167,139,250,.08); }
+.cstrait-list { display: flex; flex-direction: column; gap: 8px; }
+.cstrait { border: 1px solid rgba(167,139,250,.35); border-radius: 8px; padding: 8px 10px; background: rgba(167,139,250,.06); }
+.cstrait-h { font-size: 12px; font-weight: 600; color: #c7b3ff; margin-bottom: 3px; }
+.cstrait-r { font-size: 11px; color: var(--dim); line-height: 1.5; }
 .csk-toggle { font-size: 10px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--dim); cursor: pointer; }
 .csk-toggle.on { background: #243528; border-color: var(--green); color: #cdeed8; }
 .csk-toggle:hover { border-color: var(--ally); }

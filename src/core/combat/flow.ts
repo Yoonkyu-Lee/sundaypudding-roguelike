@@ -8,6 +8,7 @@ import { insertInterrupts, predictInterruptSubjects } from "./interrupt.ts";
 import { getLegalActions } from "./targeting.ts";
 import { advance, onNormalTurnEnd } from "./turnOrder.ts";
 import { checkWin } from "./winCheck.ts";
+import { fireTrigger } from "./passives/index.ts";
 
 export function step(state: GameState, action: Action): GameState {
   if (state.phase !== "inProgress" || !state.current) return state;
@@ -31,6 +32,7 @@ export function step(state: GameState, action: Action): GameState {
     }
     // 출혈: 행동 시 발동 (정규 + 끼어들기 모두, 2.11)
     tickPeriodic(state, actor, "onAction");
+    if (actor.alive) fireTrigger(state, { on: "beforeAction", subjectUid: actor.uid });
     if (actor.alive) {
       // 쿨타임은 사용 즉시 설정(끼어들기에서도 설정됨; 단 '감소'만 끼어들기서 안 됨)
       actor.cooldowns[action.skillId] = skill.cooldown;

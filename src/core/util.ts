@@ -44,8 +44,13 @@ export function statusFlag(unit: Unit, key: "invincible" | "taunt"): boolean {
   return unit.statuses.some((s) => STATUS_DEFS[s.defId][key] && s.stacks > 0);
 }
 
+/** 패시브 statMod 누적 보정 조회 (0 기본). */
+export function statMod(unit: Unit, key: "accuracy" | "evasion" | "critChance" | "critMultiplier" | "speedMin" | "speedMax"): number {
+  return unit.statMods[key] ?? 0;
+}
+
 export function critPctOf(unit: Unit): number {
-  return unit.critChance + statusNumSum(unit, "critChanceAdd");
+  return unit.critChance + statMod(unit, "critChance") + statusNumSum(unit, "critChanceAdd");
 }
 
 /** 빙결 등 행동 봉쇄 상태 */

@@ -24,7 +24,13 @@ export interface SheetSkill {
   active: boolean;
   canUpgrade: boolean;
   signature: boolean;
+  /** 능동기 여부(스킬창 발동). false=순수 패시브 */
+  isActiveSkill?: boolean;
+  /** 패시브 파트 설명(있으면 하이브리드/순수 패시브). describeSkillPassives 결과 */
+  passives?: string[];
 }
+/** 캐릭터 특성(상시) — 읽기전용 표시용. */
+export interface SheetTrait { name: string; icon?: string; rules: string[] }
 export interface SheetData {
   charId: string;
   name: string;
@@ -36,6 +42,7 @@ export interface SheetData {
   equipped: { weapon?: string; armor?: string; held?: string };
   inventory: string[]; // 미장착 보유 아이템
   skills: SheetSkill[];
+  traits: SheetTrait[]; // 캐릭터 특성(상시 패시브)
   statuses: UnitView["statuses"]; // 활성 상태이상 (전투만, 맵=[])
   activeCount: number;
   editable: boolean; // 맵=장착/활성4 조작, 전투=읽기전용
@@ -138,17 +145,28 @@ function skillRow(s: SheetSkill, d: SheetData): string {
   const tk = sk ? skillType(sk).key : "attack";
   const tag = s.signature ? `<span class="csk-tag sig">전용기</span>` : `<span class="csk-tag univ">범용기</span>`;
   const up = s.canUpgrade ? `<span class="csk-up" title="강화 가능">⬆</span>` : "";
-  const spec = sk ? `<span class="csk-spec">${esc(skillInline(sk))}</span>` : "";
-  const traits = sk && skillTraits(sk).length ? `<div class="csk-traits">${traitsHtml(sk)}</div>` : ""; // 효과 칩(호버=설명)
+  const spec = sk && s.isActiveSkill !== false ? `<span class="csk-spec">${esc(skillInline(sk))}</span>` : "";
+  const traits = sk && s.isActiveSkill !== false && skillTraits(sk).length ? `<div class="csk-traits">${traitsHtml(sk)}</div>` : ""; // 능동 효과 칩(호버=설명)
+  const passive = s.passives && s.passives.length ? `<div class="csk-passive">${s.passives.map((p) => `<span class="csk-pchip" title="패시브 — 보유 시 상시">🔄 ${esc(p)}</span>`).join("")}</div>` : "";
   // 출전 토글: 활성=빼기(최소 1), 비활성=넣기(최대 4). setActiveSkill이 한도 처리.
   const canAdd = !s.active && d.activeCount < 4;
   const btn = d.editable
     ? `<button class="csk-toggle${s.active ? " on" : ""}" data-sheet-skill="${s.id}"${!s.active && !canAdd ? " disabled" : ""}>${s.active ? "출전 ✓" : "출전"}</button>`
     : "";
+  const ptag = s.isActiveSkill === false ? `<span class="csk-tag pas">패시브</span>` : (s.passives && s.passives.length ? `<span class="csk-tag pas">하이브리드</span>` : "");
   return `<div class="csk-row${s.active ? " active" : ""}">
-    <div class="csk-line"><span class="sktype t-${tk}">${sk ? skillType(sk).label : ""}</span><span class="csk-name">${esc(s.name)}${s.tier > 1 ? `<sup>T${s.tier}</sup>` : ""}</span>${tag}${up}${btn}</div>
-    ${spec}${traits}
+    <div class="csk-line"><span class="sktype t-${tk}">${sk ? skillType(sk).label : ""}</span><span class="csk-name">${esc(s.name)}${s.tier > 1 ? `<sup>T${s.tier}</sup>` : ""}</span>${tag}${ptag}${up}${btn}</div>
+    ${spec}${traits}${passive}
   </div>`;
+}
+
+// 특성 섹션 (읽기전용) — 캐릭터 상시 패시브.
+function traitSection(d: SheetData): string {
+  if (!d.traits.length) return "";
+  const cards = d.traits
+    .map((t) => `<div class="cstrait"><div class="cstrait-h">${t.icon ?? "✦"} ${esc(t.name)}</div>${t.rules.map((r) => `<div class="cstrait-r">${esc(r)}</div>`).join("")}</div>`)
+    .join("");
+  return `<div class="cssection"><h4>특성 <span class="cshint">캐릭터 상시 효과</span></h4><div class="cstrait-list">${cards}</div></div>`;
 }
 
 function skillList(d: SheetData): string {
@@ -172,6 +190,7 @@ export function sheetBody(d: SheetData): string {
       <div class="cssection"><h4>능력치 ${toggle}</h4><div class="csstats">${statRows(d)}</div></div>
       ${statusSec}
       <div class="cssection"><h4>장착</h4><div class="csslots">${SLOTS.map((sl) => slotBlock(d, sl)).join("")}</div></div>
+      ${traitSection(d)}
       ${skillList(d)}
     </div>`;
 }

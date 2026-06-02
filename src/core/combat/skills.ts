@@ -6,6 +6,7 @@ import { computeDamage, dealRawDamage } from "./damage.ts";
 import { applyStatusInstance } from "./status.ts";
 import { getFormationBonus } from "./formation.ts";
 import { areaTargets, computeHitChance } from "./targeting.ts";
+import { fireTrigger } from "./passives/index.ts";
 
 /** 앵커(주 대상) 유닛 uid 해소 — targetUid > targetCell/cells[0]의 대상 진영 유닛. 끼어들기 주체 해소에 공유(2.11). */
 export function resolveAnchorUid(
@@ -32,6 +33,8 @@ function moveUnit(state: GameState, u: Unit, deltaCol: number): void {
   const from = { ...u.pos };
   u.pos = dest;
   state.log.push({ t: "move", uid: u.uid, from, to: { ...dest } });
+  fireTrigger(state, { on: "onMove", subjectUid: u.uid });
+  fireTrigger(state, { on: "enterCell", subjectUid: u.uid, cell: { ...dest } });
 }
 
 /** 시전자 자신에게 1회만 적용되는 효과 (광역 중복 방지): applyStatusSelf, move(self). */
@@ -53,7 +56,7 @@ function applyTargetEffects(state: GameState, actor: Unit, skill: Skill, target:
         const atk = getFormationBonus(state, actor, "attackPower");
         const up = actor.skillDmgBonus[skill.id] ?? 0;
         const final = computeDamage(actor, eff.amount + atk + up, crit);
-        dealRawDamage(state, target, final, { ignoreShield: hasStatus(actor, "pierce") });
+        dealRawDamage(state, target, final, { ignoreShield: hasStatus(actor, "pierce"), attackerUid: actor.uid, crit });
         break;
       }
       case "applyStatus":
@@ -70,6 +73,7 @@ function applyTargetEffects(state: GameState, actor: Unit, skill: Skill, target:
         const amt = Math.round(eff.amount + def) + target.equipShieldGainAdd; // 방어구 쉴드 획득량 보정(받는 쪽, 4.3)
         target.shield += amt;
         state.log.push({ t: "shieldGain", targetUid: target.uid, amount: amt });
+        fireTrigger(state, { on: "onShieldGain", subjectUid: target.uid, attackerUid: actor.uid });
         break;
       }
       case "heal": {
@@ -77,6 +81,7 @@ function applyTargetEffects(state: GameState, actor: Unit, skill: Skill, target:
         const before = target.hp;
         target.hp = Math.min(target.hpMax, target.hp + Math.round(eff.amount + def));
         state.log.push({ t: "heal", targetUid: target.uid, amount: target.hp - before });
+        fireTrigger(state, { on: "onHeal", subjectUid: target.uid, attackerUid: actor.uid });
         break;
       }
       case "move":
@@ -94,6 +99,7 @@ export function resolveSkill(
   sel: { targetUid?: string; targetCell?: Pos; cells?: Pos[] },
 ): void {
   state.log.push({ t: "skillUsed", uid: actor.uid, skillId: skill.id, targetUid: sel.targetUid });
+  fireTrigger(state, { on: "skillUsed", subjectUid: actor.uid, skillId: skill.id });
 
   // 시전자 자기 효과 1회 (광역 중복 방지)
   applySelfEffects(state, actor, skill);
@@ -108,10 +114,12 @@ export function resolveSkill(
       const chance = computeHitChance(actor, skill, tgt);
       if (!skill.alwaysHit && !state.rng.chance(chance)) {
         state.log.push({ t: "miss", uid: actor.uid, targetUid: tgt.uid, chance });
+        fireTrigger(state, { on: "onMiss", attackerUid: actor.uid, subjectUid: tgt.uid });
         continue;
       }
       const crit = state.rng.chance(critPctOf(actor));
       state.log.push({ t: "hit", uid: actor.uid, targetUid: tgt.uid, chance, crit });
+      fireTrigger(state, { on: "onHit", attackerUid: actor.uid, subjectUid: tgt.uid, crit });
       applyTargetEffects(state, actor, skill, tgt, crit);
     } else {
       applyTargetEffects(state, actor, skill, tgt, false); // self/ally: 명중 판정 없음

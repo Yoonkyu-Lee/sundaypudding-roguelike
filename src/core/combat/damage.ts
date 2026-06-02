@@ -1,19 +1,20 @@
 // 데미지/피해 적용 (2.5/2.9/3.7) — 스킬 상수 데미지, 쉴드·공포·관통·불사, 미리보기.
 import type { GameState, Skill, Unit } from "../types.ts";
 import { STATUS_DEFS } from "../../data/statuses.ts";
-import { hasStatus, statusFlag, statusNumSum, totalStacks } from "../util.ts";
+import { hasStatus, statMod, statusFlag, statusNumSum, totalStacks } from "../util.ts";
 import { getFormationBonus } from "./formation.ts";
+import { fireTrigger } from "./passives/index.ts";
 
 /** 데미지 계산: (스킬상수 + 무기보정 + 합연산보정[공위증/약화]) × 전역배율(동상) × crit. (3.7 순서) */
 export function computeDamage(actor: Unit, base: number, crit: boolean): number {
   let dmg = base + actor.equipDmgFlat + statusNumSum(actor, "dmgDealtFlat"); // 무기 dmgFlat(4.3) + 공위증(+)/약화(-)
   if (hasStatus(actor, "frost")) dmg *= STATUS_DEFS["frost"].damageDealtMult ?? 1; // 곱연산(전역)
-  if (crit) dmg *= actor.critMultiplier + statusNumSum(actor, "critMultiplierAdd");
+  if (crit) dmg *= actor.critMultiplier + statMod(actor, "critMultiplier") + statusNumSum(actor, "critMultiplierAdd");
   return Math.max(0, Math.round(dmg));
 }
 
 /** 쉴드 → HP 순으로 피해 적용 (2.9). 공포(쉴드 잠식)·관통(쉴드 무시)·불사(생존) 반영. */
-export function dealRawDamage(state: GameState, target: Unit, finalAmount: number, opts?: { ignoreShield?: boolean }): void {
+export function dealRawDamage(state: GameState, target: Unit, finalAmount: number, opts?: { ignoreShield?: boolean; attackerUid?: string; crit?: boolean }): void {
   if (!target.alive || finalAmount <= 0) return;
   // 무적: 모든 피해 0 (백병원 등)
   if (statusFlag(target, "invincible")) {
@@ -45,9 +46,18 @@ export function dealRawDamage(state: GameState, target: Unit, finalAmount: numbe
   }
 
   state.log.push({ t: "damage", targetUid: target.uid, base: finalAmount, final: finalAmount, toShield, toHp });
-  if (target.hp <= 0 && !saved) {
+  const died = target.hp <= 0 && !saved;
+  if (died) {
     target.alive = false;
     state.log.push({ t: "death", uid: target.uid });
+  }
+  // 패시브 훅: 피격(피해자 관점) / 가해(가해자 관점) / 처치 / 사망
+  const a = opts?.attackerUid;
+  fireTrigger(state, { on: "damaged", subjectUid: target.uid, attackerUid: a, damage: finalAmount, crit: opts?.crit });
+  if (a) fireTrigger(state, { on: "dealtDamage", attackerUid: a, subjectUid: target.uid, damage: finalAmount, crit: opts?.crit });
+  if (died) {
+    fireTrigger(state, { on: "death", subjectUid: target.uid, attackerUid: a });
+    if (a) fireTrigger(state, { on: "kill", attackerUid: a, subjectUid: target.uid });
   }
 }
 

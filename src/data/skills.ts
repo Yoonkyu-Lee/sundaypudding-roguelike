@@ -184,7 +184,7 @@ export const SKILLS: Record<string, Skill> = {
 
   // ══ 우익(대한민청) — 플레이어 ══
   // 김두한 (브루저/딜러, 높은 치명)
-  kim_punch: { id: "kim_punch", name: "종로의 주먹", exclusiveTo: "kim", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, tier: 1, nextTierId: "kim_punch2", effects: [{ kind: "damage", amount: 14 }] },
+  kim_punch: { id: "kim_punch", name: "종로의 주먹", exclusiveTo: "kim", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, tier: 1, nextTierId: "kim_punch2", effects: [{ kind: "damage", amount: 14 }], passives: [{ when: { on: "onHit", as: "attacker", crit: true }, then: [{ do: "applyStatus", statusId: "bleed", stacks: 1, duration: 2, target: "subject" }] }] }, // 하이브리드: 능동 강타 + 크리 시 출혈 패시브
   kim_kick: { id: "kim_kick", name: "공중 이단 발차기", exclusiveTo: "kim", target: "enemy", cooldown: 2, accuracy: 90, reach: 1, effects: [{ kind: "move", who: "self", deltaCol: -3 }, { kind: "damage", amount: 12 }] },
   kim_oyabun: { id: "kim_oyabun", name: "오야붕의 위엄", exclusiveTo: "kim", target: "self", cooldown: 4, accuracy: 0, alwaysHit: true, effects: [{ kind: "cleanse" }, { kind: "applyStatus", statusId: "might", stacks: 1, duration: 3 }, { kind: "applyStatus", statusId: "edge", stacks: 1, duration: 3 }] },
   kim_4dollar: { id: "kim_4dollar", name: "4달러", exclusiveTo: "kim", target: "ally", cooldown: 5, accuracy: 0, alwaysHit: true, grantsInterrupt: 1, grantsInterruptTo: "target", effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 2 }] },
@@ -254,4 +254,7 @@ export const SKILLS: Record<string, Skill> = {
   u_aimed_shot: { id: "u_aimed_shot", name: "조준 사격", target: "enemy", cooldown: 1, accuracy: 90, effects: [{ kind: "damage", amount: 8 }] },
   u_snare: { id: "u_snare", name: "올가미", target: "enemy", cooldown: 3, accuracy: 85, effects: [{ kind: "damage", amount: 5 }, { kind: "applyStatus", statusId: "paralyze", stacks: 2, duration: 2 }] },
   u_first_aid: { id: "u_first_aid", name: "응급 처치", target: "ally", cooldown: 2, accuracy: 0, alwaysHit: true, effects: [{ kind: "heal", amount: 12 }] },
+
+  // ══ 순수 패시브 스킬 (active:false) — 보유 시 상시 효과, 전투 스킬창엔 안 뜸 ══
+  u_toughness: { id: "u_toughness", name: "강인함", active: false, target: "self", cooldown: 0, accuracy: 0, effects: [], passives: [{ when: { on: "battleStart" }, then: [{ do: "shield", amount: 6, target: "self" }] }] },
 };

@@ -1,0 +1,27 @@
+// 특성(trait) 데이터 — 캐릭터를 정의하는 상시 패시브 룰 묶음 (디자이너 작성).
+// 캐릭터가 characters.ts의 traitIds로 참조. 룰 = when/if/then (core/types/passives.ts 스키마).
+// 작성법·카탈로그: src/data/README.md "특성/패시브" 절.
+import type { TraitDef } from "../core/types.ts";
+
+export const TRAITS: Record<string, TraitDef> = {
+  // 전투 시작 시 최전열이면 명중 +10 (battleStart 1회 → statMod 안전).
+  frontliner: {
+    id: "frontliner", name: "선봉장", icon: "🛡", desc: "전투 시작 시 최전열에 있으면 명중 +10.",
+    rules: [{ when: { on: "battleStart" }, if: [{ c: "isFrontline", who: "self" }], then: [{ do: "statMod", stat: "accuracy", delta: 10, target: "self" }] }],
+  },
+  // 적 처치 시 자가 회복 8.
+  bloodlust: {
+    id: "bloodlust", name: "피의 갈망", icon: "🩸", desc: "적을 쓰러뜨리면 체력 8 회복.",
+    rules: [{ when: { on: "kill" }, then: [{ do: "heal", amount: 8, target: "self" }] }],
+  },
+  // 아군이 쓰러지면 공위증 1(전투 내내).
+  vindictive: {
+    id: "vindictive", name: "앙심", icon: "😤", desc: "아군이 쓰러질 때마다 공위증 1을 얻는다(전투 동안).",
+    rules: [{ when: { on: "death", who: "ally" }, then: [{ do: "applyStatus", statusId: "might", stacks: 1, duration: 99, target: "self" }] }],
+  },
+  // 피격 시 50% 확률로 공격자에게 가시 피해(턴당 2회 한도 → 무한반사 방지).
+  thorns: {
+    id: "thorns", name: "가시", icon: "🌵", desc: "피격 시 50% 확률로 공격자에게 3 피해(턴당 2회).",
+    rules: [{ when: { on: "damaged" }, if: [{ c: "chance", pct: 50 }], then: [{ do: "damage", amount: 3, target: "subject" }], maxPerTurn: 2 }],
+  },
+};

@@ -10,7 +10,8 @@
 | 파일 | 콘텐츠 |
 |---|---|
 | `characters.ts` | 캐릭터 — 스탯(HP/속도/회피/명중/치명)·`skillIds`(learnset)·`avatar`·`playable` |
-| `skills.ts` | 스킬 — 타겟·쿨타임·명중·사정권·면적·효과(`effects[]`)·강화 티어 체인 |
+| `skills.ts` | 스킬 — 타겟·쿨타임·명중·사정권·면적·**능동 효과(`effects[]`)** + **패시브(`passives[]`)**·`active` 태그·강화 티어 체인 |
+| `traits.ts` | **특성** — 캐릭터를 정의하는 상시 패시브 룰 묶음(`TraitDef`). 캐릭터가 `traitIds`로 참조 |
 | `statuses.ts` | 상태이상 — 표준 거동 필드 조합(지속피해/회복·행동봉쇄·배율 등) |
 | `items.ts` | 장착 아이템 — 능력치 보정·무기 데미지·방어구 쉴드 |
 | `formations.ts` | 포메이션 — 열별 보너스 총량(공격/방어) |
@@ -194,6 +195,72 @@
 | `useMastery` | boolean | 숙련도 보상 게이팅 사용. `false`면 전 tier 개방 |
 
 > **좌표 `Pos`** = `{ row: number, col: number }`. **열(col) 0 = 최전방**, 열이 클수록 후방.
+
+---
+
+---
+
+## 🎛 특성(trait) / 패시브(passive) — when/if/then 룰 언어
+
+**상시 효과**(플레이어가 전투 중 발동하지 않는 효과)를 만드는 미니 언어. 둘 다 같은 룰 형식을 쓴다:
+
+```ts
+PassiveRule = { when: Trigger, if?: Condition[], then: Effect[], maxPerTurn?, maxPerBattle? }
+```
+> `when` 시점에, `if` 조건이 **모두** 참이면(없으면 항상), `then` 효과를 순서대로 실행.
+
+- **특성(trait)** = 캐릭터를 정의. `traits.ts`에 `TraitDef { id, name, icon?, desc?, rules: PassiveRule[] }`를 만들고, `characters.ts`의 `traitIds: ["..."]`로 부여. **여러 개 가능**.
+- **패시브(passive)** = 스킬을 **보유**하면(편성/출전 무관) 작동. `skills.ts`의 스킬에 `passives: PassiveRule[]`.
+- **능동기 태그**: 스킬은 기본 `active`(전투 스킬창에서 발동). 순수 패시브 스킬은 `active: false`(스킬창에 안 뜸). 한 스킬에 `effects`(능동)와 `passives`(상시)를 **둘 다** 넣으면 **하이브리드**.
+
+```ts
+// 하이브리드 예: 능동 강타 + "크리 시 출혈" 패시브
+{ id:"kim_punch", name:"종로의 주먹", target:"enemy", cooldown:0, accuracy:90, effects:[{kind:"damage",amount:14}],
+  passives:[{ when:{on:"onHit",as:"attacker",crit:true}, then:[{do:"applyStatus",statusId:"bleed",stacks:1,duration:2,target:"subject"}] }] }
+// 특성 예(traits.ts): 적 처치 시 자가 회복
+{ id:"bloodlust", name:"피의 갈망", rules:[{ when:{on:"kill"}, then:[{do:"heal",amount:8,target:"self"}] }] }
+```
+
+### Trigger 카탈로그 (`when` — 전투 스코프)
+`self`=룰 소유자 / `subject`=이벤트 상대(피격자·턴 주체 등) / `target`=현재 행동 대상.
+
+| `on` | 발동 시점 | 옵션 |
+|---|---|---|
+| `battleStart` · `roundStart` · `roundEnd` | 전투/라운드 경계 | — |
+| `turnStart` · `turnEnd` | 턴 시작/종료 | `who?: self\|ally\|enemy\|any`(기본 self) |
+| `everyNTurns` | 소유자 N번째 턴마다 | `n` |
+| `interruptStart` | 끼어들기 턴 시작 | — |
+| `speedRoll` | 주사위 굴릴 때 | (효과는 `modSpeedRoll`/`rerollSpeed`만) |
+| `beforeAction` · `skillUsed` | 행동 직전 / 스킬 사용 | `who?` · `skillId?` |
+| `onMove` · `enterCell` | 이동 / 특정 칸 진입 | `who?` · `row?`/`col?` |
+| `onHit` · `onMiss` | 명중 / 빗나감 | `as?: attacker\|target` · `crit?` |
+| `dealtDamage` · `damaged` | 가해 / 피격 | — |
+| `kill` · `death` | 처치 / 사망 | `death.who?` |
+| `onHeal` · `onShieldGain` | 회복 / 쉴드 획득 | `onHeal.as?` |
+| `statusApplied` · `statusTick` | 상태 부여 / 지속 발동(on-bleed) | `statusId?` · `as?` |
+| `battleEnd` | 전투 종료 | `result?: win\|lose` |
+
+### Condition 카탈로그 (`if` — AND 결합)
+`hpPct(who,cmp,v)` · `round(cmp,v)` · `selfTurnCount(cmp,v)` · `everyN(n,of)` · `firstTurn` · `hasStatus(who,statusId,minStacks?)` · `missingStatus(who,statusId)` · `atColumn/atRow(who,cmp,v)` · `atCell(who,row,col)` · `isFrontline(who)` · `sideCount(side,cmp,v)` · `outnumbered` · `subjectCharId(charId)` · `subjectSide(side)` · `wasCrit` · `damageAtLeast(v)` · `skillIs(skillId)` · `chance(pct)`.
+`cmp` = `lt`·`lte`·`eq`·`gte`·`gt`.
+
+### Effect 카탈로그 (`then`)
+대상 `target`: `self`·`subject`·`target`·`allAllies`·`allEnemies`·`randomEnemy`·`randomAlly`.
+
+| `do` | 효과 |
+|---|---|
+| `damage` / `heal` / `shield` `{amount,target}` | 피해 / 회복 / 쉴드 |
+| `applyStatus` `{statusId,stacks,duration,target}` | 상태이상 부여 |
+| `cleanse {target}` · `move {deltaCol,target}` | 정화 / 이동(음수=전진) |
+| `grantInterrupt {count,target}` | 끼어들기 부여 |
+| `statMod {stat,delta,target}` | 전투 동안 스탯 누적 보정(accuracy/evasion/critChance/critMultiplier/speedMin/speedMax) |
+| `modCooldown {skillId?,delta,target}` | 쿨다운 가감 |
+| `modSpeedRoll {delta}` · `rerollSpeed` | 주사위 가산 / 재굴림 (`speedRoll` 트리거 전용) |
+
+> **주의**: `statMod`은 누적되고 자동 만료가 없다 → **`battleStart` 1회**나 `maxPerBattle:1`로만 쓰고, 매 턴 갱신형 버프는 **`applyStatus`(버프 상태이상)**로. 무한 연쇄(피격→피해→피격…)는 엔진이 깊이·재진입으로 막지만, `maxPerTurn`/`maxPerBattle`로 의도된 한도를 두는 게 좋다.
+
+### 못 하는 것 → 엔진 요청
+위 카탈로그에 없는 시점·조건·효과(예: 흡혈=가한 피해 비례 회복, 반사 비율, 특정 효과 면역, 모험 스코프 노드/골드 트리거)는 **새 엔진 프리미티브**가 필요 → "요청하는 법"대로 엔지니어에게.
 
 ---
 

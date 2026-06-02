@@ -4,8 +4,10 @@ import { buildObservation } from "../core/engine.ts";
 import { setActiveSkill, movePartyMember, equipItem, unequipItem, getRunView, type RunState } from "../core/run.ts";
 import { SKILLS } from "../data/skills.ts";
 import { CHARACTERS } from "../data/characters.ts";
+import { TRAITS } from "../data/traits.ts";
 import { ITEMS } from "../data/items.ts";
-import { renderCharSheet, type SheetData, type SheetHandlers } from "./charSheet.ts";
+import { renderCharSheet, type SheetData, type SheetHandlers, type SheetSkill, type SheetTrait } from "./charSheet.ts";
+import { describeRule, describeSkillPassives } from "./battle/passiveDesc.ts";
 import { renderPartyView, type PartyViewHandlers } from "./partyView.ts";
 import type { Ui } from "./battle/shared.ts";
 
@@ -46,6 +48,15 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     onMove(charId, to) { movePartyMember(deps.getRun(), charId, to); render(); }, // 진형 배치(맵 전용)
   };
 
+  // 캐릭터 특성(상시) → 읽기전용 표시 데이터.
+  const traitsOf = (charId: string): SheetTrait[] =>
+    (CHARACTERS[charId]?.traitIds ?? []).map((id) => TRAITS[id]).filter(Boolean).map((t) => ({ name: t.name, icon: t.icon, rules: t.rules.map(describeRule) }));
+  // 스킬에 active/passive 표시 정보 부착.
+  const enrich = (s: SheetSkill): SheetSkill => {
+    const sk = SKILLS[s.id];
+    return { ...s, isActiveSkill: sk?.active !== false, passives: sk ? describeSkillPassives(sk) : [] };
+  };
+
   // 맵 파티원/파티뷰 우측 상세 — 보유 스킬/장착/HP(파티 상태). 전투 중이면 실시간 HP.
   function buildSheetData(charId: string): SheetData | null {
     const run = deps.getRun();
@@ -69,7 +80,8 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       base: { hp: ch.hp, speedMin: ch.speedMin, speedMax: ch.speedMax, evasion: ch.evasion, accuracy: ch.accuracy, critChance: ch.critChance, critMultiplier: ch.critMultiplier },
       equipped: m?.equipped ?? {},
       inventory: run.inventory,
-      skills: pv?.skills ?? [],
+      skills: (pv?.skills ?? []).map(enrich),
+      traits: traitsOf(charId),
       statuses: [], // 맵엔 상태이상 없음
       activeCount: pv?.activeCount ?? 0,
       editable: run.phase !== "battle", // 장착·활성4·진형 변경은 비전투면 어디서나
@@ -89,7 +101,7 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     const m = u.side === "ally" ? run.party.find((p) => p.charId === u.charId) : undefined;
     const ownedIds = m ? m.ownedSkillIds : ch.skillIds; // 적은 learnset 전체 노출
     const activeSet = new Set(u.activeSkillIds);
-    const skills = ownedIds.map((sid) => ({
+    const skills = ownedIds.map((sid) => enrich({
       id: sid,
       name: SKILLS[sid]?.name ?? sid,
       tier: SKILLS[sid]?.tier ?? 1,
@@ -108,6 +120,7 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       equipped: m?.equipped ?? {}, // 적은 장착 없음
       inventory: [], // 전투 중 장착 변경 없음
       skills,
+      traits: traitsOf(u.charId),
       statuses: view?.statuses ?? [], // 활성 상태이상(분해 관측)
       activeCount: u.activeSkillIds.length,
       editable: false, // 전투=읽기전용(아군·적)
