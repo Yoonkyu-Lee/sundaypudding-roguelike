@@ -141,6 +141,6 @@ export function applySpeedRollPassives(state: GameState, rolls: SpeedRoll[]): vo
         else if (eff.do === "rerollSpeed") r.roll = state.rng.int(u.speedMin, u.speedMax);
       }
     }
-    r.speed = Math.max(1, r.roll - r.speedDown);
+    r.speed = Math.max(1, r.roll + r.speedMod);
   }
 }

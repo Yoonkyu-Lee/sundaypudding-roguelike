@@ -46,13 +46,13 @@ test("합법 행동: 시작 시 빈 배열이 아니고, 쿨다운/사정권을 
   // 첫 행동 유닛이 적이든 아군이든, 최소 1개 합법 행동(또는 스킵)
 });
 
-test("라운드 SPD 분해: roundStart에 rolls 노출, speed=max(1,roll−speedDown), roll∈[min,max] (2.2)", () => {
+test("라운드 SPD 분해: roundStart에 rolls 노출, speed=max(1,roll+speedMod), roll∈[min,max] (2.2)", () => {
   const state = createBattle(42, DEMO_ENCOUNTER);
   const rs = state.log.find((e) => e.t === "roundStart");
   assert.ok(rs && rs.t === "roundStart" && rs.rolls.length > 0, "rolls 노출");
   if (rs && rs.t === "roundStart") {
     for (const r of rs.rolls) {
-      assert.equal(r.speed, Math.max(1, r.roll - r.speedDown), "최종 speed 공식");
+      assert.equal(r.speed, Math.max(1, r.roll + r.speedMod), "최종 speed 공식");
       assert.ok(r.roll >= r.speedMin && r.roll <= r.speedMax, "roll 범위 내");
     }
     assert.equal(rs.rolls.length, rs.order.length, "rolls와 order 동수");

@@ -34,7 +34,7 @@
 - **SkillEffect**(`skills.ts effects[]`): `damage` · `applyStatus` · `applyStatusSelf` · `shield` · `heal` · `cleanse` · `move`(밀치기/돌진)
 - **AreaShape**(`area`): `single` · `row` · `col` · `square`(radius) · `cross`(radius) · `all` · `free`(N칸 자유선택)
 - **Skill 필드**: `cooldown` · `accuracy` · `alwaysHit` · `usableFrom`(시전 칸) · `targetCells`(타겟 칸) · `reach`(근접 사정권) · `grantsInterrupt`/`grantsInterruptTo`(끼어들기 부여) · `tier`/`nextTierId` · `exclusiveTo`
-- **StatusDef 거동**: `dot`(지속피해) · `hot`(재생) · `actionDenial`(행동봉쇄) · `damageDealtMult` · `dmgDealtFlat` · `critChanceAdd`/`critMultiplierAdd` · `shieldShred`(쉴드 잠식) · `pierce`(쉴드 무시) · `undying`(불사) · `invincible`(무적) · `taunt`(도발) · `speedDown` · `grantsInterrupt`
+- **StatusDef 거동**: `dot`(지속피해) · `hot`(재생) · `actionDenial`(행동봉쇄) · `damageDealtMult` · `dmgDealtFlat` · `critChanceAdd`/`critMultiplierAdd` · `shieldShred`(쉴드 잠식) · `pierce`(쉴드 무시) · `undying`(불사) · `invincible`(무적) · `taunt`(도발) · `speedMod`(SPD 보정, +상승/−하락) · `grantsInterrupt`
 - **ItemDef**: 능력치 `mods`(hp/회피/명중/치명/속도) · `dmgFlat`(무기) · `shieldGainAdd`(방어구)
 - **맵**: `MapGenConfig`(rows·startWidth·firstRowType·nodeWeights·branch)
 
@@ -146,7 +146,7 @@
 | `undying?` | boolean | 사망 방지(HP 0 이하로 안 죽음) |
 | `invincible?` | boolean | 무적(모든 피해 0) |
 | `taunt?` | boolean | 도발(적 공격 집중 — AI 참조) |
-| `speedDown?` | number | SPD 감소(라운드 서열 뒤로 — 마비/둔화) |
+| `speedMod?` | number | SPD 보정(부호 있음): **양수=상승**(서열 앞), **음수=하락**(서열 뒤). 가속/마비 |
 | `grantsInterrupt?` | boolean | 보유 유닛이 정규 턴에 행동하면 끼어들기 발생(신속) |
 
 **`trigger`**(`dot`/`hot` 발동 시점): `"turnStart"`(턴 시작) · `"turnEnd"`(턴 종료) · `"onAction"`(정규+끼어들기 모든 행동).

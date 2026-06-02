@@ -76,5 +76,5 @@ export const STATUS_DEFS: Record<StatusDefId, StatusDef> = {
   ambush: { id: "ambush", name: "은신", icon: "🥷", buff: true, critChanceAdd: 100 }, // 다음 공격 무조건 치명
   invincible: { id: "invincible", name: "무적", icon: "💠", buff: true, invincible: true }, // 모든 피해 0
   taunt: { id: "taunt", name: "도발", icon: "📣", taunt: true }, // 적 공격 집중 유도(AI 참조)
-  paralyze: { id: "paralyze", name: "마비", icon: "💫", speedDown: 3 }, // 속도↓ → 서열 밀림 (3.5)
+  paralyze: { id: "paralyze", name: "마비", icon: "💫", speedMod: -3 }, // 속도↓(음수) → 서열 밀림 (3.5)
 };

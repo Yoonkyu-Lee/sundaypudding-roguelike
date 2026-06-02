@@ -56,7 +56,7 @@ export function createTimelinePanel(): TimelinePanel {
       <div class="trows">${rolls.map((r) => `<div class="trow rollrow" data-uid="${r.uid}">
         <span class="tmark"></span>${avatarHtml(r.avatar, "avt")}<span class="tname ${r.side}">${esc(r.name)}</span>
         <span class="ri-die" data-min="${r.speedMin}" data-max="${r.speedMax}">?</span>
-        <span class="ri-adj">${r.speedDown > 0 ? `−${r.speedDown}` : ""}</span>
+        <span class="ri-adj">${r.speedMod ? (r.speedMod > 0 ? `+${r.speedMod}` : `${r.speedMod}`) : ""}</span>
         <span class="tspd"></span></div>`).join("")}</div>
       <div class="ri-skip">클릭하면 건너뛰기</div>`;
 
