@@ -19,8 +19,8 @@ export interface HubData {
   maxRoster: number;
   party: { charId: string; name: string; avatar?: string }[]; // runActive 시 현재 파티(읽기전용)
   runActive: boolean;
-  act?: number;
-  totalActs?: number;
+  floor?: number;
+  totalFloors?: number;
 }
 
 /** 타이틀 스플래시. */
@@ -50,7 +50,7 @@ export function renderHub(app: HTMLElement, d: HubData, h: ShellHandlers): void 
   if (d.runActive) {
     const cards = d.party.map((m) => `<div class="hub-mem">${avatarHtml(m.avatar, "avt")}<span class="hub-nm">${esc(m.name)}</span></div>`).join("");
     body = `<section class="hub-sec"><h2>현재 원정대 <span class="hint">런 진행 중 — 편성 잠금</span></h2><div class="hub-mems">${cards}</div></section>
-      <div class="hub-controls"><button class="act" id="resumebtn">▶ 이어하기${d.act ? ` (액트 ${d.act}/${d.totalActs})` : ""}</button><button class="act ghost" id="abandonbtn">런 포기</button></div>`;
+      <div class="hub-controls"><button class="act" id="resumebtn">▶ 이어하기${d.floor ? ` (층 ${d.floor}/${d.totalFloors})` : ""}</button><button class="act ghost" id="abandonbtn">런 포기</button></div>`;
   } else {
     const grid = d.pool.map(poolCard).join("");
     const ok = d.selectedCount >= 1;

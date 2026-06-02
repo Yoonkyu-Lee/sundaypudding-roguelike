@@ -2,22 +2,27 @@
 // 비전투 노드 해소는 shop.ts·encounter.ts, 공유 변이(node/heal/complete/skill)는 helpers.ts로 분리.
 import { Rng } from "../rng.ts";
 import { createBattle } from "../engine.ts";
-import type { MapGenConfig, PartyMemberState, Phase, Pos } from "../types.ts";
+import type { PartyMemberState, Phase, Pos, RunDef } from "../types.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { NODE_ROSTERS } from "../../data/encounters.ts";
-import { ACTS } from "../../data/maps.ts";
+import { DEFAULT_RUN } from "../../data/runs/index.ts";
 import { ENCOUNTER_EVENTS } from "../../data/events.ts";
-import { genMap } from "./map.ts";
+import { outgoingIds, nodesReachingClear } from "./graph.ts";
 import type { RunState } from "./types.ts";
 import { genRewards } from "./rewards.ts";
 import { fireRunTrigger } from "./passives.ts";
-import { node, healParty, completeNode, upgradeOwned, learnOwned } from "./helpers.ts";
+import { node, curFloor, healParty, completeNode, upgradeOwned, learnOwned } from "./helpers.ts";
 import { generateShop } from "./shop.ts";
 
-export function createRun(seed: number, roster: { charId: string; pos: Pos }[], acts: MapGenConfig[] = ACTS, opts: { mastery?: Record<string, number>; useMastery?: boolean } = {}): RunState {
+/** reachable = entry/현재 노드의 방향 전진 ∩ 클리어 도달 가능(막힌 노드 비활성). */
+function liveReachable(floor: RunDef["floors"][number], fromId: string): string[] {
+  const live = nodesReachingClear(floor);
+  return outgoingIds(floor, fromId).filter((id) => live.has(id));
+}
+
+export function createRun(seed: number, roster: { charId: string; pos: Pos }[] = DEFAULT_RUN.roster, runDef: RunDef = DEFAULT_RUN, opts: { mastery?: Record<string, number>; useMastery?: boolean } = {}): RunState {
   const rng = new Rng(seed ^ 0x9e3779b9);
-  const map = acts[0];
-  const nodes = genMap(rng, map);
+  const f0 = runDef.floors[0];
   const party: PartyMemberState[] = roster.map((m) => {
     const c = CHARACTERS[m.charId];
     const owned = c.skillIds.slice(0, 4); // 시작 보유 = learnset 앞 4 (나머지는 학습기, 보상으로 습득)
@@ -26,15 +31,13 @@ export function createRun(seed: number, roster: { charId: string; pos: Pos }[], 
   return {
     rng,
     seed,
-    act: 1,
-    acts,
+    runDef,
+    floor: 0,
     useMastery: opts.useMastery ?? false,
-    rows: map.rows,
-    nodes,
     party,
-    visited: ["start"],
-    reachable: nodes.filter((n) => n.r === 0).map((n) => n.id), // 시작 노드의 전진 = 첫 행
-    currentNodeId: "start",
+    visited: [f0.entryNodeId],
+    reachable: liveReachable(f0, f0.entryNodeId), // 입장 노드의 방향 전진(클리어 도달 가능만)
+    currentNodeId: f0.entryNodeId,
     activeNodeId: null,
     phase: "map",
     battle: null,
@@ -77,6 +80,14 @@ export function enterNode(run: RunState, nodeId: string): void {
   run.activeNodeId = nodeId;
   fireRunTrigger(run, { on: "nodeEnter", nodeType: n.type });
 
+  // 클리어(목표) 노드: 전투 없이 진입 = 층 종료
+  if (n.type === "clear") {
+    if (!run.visited.includes(nodeId)) run.visited.push(nodeId);
+    run.log.push("클리어 노드 도달 — 층 완료");
+    completeFloor(run);
+    return;
+  }
+
   if (n.type === "battle" || n.type === "elite" || n.type === "boss") {
     const battleSeed = run.rng.int(0, 2_000_000_000);
     const enc = { id: n.type, name: n.type, allies: [], enemies: NODE_ROSTERS[n.type] ?? NODE_ROSTERS.battle, boss: n.type === "boss" };
@@ -114,20 +125,25 @@ export function enterNode(run: RunState, nodeId: string): void {
   completeNode(run, nodeId);
 }
 
-/** 다음 액트로 (7.3 다층): 새 맵 생성·진행 초기화·파티 50% 회복(숨돌리기). 결정론(run.rng). */
-function advanceAct(run: RunState): void {
-  run.act += 1;
-  const map = run.acts[run.act - 1];
-  run.rows = map.rows;
-  run.nodes = genMap(run.rng, map);
-  run.visited = ["start"];
-  run.reachable = run.nodes.filter((n) => n.r === 0).map((n) => n.id);
-  run.currentNodeId = "start";
+/** 층 완료(클리어 노드 진입): 최종 층이면 게임 클리어, 아니면 다음 층 로드 + 부활·50% 회복. 결정론. */
+function completeFloor(run: RunState): void {
+  fireRunTrigger(run, { on: "nodeClear", nodeType: "clear" });
+  if (run.floor >= run.runDef.floors.length - 1) {
+    run.phase = "won";
+    run.activeNodeId = null;
+    run.log.push("최종 층 클리어 — 게임 클리어!");
+    return;
+  }
+  run.floor += 1;
+  const f = curFloor(run);
+  run.visited = [f.entryNodeId];
+  run.reachable = liveReachable(f, f.entryNodeId);
+  run.currentNodeId = f.entryNodeId;
   run.activeNodeId = null;
   run.battle = null;
-  healParty(run, 0.5, true); // 액트 전환: 전투불능 부활 + 50% 회복
+  healParty(run, 0.5, true); // 층 전환: 전투불능 부활 + 50% 회복
   run.phase = "map";
-  run.log.push(`액트 ${run.act} 진입 — 전투불능 부활 + 파티 50% 회복`);
+  run.log.push(`${f.name ?? `층 ${run.floor + 1}`} 진입 — 전투불능 부활 + 파티 50% 회복`);
   fireRunTrigger(run, { on: "actStart" });
 }
 
@@ -145,15 +161,8 @@ export function resolveBattleEnd(run: RunState): void {
     run.log.push("전멸 — 런 실패");
     return;
   }
-  // allyWin
+  // allyWin — 보스도 길목(층 종료는 클리어 노드가). 모든 전투 승리 = 골드 + 보상 3택1. 보스가 가장 큰 골드.
   const n = node(run, run.activeNodeId!);
-  // 최종 액트 보스 = 게임 클리어 (보상 없음, 끝)
-  if (n.type === "boss" && run.act >= run.acts.length) {
-    run.phase = "won";
-    run.log.push("최종 보스 격파 — 게임 클리어!");
-    return;
-  }
-  // 그 외 승리(일반/엘리트/액트 보스) = 골드 + 보상 3택1. 보스는 가장 큰 골드. (보상 선택 후 chooseReward가 다음 액트로)
   const goldGain = n.type === "boss" ? 24 : n.type === "elite" ? 16 : 8;
   run.gold += goldGain;
   fireRunTrigger(run, { on: "goldGain" });
@@ -179,11 +188,7 @@ export function chooseReward(run: RunState, optionId: string): void {
   }
   run.log.push(`보상: ${opt.label}`);
   run.rewards = null;
-  // 액트 보스 보상을 받은 뒤 다음 액트로 진입(+전투불능 부활·50% 회복). 그 외엔 같은 액트 맵으로 복귀.
-  if (node(run, run.activeNodeId!).type === "boss") {
-    advanceAct(run);
-  } else {
-    run.battle = null;
-    completeNode(run, run.activeNodeId!);
-  }
+  // 보상 후 맵으로 복귀(다음 선택지 = 방향 전진). 층 종료는 클리어 노드 진입으로만.
+  run.battle = null;
+  completeNode(run, run.activeNodeId!);
 }

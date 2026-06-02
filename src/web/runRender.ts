@@ -129,7 +129,7 @@ function rewardScreen(view: RunView, h: RunHandlers): string {
 function endScreen(view: RunView): string {
   const won = view.phase === "won";
   return `<div class="endscreen ${won ? "won" : "lost"}">
-    <div class="endbig">${won ? "🏆 전 액트 클리어! 게임 승리!" : "💀 전멸 — 런 실패"}</div>
+    <div class="endbig">${won ? "🏆 전 층 클리어! 게임 승리!" : "💀 전멸 — 런 실패"}</div>
     <button class="act" id="tohub">🏠 집으로</button>
   </div>`;
 }
@@ -145,7 +145,7 @@ export function renderRunScreen(app: HTMLElement, view: RunView, h: RunHandlers)
   app.innerHTML = `
     <header>
       <h1>🍮 Sundaypudding Roguelike</h1>
-      <div class="meta">${view.phase === "won" || view.phase === "lost" ? "" : `액트 ${view.act}/${view.totalActs} · `}${view.phase === "map" ? "맵 — 경로 선택" : view.phase}${view.phase === "won" || view.phase === "lost" ? "" : ` <button class="hdr-menu" id="pausebtn" title="메뉴 (Esc)">⏸</button>`}</div>
+      <div class="meta">${view.phase === "won" || view.phase === "lost" ? "" : `층 ${view.floor}/${view.totalFloors} · `}${view.phase === "map" ? "맵 — 경로 선택" : view.phase}${view.phase === "won" || view.phase === "lost" ? "" : ` <button class="hdr-menu" id="pausebtn" title="메뉴 (Esc)">⏸</button>`}</div>
     </header>
     <div class="runlayout">
       <div class="runmain">${body}</div>

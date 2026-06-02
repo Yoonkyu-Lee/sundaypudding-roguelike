@@ -1,16 +1,18 @@
 // 런 관측(맵/파티/보상) — RunState → RunView. 전투 화면은 run.battle을 직접 사용.
 import type { NodeStatus, RunState, RunView } from "./types.ts";
+import { curFloor } from "./helpers.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { SKILLS } from "../../data/skills.ts";
 import { ENCOUNTER_EVENTS } from "../../data/events.ts";
 
 export function getRunView(run: RunState): RunView {
+  const floor = curFloor(run);
   return {
     phase: run.phase,
-    act: run.act,
-    totalActs: run.acts.length,
-    rows: run.rows,
-    nodes: run.nodes.map((n) => {
+    floor: run.floor + 1,
+    totalFloors: run.runDef.floors.length,
+    edges: floor.edges,
+    nodes: floor.nodes.map((n) => {
       let status: NodeStatus = "locked";
       if (run.currentNodeId === n.id) status = "current"; // 지금 서 있는 위치 (테두리)
       else if (run.reachable.includes(n.id)) status = "reachable"; // 다음 선택지 (다른 색 테두리)

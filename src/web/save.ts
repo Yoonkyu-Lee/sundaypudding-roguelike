@@ -8,6 +8,7 @@ const SAVE_KEY = "spr_save_v1";
 /** 현재 데이터/스키마와 호환되는 세이브인가. 안 맞으면 폐기 대상. */
 function loadable(run: RunState | null): run is RunState {
   if (!run || !Array.isArray(run.party) || run.party.length === 0) return false;
+  if (!run.runDef || !Array.isArray(run.runDef.floors) || typeof run.floor !== "number") return false; // 구 맵 스키마(act/nodes) → 폐기
   if (!run.party.every((m) => CHARACTERS[m.charId])) return false; // 삭제/개명된 캐릭 참조 → 호환 불가
   if (run.battle && Array.isArray(run.battle.units) && run.battle.units.some((u) => !Array.isArray(u.rules))) return false; // 구 전투 스키마(패시브 룰 이전)
   return true;

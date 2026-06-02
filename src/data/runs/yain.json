@@ -1,0 +1,75 @@
+{
+  "id": "yain",
+  "name": "야인시대",
+  "desc": "우익 4인으로 좌익을 돌파. 방향 그래프 3개 층, 클리어 노드 도달로 층 완료.",
+  "useMastery": true,
+  "roster": [
+    { "charId": "kim", "pos": { "row": 1, "col": 0 } },
+    { "charId": "shin", "pos": { "row": 2, "col": 0 } },
+    { "charId": "shanghai", "pos": { "row": 1, "col": 2 } },
+    { "charId": "cho", "pos": { "row": 2, "col": 2 } }
+  ],
+  "floors": [
+    {
+      "id": "f1",
+      "name": "종로 입성",
+      "entryNodeId": "f1_entry",
+      "nodes": [
+        { "id": "f1_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f1_b1", "type": "battle", "q": 1, "r": -1 },
+        { "id": "f1_b2", "type": "battle", "q": 1, "r": 1 },
+        { "id": "f1_shop", "type": "shop", "q": 2, "r": -1 },
+        { "id": "f1_rest", "type": "rest", "q": 2, "r": 1 },
+        { "id": "f1_boss", "type": "boss", "q": 3, "r": 0 },
+        { "id": "f1_clear", "type": "clear", "q": 4, "r": 0 }
+      ],
+      "edges": [
+        { "from": "f1_entry", "to": "f1_b1" },
+        { "from": "f1_entry", "to": "f1_b2" },
+        { "from": "f1_b1", "to": "f1_shop" },
+        { "from": "f1_b2", "to": "f1_rest" },
+        { "from": "f1_shop", "to": "f1_boss" },
+        { "from": "f1_rest", "to": "f1_boss" },
+        { "from": "f1_boss", "to": "f1_clear" }
+      ]
+    },
+    {
+      "id": "f2",
+      "name": "갈림길",
+      "entryNodeId": "f2_entry",
+      "nodes": [
+        { "id": "f2_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f2_a", "type": "battle", "q": 1, "r": -1 },
+        { "id": "f2_e", "type": "encounter", "q": 1, "r": 1 },
+        { "id": "f2_bossA", "type": "boss", "q": 2, "r": -1 },
+        { "id": "f2_bossB", "type": "boss", "q": 2, "r": 1 },
+        { "id": "f2_clearA", "type": "clear", "q": 3, "r": -1 },
+        { "id": "f2_clearB", "type": "clear", "q": 3, "r": 1 }
+      ],
+      "edges": [
+        { "from": "f2_entry", "to": "f2_a" },
+        { "from": "f2_entry", "to": "f2_e" },
+        { "from": "f2_a", "to": "f2_bossA" },
+        { "from": "f2_e", "to": "f2_bossB" },
+        { "from": "f2_bossA", "to": "f2_clearA" },
+        { "from": "f2_bossB", "to": "f2_clearB" }
+      ]
+    },
+    {
+      "id": "f3",
+      "name": "최후 결전",
+      "entryNodeId": "f3_entry",
+      "nodes": [
+        { "id": "f3_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f3_elite", "type": "elite", "q": 1, "r": 0 },
+        { "id": "f3_boss", "type": "boss", "q": 2, "r": 0 },
+        { "id": "f3_clear", "type": "clear", "q": 3, "r": 0 }
+      ],
+      "edges": [
+        { "from": "f3_entry", "to": "f3_elite" },
+        { "from": "f3_elite", "to": "f3_boss" },
+        { "from": "f3_boss", "to": "f3_clear" }
+      ]
+    }
+  ]
+}

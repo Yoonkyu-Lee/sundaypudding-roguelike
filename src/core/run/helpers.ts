@@ -1,12 +1,17 @@
 // 런 공유 변이 헬퍼 (leaf — run.ts·shop.ts·encounter.ts 공용, 사이클 방지).
 // 노드 조회 + 파티 회복(+모험 트리거) + 노드 완료(+nodeClear) + 스킬 보유/강화 변이.
-import type { PartyMemberState } from "../types.ts";
+import type { FloorDef, MapNode, PartyMemberState } from "../types.ts";
 import type { RunState } from "./types.ts";
-import { forwardIds, type RunNode } from "./map.ts";
+import { outgoingIds, nodesReachingClear } from "./graph.ts";
 import { fireRunTrigger } from "./passives.ts";
 
-export function node(run: RunState, id: string): RunNode {
-  const n = run.nodes.find((x) => x.id === id);
+/** 현재 층 그래프 (RunState의 단일 진실원 = runDef.floors[floor]). */
+export function curFloor(run: RunState): FloorDef {
+  return run.runDef.floors[run.floor];
+}
+
+export function node(run: RunState, id: string): MapNode {
+  const n = curFloor(run).nodes.find((x) => x.id === id);
   if (!n) throw new Error(`node not found: ${id}`);
   return n;
 }
@@ -26,8 +31,11 @@ export function healParty(run: RunState, pct: number, revive = false): void {
 export function completeNode(run: RunState, nodeId: string): void {
   if (!run.visited.includes(nodeId)) run.visited.push(nodeId);
   const n = node(run, nodeId);
+  const floor = curFloor(run);
   run.currentNodeId = nodeId; // 지금 서 있는 위치 갱신
-  run.reachable = forwardIds(run.nodes, n); // 전진(r+1) 인접 셀 (좌표로 계산)
+  // 다음 선택지 = 전진(방향 간선) ∩ 클리어 도달 가능 노드 (막힌 노드 자동 비활성)
+  const live = nodesReachingClear(floor);
+  run.reachable = outgoingIds(floor, nodeId).filter((id) => live.has(id));
   run.activeNodeId = null;
   run.phase = "map";
   fireRunTrigger(run, { on: "nodeClear", nodeType: n.type });

@@ -12,7 +12,7 @@ const ROSTER = [
 test("보상 강화: 보유·활성 스킬을 다음 티어로 교체 + map 복귀 (4.6)", () => {
   const run = createRun(1, ROSTER);
   run.phase = "reward";
-  run.activeNodeId = run.nodes[0].id;
+  run.activeNodeId = run.currentNodeId;
   const kim = run.party.find((m) => m.charId === "kim")!;
   assert.ok(kim.ownedSkillIds.includes("kim_punch") && kim.activeSkillIds.includes("kim_punch"));
   run.rewards = [{ id: "u", kind: "upgradeSkill", charId: "kim", fromSkillId: "kim_punch", toSkillId: "kim_punch2", label: "t" }];
@@ -25,7 +25,7 @@ test("보상 강화: 보유·활성 스킬을 다음 티어로 교체 + map 복�
 test("보상 새 스킬: 미보유 스킬을 보유 풀에 추가 (4.5)", () => {
   const run = createRun(1, ROSTER);
   run.phase = "reward";
-  run.activeNodeId = run.nodes[0].id;
+  run.activeNodeId = run.currentNodeId;
   const cho = run.party.find((m) => m.charId === "cho")!; // learnset 6, 보유=앞4
   const newId = "u_guard"; // 미보유 학습기
   assert.ok(!cho.ownedSkillIds.includes(newId));
@@ -56,7 +56,7 @@ test("상점: 골드로 구매 → 적용 + 차감 + 항목 제거 (7.2)", () =>
   const run = createRun(1, ROSTER);
   run.gold = 100;
   run.phase = "shop";
-  run.activeNodeId = run.nodes[0].id;
+  run.activeNodeId = run.currentNodeId;
   run.shop = [{ id: "h", kind: "heal", cost: 15, pct: 0.5, label: "치료" }];
   run.party[0].hp = 1;
   buyShopOffer(run, "h");
@@ -69,7 +69,7 @@ test("상점: 골드 부족이면 구매 불가", () => {
   const run = createRun(1, ROSTER);
   run.gold = 10;
   run.phase = "shop";
-  run.activeNodeId = run.nodes[0].id;
+  run.activeNodeId = run.currentNodeId;
   run.shop = [{ id: "h", kind: "heal", cost: 15, pct: 0.5, label: "치료" }];
   buyShopOffer(run, "h");
   assert.equal(run.gold, 10, "차감 안 됨");
@@ -96,7 +96,7 @@ test("인카운터: 선택지 결과 적용 후 map 복귀 (7.2)", () => {
   // 조병옥(수전노=nodeClear 골드) 트레잇 간섭 피하려 골드 트레잇 없는 단독 파티로 정확값 검증
   const run = createRun(1, [{ charId: "kim", pos: { row: 1, col: 0 } }]);
   run.phase = "encounter";
-  run.activeNodeId = run.nodes[0].id;
+  run.activeNodeId = run.currentNodeId;
   run.encounterId = "cache"; // 안전 선택(loot=골드 +25)
   const before = run.gold;
   chooseEncounterOption(run, "loot");

@@ -1,9 +1,9 @@
 // 본거지 편성 컨트롤러 — 플레이 가능 풀에서 1~4명 선택(영구 저장), 선택 로스터로 런 생성.
 // selectedRoster 상태를 캡슐화. main은 makeRun/data/toggle만 호출. (메커니즘=엔진, 선택=플레이어 런타임)
 import { createRun, type RunState } from "../core/run.ts";
-import type { GameMode } from "../core/types.ts";
+import type { RunDef } from "../core/types.ts";
 import { CHARACTERS } from "../data/characters.ts";
-import { MODES, rosterFromIds } from "../data/modes.ts";
+import { DEFAULT_RUN, rosterFromIds } from "../data/runs/index.ts";
 import { masteryMap, masteryInfo, getRoster, setRoster } from "./meta.ts";
 import type { HubData } from "./shell.ts";
 
@@ -15,14 +15,14 @@ export interface Hub {
   toggle(charId: string): void; // 편성 선택 토글(최소1·최대4). 런 잠금은 호출자가 판단
 }
 
-export function createHub(mode: GameMode = MODES.normal): Hub {
+export function createHub(runDef: RunDef = DEFAULT_RUN): Hub {
   const playable = Object.values(CHARACTERS).filter((c) => c.playable);
-  let selected = getRoster(mode.roster.map((m) => m.charId)).filter((id) => CHARACTERS[id]?.playable).slice(0, MAX_ROSTER);
-  if (selected.length === 0) selected = mode.roster.map((m) => m.charId).slice(0, MAX_ROSTER);
+  let selected = getRoster(runDef.roster.map((m) => m.charId)).filter((id) => CHARACTERS[id]?.playable).slice(0, MAX_ROSTER);
+  if (selected.length === 0) selected = runDef.roster.map((m) => m.charId).slice(0, MAX_ROSTER);
 
   return {
     makeRun(seed) {
-      return createRun(seed, rosterFromIds(selected), mode.acts, { mastery: masteryMap(), useMastery: mode.useMastery });
+      return createRun(seed, rosterFromIds(selected), runDef, { mastery: masteryMap(), useMastery: runDef.useMastery });
     },
     data(run, runActive) {
       return {
@@ -31,8 +31,8 @@ export function createHub(mode: GameMode = MODES.normal): Hub {
         maxRoster: MAX_ROSTER,
         party: run.party.filter((m) => CHARACTERS[m.charId]).map((m) => ({ charId: m.charId, name: CHARACTERS[m.charId].name, avatar: CHARACTERS[m.charId].avatar })),
         runActive,
-        act: runActive ? run.act : undefined,
-        totalActs: run.acts.length,
+        floor: runActive ? run.floor + 1 : undefined,
+        totalFloors: run.runDef.floors.length,
       };
     },
     toggle(charId) {

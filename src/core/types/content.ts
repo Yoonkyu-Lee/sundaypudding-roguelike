@@ -186,26 +186,7 @@ export interface ItemDef {
   nextTierId?: string; // 강화 체인 (스킬 nextTierId와 동형)
 }
 
-// ── 런 맵 생성 (7장, 데이터 주도) ──────────────────────────────────────────
-// 노드 종류 (7.2). start=입장 노드, clear=목표 마커(전투 없음, 진입=층 종료). boss는 길목(일반 전투).
+// ── 런 맵 노드 종류 (7장) ──────────────────────────────────────────────────
+// start=입장 노드, clear=목표 마커(전투 없음, 진입=층 종료). boss는 길목(일반 전투).
+// 자유 방향그래프 맵 스키마(RunDef/FloorDef/MapNode/MapEdge)는 types/map.ts. (구 MapGenConfig/GameMode 폐기)
 export type NodeType = "start" | "battle" | "elite" | "shop" | "encounter" | "rest" | "boss" | "clear";
-
-/** 맵 생성 설정 — 디자이너 편집. 메커니즘(genMap)=엔진, 값=여기. (다층은 후속: 이 형태의 배열로 확장) */
-export interface MapGenConfig {
-  rows: number; // 선택 층(보스 제외) 깊이 (7.3 parameterizable)
-  startWidth: [number, number]; // 시작 행 너비 범위(min,max)
-  firstRowType: NodeType; // 첫 행 고정 타입(안전 시작, 보통 battle)
-  nodeWeights: Partial<Record<NodeType, number>>; // 행1+ 노드 타입 가중치 추첨
-  /** 자식 분기 확률(%) — 각 부모가 다음 행에 만드는 자식 */
-  branch: { keepQChance: number; extraSameChance: number; extraLeftChance: number };
-}
-
-// ── 게임 모드 (0.1/7.4) — 모드 = 런 베이스의 설정. 디자이너가 데이터로 캠페인/일반/챌린지 추가 ──
-export interface GameMode {
-  id: string;
-  name: string;
-  desc?: string;
-  roster: { charId: string; pos: Pos }[]; // 시작 파티
-  acts: MapGenConfig[]; // 액트별 맵 (다층 7.3)
-  useMastery: boolean; // 숙련도 보상 게이팅 사용 여부(4.4) — false면 전 tier 개방
-}

@@ -1,7 +1,6 @@
 // 런 도메인 타입 (전투 위 레이어). 사이클 방지를 위해 leaf 타입 모듈로 분리.
-import type { GameState, MapGenConfig, PartyMemberState } from "../types.ts";
+import type { GameState, MapEdge, MapNode, NodeType, PartyMemberState, RunDef } from "../types.ts";
 import type { Rng } from "../rng.ts";
-import type { NodeType, RunNode } from "./map.ts";
 
 export type RunPhase = "map" | "battle" | "reward" | "shop" | "encounter" | "won" | "lost";
 
@@ -21,11 +20,9 @@ export type ShopOffer =
 export interface RunState {
   rng: Rng;
   seed: number;
-  act: number; // 현재 액트 (1-base, 7.3 다층)
-  acts: MapGenConfig[]; // 액트별 맵 구성 (acts.length = 총 액트 수)
+  runDef: RunDef; // 저작 런(직렬화 가능). 현재 층 그래프 = runDef.floors[floor] (helpers.curFloor)
+  floor: number; // 0-base 현재 층 인덱스 (선형 체인)
   useMastery: boolean; // 숙련도 보상 게이팅 사용(4.4) — 모드 설정에서 옴
-  rows: number; // 현재 액트 깊이 (보스 제외 선택 층 수, 7.3)
-  nodes: RunNode[];
   party: PartyMemberState[];
   visited: string[];
   reachable: string[]; // 지금 선택 가능한 노드 (다음 선택지)
@@ -47,10 +44,10 @@ export type NodeStatus = "current" | "visited" | "active" | "reachable" | "locke
 
 export interface RunView {
   phase: RunPhase;
-  act: number; // 현재 액트 (1-base)
-  totalActs: number; // 총 액트 수
-  rows: number;
+  floor: number; // 현재 층 (1-base)
+  totalFloors: number; // 총 층 수
   nodes: { id: string; q: number; r: number; type: NodeType; status: NodeStatus }[];
+  edges: MapEdge[]; // 현재 층 방향 간선 (웹 화살표 렌더용)
   party: {
     name: string;
     charId: string;
