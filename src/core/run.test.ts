@@ -2,7 +2,7 @@
 // (육성/상점 → run-progression.test.ts · 영속/메타/다층 → run-meta.test.ts · 그래프 원자 → map.test.ts)
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRun, enterNode, resolveBattleEnd, chooseReward, leaveShop, chooseEncounterOption, movePartyMember, curFloor, validateRun, outgoingIds } from "./run.ts";
+import { createRun, enterNode, resolveBattleEnd, chooseReward, leaveShop, chooseEncounterOption, movePartyMember, curFloor, validateRun, liveReachable } from "./run.ts";
 import { step, createBattle, getFormationBonus } from "./engine.ts";
 import { chooseAction } from "./ai.ts";
 import { ENCOUNTER_EVENTS } from "../data/events.ts";
@@ -45,13 +45,13 @@ test("저작 런(야인시대)은 검증 통과 — 모든 노드가 entry→cle
   assert.equal(v.ok, true, v.errors.join("; "));
 });
 
-test("createRun: current=floor0 entry, reachable=entry의 방향전진(클리어 도달 가능만)", () => {
+test("createRun: current=floor0 entry, reachable=entry의 미방문 이웃(클리어 도달 가능만)", () => {
   const run = createRun(7, ROSTER);
   const f0 = curFloor(run);
   assert.equal(run.floor, 0);
   assert.equal(run.currentNodeId, f0.entryNodeId);
   assert.ok(run.reachable.length > 0);
-  assert.deepEqual(run.reachable.sort(), outgoingIds(f0, f0.entryNodeId).sort());
+  assert.deepEqual(run.reachable.sort(), liveReachable(f0, f0.entryNodeId, new Set([f0.entryNodeId])).sort());
 });
 
 test("런 완주: 클리어 노드 도달로 층 완료 → 3개 층 돌파 후 won/lost", () => {
@@ -69,8 +69,8 @@ test("클리어 노드 진입 = 층 종료(전투 없음). 갈림길: 어느 클
     floors: [
       { id: "fa", entryNodeId: "e", nodes: [
         { id: "e", type: "start", q: 0, r: 0 },
-        { id: "cA", type: "clear", q: 1, r: -1 },
-        { id: "cB", type: "clear", q: 1, r: 1 },
+        { id: "cA", type: "clear", q: 1, r: 0 },
+        { id: "cB", type: "clear", q: 0, r: 1 },
       ], edges: [{ from: "e", to: "cA" }, { from: "e", to: "cB" }] },
       { id: "fb", entryNodeId: "e2", nodes: [
         { id: "e2", type: "start", q: 0, r: 0 },

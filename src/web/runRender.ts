@@ -106,23 +106,18 @@ function mapScreen(view: RunView, h: RunHandlers): string {
   const ctr = new Map(pos.map((p) => [p.n.id, { x: px(p.x) + W / 2, y: py(p.y) + H / 2 }]));
   const statusOf = new Map(view.nodes.map((n) => [n.id, n.status]));
 
-  // 방향 간선: 출발 헥스 밖→도착 헥스 직전까지 선 + 화살촉. 현재 위치에서 나가는 활성 경로는 강조.
+  // 무방향 변: 맞닿은 헥스 중심을 잇는 선(화살표 없음). 현재 위치에서 갈 수 있는 활성 경로는 강조.
   const edges = view.edges
     .map((e) => {
       const a = ctr.get(e.from);
       const b = ctr.get(e.to);
       if (!a || !b) return "";
-      const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
-      const ux = dx / len, uy = dy / len;
-      const x1 = a.x + ux * SIZE * 0.85, y1 = a.y + uy * SIZE * 0.85;
-      const x2 = b.x - ux * SIZE * 0.95, y2 = b.y - uy * SIZE * 0.95;
-      const hot = statusOf.get(e.from) === "current" && statusOf.get(e.to) === "reachable";
-      return `<line class="medge${hot ? " hot" : ""}" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" marker-end="url(#mah)"/>`;
+      const sa = statusOf.get(e.from), sb = statusOf.get(e.to);
+      const hot = (sa === "current" && sb === "reachable") || (sb === "current" && sa === "reachable");
+      return `<line class="medge${hot ? " hot" : ""}" x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}"/>`;
     })
     .join("");
-  const edgesSvg = `<svg class="mapedges" width="${cw}" height="${ch}" viewBox="0 0 ${cw} ${ch}">
-    <defs><marker id="mah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" class="mah"/></marker></defs>
-    ${edges}</svg>`;
+  const edgesSvg = `<svg class="mapedges" width="${cw}" height="${ch}" viewBox="0 0 ${cw} ${ch}">${edges}</svg>`;
 
   const hexes = pos
     .map(({ n, x, y }) => {
@@ -141,7 +136,7 @@ function mapScreen(view: RunView, h: RunHandlers): string {
     })
     .join("");
   return `<div class="mapwrap"><div class="hexfield" style="width:${cw}px;height:${ch}px">${edgesSvg}${hexes}</div></div>
-  <div class="hint">화살표(→) 방향으로 전진해 클리어(🚩) 노드에 도달하면 층 완료. 빛나는 육각 셀을 클릭하세요.</div>`;
+  <div class="hint">맞닿은 길을 따라 클리어(🚩) 노드에 도달하면 층 완료(지나온 칸은 잠김). 빛나는 육각 셀을 클릭하세요.</div>`;
 }
 
 function rewardScreen(view: RunView, h: RunHandlers): string {

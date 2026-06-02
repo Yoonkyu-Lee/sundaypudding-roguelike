@@ -7,18 +7,12 @@ import { CHARACTERS } from "../../data/characters.ts";
 import { NODE_ROSTERS } from "../../data/encounters.ts";
 import { DEFAULT_RUN } from "../../data/runs/index.ts";
 import { ENCOUNTER_EVENTS } from "../../data/events.ts";
-import { outgoingIds, nodesReachingClear } from "./graph.ts";
+import { liveReachable } from "./graph.ts";
 import type { RunState } from "./types.ts";
 import { genRewards } from "./rewards.ts";
 import { fireRunTrigger } from "./passives.ts";
 import { node, curFloor, healParty, completeNode, upgradeOwned, learnOwned } from "./helpers.ts";
 import { generateShop } from "./shop.ts";
-
-/** reachable = entry/현재 노드의 방향 전진 ∩ 클리어 도달 가능(막힌 노드 비활성). */
-function liveReachable(floor: RunDef["floors"][number], fromId: string): string[] {
-  const live = nodesReachingClear(floor);
-  return outgoingIds(floor, fromId).filter((id) => live.has(id));
-}
 
 export function createRun(seed: number, roster: { charId: string; pos: Pos }[] = DEFAULT_RUN.roster, runDef: RunDef = DEFAULT_RUN, opts: { mastery?: Record<string, number>; useMastery?: boolean } = {}): RunState {
   const rng = new Rng(seed ^ 0x9e3779b9);
@@ -36,7 +30,7 @@ export function createRun(seed: number, roster: { charId: string; pos: Pos }[] =
     useMastery: opts.useMastery ?? false,
     party,
     visited: [f0.entryNodeId],
-    reachable: liveReachable(f0, f0.entryNodeId), // 입장 노드의 방향 전진(클리어 도달 가능만)
+    reachable: liveReachable(f0, f0.entryNodeId, new Set([f0.entryNodeId])), // 입장 노드의 미방문 이웃(클리어 도달 가능만)
     currentNodeId: f0.entryNodeId,
     activeNodeId: null,
     phase: "map",
@@ -137,7 +131,7 @@ function completeFloor(run: RunState): void {
   run.floor += 1;
   const f = curFloor(run);
   run.visited = [f.entryNodeId];
-  run.reachable = liveReachable(f, f.entryNodeId);
+  run.reachable = liveReachable(f, f.entryNodeId, new Set([f.entryNodeId]));
   run.currentNodeId = f.entryNodeId;
   run.activeNodeId = null;
   run.battle = null;

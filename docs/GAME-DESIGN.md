@@ -445,16 +445,16 @@
 
 > 멘탈 모델: **붕괴 스타레일 "차분화 우주"** (다층 로그라이크 진행).
 
-### 7.1 맵 위상 — 자유 방향그래프 (클리어 노드 목표)
+### 7.1 맵 위상 — 헥스 인접 무방향그래프 (클리어 노드 목표)
 
 | 항목 | 결정 | 상태 |
 |---|---|---|
-| 기본 위상 | **자유 방향그래프**. 노드(`MapNode`, axial `(q,r)`는 **렌더 위치일 뿐**) + **명시적 방향 간선**(`MapEdge from→to`). 위상은 간선이 정의(좌표 인접 암시 폐기). | ✓ |
-| 간선 | 디자이너가 자유로 부착하는 **방향 있는 변**. 플레이어는 방향대로만 전진, **복귀 불가**. 우회=더 긴 방향 경로. | ✓ |
+| 기본 위상 | **헥스 인접 무방향그래프**. 노드(`MapNode`, axial `(q,r)`=헥스 격자 위치) + **무방향 변**(`MapEdge`) — 변은 **맞닿은(인접) 헥스끼리만**. 디자이너가 인접 변을 켜고 끔(전부 켜면=순수 인접이동). | ✓ |
+| 이동/진행 | **재방문 불가(전진만)**: 맞닿은 **미방문** 이웃으로만 이동, 방문 칸 잠금. 우회=더 긴 경로. 막힌 이웃(미방문 경로로 clear 못 감)은 자동 비활성(`liveReachable`). | ✓ |
 | 목표/종료 | **클리어 노드**(전투 없는 목표 마커). 진입 = 층 종료. **보스는 길목**(일반 전투 노드). 다중 보스/클리어 = 갈림길 → **아무 클리어 노드나 진입하면 층 완료**. | ✓ |
-| 도달성 불변식 | 모든 활성 노드는 **어떤 클리어 노드로 도달 가능**해야. 저장 시 `validateRun`(고립 노드 거부), 플레이 중 막힌 노드 자동 비활성(`nodesReachingClear`). | ✓ |
+| 도달성 불변식 | 변은 **맞닿은 헥스끼리만**(`hexAdjacent` 검증). 모든 노드는 entry 연결성분에 ∧ 그 성분에 clear 존재. 저장 시 `validateRun`(비인접 변·고립 노드 거부). | ✓ |
 | 저작/생성 | **절차생성(genMap) 폐기.** 손으로 짠 **레포 JSON**(`data/runs/*.json`)만 — 에디터 GUI가 저작·내보내기. 엔진은 `RunDef` 해석만. | ✓(엔진) / 에디터 ☐ |
-| 렌더 | axial→픽셀(`x=W(q+r/2), y=1.5·size·r`) 절대배치 + **방향 간선 SVG 화살표**(`runRender.ts mapScreen`). | ✓ |
+| 렌더 | axial→픽셀(`x=W(q+r/2), y=1.5·size·r`) 절대배치 + **무방향 변 선**(화살표 없음; 현재 위치의 활성 경로 강조, `runRender.ts mapScreen`). | ✓ |
 | 중첩(nested) | 노드 선택 후, 원하면 **한 단계 미시적 진행**을 셀 내부에 끼울 수 있음. 매크로=그래프, 마이크로=셀 내부 | ☐ |
 
 ### 7.2 노드 종류 (6종, 시작 세트)
@@ -571,7 +571,7 @@
 
 **☐ 미구현 (다음 슬라이스)**
 - **적 전용 AI/패턴(엔진 프리미티브 추가)**: 우선순위 룰 프로파일(`AiProfile`)을 데이터(`data/ai.ts`)로, 캐릭터가 `aiProfileId`로 참조. 엔진 `ai/profile.ts`가 해석(매 턴 합법행동을 prefer/target/weight로 스코어→최고점, 미적용 시 공유 그리디 fallback). 좌익 4명에 healer/assassin/guardian/skirmisher 배정. 결정론(rng 미사용)·데모 골든 불변(데모=잡몹, 프로파일 없음). 카탈로그·작성법=`src/data/README.md`.
-- **맵 엔진 대개편(엔진 프리미티브 추가)**: 좌표암시 헥스 → **자유 방향그래프**(명시적 방향 간선) + **클리어 노드**(도달=층 종료, 보스=길목, 다중 보스/클리어 갈림길) + **런=층 선형체인**. 절차생성 폐기, **저작 런 JSON**(`data/runs/*.json`)만. 엔진 `run/graph.ts`(도달성·검증), 스키마 `types/map.ts`, 야인시대 런 재저작. 웹=방향 간선 화살표·클리어 노드 시각. **남은 절반(다음 스펙)**: 맵 에디터 GUI(런 CRUD·3패인 드래그드롭·저장 검증) + 분기 층 그래프 + 노드 메타데이터.
+- **맵 엔진 대개편(엔진 프리미티브 추가)**: 좌표암시 헥스 → **헥스 인접 무방향그래프**(맞닿은 헥스끼리 변, 디자이너 토글) + **재방문 불가 이동**(미방문 이웃, 막힌노드 비활성) + **클리어 노드**(도달=층 종료, 보스=길목, 다중 보스/클리어 갈림길) + **런=층 선형체인**. 절차생성 폐기, **저작 런 JSON**(`data/runs/*.json`)만. 엔진 `run/graph.ts`(인접·도달성·검증), 스키마 `types/map.ts`, 야인시대 런 재저작. 웹=무방향 변 선·클리어 노드 시각. **남은 절반(다음 스펙)**: 맵 에디터 GUI(런 CRUD·3패인 드래그드롭·저장 검증) + 분기 층 그래프 + 노드 메타데이터.
 - 본산 메타 재화·추가 해금(5.3 다, 5장 일부 — 숙련도 XP/tier 해금은 구현) · 여러 모드(캠페인/챌린지) 데이터·모드 선택 UI · 적 스탯 층 스케일링 · 웹 렌더러 고도화 · 밸런싱(골드/가격·이벤트 풀·숙련도 곡선)
   - (해소됨) ~~근접 도달불가 교착~~ → **`reach` 프리미티브**(동적 도달, 2.4): 근접 스킬은 정적 전방 마스크 대신 "최전열(살아있는 적 최소 열)부터 연속 n칸"을 타격 → 후열만 남아도 그게 전열이 되어 항상 도달, 교착 불가. 빈 열을 건너뛰지 않음(근접=인접, 원거리화 방지).
 - `x`(보유 스킬 상한), DoT `x`(스택당 피해) 등 밸런스 수치 (현재 placeholder 값으로 동작 중)
@@ -593,7 +593,7 @@
 - **TurnOrderResolver**: 라운드제(상수/SPD 주사위 서열). `combat/turnOrder.ts`.
 - **특성/패시브 룰 엔진(when/if/then)**: 상시 효과의 디자이너 언어. `PassiveRule = {when:Trigger, if?:Condition[], then:Effect[]}`. **특성**=캐릭터(`data/traits.ts` `TraitDef`+`Character.traitIds`, 항상), **패시브**=스킬 **출전(활성 4)**(`Skill.passives`, `active` 태그로 능동/하이브리드 구분). 전투 훅이 `combat/passives/`의 `fireTrigger`를 인라인 호출(결정론 정렬·재진입 가드). **Trigger**(battleStart/round/turn/everyN/speedRoll/hit/miss/damage/heal/shield/status/move/kill/death/battleEnd…) · **Condition**(hpPct/round/everyN/hasStatus/위치/진영수/chance…) · **Effect**(damage/heal/shield/applyStatus/cleanse/removeStatus/move/grantInterrupt/statMod/modCooldown/modSpeedRoll/rerollSpeed/healByDamage(흡혈)/reflectByDamage(비율반사)/castSkill(액티브 자동시전; **leaf 스킬만**=passives 없는, `validateCastSkill`가 check 게이트서 강제·재귀 방지) · EffTarget other*=자신/대상 제외 광역). 적도 같은 엔진(skillIds passives + traitIds) — 적 특성 콘텐츠 가능. 카탈로그·작성법 = `src/data/README.md`. **모험(run) 스코프**: `run/passives.ts`가 `nodeEnter`/`nodeClear`/`actStart`/`goldGain`/`partyHpChange` 트리거 + `goldDelta`/`healParty`/`grantRunStatus`(계승) 효과 + `nodeTypeIs`/`goldAtLeast` 조건 해석. 전투/모험 같은 `PassiveRule` 스키마 공유.
 - **런 노드 해소**: 전투생성·휴식/상점/인카운터·보상 3택1. `core/run/*`.
-- **맵 그래프(자유 방향그래프)**: `RunDef = { floors: FloorDef[] }`(층 선형체인), `FloorDef = { entryNodeId, nodes: MapNode[], edges: MapEdge[] }`, 방향 간선 `MapEdge from→to`. 엔진 `run/graph.ts`: `outgoingIds`(전진)·`nodesReachingClear`(역BFS)·`validateRun`(도달성 불변식). 클리어 노드 진입=층 종료, 보스=길목. 저작=`data/runs/*.json`(레포 JSON, 에디터 출력). 스키마=`types/map.ts`. (구 `genMap`/`MapGenConfig`/`GameMode` 폐기)
+- **맵 그래프(헥스 인접 무방향그래프)**: `RunDef = { floors: FloorDef[] }`(층 선형체인), `FloorDef = { entryNodeId, nodes: MapNode[], edges: MapEdge[] }`, **무방향 변**(맞닿은 헥스끼리만). 엔진 `run/graph.ts`: `hexAdjacent`·`neighborIds`·`liveReachable`(재방문 불가·막힌노드 비활성)·`validateRun`(인접 변·도달성). 클리어 노드 진입=층 종료, 보스=길목. 저작=`data/runs/*.json`(레포 JSON, 에디터 출력). 스키마=`types/map.ts`. (구 `genMap`/`MapGenConfig`/`GameMode` 폐기)
 - **AI 행동결정 정책(우선순위 룰)**: "턴이 왔을 때 합법 행동 중 무엇을 고를지"의 디자이너 언어(반응형 패시브와 별개의 *능동* 결정). `AiProfile = { rules: AiRule[] }`, `AiRule = {if?:AiCondition[], prefer?:SkillKindPref, target?:TargetPref, weight?}`. 위→아래 첫 적용가능(조건 참 AND 합법행동 존재) 룰이 결정, 없으면 **공유 그리디 fallback**(도발 우선·최저 HP·최고 명중). **prefer**(damage/heal/shield/applyStatus/cleanse/any) · **target**(lowest/highestHpEnemy·lowestHpAlly·front/backmostEnemy·self·anyEnemy/Ally) · **AiCondition**(selfHpPct·ally/enemyHpPctBelow·self/enemy HasStatus·selfMissingStatus·round·outnumbered·allyCount) · **weight**(backline/frontlineTarget·lowHpTarget·hitChance·critChance, 보조 정렬). 캐릭터가 `aiProfileId`로 참조(없으면 그리디=기존 동작). 결정론(rng 미사용, 동점=인덱스). 스키마=`core/types/ai.ts`, 해석=`ai/profile.ts`, 콘텐츠=`data/ai.ts`. 작성법=`src/data/README.md`.
 
 **프리미티브-갭 결정 프로토콜 (필수·사용자에게 명시):**

@@ -2,7 +2,7 @@
 // 노드 조회 + 파티 회복(+모험 트리거) + 노드 완료(+nodeClear) + 스킬 보유/강화 변이.
 import type { FloorDef, MapNode, PartyMemberState } from "../types.ts";
 import type { RunState } from "./types.ts";
-import { outgoingIds, nodesReachingClear } from "./graph.ts";
+import { liveReachable } from "./graph.ts";
 import { fireRunTrigger } from "./passives.ts";
 
 /** 현재 층 그래프 (RunState의 단일 진실원 = runDef.floors[floor]). */
@@ -33,9 +33,8 @@ export function completeNode(run: RunState, nodeId: string): void {
   const n = node(run, nodeId);
   const floor = curFloor(run);
   run.currentNodeId = nodeId; // 지금 서 있는 위치 갱신
-  // 다음 선택지 = 전진(방향 간선) ∩ 클리어 도달 가능 노드 (막힌 노드 자동 비활성)
-  const live = nodesReachingClear(floor);
-  run.reachable = outgoingIds(floor, nodeId).filter((id) => live.has(id));
+  // 다음 선택지 = 미방문 이웃 중 방문지를 피해 클리어 도달 가능한 노드 (재방문 불가·막힌 노드 비활성)
+  run.reachable = liveReachable(floor, nodeId, new Set(run.visited));
   run.activeNodeId = null;
   run.phase = "map";
   fireRunTrigger(run, { on: "nodeClear", nodeType: n.type });

@@ -32,7 +32,7 @@ src/core/
                     AreaShape·SkillTarget·Skill(+active/passives)·FormationLayout·Character(+traitIds/aiProfileId)
     passives.ts     특성/패시브 룰 스키마: PassiveRule·Trigger·Condition·Effect·TraitDef·EffTarget·StatKey
     ai.ts           AI 행동결정 정책 스키마: AiProfile·AiRule·AiCondition·SkillKindPref·TargetPref·AiWeightKey
-    map.ts          자유 방향그래프 맵 스키마: RunDef(층 선형체인)·FloorDef·MapNode·MapEdge(방향). NodeType는 content(+clear)
+    map.ts          헥스 인접 무방향그래프 맵 스키마: RunDef(층 선형체인)·FloorDef·MapNode(q,r 헥스)·MapEdge(무방향, 맞닿은 헥스끼리). NodeType는 content(+clear)
     runtime.ts      엔진 상태: StatusInstance·Unit·PartyMemberState·TurnKind·QueueEntry·
                     Action·Phase·GameEvent·GameState·UnitView·LegalAction·Observation
   engine.ts         ▸배럴(파사드): export * from combat/index
@@ -59,11 +59,11 @@ src/core/
   observation.ts    ▸배럴(파사드): export { buildObservation } from combat/observation
   run.ts            ▸배럴(파사드): export * from run/index
   run/
-    graph.ts        자유 방향그래프 엔진(메커니즘): outgoingIds · nodesReachingClear(역BFS) · reachableFromEntry · validateFloor/validateRun(도달성 불변식·고립노드). 순수·결정론. (구 map.ts genMap 폐기)
+    graph.ts        헥스 인접 무방향그래프 엔진(메커니즘): hexAdjacent(6방향) · neighborIds(무방향) · canReachClear/liveReachable(방문지 회피·재방문 불가) · reachableFromEntry · validateFloor/validateRun(인접 변 검증·고립노드). 순수·결정론. (구 genMap 폐기)
     types.ts        런 도메인 타입(leaf): RunPhase·RewardOption·RunState·NodeStatus·RunView
     rewards.ts      genRewards(강화/학습 3택1) · damagingSkills (순수 생성; 적용은 run.ts)
     run.ts          오케스트레이터: createRun(seed,roster,runDef) · enterNode(clear→completeFloor) · completeFloor(층종료/다음층, 구 advanceAct) · resolveBattleEnd · chooseReward · setActiveSkill · movePartyMember
-    helpers.ts      공유 변이(leaf): curFloor(현재 층 그래프) · node · healParty(+partyHpChange) · completeNode(방향전진∩클리어도달) · upgradeOwned · learnOwned
+    helpers.ts      공유 변이(leaf): curFloor(현재 층 그래프) · node · healParty(+partyHpChange) · completeNode(미방문 이웃·재방문 불가·막힌노드 비활성) · upgradeOwned · learnOwned
     shop.ts         상점(7.2): generateShop · buyShopOffer · leaveShop
     encounter.ts    인카운터(7.2): applyOutcome · chooseEncounterOption
     items.ts        장착(4.3): equipItem/unequipItem(maxHp 재계산) · genItemOffers(상점)/itemRewardOptions(보상) · 인벤토리 왕복
@@ -157,12 +157,12 @@ src/core/
 | 승패 (7.3) | `combat/winCheck.ts`: `checkWin` |
 | 행동 1회 처리(턴 진행) | `combat/flow.ts`: `step` |
 | 관측 빌드(JSON) (8.2) | `combat/observation.ts`: `buildObservation` |
-| 자유 방향그래프 맵·도달성·검증 (7.1) | `run/graph.ts`: `outgoingIds`·`nodesReachingClear`·`validateRun` (메커니즘=엔진) |
+| 헥스 인접 무방향그래프 맵·도달성·검증 (7.1) | `run/graph.ts`: `hexAdjacent`·`neighborIds`·`liveReachable`(재방문 불가)·`validateRun` (메커니즘=엔진) |
 | 맵 데이터화(저작 런) (7.1) | `data/runs/*.json` `RunDef`/`FloorDef`/`MapNode`/`MapEdge`(`types/map.ts`) · `data/runs/index.ts RUNS` · `createRun(seed,roster,runDef)` |
 | 클리어 노드 = 층 종료 / 보스=길목 | `run/run.ts`: `enterNode`(clear→`completeFloor`) · 다중 보스/클리어 갈림길(아무 클리어 진입=완료) |
 | 노드 진입·해소·전투생성·승패 (7장) | `run/run.ts`: `enterNode`/`resolveBattleEnd` |
 | 런 이어하기 영속화 (셸) | `run/save.ts` `serializeRun`/`deserializeRun`(순수, Rng=state만) · 웹 `main.ts` localStorage(`spr_save_v1`, render마다 저장·승패/포기 시 삭제·부팅 복원) |
-| 다층(층 선형체인) 진행 (7.3) | `RunState.floor`/`runDef.floors` · `run/run.ts` `completeFloor`(클리어 노드 진입→다음 층·50%회복·최종층=won) · `RunView.floor`/`totalFloors` · 웹 "층 N/M" 표기 · 방향 간선 화살표(`runRender.ts mapScreen`) |
+| 다층(층 선형체인) 진행 (7.3) | `RunState.floor`/`runDef.floors` · `run/run.ts` `completeFloor`(클리어 노드 진입→다음 층·50%회복·최종층=won) · `RunView.floor`/`totalFloors` · 웹 "층 N/M" 표기 · 무방향 변 선(`runRender.ts mapScreen`, 활성 경로 강조) |
 | 보상 3택1 생성·적용 (4.5) | `run/rewards.ts`: `genRewards` · `run/run.ts`: `chooseReward` |
 | 육성: 스킬 보유풀/활성선택/강화티어 (4.2/4.6) | `PartyMemberState.ownedSkillIds`/`activeSkillIds` · `Skill.nextTierId`(데이터 티어) · `run/run.ts`: `setActiveSkill`·`chooseReward`(강화=id교체/학습=풀추가) · `combat/state.ts` makeUnit가 활성 4 사용 |
 | 전용기/범용기 + learnset (4.6) | `Skill.exclusiveTo`(전용기 소유자, 없으면 범용기 `u_*`) · `Character.skillIds`=learnset(포켓몬식, 학습 가능 여부) · 범용기는 여러 learnset 공유(예 `u_guard`=kim·shin·cho) · 게이팅=`run/rewards.ts` genRewards가 learnset에서 추첨 |

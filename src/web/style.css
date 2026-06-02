@@ -225,9 +225,8 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 }
 /* 방향 간선(화살표) — 헥스 버튼 뒤(z-index 0). */
 .mapedges { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 0; }
-.medge { stroke: var(--line); stroke-width: 2; opacity: .5; }
-.medge.hot { stroke: var(--accent); stroke-width: 3; opacity: 1; }
-.mah { fill: var(--dim); }
+.medge { stroke: var(--line); stroke-width: 2.5; opacity: .5; }
+.medge.hot { stroke: var(--accent); stroke-width: 3.5; opacity: 1; }
 .mhex {
   position: absolute; inset: 3px;
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
