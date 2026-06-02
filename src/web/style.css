@@ -489,6 +489,26 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .ed-btn:disabled { opacity: .4; cursor: not-allowed; }
 .ed-empty { color: var(--dim); padding: 24px; text-align: center; }
 
+/* 편집 화면 */
+.editor.edit-mode header { gap: 12px; }
+.editor.edit-mode h1 .dim { font-size: 15px; opacity: .6; }
+.ed-edit { display: flex; gap: 16px; align-items: flex-start; }
+.ed-canvas { flex: 1; overflow: auto; }
+.ed-side { width: 270px; flex: none; display: flex; flex-direction: column; gap: 14px; }
+.ed-side section h3 { font-size: 13px; color: var(--dim); margin: 0 0 6px; }
+.ed-catalog { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.ed-chip { display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; cursor: grab; font-size: 13px; }
+.ed-chip:active { cursor: grabbing; }
+.ed-chip .mico { font-size: 16px; }
+.ed-slot { position: absolute; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); background: var(--panel); opacity: .25; border: 0; }
+.ed-slot:hover, .ed-slot.over { opacity: .55; background: var(--accent); }
+.mnode.entry { background: #4a78c4; }
+.mnode.sel { filter: drop-shadow(0 0 8px rgba(255,209,102,.95)); z-index: 3; }
+.mnode.conn { outline: 0; background: var(--accent); }
+.mnode.conn .mhex { background: #3a3f2b; }
+.mnode.dead { background: var(--enemy); }
+.ed-selinfo { font-size: 13px; display: flex; flex-direction: column; gap: 8px; }
+
 .hub header { margin-bottom: 16px; }
 .hub h1 { color: var(--accent); }
 .hub-link { background: transparent; border: 1px solid var(--line); color: var(--dim); border-radius: 6px; padding: 4px 10px; cursor: pointer; }

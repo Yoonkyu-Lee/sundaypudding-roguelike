@@ -1,6 +1,7 @@
 // 런 화면 렌더 (맵/보상/결과). 전투 화면은 render.ts(renderApp)가 담당.
-import type { NodeType, RunView } from "../core/run.ts";
+import type { RunView } from "../core/run.ts";
 import { avatarHtml } from "./render.ts";
+import { TYPE_ICON, TYPE_NAME } from "./nodeMeta.ts";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 
@@ -17,26 +18,6 @@ export interface RunHandlers {
   onPause: () => void; // 일시정지 메뉴 열기
 }
 
-const TYPE_ICON: Record<NodeType, string> = {
-  start: "📍",
-  battle: "⚔️",
-  elite: "💀",
-  shop: "🛒",
-  encounter: "❓",
-  rest: "🏕️",
-  boss: "👑",
-  clear: "🚩",
-};
-const TYPE_NAME: Record<NodeType, string> = {
-  start: "시작",
-  battle: "전투",
-  elite: "엘리트",
-  shop: "상점",
-  encounter: "인카운터",
-  rest: "휴식",
-  boss: "보스",
-  clear: "클리어",
-};
 
 function partyPanel(view: RunView): string {
   // 요약만 — 상세(스탯·장착·활성4 관리)는 클릭 시 캐릭터 시트(모달)로. (slice1)

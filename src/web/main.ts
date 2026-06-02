@@ -15,7 +15,7 @@ import { renderTitle, renderHub, renderPause, type ShellHandlers } from "./shell
 import { createHub } from "./hub.ts";
 import { saveRun, clearSave, loadRun } from "./save.ts";
 import { renderEditor } from "./editor/editorRender.ts";
-import { createEditorMenu } from "./editor/controller.ts";
+import { createEditor } from "./editor/controller.ts";
 
 const app = document.getElementById("app")!;
 const panel = createTimelinePanel(); // 행동서열 패널 — 주사위(rolling)↔전투(live) 한 컴포넌트, 전투 셸에 영속 마운트
@@ -61,7 +61,7 @@ function render(): void {
   if (appState !== "run") {
     app.querySelector(".pause-overlay")?.remove();
     if (appState === "title") renderTitle(app, shellHandlers);
-    else if (appState === "editor") renderEditor(app, editorMenu.data(), editorMenu.handlers);
+    else if (appState === "editor") renderEditor(app, editor.data(), editor.handlers);
     else renderHub(app, hub.data(run, runActive), shellHandlers);
     return;
   }
@@ -269,7 +269,7 @@ function testRun(def: RunDef): void {
   appState = "run";
   render();
 }
-const editorMenu = createEditorMenu({ testRun, rerender: render, toTitle: () => { appState = "title"; render(); } });
+const editor = createEditor({ testRun, rerender: render, toTitle: () => { appState = "title"; render(); } });
 
 // 게임 흐름 셸 핸들러 (타이틀/집/일시정지)
 const shellHandlers: ShellHandlers = {
