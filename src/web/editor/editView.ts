@@ -1,47 +1,12 @@
-// 맵 에디터 — 단일 층 편집 화면. 엑셀식 광활한 육각 격자 위 배치(어디든) + 카메라(고정 뷰포트).
-// 벽 = 두 인접 노드의 공유 변에 그리는 테두리(호버=점선 미리보기, 클릭=실선 벽). 연결됨=선 없음.
+// 맵 에디터 — 단일 층 편집 화면. 격자·노드·벽이 hexgeo(SoT) 공유 → 완벽한 벌집.
+// 노드 = SVG 폴리곤(시각, 격자 셀과 구성상 동일) + 투명 오버레이 div(드래그/클릭/아이콘).
 import { esc } from "../battle/shared.ts";
 import type { NodeType } from "../../core/types.ts";
 import type { EditData, EditorHandlers } from "./editorRender.ts";
+import { SIZE, W, FW, FH, ccx, ccy, hexPoints, gridPathStr, pixelToAxial } from "./hexgeo.ts";
 
-const SIZE = 34;                 // 헥스 중심→꼭짓점
-const WALL_SW = 3.5;             // 벽 선 두께(.ed-wallvis와 일치) — 둥근 캡 보정용
-const W = Math.sqrt(3) * SIZE;   // 헥스 폭
-const R = 14;                    // 격자 반경(±R 셀)
-const OX = W * 1.5 * R + W;      // 원점 오프셋(모든 셀 양수 좌표)
-const OY = 1.5 * SIZE * R + 2 * SIZE;
-const FW = OX * 2, FH = OY * 2;  // 고정 격자(필드) 크기
-const ccx = (q: number, r: number) => OX + W * (q + r / 2); // 셀 중심
-const ccy = (r: number) => OY + 1.5 * SIZE * r;
+const WALL_SW = 3.5; // 벽 선 두께(.ed-wallvis와 일치)
 
-// 픽셀(필드 로컬)→axial 셀 (역변환 + 큐브 라운딩)
-function axialRound(qf: number, rf: number): { q: number; r: number } {
-  let x = qf, z = rf, y = -x - z;
-  let rx = Math.round(x), ry = Math.round(y), rz = Math.round(z);
-  const dx = Math.abs(rx - x), dy = Math.abs(ry - y), dz = Math.abs(rz - z);
-  if (dx > dy && dx > dz) rx = -ry - rz; else if (dy > dz) ry = -rx - rz; else rz = -rx - ry;
-  return { q: rx, r: rz };
-}
-function pixelToAxial(fx: number, fy: number): { q: number; r: number } {
-  const x = fx - OX, y = fy - OY;
-  const r = y / (1.5 * SIZE);
-  return axialRound(x / W - r / 2, r);
-}
-
-// 희미한 육각 격자 path(엑셀 격자선) — 고정 범위라 1회 계산 후 메모이즈.
-let GRID = "";
-function gridPath(): string {
-  if (GRID) return GRID;
-  const segs: string[] = [];
-  for (let q = -R; q <= R; q++) for (let r = -R; r <= R; r++) {
-    const x = ccx(q, r), y = ccy(r), s2 = SIZE / 2;
-    segs.push(`M${x.toFixed(1)} ${(y - SIZE).toFixed(1)}L${(x + W / 2).toFixed(1)} ${(y - s2).toFixed(1)}L${(x + W / 2).toFixed(1)} ${(y + s2).toFixed(1)}L${x.toFixed(1)} ${(y + SIZE).toFixed(1)}L${(x - W / 2).toFixed(1)} ${(y + s2).toFixed(1)}L${(x - W / 2).toFixed(1)} ${(y - s2).toFixed(1)}Z`);
-  }
-  GRID = segs.join("");
-  return GRID;
-}
-
-// 층 그래프 패널(선형).
 function floorBar(d: EditData): string {
   const cards = d.floors.map((f, i) =>
     `<div class="ed-floor${i === d.floorIdx ? " active" : ""}">
@@ -53,34 +18,37 @@ function floorBar(d: EditData): string {
 
 export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers): void {
   const center = new Map(d.nodes.map((n) => [n.id, { x: ccx(n.q, n.r), y: ccy(n.r) }]));
-  const ekey = (a: string, b: string) => (a < b ? `${a}__${b}` : `${b}__${a}`);
 
-  // 벽: 인접 노드쌍의 공유 변에 테두리 선분(중점에서 수직, 길이=헥스 변). hit(투명)→호버, vis→점선/실선.
+  // 벽: 인접 노드쌍의 공유 변 테두리(중점 수직, 둥근 캡이 꼭짓점에 닿게 길이 보정). hit=넓게, vis=점선/실선.
   const pairs = [...d.edges.map((e) => ({ ...e, built: false })), ...d.walls.map((w) => ({ ...w, built: true }))];
   const wallSvg = pairs.map((p) => {
     const a = center.get(p.a), b = center.get(p.b);
     if (!a || !b) return "";
     const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
     const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
-    const pxu = -dy / len, pyu = dx / len; // 공유 변 = 중점에서 수직
-    const seg = (half: number) => [mx - pxu * half, my - pyu * half, mx + pxu * half, my + pyu * half].map((v) => v.toFixed(1));
-    const [hx1, hy1, hx2, hy2] = seg(SIZE / 2); // 히트선: 변 전체(호버 영역 넓게)
-    // 시각선: 둥근 캡(WALL_SW/2)이 꼭짓점에 정확히 닿도록 길이를 두께만큼 줄임 → 세로/사선 모두 모서리 균일
+    const px = -dy / len, py = dx / len;
+    const seg = (half: number) => [mx - px * half, my - py * half, mx + px * half, my + py * half].map((v) => v.toFixed(1));
+    const [hx1, hy1, hx2, hy2] = seg(SIZE / 2);
     const [vx1, vy1, vx2, vy2] = seg((SIZE - WALL_SW) / 2);
     return `<line class="ed-ehit" data-edge="${p.a}|${p.b}" x1="${hx1}" y1="${hy1}" x2="${hx2}" y2="${hy2}"><title>${p.built ? "벽 — 클릭해 연결" : "연결됨 — 클릭해 벽 세우기"}</title></line>`
       + `<line class="ed-wallvis${p.built ? " built" : ""}" x1="${vx1}" y1="${vy1}" x2="${vx2}" y2="${vy2}"/>`;
   }).join("");
 
   const dead = new Set(d.deadNodes);
-  const nodes = d.nodes.map((n) => {
+  // 노드 시각 = SVG 폴리곤(격자 셀과 동일 기하)
+  const nodePolys = d.nodes.map((n) => {
     const cls = [n.type, n.id === d.sel ? "sel" : "", dead.has(n.id) ? "dead" : "", n.id === d.entryId ? "entry" : ""].filter(Boolean).join(" ");
+    return `<polygon class="ednode-poly ${cls}" points="${hexPoints(n.q, n.r)}"/>`;
+  }).join("");
+  // 노드 상호작용/아이콘 = 투명 오버레이 div(드래그=이동, 클릭=선택)
+  const nodeOverlays = d.nodes.map((n) => {
     const cxp = ccx(n.q, n.r), cyp = ccy(n.r);
-    return `<button class="mnode ${cls}" draggable="true" data-node="${n.id}" style="left:${(cxp - W / 2).toFixed(1)}px;top:${(cyp - SIZE).toFixed(1)}px;width:${W.toFixed(1)}px;height:${(2 * SIZE).toFixed(1)}px" title="${n.icon} ${n.name}${n.id === d.entryId ? " (입장)" : ""}">
-      <span class="mhex"><span class="mico">${n.icon}</span><span class="mlabel">${n.name}</span></span>
-    </button>`;
+    return `<button class="ednode${n.id === d.sel ? " sel" : ""}" draggable="true" data-node="${n.id}" style="left:${(cxp - W / 2).toFixed(1)}px;top:${(cyp - SIZE).toFixed(1)}px;width:${W.toFixed(1)}px;height:${(2 * SIZE).toFixed(1)}px" title="${n.icon} ${n.name}${n.id === d.entryId ? " (입장)" : ""}">
+      <span class="ednode-ico">${n.icon}</span><span class="ednode-lbl">${n.name}</span></button>`;
   }).join("");
 
-  const gridSvg = `<svg class="ed-grid" width="${FW}" height="${FH}" viewBox="0 0 ${FW} ${FH}"><path d="${gridPath()}"/></svg>`;
+  const gridSvg = `<svg class="ed-grid" width="${FW}" height="${FH}" viewBox="0 0 ${FW} ${FH}"><path d="${gridPathStr()}"/></svg>`;
+  const nodesSvg = `<svg class="ed-nodes" width="${FW}" height="${FH}" viewBox="0 0 ${FW} ${FH}">${nodePolys}</svg>`;
   const wallsSvg = `<svg class="ed-walls" width="${FW}" height="${FH}" viewBox="0 0 ${FW} ${FH}">${wallSvg}</svg>`;
 
   const catalog = d.catalog.map((c) =>
@@ -88,7 +56,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   const selInfo = d.sel
     ? `<div class="ed-selinfo">선택: ${esc(d.nodes.find((n) => n.id === d.sel)!.name)}${d.sel === d.entryId ? " (입장 — 삭제 불가)" : ""}
         ${d.sel !== d.entryId ? `<button class="ed-btn ghost" id="ed-delnode">🗑 노드 삭제 (Del)</button>` : ""}</div>`
-    : `<div class="ed-selinfo hint">카탈로그를 격자에 <b>드래그</b>해 배치 · 노드 <b>드래그</b>=이동 · <b>클릭</b>=선택(Del 삭제) · 두 칸 사이 변에 <b>호버→클릭</b>=벽(차단)/연결.</div>`;
+    : `<div class="ed-selinfo hint">카탈로그를 격자에 <b>드래그</b>해 배치 · 노드 <b>드래그</b>=이동 · <b>클릭</b>=선택(Del 삭제) · 두 칸 사이 변에 <b>호버→클릭</b>=벽/연결.</div>`;
   const errs = d.valid ? `<div class="ed-ok">✓ 유효한 맵</div>` : `<div class="ed-bad">✗ ${d.errors.map(esc).join("<br>")}</div>`;
 
   app.innerHTML = `<div class="editor edit-mode">
@@ -97,7 +65,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
     <div class="ed-edit">
       <div class="ed-left">
         <div class="ed-viewport">
-          <div class="hexfield" id="ed-field" style="width:${FW}px;height:${FH}px">${gridSvg}${wallsSvg}${nodes}</div>
+          <div class="hexfield" id="ed-field" style="width:${FW}px;height:${FH}px">${gridSvg}${nodesSvg}${nodeOverlays}${wallsSvg}</div>
           <div class="ed-zoom"><button id="ed-zin" title="확대">＋</button><button id="ed-zout" title="축소">－</button><button id="ed-zreset" title="리셋">⤢</button></div>
           <div class="ed-vphint">휠=줌 · 휠(가운데) 드래그=이동</div>
         </div>
@@ -118,7 +86,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   app.querySelectorAll<HTMLElement>("[data-fsel]").forEach((b) => b.addEventListener("click", () => h.onSelectFloor(Number(b.dataset.fsel))));
   app.querySelectorAll<HTMLElement>("[data-fdel]").forEach((b) => b.addEventListener("click", () => h.onDeleteFloor(Number(b.dataset.fdel))));
   app.querySelectorAll<HTMLElement>("[data-fmove]").forEach((b) => b.addEventListener("click", () => { const [i, dir] = b.dataset.fmove!.split(":").map(Number); h.onMoveFloor(i, dir); }));
-  app.querySelectorAll<HTMLElement>(".mnode[data-node]").forEach((b) => {
+  app.querySelectorAll<HTMLElement>(".ednode[data-node]").forEach((b) => {
     b.addEventListener("click", () => h.onNodeClick(b.dataset.node!));
     b.addEventListener("dragstart", (e) => e.dataTransfer!.setData("text/plain", `mv:${b.dataset.node}`));
   });
@@ -131,7 +99,6 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   const field = app.querySelector<HTMLElement>("#ed-field");
   if (!vp || !field) return;
 
-  // 드롭(필드 전체, 버블링으로 노드 위에서도) — 픽셀→셀 좌표로 배치/이동
   field.addEventListener("dragover", (e) => e.preventDefault());
   field.addEventListener("drop", (e) => {
     e.preventDefault();
@@ -143,16 +110,14 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
     else if (data.startsWith("mv:")) h.onMoveNode(data.slice(3), q, r);
   });
 
-  // ── 카메라(줌·팬) — DOM 직접 변환, 변경분만 영속. 첫 진입은 입장 노드 중앙 정렬 ──
+  // ── 카메라(줌·팬) — translate 정수 스냅, 변경분만 영속. 첫 진입은 입장 노드 중앙 정렬 ──
   const cam = { ...d.camera };
   const clamp = (z: number) => Math.max(0.3, Math.min(2.5, z));
-  // translate는 정수 픽셀로 스냅(소수 픽셀 AA로 인한 비대칭 느낌 완화). 줌 누적은 float 유지.
   const apply = () => { field.style.transformOrigin = "0 0"; field.style.transform = `translate(${Math.round(cam.x)}px,${Math.round(cam.y)}px) scale(${cam.zoom})`; };
   if (Number.isNaN(cam.x)) {
     const e0 = d.nodes.find((n) => n.id === d.entryId) ?? d.nodes[0];
     const r0 = vp.getBoundingClientRect();
-    const ex = e0 ? ccx(e0.q, e0.r) : OX, ey = e0 ? ccy(e0.r) : OY;
-    cam.zoom = 1; cam.x = r0.width / 2 - ex; cam.y = r0.height / 2 - ey;
+    cam.zoom = 1; cam.x = r0.width / 2 - (e0 ? ccx(e0.q, e0.r) : FW / 2); cam.y = r0.height / 2 - (e0 ? ccy(e0.r) : FH / 2);
     h.onCamera({ ...cam });
   }
   apply();
@@ -169,5 +134,5 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   const ctr = () => { const r = vp.getBoundingClientRect(); return [r.width / 2, r.height / 2] as const; };
   app.querySelector("#ed-zin")!.addEventListener("click", () => zoomAt(...ctr(), 1.2));
   app.querySelector("#ed-zout")!.addEventListener("click", () => zoomAt(...ctr(), 1 / 1.2));
-  app.querySelector("#ed-zreset")!.addEventListener("click", () => { cam.zoom = 1; const [mx, my] = ctr(); cam.x = mx - OX; cam.y = my - OY; apply(); h.onCamera({ ...cam }); });
+  app.querySelector("#ed-zreset")!.addEventListener("click", () => { cam.zoom = 1; const [mx, my] = ctr(); cam.x = mx - FW / 2; cam.y = my - FH / 2; apply(); h.onCamera({ ...cam }); });
 }
