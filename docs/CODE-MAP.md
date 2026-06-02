@@ -50,7 +50,8 @@ src/core/
     passives/       특성·패시브 룰 디스패처 (when/if/then) — 각 전투 훅이 fireTrigger 호출
       compile.ts      compileRules (보유 스킬 passives + 캐릭 traitIds → Unit.rules)
       dispatch.ts     fireTrigger(매칭·결정론 정렬·재진입 가드) · onUnitTurnStart · applySpeedRollPassives
-      conditions.ts   evalConditions (if 평가) · effects.ts applyEffect (then, 기존 프리미티브 재사용)
+      conditions.ts   evalConditions (if 평가) · effects.ts applyEffect (then; castSkill=resolveSkill 경유)
+      validate.ts     validateCastSkill (castSkill 대상=leaf 스킬만 — check 게이트가 강제, 재귀 방지)
       ctx.ts          TriggerCtx · RuleCtx · cmp · isFrontline    index.ts ▸배럴
     index.ts        ▸배럴
   observation.ts    ▸배럴(파사드): export { buildObservation } from combat/observation

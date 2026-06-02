@@ -254,6 +254,7 @@ export const SKILLS: Record<string, Skill> = {
   u_aimed_shot: { id: "u_aimed_shot", name: "조준 사격", target: "enemy", cooldown: 1, accuracy: 90, effects: [{ kind: "damage", amount: 8 }] },
   u_snare: { id: "u_snare", name: "올가미", target: "enemy", cooldown: 3, accuracy: 85, effects: [{ kind: "damage", amount: 5 }, { kind: "applyStatus", statusId: "paralyze", stacks: 2, duration: 2 }] },
   u_first_aid: { id: "u_first_aid", name: "응급 처치", target: "ally", cooldown: 2, accuracy: 0, alwaysHit: true, effects: [{ kind: "heal", amount: 12 }] },
+  u_jab: { id: "u_jab", name: "잽", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 3 }] }, // leaf(무-passive) — castSkill 자동발동 대상용
 
   // ══ 순수 패시브 스킬 (active:false) — 보유 시 상시 효과, 전투 스킬창엔 안 뜸 ══
   u_toughness: { id: "u_toughness", name: "강인함", active: false, target: "self", cooldown: 0, accuracy: 0, effects: [], passives: [{ when: { on: "battleStart" }, then: [{ do: "shield", amount: 6, target: "self" }] }] },

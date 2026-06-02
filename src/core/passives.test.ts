@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createBattle, getLegalActions, step } from "./engine.ts";
-import { applyEffect } from "./combat/passives/index.ts";
+import { applyEffect, validateCastSkill } from "./combat/passives/index.ts";
 import { createRun, enterNode, resolveBattleEnd, chooseReward, leaveShop, chooseEncounterOption, fireRunTrigger, type RunState } from "./run.ts";
 import { chooseAction } from "./ai.ts";
 import type { GameState, PartyMemberState } from "./types.ts";
@@ -152,4 +152,25 @@ test("적 특성 broadcast: 심영(rally) battleStart → 적 진영 전체 공�
   const has = (cid: string) => g.units.find((u) => u.charId === cid)!.statuses.some((s) => s.defId === "might");
   assert.ok(has("shim") && has("chunho"), "적 진영 전체 broadcast");
   assert.ok(!has("kim"), "아군엔 미적용");
+});
+
+// ── castSkill (패시브가 액티브 스킬을 자동 시전) ──
+test("castSkill: 패시브가 leaf 액티브 스킬을 정상 시전(스킬 파이프라인 경유)", () => {
+  const g = createBattle(1, enemy1, [ally("kim", { row: 0, col: 0 }, ["kim_punch"])]);
+  const kim = g.units.find((u) => u.charId === "kim")!;
+  const before = g.log.length;
+  applyEffect(g, { owner: kim }, { do: "castSkill", skillId: "u_jab" });
+  assert.ok(g.log.slice(before).some((e) => e.t === "skillUsed" && e.skillId === "u_jab"), "castSkill → 스킬 시전");
+});
+
+test("castSkill 런타임 가드: 비-leaf(passives 보유) 스킬은 시전 차단(재귀 방지)", () => {
+  const g = createBattle(1, enemy1, [ally("kim", { row: 0, col: 0 }, ["kim_punch"])]);
+  const kim = g.units.find((u) => u.charId === "kim")!;
+  const before = g.log.length;
+  applyEffect(g, { owner: kim }, { do: "castSkill", skillId: "kim_punch" }); // kim_punch엔 passives 있음 → 차단
+  assert.ok(!g.log.slice(before).some((e) => e.t === "skillUsed"), "비-leaf 시전 안 됨");
+});
+
+test("castSkill 검증: 현 데이터는 leaf만 castSkill (위반 0)", () => {
+  assert.deepEqual(validateCastSkill(), []);
 });

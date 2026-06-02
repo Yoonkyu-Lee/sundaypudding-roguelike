@@ -2,4 +2,5 @@
 export { compileRules } from "./compile.ts";
 export { fireTrigger, onUnitTurnStart, applySpeedRollPassives } from "./dispatch.ts";
 export { applyEffect } from "./effects.ts"; // 효과 인터프리터(테스트/도구용 노출)
+export { validateCastSkill } from "./validate.ts"; // castSkill leaf 검증(테스트/체크 게이트)
 export type { TriggerCtx, RuleCtx } from "./ctx.ts";

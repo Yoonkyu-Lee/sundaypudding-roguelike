@@ -4,7 +4,10 @@ import { clamp, hasStatus, samePos } from "../../util.ts";
 import { computeDamage, dealRawDamage } from "../damage.ts";
 import { applyStatusInstance } from "../status.ts";
 import { insertInterrupts } from "../interrupt.ts";
+import { resolveSkill } from "../skills.ts";
+import { validTargets } from "../targeting.ts";
 import { STATUS_DEFS } from "../../../data/statuses.ts";
+import { SKILLS } from "../../../data/skills.ts";
 import type { RuleCtx } from "./ctx.ts";
 
 function resolveTargets(state: GameState, rctx: RuleCtx, t: EffTarget): Unit[] {
@@ -46,6 +49,13 @@ export function applyEffect(state: GameState, rctx: RuleCtx, eff: Effect): void 
     case "healByDamage": { const amt = Math.round((rctx.damage ?? 0) * eff.pct / 100); if (amt > 0) for (const tgt of resolveTargets(state, rctx, eff.target)) { if (!tgt.alive) continue; const b = tgt.hp; tgt.hp = Math.min(tgt.hpMax, tgt.hp + amt); state.log.push({ t: "heal", targetUid: tgt.uid, amount: tgt.hp - b }); } break; }
     case "reflectByDamage": { const amt = Math.round((rctx.damage ?? 0) * eff.pct / 100); if (amt > 0) for (const tgt of resolveTargets(state, rctx, eff.target)) dealRawDamage(state, tgt, amt, { attackerUid: owner.uid }); break; }
     case "removeStatus": for (const tgt of resolveTargets(state, rctx, eff.target)) tgt.statuses = tgt.statuses.filter((s) => s.defId !== eff.statusId); break;
+    case "castSkill": {
+      const sk = SKILLS[eff.skillId];
+      if (!sk || (sk.passives && sk.passives.length) || !owner.alive) break; // leaf 스킬만(재귀 방지) · 죽은 시전자 무시
+      const sel = sk.target === "self" ? { targetUid: owner.uid } : (() => { const ts = validTargets(state, owner, sk); return ts.length ? { targetUid: ts[0].uid } : null; })();
+      if (sel) resolveSkill(state, owner, sk, sel); // 명중·치명·reach·면적은 스킬 파이프라인이 처리
+      break;
+    }
     case "modCooldown": for (const tgt of resolveTargets(state, rctx, eff.target)) { const ids = eff.skillId ? [eff.skillId] : Object.keys(tgt.cooldowns); for (const id of ids) tgt.cooldowns[id] = Math.max(0, (tgt.cooldowns[id] ?? 0) + eff.delta); } break;
     case "modSpeedRoll": case "rerollSpeed": break; // speedRoll 트리거에서 turnOrder가 처리
     case "goldDelta": case "healParty": case "grantRunStatus": break; // 모험 스코프 효과 — run/passives.ts가 처리

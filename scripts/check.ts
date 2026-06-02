@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from "
 import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { join, relative, dirname, resolve, basename } from "node:path";
+import { validateCastSkill } from "../src/core/combat/passives/validate.ts";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const SRC = join(ROOT, "src");
@@ -78,6 +79,9 @@ for (const f of srcFiles) {
     warn(`배럴 우회 import: ${rf} → ${target} (배럴/파사드 경유 권장)`);
   }
 }
+
+// ── 3.5) castSkill leaf 검증 (재귀 방지: passives 가진 스킬은 castSkill 대상 불가) ──
+for (const m of validateCastSkill()) fail(`castSkill 검증: ${m}`);
 
 // ── 4) tsc ────────────────────────────────────────────────────────────────
 function run(cmd: string): { ok: boolean; out: string } {

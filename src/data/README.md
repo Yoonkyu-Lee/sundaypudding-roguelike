@@ -283,6 +283,9 @@ when/if/then 룰은 **두 스코프**로 갈린다 — 트리거가 스코프를
 | `goldDelta {amount}` | (모험) 골드 가감 |
 | `healParty {pct}` | (모험) 파티 비율 회복 |
 | `grantRunStatus {statusId,stacks,duration,target}` | (모험) **다음 전투 시작 시** 부여(계승, 1회) |
+| `castSkill {skillId}` | **액티브 스킬 자동 시전** — 명중·사정권·면적·치명은 그 스킬 정의대로(타겟 자동). "WHEN(패시브)이 HOW(액티브)를 발동" |
+
+> **⚠️ `castSkill` 재귀 방지 규칙(강제)**: `castSkill`의 대상은 **`passives`가 없는 leaf(순수 액티브) 스킬만** 허용. `passives`를 가진 스킬을 castSkill 대상으로 쓰면 **`npm run check`가 커밋을 막는다**(패시브→스킬→패시브→… 무한 중첩 차단). 즉 자동공격용 스킬은 명중/피해/사정권만 있는 순수 액티브로 따로 만들고, 그걸 패시브가 트리거. (교차 연쇄는 엔진 깊이·재진입 가드가 추가로 차단.)
 
 > **주의**: `statMod`은 누적되고 자동 만료가 없다 → **`battleStart` 1회**나 `maxPerBattle:1`로만 쓰고, 매 턴 갱신형 버프는 **`applyStatus`(버프 상태이상)**로. 무한 연쇄(피격→피해→피격…)는 엔진이 깊이·재진입으로 막지만, `maxPerTurn`/`maxPerBattle`로 의도된 한도를 두는 게 좋다.
 

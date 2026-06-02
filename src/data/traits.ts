@@ -51,4 +51,9 @@ export const TRAITS: Record<string, TraitDef> = {
     id: "barbed", name: "가시갑주", icon: "🪖", desc: "피격 시 받은 피해의 50%를 공격자에게 반사(턴당 2회).",
     rules: [{ when: { on: "damaged" }, then: [{ do: "reflectByDamage", pct: 50, target: "subject" }], maxPerTurn: 2 }],
   },
+  // 매 턴 자동으로 잽(액티브 스킬 u_jab)을 시전 — castSkill 시연. 명중·사정권은 u_jab 정의대로.
+  reflexes: {
+    id: "reflexes", name: "반사신경", icon: "🥊", desc: "매 턴 자동으로 잽(근접 3·명중 90)을 날린다.",
+    rules: [{ when: { on: "turnStart", who: "self" }, then: [{ do: "castSkill", skillId: "u_jab" }], maxPerTurn: 1 }],
+  },
 };

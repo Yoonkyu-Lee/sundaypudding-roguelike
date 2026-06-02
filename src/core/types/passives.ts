@@ -99,6 +99,7 @@ export type Effect =
   | { do: "healByDamage"; pct: number; target: EffTarget } // 흡혈: 가한 피해의 pct% 회복
   | { do: "reflectByDamage"; pct: number; target: EffTarget } // 비율 반사: 받은 피해의 pct%를 대상에 피해
   | { do: "removeStatus"; statusId: string; target: EffTarget } // 특정 상태이상 1종 제거
+  | { do: "castSkill"; skillId: string } // 액티브 스킬을 정상 시전(명중·사정권·면적은 스킬 정의대로, 타겟 자동). 대상은 passives 없는 leaf 스킬만(재귀 방지)
   // ── 모험(run) 스코프 효과 ──
   | { do: "goldDelta"; amount: number } // 골드 가감
   | { do: "healParty"; pct: number } // 파티 비율 회복
