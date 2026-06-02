@@ -32,11 +32,11 @@ test("스모크: 전투는 cap 내에 종료되고 승패가 결정된다", () =
 
 test("명중 공식: (명중률 + 스킬명중) − DEX, 클램프 (2.7)", () => {
   const state = createBattle(42, DEMO_ENCOUNTER);
-  const beef = state.units.find((u) => u.name === "비프")!;
-  const slime = state.units.find((u) => u.side === "enemy")!;
-  // 강타 acc 90, 비프 acc 0, 슬라임 evasion 6 → 84
-  const expected = 0 + SKILLS["gangta"].accuracy - slime.evasion;
-  assert.equal(computeHitChance(beef, SKILLS["gangta"], slime), expected);
+  const kim = state.units.find((u) => u.name === "김두한")!;
+  const enemy = state.units.find((u) => u.side === "enemy")!;
+  // 종로의 주먹 acc 90, 김두한 acc 0, 깡패 evasion 6 → 84
+  const expected = 0 + SKILLS["kim_punch"].accuracy - enemy.evasion;
+  assert.equal(computeHitChance(kim, SKILLS["kim_punch"], enemy), expected);
 });
 
 test("합법 행동: 시작 시 빈 배열이 아니고, 쿨다운/사정권을 반영", () => {
@@ -61,13 +61,13 @@ test("라운드 SPD 분해: roundStart에 rolls 노출, speed=max(1,roll−speed
 
 test("대기: 쓸 스킬이 있어도 자발적 턴 넘기기 가능(chosen), 쿨 미소모", () => {
   const state = createBattle(42, DEMO_ENCOUNTER);
-  const beef = state.units.find((u) => u.name === "비프")!;
-  beef.cooldowns = {};
-  forceTurn(state, beef.uid);
+  const kim = state.units.find((u) => u.name === "김두한")!;
+  kim.cooldowns = {};
+  forceTurn(state, kim.uid);
   const legal = getLegalActions(state);
   assert.ok(legal.some((a) => a.action.type === "skill"), "스킬 선택지 존재");
   assert.ok(legal.some((a) => a.action.type === "skip"), "대기 선택지도 존재");
   step(state, { type: "skip" });
   assert.ok(state.log.some((e) => e.t === "skip" && e.reason === "chosen"), "자발적 대기는 chosen 사유");
-  assert.ok(Object.values(beef.cooldowns).every((c) => c === 0), "대기는 어떤 스킬도 쿨에 안 올림");
+  assert.ok(Object.values(kim.cooldowns).every((c) => c === 0), "대기는 어떤 스킬도 쿨에 안 올림");
 });

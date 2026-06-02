@@ -46,13 +46,13 @@ export const DEMO_ENCOUNTER: Encounter = {
   id: "demo",
   name: "데모 조우",
   allies: [
-    { charId: "beef", pos: { row: 1, col: 0 } }, // 전방 탱
-    { charId: "pudding", pos: { row: 2, col: 1 } }, // 한 칸 뒤 딜러
-    { charId: "jelly", pos: { row: 2, col: 2 } }, // 후방 서포터
+    { charId: "kim", pos: { row: 1, col: 0 } }, // 전방 브루저
+    { charId: "shanghai", pos: { row: 2, col: 1 } }, // 한 칸 뒤 원거리 딜러
+    { charId: "cho", pos: { row: 2, col: 2 } }, // 후방 서포터
   ],
   enemies: [
-    { charId: "slime", pos: { row: 1, col: 0 } }, // 전방 (근접 사정권)
-    { charId: "slime", pos: { row: 2, col: 0 } }, // 전방
-    { charId: "frostspirit", pos: { row: 1, col: 2 } }, // 후방 → 근접기 안 닿음(밀치기/원거리 필요)
+    { charId: "thug", pos: { row: 1, col: 0 } }, // 전방 (근접 사정권)
+    { charId: "thug", pos: { row: 2, col: 0 } }, // 전방
+    { charId: "thug2", pos: { row: 1, col: 2 } }, // 후방 → 근접기 안 닿음(원거리 필요)
   ],
 };
