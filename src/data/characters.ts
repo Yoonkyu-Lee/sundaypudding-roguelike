@@ -74,9 +74,9 @@ export const CHARACTERS: Record<string, Character> = {
   cho: { id: "cho", name: "조병옥", avatar: "/avatars/cho.webp", playable: true, traitIds: ["vindictive", "miser"], hp: 34, speedMin: 5, speedMax: 8, evasion: 9, accuracy: 0, critChance: 5, critMultiplier: 1.5, skillIds: ["cho_warn", "cho_martial", "cho_police", "cho_ult", "u_first_aid", "u_guard"] },
 
   // ══ 좌익(조선공산당) — 적(엘리트/보스) ══
-  jung: { id: "jung", name: "정진영", avatar: "/avatars/jung.webp", hp: 32, speedMin: 6, speedMax: 9, evasion: 11, accuracy: 0, critChance: 15, critMultiplier: 1.5, skillIds: ["jung_shot", "jung_retreat", "jung_charge", "jung_ult"] },
-  chunho: { id: "chunho", name: "김천호", avatar: "/avatars/chunho.webp", hp: 26, speedMin: 7, speedMax: 10, evasion: 14, accuracy: 0, critChance: 25, critMultiplier: 1.6, skillIds: ["chunho_stab", "chunho_shadow", "chunho_dagger", "chunho_ult"] },
-  shim: { id: "shim", name: "심영", avatar: "/avatars/shim.webp", hp: 48, speedMin: 3, speedMax: 6, evasion: 5, accuracy: 0, critChance: 5, critMultiplier: 1.5, skillIds: ["shim_speech", "shim_mother", "shim_flag", "shim_ult"] },
+  jung: { id: "jung", name: "정진영", avatar: "/avatars/jung.webp", traitIds: ["barbed"], hp: 32, speedMin: 6, speedMax: 9, evasion: 11, accuracy: 0, critChance: 15, critMultiplier: 1.5, skillIds: ["jung_shot", "jung_retreat", "jung_charge", "jung_ult"] },
+  chunho: { id: "chunho", name: "김천호", avatar: "/avatars/chunho.webp", traitIds: ["bloodfiend"], hp: 26, speedMin: 7, speedMax: 10, evasion: 14, accuracy: 0, critChance: 25, critMultiplier: 1.6, skillIds: ["chunho_stab", "chunho_shadow", "chunho_dagger", "chunho_ult"] },
+  shim: { id: "shim", name: "심영", avatar: "/avatars/shim.webp", traitIds: ["rally"], hp: 48, speedMin: 3, speedMax: 6, evasion: 5, accuracy: 0, critChance: 5, critMultiplier: 1.5, skillIds: ["shim_speech", "shim_mother", "shim_flag", "shim_ult"] },
   doctor: { id: "doctor", name: "의사양반", avatar: "/avatars/doctor.webp", hp: 30, speedMin: 5, speedMax: 8, evasion: 8, accuracy: 0, critChance: 5, critMultiplier: 1.5, skillIds: ["doc_tap", "doc_heal", "doc_cleanse", "doc_ult"] },
 
   // ══ 잡몹 ══

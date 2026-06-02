@@ -255,13 +255,16 @@ PassiveRule = { when: Trigger, if?: Condition[], then: Effect[], maxPerTurn?, ma
 `cmp` = `lt`·`lte`·`eq`·`gte`·`gt`.
 
 ### Effect 카탈로그 (`then`)
-대상 `target`: `self`·`subject`·`target`·`allAllies`·`allEnemies`·`randomEnemy`·`randomAlly`.
+대상 `target`: `self`·`subject`·`target`·`allAllies`·`allEnemies`·`otherAllies`(자신 제외)·`otherEnemies`(대상 제외)·`randomEnemy`·`randomAlly`.
 
 | `do` | 효과 |
 |---|---|
 | `damage` / `heal` / `shield` `{amount,target}` | 피해 / 회복 / 쉴드 |
 | `applyStatus` `{statusId,stacks,duration,target}` | 상태이상 부여 |
-| `cleanse {target}` · `move {deltaCol,target}` | 정화 / 이동(음수=전진) |
+| `cleanse {target}` · `removeStatus {statusId,target}` | 디버프 전체 정화 / 특정 상태 1종 제거 |
+| `move {deltaCol,target}` | 이동(음수=전진) |
+| `healByDamage {pct,target}` | 흡혈 — 가한 피해 pct% 회복(`dealtDamage`/`onHit` 트리거) |
+| `reflectByDamage {pct,target}` | 비율 반사 — 받은 피해 pct% 피해(`damaged` 트리거, target=subject=공격자) |
 | `grantInterrupt {count,target}` | 끼어들기 부여 |
 | `statMod {stat,delta,target}` | 전투 동안 스탯 누적 보정(accuracy/evasion/critChance/critMultiplier/speedMin/speedMax) |
 | `modCooldown {skillId?,delta,target}` | 쿨다운 가감 |

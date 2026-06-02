@@ -4,7 +4,7 @@ import { STATUS_DEFS } from "../../data/statuses.ts";
 import { SKILLS } from "../../data/skills.ts";
 
 const CMP: Record<string, string> = { lt: "<", lte: "≤", eq: "=", gte: "≥", gt: ">" };
-const TGT: Record<EffTarget, string> = { self: "자신", subject: "상대", target: "대상", allAllies: "아군 전체", allEnemies: "적 전체", randomEnemy: "무작위 적", randomAlly: "무작위 아군" };
+const TGT: Record<EffTarget, string> = { self: "자신", subject: "상대", target: "대상", allAllies: "아군 전체", allEnemies: "적 전체", otherAllies: "아군(자신 제외)", otherEnemies: "적(대상 제외)", randomEnemy: "무작위 적", randomAlly: "무작위 아군" };
 const STAT: Record<string, string> = { accuracy: "명중", evasion: "회피", critChance: "치명%", critMultiplier: "치명배수", speedMin: "속도하한", speedMax: "속도상한" };
 const sName = (id: string) => STATUS_DEFS[id]?.name ?? id;
 const who = (w: string) => (w === "self" ? "자신" : w === "subject" ? "상대" : "대상");
@@ -86,6 +86,9 @@ function thenText(e: Effect): string {
     case "goldDelta": return `골드 ${e.amount >= 0 ? "+" : ""}${e.amount}`;
     case "healParty": return `파티 ${Math.round(e.pct * 100)}% 회복`;
     case "grantRunStatus": return `${TGT[e.target]} ${sName(e.statusId)} ${e.stacks}×${e.duration}턴(다음 전투)`;
+    case "healByDamage": return `${TGT[e.target]} 가한 피해 ${e.pct}% 흡혈`;
+    case "reflectByDamage": return `${TGT[e.target]}에 받은 피해 ${e.pct}% 반사`;
+    case "removeStatus": return `${TGT[e.target]} ${sName(e.statusId)} 제거`;
   }
 }
 

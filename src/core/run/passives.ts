@@ -25,7 +25,8 @@ function evalRunCond(run: RunState, ctx: RunTriggerCtx, owner: PartyMemberState,
 
 function targets(run: RunState, owner: PartyMemberState, t: EffTarget): PartyMemberState[] {
   if (t === "allAllies") return run.party.filter((m) => m.hp > 0);
-  return [owner]; // self(및 그 외) = 소유자
+  if (t === "otherAllies") return run.party.filter((m) => m.hp > 0 && m.charId !== owner.charId);
+  return [owner]; // self(및 그 외; 모험 스코프엔 적 없음) = 소유자
 }
 
 function applyRunEffect(run: RunState, owner: PartyMemberState, e: Effect): void {

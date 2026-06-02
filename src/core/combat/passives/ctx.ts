@@ -19,6 +19,7 @@ export interface RuleCtx {
   owner: Unit;
   subject?: Unit;
   target?: Unit;
+  damage?: number; // 흡혈/비율반사용 — 트리거의 피해량(dealtDamage/damaged)
 }
 
 export function cmp(a: number, op: "lt" | "lte" | "eq" | "gte" | "gt", b: number): boolean {

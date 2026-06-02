@@ -97,7 +97,7 @@ export function fireTrigger(state: GameState, tctx: TriggerCtx): void {
     for (const cr of u.rules) {
       if (cr.rule.when.on !== tctx.on) continue;
       const rctx = match(state, tctx, u, cr.rule.when);
-      if (rctx) matched.push({ owner: u, cr, rctx, ord: orderIndexOf(state, u.uid) });
+      if (rctx) { rctx.damage = tctx.damage; matched.push({ owner: u, cr, rctx, ord: orderIndexOf(state, u.uid) }); }
     }
   }
   if (matched.length === 0) return;

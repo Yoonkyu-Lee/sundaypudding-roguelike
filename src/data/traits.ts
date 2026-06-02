@@ -35,4 +35,20 @@ export const TRAITS: Record<string, TraitDef> = {
     id: "warspirit", name: "전의", icon: "⚔", desc: "보스 노드 진입 시 다음 전투에 파티 전원 공위증.",
     rules: [{ when: { on: "nodeEnter", nodeType: "boss" }, then: [{ do: "grantRunStatus", statusId: "might", stacks: 1, duration: 99, target: "allAllies" }] }],
   },
+  // ── 적 전용 특성(좌익) — 같은 엔진. 신규 어휘 시연 ──
+  // 가한 피해의 30%를 흡혈.
+  bloodfiend: {
+    id: "bloodfiend", name: "흡혈귀", icon: "🦇", desc: "가한 피해의 30%만큼 체력 회복.",
+    rules: [{ when: { on: "dealtDamage" }, then: [{ do: "healByDamage", pct: 30, target: "self" }] }],
+  },
+  // 전투 시작 시 아군 진영(=자기편) 전체에 공위증 1.
+  rally: {
+    id: "rally", name: "규합", icon: "📣", desc: "전투 시작 시 아군 전체에 공위증.",
+    rules: [{ when: { on: "battleStart" }, then: [{ do: "applyStatus", statusId: "might", stacks: 1, duration: 99, target: "allAllies" }] }],
+  },
+  // 피격 시 받은 피해의 50%를 공격자에게 반사(턴당 2회).
+  barbed: {
+    id: "barbed", name: "가시갑주", icon: "🪖", desc: "피격 시 받은 피해의 50%를 공격자에게 반사(턴당 2회).",
+    rules: [{ when: { on: "damaged" }, then: [{ do: "reflectByDamage", pct: 50, target: "subject" }], maxPerTurn: 2 }],
+  },
 };

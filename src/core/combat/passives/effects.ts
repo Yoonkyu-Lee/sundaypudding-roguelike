@@ -14,6 +14,8 @@ function resolveTargets(state: GameState, rctx: RuleCtx, t: EffTarget): Unit[] {
     case "target": return (rctx.target ?? rctx.subject) ? [(rctx.target ?? rctx.subject)!] : [];
     case "allAllies": return state.units.filter((u) => u.alive && u.side === rctx.owner.side);
     case "allEnemies": return state.units.filter((u) => u.alive && u.side !== rctx.owner.side);
+    case "otherAllies": return state.units.filter((u) => u.alive && u.side === rctx.owner.side && u.uid !== rctx.owner.uid);
+    case "otherEnemies": return state.units.filter((u) => u.alive && u.side !== rctx.owner.side && u.uid !== rctx.subject?.uid);
     case "randomEnemy": { const e = state.units.filter((u) => u.alive && u.side !== rctx.owner.side); return e.length ? [e[state.rng.int(0, e.length - 1)]] : []; }
     case "randomAlly": { const a = state.units.filter((u) => u.alive && u.side === rctx.owner.side); return a.length ? [a[state.rng.int(0, a.length - 1)]] : []; }
   }
@@ -41,6 +43,9 @@ export function applyEffect(state: GameState, rctx: RuleCtx, eff: Effect): void 
     case "move": for (const tgt of resolveTargets(state, rctx, eff.target)) if (tgt.alive) moveUnit(state, tgt, eff.deltaCol); break;
     case "grantInterrupt": { const subs: string[] = []; for (const tgt of resolveTargets(state, rctx, eff.target)) for (let i = 0; i < eff.count; i++) subs.push(tgt.uid); insertInterrupts(state, subs); break; }
     case "statMod": for (const tgt of resolveTargets(state, rctx, eff.target)) tgt.statMods[eff.stat] = (tgt.statMods[eff.stat] ?? 0) + eff.delta; break;
+    case "healByDamage": { const amt = Math.round((rctx.damage ?? 0) * eff.pct / 100); if (amt > 0) for (const tgt of resolveTargets(state, rctx, eff.target)) { if (!tgt.alive) continue; const b = tgt.hp; tgt.hp = Math.min(tgt.hpMax, tgt.hp + amt); state.log.push({ t: "heal", targetUid: tgt.uid, amount: tgt.hp - b }); } break; }
+    case "reflectByDamage": { const amt = Math.round((rctx.damage ?? 0) * eff.pct / 100); if (amt > 0) for (const tgt of resolveTargets(state, rctx, eff.target)) dealRawDamage(state, tgt, amt, { attackerUid: owner.uid }); break; }
+    case "removeStatus": for (const tgt of resolveTargets(state, rctx, eff.target)) tgt.statuses = tgt.statuses.filter((s) => s.defId !== eff.statusId); break;
     case "modCooldown": for (const tgt of resolveTargets(state, rctx, eff.target)) { const ids = eff.skillId ? [eff.skillId] : Object.keys(tgt.cooldowns); for (const id of ids) tgt.cooldowns[id] = Math.max(0, (tgt.cooldowns[id] ?? 0) + eff.delta); } break;
     case "modSpeedRoll": case "rerollSpeed": break; // speedRoll 트리거에서 turnOrder가 처리
     case "goldDelta": case "healParty": case "grantRunStatus": break; // 모험 스코프 효과 — run/passives.ts가 처리

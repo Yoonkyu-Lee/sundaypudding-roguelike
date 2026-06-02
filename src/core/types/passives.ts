@@ -75,8 +75,8 @@ export type Condition =
   | { c: "nodeTypeIs"; nodeType: NodeType }
   | { c: "goldAtLeast"; v: number };
 
-/** 효과 대상. */
-export type EffTarget = "self" | "subject" | "target" | "allAllies" | "allEnemies" | "randomEnemy" | "randomAlly";
+/** 효과 대상. other*=소유자/대상 제외 광역. */
+export type EffTarget = "self" | "subject" | "target" | "allAllies" | "allEnemies" | "otherAllies" | "otherEnemies" | "randomEnemy" | "randomAlly";
 /** statMod 가능한 스탯. */
 export type StatKey = "accuracy" | "evasion" | "critChance" | "critMultiplier" | "speedMin" | "speedMax";
 
@@ -95,6 +95,10 @@ export type Effect =
   | { do: "rerollSpeed" } // speedRoll 트리거 전용(소유자 주사위 재굴림, state.rng)
   | { do: "statMod"; stat: StatKey; delta: number; target: EffTarget } // 전투 동안 누적 스탯 보정
   | { do: "modCooldown"; skillId?: string; delta: number; target: EffTarget } // 쿨다운 가감(음수=감소)
+  // ── 피해 비례/상태 제거 (전투 스코프 — dealtDamage/damaged 등 ctx.damage 필요) ──
+  | { do: "healByDamage"; pct: number; target: EffTarget } // 흡혈: 가한 피해의 pct% 회복
+  | { do: "reflectByDamage"; pct: number; target: EffTarget } // 비율 반사: 받은 피해의 pct%를 대상에 피해
+  | { do: "removeStatus"; statusId: string; target: EffTarget } // 특정 상태이상 1종 제거
   // ── 모험(run) 스코프 효과 ──
   | { do: "goldDelta"; amount: number } // 골드 가감
   | { do: "healParty"; pct: number } // 파티 비율 회복

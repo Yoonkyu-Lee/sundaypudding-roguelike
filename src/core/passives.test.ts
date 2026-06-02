@@ -2,6 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createBattle, getLegalActions, step } from "./engine.ts";
+import { applyEffect } from "./combat/passives/index.ts";
 import { createRun, enterNode, resolveBattleEnd, chooseReward, leaveShop, chooseEncounterOption, fireRunTrigger, type RunState } from "./run.ts";
 import { chooseAction } from "./ai.ts";
 import type { GameState, PartyMemberState } from "./types.ts";
@@ -101,4 +102,51 @@ test("모험 스코프 통합: 특성 파티 런이 종료되고(가드), 같은
   const b = autoRun(3);
   assert.deepEqual(a, b, "결정론");
   assert.ok(a.phase === "won" || a.phase === "lost");
+});
+
+// ── 신규 어휘 (흡혈·비율반사·상태제거·자신제외 광역·적 broadcast) ──
+test("흡혈(healByDamage): 가한 피해 비례 회복", () => {
+  const g = createBattle(1, enemy1, [ally("kim", { row: 0, col: 0 }, ["kim_punch"])]);
+  const kim = g.units.find((u) => u.charId === "kim")!;
+  kim.hp = 10;
+  applyEffect(g, { owner: kim, damage: 20 }, { do: "healByDamage", pct: 50, target: "self" });
+  assert.equal(kim.hp, 20); // +50% of 20
+});
+
+test("비율 반사(reflectByDamage): 받은 피해 비례 피해", () => {
+  const g = createBattle(1, enemy1, [ally("kim", { row: 0, col: 0 }, ["kim_punch"])]);
+  const kim = g.units.find((u) => u.charId === "kim")!;
+  const thug = g.units.find((u) => u.side === "enemy")!;
+  const before = thug.hp;
+  applyEffect(g, { owner: kim, subject: thug, damage: 10 }, { do: "reflectByDamage", pct: 50, target: "subject" });
+  assert.equal(thug.hp, before - 5);
+});
+
+test("removeStatus: 특정 상태 1종만 제거(다른 상태 유지)", () => {
+  const g = createBattle(1, enemy1, [ally("kim", { row: 0, col: 0 }, ["kim_punch"])]);
+  const kim = g.units.find((u) => u.charId === "kim")!;
+  kim.statuses.push({ defId: "bleed", stacks: 1, duration: 2, sourceUid: kim.uid });
+  kim.statuses.push({ defId: "might", stacks: 1, duration: 2, sourceUid: kim.uid });
+  applyEffect(g, { owner: kim }, { do: "removeStatus", statusId: "bleed", target: "self" });
+  assert.ok(!kim.statuses.some((s) => s.defId === "bleed"), "bleed 제거");
+  assert.ok(kim.statuses.some((s) => s.defId === "might"), "might 유지");
+});
+
+test("otherAllies: 소유자 제외 아군만", () => {
+  const enc: Encounter = { id: "t", name: "t", allies: [], enemies: [{ charId: "thug", pos: { row: 0, col: 0 } }], boss: false };
+  const g = createBattle(1, enc, [ally("kim", { row: 0, col: 0 }, ["kim_punch"]), ally("shin", { row: 1, col: 0 }, ["shin_axe"])]);
+  const kim = g.units.find((u) => u.charId === "kim")!;
+  const shin = g.units.find((u) => u.charId === "shin")!;
+  kim.hp = 10; shin.hp = 10;
+  applyEffect(g, { owner: kim }, { do: "heal", amount: 5, target: "otherAllies" });
+  assert.equal(kim.hp, 10, "자신 제외");
+  assert.equal(shin.hp, 15, "다른 아군만 회복");
+});
+
+test("적 특성 broadcast: 심영(rally) battleStart → 적 진영 전체 공위증, 아군엔 미적용", () => {
+  const enc: Encounter = { id: "t", name: "t", allies: [], enemies: [{ charId: "shim", pos: { row: 0, col: 0 } }, { charId: "chunho", pos: { row: 1, col: 0 } }], boss: false };
+  const g = createBattle(1, enc, [ally("kim", { row: 0, col: 0 }, ["kim_punch"])]);
+  const has = (cid: string) => g.units.find((u) => u.charId === cid)!.statuses.some((s) => s.defId === "might");
+  assert.ok(has("shim") && has("chunho"), "적 진영 전체 broadcast");
+  assert.ok(!has("kim"), "아군엔 미적용");
 });
