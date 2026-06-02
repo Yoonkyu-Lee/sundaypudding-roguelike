@@ -2,11 +2,11 @@
 // 전투는 render.ts(renderApp) 재사용, 맵/보상/결과는 runRender.ts. (7장)
 import { step } from "../core/engine.ts";
 import { chooseAction } from "../core/ai.ts";
-import { enterNode, resolveBattleEnd, chooseReward, setActiveSkill, buyShopOffer, leaveShop, chooseEncounterOption, getRunView, type RunState } from "../core/run.ts";
-import type { Action } from "../core/types.ts";
+import { createRun, enterNode, resolveBattleEnd, chooseReward, setActiveSkill, buyShopOffer, leaveShop, chooseEncounterOption, getRunView, type RunState } from "../core/run.ts";
+import type { Action, RunDef } from "../core/types.ts";
 import { SKILLS } from "../data/skills.ts";
 import { CHARACTERS } from "../data/characters.ts";
-import { grantWin } from "./meta.ts";
+import { grantWin, masteryMap } from "./meta.ts";
 import { renderApp, type Handlers, type Ui } from "./render.ts";
 import { renderRunScreen, type RunHandlers } from "./runRender.ts";
 import { createTimelinePanel, type RollView } from "./battle/timelinePanel.ts";
@@ -14,6 +14,8 @@ import { createOverlay } from "./overlay.ts";
 import { renderTitle, renderHub, renderPause, type ShellHandlers } from "./shell.ts";
 import { createHub } from "./hub.ts";
 import { saveRun, clearSave, loadRun } from "./save.ts";
+import { renderEditor } from "./editor/editorRender.ts";
+import { createEditorMenu } from "./editor/controller.ts";
 
 const app = document.getElementById("app")!;
 const panel = createTimelinePanel(); // 행동서열 패널 — 주사위(rolling)↔전투(live) 한 컴포넌트, 전투 셸에 영속 마운트
@@ -24,7 +26,7 @@ const makeRun = (s: number) => hub.makeRun(s);
 let run: RunState;
 let seed = 42;
 let busy = false;
-let appState: "title" | "hub" | "run" = "title"; // 게임 흐름 셸 (슬라이스2)
+let appState: "title" | "hub" | "editor" | "run" = "title"; // 게임 흐름 셸 (+에디터)
 let runActive = false; // 진행 중 런이 있나(이어하기 가능)
 let pauseOpen = false; // 런 중 일시정지 오버레이
 
@@ -59,6 +61,7 @@ function render(): void {
   if (appState !== "run") {
     app.querySelector(".pause-overlay")?.remove();
     if (appState === "title") renderTitle(app, shellHandlers);
+    else if (appState === "editor") renderEditor(app, editorMenu.data(), editorMenu.handlers);
     else renderHub(app, hub.data(run, runActive), shellHandlers);
     return;
   }
@@ -254,9 +257,24 @@ function newRun(s: number): void {
   render();
 }
 
+// ── 맵 에디터 (E1: 런 목록·드래프트·테스트플레이) ──
+/** 드래프트/런을 즉시 플레이(허브 우회) — 런 자체 로스터로 createRun. */
+function testRun(def: RunDef): void {
+  seed += 1;
+  ui.seed = seed;
+  run = createRun(seed, def.roster, def, { mastery: masteryMap(), useMastery: def.useMastery });
+  resetUi();
+  runActive = true;
+  pauseOpen = false;
+  appState = "run";
+  render();
+}
+const editorMenu = createEditorMenu({ testRun, rerender: render, toTitle: () => { appState = "title"; render(); } });
+
 // 게임 흐름 셸 핸들러 (타이틀/집/일시정지)
 const shellHandlers: ShellHandlers = {
   onStart() { appState = "hub"; render(); },
+  onEditor() { appState = "editor"; render(); },
   onNewRun() { newRun(seed + 1); },
   onResumeRun() { appState = "run"; pauseOpen = false; render(); },
   onAbandonRun() { runActive = false; clearSave(); render(); },

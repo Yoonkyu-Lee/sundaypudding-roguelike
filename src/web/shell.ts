@@ -3,6 +3,7 @@ import { avatarHtml, esc } from "./battle/shared.ts";
 
 export interface ShellHandlers {
   onStart: () => void; // 타이틀 → 집
+  onEditor: () => void; // 타이틀 → 맵 에디터
   onNewRun: () => void; // 집: 새 런 시작
   onResumeRun: () => void; // 집: 이어하기
   onAbandonRun: () => void; // 집: 진행 중 런 포기
@@ -29,8 +30,10 @@ export function renderTitle(app: HTMLElement, h: ShellHandlers): void {
     <div class="title-logo">🍮 Sundaypudding<br>Roguelike</div>
     <div class="title-sub">야인시대 로스터로 3개 액트를 돌파하라</div>
     <button class="title-start" id="startbtn">▶ 시작</button>
+    <button class="title-editor" id="editorbtn">🗺 맵 에디터</button>
   </div></div>`;
   app.querySelector("#startbtn")!.addEventListener("click", () => h.onStart());
+  app.querySelector("#editorbtn")!.addEventListener("click", () => h.onEditor());
 }
 
 // 편성 선택 카드 (playable 캐릭) — 클릭=토글. 숙련도 Lv/해금 tier 표시.
