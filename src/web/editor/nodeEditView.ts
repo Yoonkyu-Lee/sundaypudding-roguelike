@@ -50,14 +50,14 @@ function slotSection(slot: LayerSlot, title: string, hint: string, kinds: string
 export function renderNodeEditView(app: HTMLElement, d: NodeEditData, h: EditorHandlers): void {
   const arr = (s: LayerSlot) => (s === "onEnter" ? d.onEnter : s === "core" ? d.core : d.onResolve);
   const sel = d.sel ? arr(d.sel.slot)[d.sel.idx] : null;
-  const form = sel ? `<h3>${esc(LAYER_SPECS[sel.kind].label)} 편집</h3>${fieldInput(sel, d.sel!.idx)}` : `<div class="hint">왼쪽에서 레이어를 선택하세요.</div>`;
+  const form = sel ? `<h3>${esc(LAYER_SPECS[sel.kind].label)} 편집</h3>${fieldInput(sel, d.sel!.idx)}${sel.kind === "combat" ? ruleEditorHtml(d) : ""}` : `<div class="hint">왼쪽에서 레이어를 선택하세요.</div>`;
   const sections = SLOTS.map((s) => slotSection(s.slot, s.title, s.hint, s.kinds, arr(s.slot), d.sel)).join("");
 
   app.innerHTML = `<div class="editor node-editor">
     <header><h1>🧩 노드 내용 — <span class="dim">${esc(d.nodeName)}</span></h1>
       <button class="hub-link" id="ne-back">← 맵으로</button></header>
     <div class="ne-body">
-      <section class="ne-list">${sections}${ruleEditorHtml(d)}</section>
+      <section class="ne-list">${sections}</section>
       <section class="ne-form">${form}</section>
     </div>
   </div>`;

@@ -26,12 +26,15 @@
             "onEnter": [{ "kind": "text", "text": "종로 한복판 — 좌익 패거리가 길을 막아선다." }],
             "onResolve": [{ "kind": "text", "text": "좌익이 물러갔다. 종로의 밤은 김두한의 것이 된다." }]
           },
-          "rules": [
-            { "when": { "on": "battleStart" }, "then": [{ "do": "showDialog", "speaker": "심영", "text": "감히 우익 나부랭이가 종로를 넘봐?" }] },
-            { "when": { "on": "roundStart" }, "if": [{ "c": "round", "cmp": "eq", "v": 2 }], "maxPerBattle": 1, "then": [{ "do": "showDialog", "speaker": "김두한", "text": "주먹 앞에 좌우가 어딨어. 덤벼!" }] },
-            { "when": { "on": "roundStart" }, "if": [{ "c": "hpPct", "who": "self", "cmp": "lte", "v": 40 }], "maxPerBattle": 1, "then": [{ "do": "showDialog", "speaker": "심영", "text": "크윽… 이게 김두한의 주먹인가…" }] }
-          ],
-          "core": [{ "kind": "combat", "rosterPreset": "boss", "boss": true }, { "kind": "gold", "amount": 24 }, { "kind": "reward" }] },
+          "core": [
+            { "kind": "combat", "rosterPreset": "boss", "boss": true, "rules": [
+              { "when": { "on": "battleStart" }, "then": [{ "do": "showDialog", "speaker": "심영", "text": "감히 우익 나부랭이가 종로를 넘봐?" }] },
+              { "when": { "on": "roundStart" }, "if": [{ "c": "round", "cmp": "eq", "v": 2 }], "maxPerBattle": 1, "then": [{ "do": "showDialog", "speaker": "김두한", "text": "주먹 앞에 좌우가 어딨어. 덤벼!" }] },
+              { "when": { "on": "roundStart" }, "if": [{ "c": "hpPct", "who": "self", "cmp": "lte", "v": 40 }], "maxPerBattle": 1, "then": [{ "do": "showDialog", "speaker": "심영", "text": "크윽… 이게 김두한의 주먹인가…" }] }
+            ] },
+            { "kind": "gold", "amount": 24 },
+            { "kind": "reward" }
+          ] },
         { "id": "f1_clear", "type": "clear", "q": 2, "r": 1, "toFloor": "f2" }
       ],
       "edges": [

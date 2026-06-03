@@ -129,7 +129,7 @@ registerLayer("combat", { schema:[{roster:'rosterGrid'},{formationBonus:'bool'},
 - **B3. 프리셋**: forge=`shop`(강화 전담) 프리셋, shrine=`event` 프리셋(B/Phase D 의존).
 
 ### Phase C — 스토리텔링: dialog + 노드 트리거 룰 `[엔진 프리미티브 추가]`
-- **✅ C슬라이스1 (완료)**: `showDialog` Effect + `dialog` GameEvent + `MapNode.rules`(PassiveRule[]). 전투 생성 시 **노드 룰을 첫 적 유닛에 컴파일·주입**(`compileInline`, `createBattle(...,nodeRules)`) → 기존 패시브 엔진이 `when/if/then` 발동 → `showDialog`가 dialog 이벤트 push(phase 불변). 웹: 전투 위 **대사 오버레이**(`.battle-dialog`, `ui.dialog`=직전 step의 dialog 이벤트) + 로그 줄. 결정론 테스트(battleStart 룰→dialog 이벤트). 114 test green.
+- **✅ C슬라이스1 (완료)**: `showDialog` Effect + `dialog` GameEvent + 트리거 룰. 전투 생성 시 **룰을 첫 적 유닛에 컴파일·주입**(`compileInline`, `createBattle(...,nodeRules)`) → 기존 패시브 엔진이 `when/if/then` 발동 → `showDialog`가 dialog 이벤트 push(phase 불변). 웹: 전투 위 **대사 오버레이**(`.battle-dialog`, `ui.dialog`=직전 step의 dialog 이벤트) + 로그 줄. 결정론 테스트(battleStart 룰→dialog 이벤트). 114 test green.
   - 범위 밖: `intervene`(비전투자 상태부여, EffTarget 활용 가능하나 미검증)·노드(비전투) 컷신·여러 dialog 큐잉 정밀 타이밍.
 - **C2(다음). 트리거 룰 저작 UI(E4 나머지)**: 노드 에디터에서 when/if/then 조립(특성/패시브 작성과 일관). 지금은 JSON으로만 저작 가능.
 
@@ -145,6 +145,7 @@ registerLayer("combat", { schema:[{roster:'rosterGrid'},{formationBonus:'bool'},
 - **✅ E4-(부분) (완료)**: 노드 에디터를 **3슬롯**(진입 onEnter · 코어 core · 완료 onResolve)으로. onEnter/onResolve = 데코 전용 카탈로그(`DECO_KINDS`), core = 전체. 레이어 핸들러를 `slot` 인지로 일반화(`selLayerRef={slot,idx}`, `slotArray` 헬퍼). 진입 연출·도착 보상 작곡 완성.
 - **✅ E4-나머지 (완료)**: **트리거 룰 에디터** — 노드 에디터에 `rules[]` 섹션(추가/삭제/선택) + when(트리거 select+파라미터)·if(조건 리스트)·then(효과 리스트, showDialog 간판) 폼. 큐레이트 카탈로그(`ruleSchema.ts` WHEN/COND/EFFECT 스펙) + 스키마 구동 폼(`ruleEditor.ts`), 룰 요약=`describeRule` 재사용. **이제 JSON 없이 전투 중 대사·개입 저작.** 컨트롤러 룰 CRUD 11핸들러.
   - 범위 밖: 전 트리거/조건/효과 망라(subset만, 스펙 행 추가로 확장)·룰 순서 재배치.
+- **✅ 룰=combat 레이어 소유 (완료)**: 트리거 룰을 노드 전역(`MapNode.rules`) → **combat `InteractiveLayer.rules`**로 이전. `startCombat`이 `L.rules` 주입 → **페이즈/웨이브별 다른 대사**(2페이즈 각성 등). 노드 에디터 룰 섹션은 **선택 combat 레이어 폼 안**에 표시(레이어 소유 명확). `MapNode.rules` 폐기. yain f1_boss 룰을 그 combat 레이어로 이전.
 
 ### 권장 순서
 A(골격) → B(combat+데코, 즉시 가치: 엘리트 차별화·보물 노드) → E1~E2(GUI 기반, B와 평행) → C(스토리텔링) → D(event) → E3~E4(리치 폼). 각 단계 종료 시 `docs/GAME-DESIGN.md`(노드 모델)·`CODE-MAP` 승격.

@@ -18,7 +18,7 @@ export type DecoratorLayer =
   | { kind: "text"; text: string }; // 로그/대사(컷신 뷰 강화는 Phase C)
 /** 상호작용 레이어 — 완료까지 블록(phase 전환). combat·reward(B). shop/event는 후속. */
 export type InteractiveLayer =
-  | { kind: "combat"; roster?: { charId: string; pos: Pos }[]; rosterPreset?: string; boss?: boolean } // 적: roster(인라인) > rosterPreset(NODE_ROSTERS 키) > battle. 보스=진형보너스
+  | { kind: "combat"; roster?: { charId: string; pos: Pos }[]; rosterPreset?: string; boss?: boolean; rules?: PassiveRule[] } // 적: roster>rosterPreset>battle. 보스=진형보너스. rules=이 전투의 트리거 룰(페이즈별 대사·개입, Phase C/E4)
   | { kind: "reward" } // 보상 3택1(genRewards) — 플레이어 선택까지 블록. treasure 노드 = core:[reward]
   | { kind: "shop" } // 상점 진열(generateShop) — leaveShop까지 블록. 스타터는 DI 등록(run.ts)
   | { kind: "event" }; // 인카운터 추첨(랜덤) — chooseEncounterOption까지 블록. 노드별 저작은 Phase D
@@ -45,10 +45,8 @@ export interface MapNode {
   label?: string;
   /** 부착 레이어(선택, Phase A). 없으면 순수 타입 코어 동작(기존과 동일). */
   layers?: NodeLayers;
-  /** 코어 시퀀스(선택, Phase A2). 있으면 타입 분기 대신 이 레이어들을 순서 실행(combat 웨이브 등). */
+  /** 코어 시퀀스(선택, Phase A2). 있으면 타입 분기 대신 이 레이어들을 순서 실행(combat 웨이브 등). 트리거 룰은 각 combat 레이어가 소유. */
   core?: Layer[];
-  /** 노드 트리거 룰(선택, Phase C). 전투 생성 시 주입 → 전투 중 when/if/then 발동(대사·개입 등). 특성과 같은 PassiveRule. */
-  rules?: PassiveRule[];
 }
 
 /** 방향 있는 간선 — from에서 to로만 전진(복귀 불가). */

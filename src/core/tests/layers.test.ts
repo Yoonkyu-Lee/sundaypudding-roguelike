@@ -153,8 +153,7 @@ test("yain 마이그레이션: f1_boss가 core 경로 + boss 프리셋 roster + 
 });
 
 test("노드 트리거 룰(Phase C): combat 진입 시 showDialog → battle.log에 dialog 이벤트(전투 안 벗어남)", () => {
-  const d = coreDef([{ kind: "combat" }]);
-  d.floors[0].nodes[1].rules = [{ when: { on: "battleStart" }, then: [{ do: "showDialog", speaker: "적장", text: "감히 여기까지…" }] }];
+  const d = coreDef([{ kind: "combat", rules: [{ when: { on: "battleStart" }, then: [{ do: "showDialog", speaker: "적장", text: "감히 여기까지…" }] }] }]);
   const run = createRun(7, d.roster, d);
   enterNode(run, "b");
   assert.equal(run.phase, "battle", "phase는 여전히 전투(연출은 phase 전환 아님)");

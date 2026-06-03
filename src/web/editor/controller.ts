@@ -39,7 +39,8 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
 
   const floor = (): FloorDef => draft!.floors[floorIdx];
   const editNode = () => floor().nodes.find((n) => n.id === nodeEditId) ?? null; // 노드 에디터 대상
-  const editRule = () => (selRule !== null ? editNode()?.rules?.[selRule] ?? null : null); // 편집 중 룰
+  const layerAt = () => { const nd = editNode(); if (!nd || !selLayerRef) return null; const arr = selLayerRef.slot === "core" ? nd.core : selLayerRef.slot === "onEnter" ? nd.layers?.onEnter : nd.layers?.onResolve; return arr?.[selLayerRef.idx] ?? null; }; // 선택 레이어
+  const editRule = () => { const lay = layerAt(); return lay && lay.kind === "combat" && selRule !== null ? lay.rules?.[selRule] ?? null : null; }; // 편집 중 룰(선택 combat 레이어 소유)
   const save = () => { if (draft) saveDraft(draft); };
 
   function openEdit(id: string): void {
@@ -100,7 +101,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       core: nd?.core ?? [],
       onResolve: nd?.layers?.onResolve ?? [],
       sel: selLayerRef,
-      rules: nd?.rules ?? [],
+      rules: (() => { const lay = layerAt(); return lay && lay.kind === "combat" ? lay.rules ?? [] : []; })(), // 선택 combat 레이어의 룰
       selRule,
     };
   }
@@ -160,15 +161,15 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       onSetNodeLabel(id, label) { if (!draft) return; setNodeLabel(floor(), id, label); save(); deps.rerender(); },
       onSetNodeRoster(id, roster) { if (!draft) return; setNodeRoster(floor(), id, roster); save(); deps.rerender(); },
       // 노드 에디터 (Phase E) — 슬롯(onEnter/core/onResolve)별 레이어 편집
-      onOpenNodeEditor(id) { if (!draft) return; const nd = floor().nodes.find((n) => n.id === id); if (!nd) return; nodeEditId = id; selLayerRef = nd.core && nd.core.length ? { slot: "core", idx: 0 } : null; selRule = nd.rules && nd.rules.length ? 0 : null; mode = "nodeEdit"; deps.rerender(); },
+      onOpenNodeEditor(id) { if (!draft) return; const nd = floor().nodes.find((n) => n.id === id); if (!nd) return; nodeEditId = id; selLayerRef = nd.core && nd.core.length ? { slot: "core", idx: 0 } : null; selRule = null; mode = "nodeEdit"; deps.rerender(); },
       onAddLayer(slot, kind) { const nd = editNode(); const spec = LAYER_SPECS[kind]; if (!nd || !spec) return; const arr = slotArray(nd, slot); arr.push(spec.make()); selLayerRef = { slot, idx: arr.length - 1 }; save(); deps.rerender(); },
       onRemoveLayer(slot, idx) { const nd = editNode(); if (!nd) return; const arr = slotArray(nd, slot); arr.splice(idx, 1); selLayerRef = arr.length ? { slot, idx: Math.min(idx, arr.length - 1) } : null; save(); deps.rerender(); },
       onMoveLayer(slot, idx, dir) { const nd = editNode(); if (!nd) return; const arr = slotArray(nd, slot); const j = idx + dir; if (j < 0 || j >= arr.length) return; [arr[idx], arr[j]] = [arr[j], arr[idx]]; if (selLayerRef && selLayerRef.slot === slot && selLayerRef.idx === idx) selLayerRef = { slot, idx: j }; save(); deps.rerender(); },
-      onSelectLayer(slot, idx) { selLayerRef = { slot, idx }; deps.rerender(); },
+      onSelectLayer(slot, idx) { selLayerRef = { slot, idx }; selRule = null; deps.rerender(); }, // 레이어 바꾸면 룰 선택 초기화(룰은 레이어 소유)
       onSetLayerField(slot, idx, key, value) { const nd = editNode(); if (!nd) return; const arr = slotArray(nd, slot); if (!arr[idx]) return; (arr[idx] as Record<string, unknown>)[key] = value; save(); deps.rerender(); },
       // 트리거 룰 (Phase E4) — 선택 룰(selRule) 대상
-      onAddRule() { const nd = editNode(); if (!nd) return; (nd.rules ??= []).push({ when: { on: "battleStart" }, then: [] }); selRule = nd.rules.length - 1; save(); deps.rerender(); },
-      onRemoveRule(idx) { const nd = editNode(); if (!nd?.rules) return; nd.rules.splice(idx, 1); selRule = nd.rules.length ? Math.min(idx, nd.rules.length - 1) : null; save(); deps.rerender(); },
+      onAddRule() { const lay = layerAt(); if (lay?.kind !== "combat") return; (lay.rules ??= []).push({ when: { on: "battleStart" }, then: [] }); selRule = lay.rules.length - 1; save(); deps.rerender(); },
+      onRemoveRule(idx) { const lay = layerAt(); if (lay?.kind !== "combat" || !lay.rules) return; lay.rules.splice(idx, 1); selRule = lay.rules.length ? Math.min(idx, lay.rules.length - 1) : null; save(); deps.rerender(); },
       onSelectRule(idx) { selRule = idx; deps.rerender(); },
       onSetWhen(kind) { const r = editRule(); const s = WHEN_SPECS[kind]; if (!r || !s) return; r.when = s.make() as Trigger; save(); deps.rerender(); },
       onSetWhenField(key, value) { const r = editRule(); if (!r) return; (r.when as Record<string, unknown>)[key] = value; save(); deps.rerender(); },
