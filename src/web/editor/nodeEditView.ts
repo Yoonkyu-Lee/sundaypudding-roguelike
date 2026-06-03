@@ -7,6 +7,13 @@ import { battlefieldHtml, wireBattlefield } from "./battlefieldEditor.ts";
 import { ruleEditorHtml, wireRuleEditor } from "./ruleEditor.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { STATUS_DEFS } from "../../data/statuses.ts";
+import { NODE_ROSTERS } from "../../data/encounters.ts";
+
+/** combat 레이어의 유효 적 구성 — 인라인 roster 우선, 없으면 프리셋(엔진 startCombat과 동일 규칙). */
+function effectiveRoster(sel: { roster?: RosterEntry[]; rosterPreset?: string }): { roster: RosterEntry[]; fromPreset: boolean } {
+  if (sel.roster && sel.roster.length) return { roster: sel.roster, fromPreset: false };
+  return { roster: (NODE_ROSTERS[sel.rosterPreset ?? "battle"] ?? NODE_ROSTERS.battle) as RosterEntry[], fromPreset: true };
+}
 
 const CHARS = Object.values(CHARACTERS).map((c) => ({ id: c.id, name: c.name }));
 const CHAR_OPTS = CHARS.map((c) => ({ value: c.id, label: c.name }));
@@ -49,7 +56,10 @@ function slotSection(slot: LayerSlot, title: string, hint: string, kinds: string
 export function renderNodeEditView(app: HTMLElement, d: NodeEditData, h: EditorHandlers): void {
   const arr = (s: LayerSlot) => (s === "onEnter" ? d.onEnter : s === "core" ? d.core : d.onResolve);
   const sel = d.sel ? arr(d.sel.slot)[d.sel.idx] : null;
-  const combatExtra = sel?.kind === "combat" ? battlefieldHtml(((sel as Record<string, unknown>).roster as RosterEntry[]) ?? [], d.allies) + ruleEditorHtml(d) : "";
+  const eff = sel?.kind === "combat" ? effectiveRoster(sel as { roster?: RosterEntry[]; rosterPreset?: string }) : null;
+  const combatExtra = sel?.kind === "combat" && eff
+    ? `${eff.fromPreset ? `<div class="hint">프리셋 적 구성 표시 중 — 편집하면 이 노드 전용 배치로 전환됩니다.</div>` : ""}${battlefieldHtml(eff.roster, d.allies)}${ruleEditorHtml(d)}`
+    : "";
   const form = sel ? `<h3>${esc(LAYER_SPECS[sel.kind].label)} 편집</h3>${fieldInput(sel, d.sel!.idx)}${combatExtra}` : `<div class="hint">왼쪽에서 레이어를 선택하세요.</div>`;
   const sections = SLOTS.map((s) => slotSection(s.slot, s.title, s.hint, s.kinds, arr(s.slot), d.sel)).join("");
 
@@ -78,7 +88,7 @@ export function renderNodeEditView(app: HTMLElement, d: NodeEditData, h: EditorH
     const val = el instanceof HTMLInputElement && el.type === "checkbox" ? el.checked : el instanceof HTMLInputElement && el.type === "number" ? Number(el.value) : el.value;
     h.onSetLayerField(d.sel!.slot, d.sel!.idx, key, val);
   }));
-  // 전장 그리드: combat 적 배치(있으면 프리셋 무시) — 드래그 배치/이동/제거
-  if (sel?.kind === "combat" && d.sel) wireBattlefield(app, ((sel as Record<string, unknown>).roster as RosterEntry[]) ?? [], (next) => h.onSetLayerField(d.sel!.slot, d.sel!.idx, "roster", next));
+  // 전장 그리드: combat 적 배치 — 유효 구성(프리셋 포함) 표시, 편집 시 인라인 roster로 구체화
+  if (sel?.kind === "combat" && d.sel && eff) wireBattlefield(app, eff.roster, (next) => h.onSetLayerField(d.sel!.slot, d.sel!.idx, "roster", next));
   wireRuleEditor(app, h); // 트리거 룰 섹션(Phase E4)
 }
