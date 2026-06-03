@@ -1,12 +1,13 @@
 // 노드 에디터 폼의 진실원 (Phase E) — 레이어 kind별 편집 필드 스펙(선언적) + 카탈로그 + 요약/기본값.
 // 단순 필드(숫자/텍스트/토글/select)는 폼 제너레이터가 자동 렌더. 리치 위젯(roster 4×4·선택지)은 E3.
 import type { Layer } from "../../core/types.ts";
+import { NODE_ROSTERS } from "../../data/encounters.ts";
 
 export interface FieldSpec { key: string; label: string; type: "number" | "text" | "bool" | "select" | "roster"; options?: string[]; optionsFrom?: "chars" | "statuses"; allowEmpty?: boolean; step?: number; }
 export interface LayerSpec { label: string; fields: FieldSpec[]; make: () => Layer; }
 
 export const LAYER_SPECS: Record<string, LayerSpec> = {
-  combat: { label: "⚔ 전투", fields: [{ key: "rosterPreset", label: "적 프리셋(배치 비우면 사용)", type: "select", options: ["battle", "elite", "boss"] }, { key: "boss", label: "진형 보너스", type: "bool" }], make: () => ({ kind: "combat", rosterPreset: "battle" }) },
+  combat: { label: "⚔ 전투", fields: [{ key: "boss", label: "진형 보너스", type: "bool" }], make: () => ({ kind: "combat", roster: NODE_ROSTERS.battle.map((e) => ({ charId: e.charId, pos: { ...e.pos } })) }) }, // 기본 적(깡패) 시드 — 전장 그리드서 편집
   reward: { label: "🎁 보상(3택1)", fields: [], make: () => ({ kind: "reward" }) },
   shop: { label: "🏪 상점", fields: [], make: () => ({ kind: "shop" }) },
   event: { label: "❓ 인카운터", fields: [], make: () => ({ kind: "event" }) },
@@ -24,7 +25,7 @@ export const DECO_KINDS: string[] = ["gold", "heal", "grantStatus", "text"];
 /** 레이어 1줄 요약(리스트 표기). */
 export function layerSummary(L: Layer): string {
   switch (L.kind) {
-    case "combat": return `전투 (${L.rosterPreset ?? "battle"}${L.boss ? " · 진형" : ""})`;
+    case "combat": return `전투 (적 ${L.roster?.length ?? 0}${L.boss ? " · 진형" : ""})`;
     case "reward": return "보상 3택1";
     case "shop": return "상점";
     case "event": return "인카운터(랜덤)";

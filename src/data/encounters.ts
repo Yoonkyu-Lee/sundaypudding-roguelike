@@ -19,8 +19,8 @@ export interface Encounter {
   enemyFormation?: FormationLayout;
 }
 
-// 노드 타입별 적 구성표 (7장). 디자이너 편집 영역 — 엔진은 키로 조회만(run/run.ts).
-// 키는 NodeType 문자열("battle"|"elite"|"boss"). data는 core/run을 import하지 않으므로 string 키.
+// 적 구성 기본 테이블 — 콘텐츠 소스는 노드의 인라인 roster(레이어 소유). 이 표는 ① 에디터 새 combat 레이어 기본 시드
+// ② 엔진 안전 fallback(roster 비면 battle) ③ 레거시 type 노드 경로(run/run.ts)로만 쓰임. (구 rosterPreset 폐기)
 export const NODE_ROSTERS: Record<string, Placement[]> = {
   // 잡몹 (일반전투/기본값)
   battle: [

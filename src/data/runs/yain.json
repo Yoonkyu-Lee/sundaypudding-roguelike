@@ -17,8 +17,8 @@
       "entryNodeId": "f1_entry",
       "nodes": [
         { "id": "f1_entry", "type": "start", "q": 0, "r": 0 },
-        { "id": "f1_b1", "type": "battle", "q": 1, "r": 0, "core": [{ "kind": "combat", "rosterPreset": "battle" }, { "kind": "gold", "amount": 8 }, { "kind": "reward" }] },
-        { "id": "f1_b2", "type": "battle", "q": 0, "r": 1, "core": [{ "kind": "combat", "rosterPreset": "battle" }, { "kind": "gold", "amount": 8 }, { "kind": "reward" }] },
+        { "id": "f1_b1", "type": "battle", "q": 1, "r": 0, "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 8 }, { "kind": "reward" }] },
+        { "id": "f1_b2", "type": "battle", "q": 0, "r": 1, "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 8 }, { "kind": "reward" }] },
         { "id": "f1_shop", "type": "shop", "q": 2, "r": 0, "core": [{ "kind": "shop" }] },
         { "id": "f1_rest", "type": "rest", "q": 0, "r": 2, "core": [{ "kind": "heal", "pct": 0.5, "revive": true }] },
         { "id": "f1_boss", "type": "boss", "q": 1, "r": 1, "label": "종로 결전",
@@ -27,7 +27,7 @@
             "onResolve": [{ "kind": "text", "text": "좌익이 물러갔다. 종로의 밤은 김두한의 것이 된다." }]
           },
           "core": [
-            { "kind": "combat", "rosterPreset": "boss", "boss": true, "rules": [
+            { "kind": "combat", "boss": true, "roster": [{ "charId": "shim", "pos": { "row": 1, "col": 0 } }, { "charId": "chunho", "pos": { "row": 2, "col": 0 } }, { "charId": "jung", "pos": { "row": 1, "col": 2 } }, { "charId": "doctor", "pos": { "row": 2, "col": 2 } }], "rules": [
               { "when": { "on": "battleStart" }, "then": [{ "do": "showDialog", "speaker": "심영", "text": "감히 우익 나부랭이가 종로를 넘봐?" }] },
               { "when": { "on": "roundStart" }, "if": [{ "c": "round", "cmp": "eq", "v": 2 }], "maxPerBattle": 1, "then": [{ "do": "showDialog", "speaker": "김두한", "text": "주먹 앞에 좌우가 어딨어. 덤벼!" }] },
               { "when": { "on": "roundStart" }, "if": [{ "c": "hpPct", "who": "self", "cmp": "lte", "v": 40 }], "maxPerBattle": 1, "then": [{ "do": "showDialog", "speaker": "심영", "text": "크윽… 이게 김두한의 주먹인가…" }] }
@@ -53,10 +53,10 @@
       "entryNodeId": "f2_entry",
       "nodes": [
         { "id": "f2_entry", "type": "start", "q": 0, "r": 0 },
-        { "id": "f2_a", "type": "battle", "q": 1, "r": 0, "core": [{ "kind": "combat", "rosterPreset": "battle" }, { "kind": "gold", "amount": 8 }, { "kind": "reward" }] },
+        { "id": "f2_a", "type": "battle", "q": 1, "r": 0, "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 8 }, { "kind": "reward" }] },
         { "id": "f2_e", "type": "encounter", "q": 0, "r": 1, "core": [{ "kind": "event" }] },
-        { "id": "f2_bossA", "type": "boss", "q": 2, "r": 0, "core": [{ "kind": "combat", "rosterPreset": "boss", "boss": true }, { "kind": "gold", "amount": 24 }, { "kind": "reward" }] },
-        { "id": "f2_bossB", "type": "boss", "q": 0, "r": 2, "core": [{ "kind": "combat", "rosterPreset": "boss", "boss": true }, { "kind": "gold", "amount": 24 }, { "kind": "reward" }] },
+        { "id": "f2_bossA", "type": "boss", "q": 2, "r": 0, "core": [{ "kind": "combat", "boss": true, "roster": [{ "charId": "shim", "pos": { "row": 1, "col": 0 } }, { "charId": "chunho", "pos": { "row": 2, "col": 0 } }, { "charId": "jung", "pos": { "row": 1, "col": 2 } }, { "charId": "doctor", "pos": { "row": 2, "col": 2 } }] }, { "kind": "gold", "amount": 24 }, { "kind": "reward" }] },
+        { "id": "f2_bossB", "type": "boss", "q": 0, "r": 2, "core": [{ "kind": "combat", "boss": true, "roster": [{ "charId": "shim", "pos": { "row": 1, "col": 0 } }, { "charId": "chunho", "pos": { "row": 2, "col": 0 } }, { "charId": "jung", "pos": { "row": 1, "col": 2 } }, { "charId": "doctor", "pos": { "row": 2, "col": 2 } }] }, { "kind": "gold", "amount": 24 }, { "kind": "reward" }] },
         { "id": "f2_clearA", "type": "clear", "q": 3, "r": 0, "toFloor": "f3" },
         { "id": "f2_clearB", "type": "clear", "q": 0, "r": 3, "toFloor": "f3" }
       ],
@@ -75,8 +75,8 @@
       "entryNodeId": "f3_entry",
       "nodes": [
         { "id": "f3_entry", "type": "start", "q": 0, "r": 0 },
-        { "id": "f3_elite", "type": "elite", "q": 1, "r": 0, "core": [{ "kind": "combat", "rosterPreset": "elite" }, { "kind": "gold", "amount": 16 }, { "kind": "reward" }] },
-        { "id": "f3_boss", "type": "boss", "q": 2, "r": 0, "core": [{ "kind": "combat", "rosterPreset": "boss", "boss": true }, { "kind": "gold", "amount": 24 }, { "kind": "reward" }] },
+        { "id": "f3_elite", "type": "elite", "q": 1, "r": 0, "core": [{ "kind": "combat", "roster": [{ "charId": "thug2", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "jung", "pos": { "row": 1, "col": 2 } }] }, { "kind": "gold", "amount": 16 }, { "kind": "reward" }] },
+        { "id": "f3_boss", "type": "boss", "q": 2, "r": 0, "core": [{ "kind": "combat", "boss": true, "roster": [{ "charId": "shim", "pos": { "row": 1, "col": 0 } }, { "charId": "chunho", "pos": { "row": 2, "col": 0 } }, { "charId": "jung", "pos": { "row": 1, "col": 2 } }, { "charId": "doctor", "pos": { "row": 2, "col": 2 } }] }, { "kind": "gold", "amount": 24 }, { "kind": "reward" }] },
         { "id": "f3_clear", "type": "clear", "q": 3, "r": 0 }
       ],
       "edges": [

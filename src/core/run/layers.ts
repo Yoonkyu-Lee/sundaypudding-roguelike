@@ -37,7 +37,7 @@ function stepCore(run: RunState, n: MapNode): void {
 /** 상호작용 전투 레이어 시작 — 적 구성(레이어 override 우선) + 모험 계승 상태 + 이 레이어의 트리거 룰(연출) 주입. */
 function startCombat(run: RunState, L: Extract<InteractiveLayer, { kind: "combat" }>): void {
   const seed = run.rng.int(0, 2_000_000_000);
-  const enemies = L.roster && L.roster.length ? L.roster : (NODE_ROSTERS[L.rosterPreset ?? "battle"] ?? NODE_ROSTERS.battle);
+  const enemies = L.roster && L.roster.length ? L.roster : NODE_ROSTERS.battle; // 인라인 roster 소유, 비면 안전 fallback
   const enc = { id: "combat", name: "전투", allies: [], enemies, boss: !!L.boss };
   const allyStates = run.party.filter((m) => m.hp > 0).map((m) => ({ ...m, startStatuses: run.pendingStatuses[m.charId] }));
   run.battle = createBattle(seed, enc, allyStates, L.rules);
