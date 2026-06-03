@@ -88,22 +88,8 @@ function mapScreen(view: RunView, h: RunHandlers): string {
   const px = (x: number) => x - minX + PAD;
   const py = (y: number) => y - minY + PAD;
 
-  // 노드 id → 중심좌표·상태
+  // 노드 id → 중심좌표(카메라 초기 중앙 정렬용). 연결선은 표시하지 않음(인접·reachable 발광으로 충분).
   const ctr = new Map(pos.map((p) => [p.n.id, { x: px(p.x) + W / 2, y: py(p.y) + H / 2 }]));
-  const statusOf = new Map(view.nodes.map((n) => [n.id, n.status]));
-
-  // 무방향 변: 맞닿은 헥스 중심을 잇는 선(화살표 없음). 현재 위치에서 갈 수 있는 활성 경로는 강조.
-  const edges = view.edges
-    .map((e) => {
-      const a = ctr.get(e.from);
-      const b = ctr.get(e.to);
-      if (!a || !b) return "";
-      const sa = statusOf.get(e.from), sb = statusOf.get(e.to);
-      const hot = (sa === "current" && sb === "reachable") || (sb === "current" && sa === "reachable");
-      return `<line class="medge${hot ? " hot" : ""}" x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}"/>`;
-    })
-    .join("");
-  const edgesSvg = `<svg class="mapedges" width="${cw}" height="${ch}" viewBox="0 0 ${cw} ${ch}">${edges}</svg>`;
 
   const hexes = pos
     .map(({ n, x, y }) => {
@@ -126,7 +112,7 @@ function mapScreen(view: RunView, h: RunHandlers): string {
   const cc = curId ? ctr.get(curId) : null;
   const dataCtr = cc ? ` data-cx="${cc.x.toFixed(1)}" data-cy="${cc.y.toFixed(1)}"` : "";
   return `<div class="mapview">
-    <div class="hexfield" id="run-field" style="width:${cw}px;height:${ch}px"${dataCtr}>${edgesSvg}${hexes}</div>
+    <div class="hexfield" id="run-field" style="width:${cw}px;height:${ch}px"${dataCtr}>${hexes}</div>
     <div class="ed-zoom"><button id="map-zin" aria-label="확대">＋</button><button id="map-zout" aria-label="축소">－</button><button id="map-zreset" aria-label="리셋">⤢</button></div>
     <div class="ed-vphint">휠=줌 · 드래그=이동</div>
   </div>

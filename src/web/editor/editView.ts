@@ -103,12 +103,6 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   const typeSvg = `<svg class="ed-hl-type" width="${FW}" height="${FH}" viewBox="0 0 ${FW} ${FH}">${typeOutlines}</svg>`;
   const wallsSvg = `<svg class="ed-walls" width="${FW}" height="${FH}" viewBox="0 0 ${FW} ${FH}">${wallSvg}</svg>`;
   const selSvg = `<svg class="ed-hl-sel" width="${FW}" height="${FH}" viewBox="0 0 ${FW} ${FH}">${selLines}</svg>`;
-  // 노드 중심 연결선(토글, 기본 off) — 밝은 흰색. 연결된 변만(d.edges).
-  const edgeLines = d.showEdges ? d.edges.map((e) => {
-    const a = center.get(e.a), b = center.get(e.b);
-    return a && b ? `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}"/>` : "";
-  }).join("") : "";
-  const edgeLinesSvg = `<svg class="ed-edgelines" width="${FW}" height="${FH}" viewBox="0 0 ${FW} ${FH}">${edgeLines}</svg>`;
 
   const catalog = d.catalog.map((c) =>
     `<div class="ed-chip" data-nt="${c.type}"><span class="mico">${c.icon}</span><span>${c.name}</span></div>`).join("");
@@ -133,8 +127,8 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
     <div class="ed-edit">
       <div class="ed-left">
         <div class="ed-viewport"${vpStyle}>
-          <div class="hexfield" id="ed-field" style="width:${FW}px;height:${FH}px">${gridSvg}${nodesSvg}${edgeLinesSvg}${typeSvg}${nodeOverlays}${wallsSvg}${selSvg}</div>
-          <div class="ed-zoom"><button id="ed-zin" aria-label="확대">＋</button><button id="ed-zout" aria-label="축소">－</button><button id="ed-zreset" aria-label="리셋">⤢</button><button id="ed-edges" class="${d.showEdges ? "on" : ""}" aria-label="연결선 표시" aria-pressed="${d.showEdges}">🔗</button></div>
+          <div class="hexfield" id="ed-field" style="width:${FW}px;height:${FH}px">${gridSvg}${nodesSvg}${typeSvg}${nodeOverlays}${wallsSvg}${selSvg}</div>
+          <div class="ed-zoom"><button id="ed-zin" aria-label="확대">＋</button><button id="ed-zout" aria-label="축소">－</button><button id="ed-zreset" aria-label="리셋">⤢</button></div>
           <div class="ed-vphint">휠=줌 · 휠(가운데) 드래그=이동</div>
         </div>
         <div class="ed-vsplit" id="ed-vsplit" role="separator" aria-label="영역 크기 조절" title="드래그하여 위/아래 영역 크기 조절"></div>
@@ -153,7 +147,6 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   app.querySelector("#ed-saverepo")?.addEventListener("click", () => h.onSaveToRepo(d.id));
   app.querySelector<HTMLInputElement>("#ed-runname")?.addEventListener("change", (e) => h.onSetRunName((e.target as HTMLInputElement).value));
   app.querySelector<HTMLInputElement>("#ed-floorname")?.addEventListener("change", (e) => h.onSetFloorName((e.target as HTMLInputElement).value));
-  app.querySelector("#ed-edges")?.addEventListener("click", () => h.onToggleEdges());
   app.querySelector("#ed-delnode")?.addEventListener("click", () => h.onDeleteSel());
   app.querySelector("#ed-addfloor")?.addEventListener("click", () => h.onAddFloor());
   app.querySelectorAll<HTMLElement>(".fg-box[data-floor-idx]").forEach((b) => b.addEventListener("click", () => h.onSelectFloor(Number(b.dataset.floorIdx))));

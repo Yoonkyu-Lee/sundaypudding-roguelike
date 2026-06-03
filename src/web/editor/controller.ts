@@ -23,7 +23,6 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
   let camera = { zoom: 1, x: 0, y: 0 };
   let floorCamera = { zoom: 1, x: 0, y: 0 }; // 층 그래프 뷰포트 카메라(편집 중 보존)
   let splitH: number | null = null; // 노드 맵 뷰포트 높이(px) — 스플리터로 조절, 편집 중 보존(null=CSS 기본)
-  let showEdges = false; // 노드 중심 연결선 표시(기본 off) — 토글
 
   const floor = (): FloorDef => draft!.floors[floorIdx];
   const save = () => { if (draft) saveDraft(draft); };
@@ -73,7 +72,6 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       camera: { ...camera },
       floorCamera: { ...floorCamera },
       splitH,
-      showEdges,
     };
   }
 
@@ -118,7 +116,6 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       onCamera(cam) { camera = cam; }, // 영속만(DOM은 호출자가 직접 갱신 — 재렌더 없음)
       onFloorCamera(cam) { floorCamera = cam; }, // 층 그래프 카메라 영속(재렌더 없음)
       onSplit(px) { splitH = px; }, // 뷰포트 분할 높이 영속(재렌더 없음)
-      onToggleEdges() { showEdges = !showEdges; deps.rerender(); }, // 노드 중심 연결선 표시 토글
       onSetRunName(name) { if (!draft) return; draft.name = name.trim() || draft.name; save(); deps.rerender(); },
       onSetFloorName(name) { if (!draft) return; floor().name = name.trim() || undefined; save(); deps.rerender(); },
       onDeleteSel() { if (!draft || !sel.length) return; for (const id of sel) if (id !== floor().entryNodeId) deleteNode(floor(), id); sel = []; save(); deps.rerender(); },
