@@ -96,13 +96,13 @@ test("보스전은 적 진형 보너스 활성(6.3) — boss 노드 진입 시 e
   assert.notEqual(run.battle!.enemyFormation, null);
 });
 
-test("노드 적 구성 override(F2): roster 지정 battle 노드 = 타입 기본 대신 그 적으로 전투 생성", () => {
+test("노드 적 구성 override: combat 레이어 인라인 roster = 타입 기본 대신 그 적으로 전투 생성", () => {
   const def: RunDef = {
     id: "t", name: "t", useMastery: false, entryFloorId: "fa",
     roster: [{ charId: "kim", pos: { row: 1, col: 0 } }],
     floors: [{ id: "fa", entryNodeId: "e", nodes: [
       { id: "e", type: "start", q: 0, r: 0 },
-      { id: "b", type: "battle", q: 1, r: 0, label: "두목 호위대", roster: [{ charId: "chunho", pos: { row: 0, col: 0 } }] },
+      { id: "b", type: "battle", q: 1, r: 0, label: "두목 호위대", core: [{ kind: "combat", roster: [{ charId: "chunho", pos: { row: 0, col: 0 } }] }] },
       { id: "c", type: "clear", q: 2, r: 0 },
     ], edges: [{ from: "e", to: "b" }, { from: "b", to: "c" }] }],
   };

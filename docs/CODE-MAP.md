@@ -172,7 +172,7 @@ src/core/
 | 맵 데이터화(저작 런) (7.1) | `data/runs/*.json` `RunDef`/`FloorDef`/`MapNode`/`MapEdge`(`types/map.ts`) · `data/runs/index.ts RUNS` · `createRun(seed,roster,runDef)` |
 | 클리어 노드 = 층 종료 / 보스=길목 | `run/run.ts`: `enterNode`(clear→`completeFloor`) · 다중 보스/클리어 갈림길(아무 클리어 진입=완료) |
 | 맵 에디터(런 CRUD·헥스 편집·층 패널·검증·테스트플레이) | `web/editor/`(store·ops·controller·editorRender·editView) · 타이틀 진입(`shell.ts` onEditor) · `validateRun`/`hexAdjacent` 재사용 · `createRun(draft)` 테스트플레이 |
-| 노드 진입·해소·전투생성·승패 (7장) | `run/run.ts`: `enterNode`/`resolveBattleEnd` |
+| 노드 진입·해소·전투생성·승패 (7장) | `run/run.ts`: `enterNode`(콘텐츠=레이어 시퀀서 일원화, clear만 구조)/`resolveBattleEnd` · `run/layers.ts nodeCore`(인라인 core ?? `data/nodeCores.ts defaultCore(type)`) |
 | 런 이어하기 영속화 (셸) | `run/save.ts` `serializeRun`/`deserializeRun`(순수, Rng=state만) · 웹 `main.ts` localStorage(`spr_save_v1`, render마다 저장·승패/포기 시 삭제·부팅 복원) |
 | 다층(층 그래프) 진행 (7.3) | `RunDef.entryFloorId`·clear `toFloor`(분기) · `run/run.ts` `completeFloor(clear)`(toFloor로 분기·50%회복·toFloor 없으면 won) · `graph.ts validateRun`(층-그래프 도달성·승리 클리어) · `RunView.floor`/`totalFloors` · 웹 "층 N/M" · 무방향 변 선 |
 | 보상 3택1 생성·적용 (4.5) | `run/rewards.ts`: `genRewards` · `run/run.ts`: `chooseReward` |

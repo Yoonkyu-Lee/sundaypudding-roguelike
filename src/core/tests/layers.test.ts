@@ -219,6 +219,22 @@ test("보상 등급(B3): tier↑ → 선택지 수 가산 (1→3, 2→4, 3→5)"
   assert.equal(genRewards(run).length, 3, "tier 생략=1");
 });
 
+test("레거시 type 폐지: core 없는 type 노드 = defaultCore로 시퀀서 동작(전투/휴식)", () => {
+  // core 없이 type만 있는 노드(레거시/수기) — enterNode가 defaultCore로 전투 시작
+  const battleNode: RunDef = { id: "L", name: "L", useMastery: false, entryFloorId: "f",
+    roster: [{ charId: "kim", pos: { row: 1, col: 0 } }],
+    floors: [{ id: "f", entryNodeId: "s", nodes: [
+      { id: "s", type: "start", q: 0, r: 0 },
+      { id: "b", type: "battle", q: 0, r: 1 }, // core 없음
+      { id: "c", type: "clear", q: 0, r: 2 },
+    ], edges: [{ from: "s", to: "b" }, { from: "b", to: "c" }] }] };
+  const run = createRun(1, battleNode.roster, battleNode);
+  enterNode(run, "b");
+  assert.equal(run.phase, "battle", "core 없어도 defaultCore(battle)로 전투 시작");
+  assert.ok(run.battle!.units.some((u) => u.side === "enemy"), "기본 적 구성 주입");
+  assert.equal(run.coreCursor, 0, "시퀀서 경로(레거시 분기 아님)");
+});
+
 test("코어 커서는 세이브 왕복 보존(웨이브 도중 재개 가능)", () => {
   const run = createRun(5, coreDef([{ kind: "combat" }, { kind: "combat" }]).roster, coreDef([{ kind: "combat" }, { kind: "combat" }]));
   enterNode(run, "b"); // 웨이브1 진행 중(coreCursor 0, phase battle)

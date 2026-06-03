@@ -1,10 +1,8 @@
 // 런 흐름 — 생성/노드 진입/완료/전투종료/보상 (7장). 전투=combat, 맵=map.ts 재사용.
 // 비전투 노드 해소는 shop.ts·encounter.ts, 공유 변이(node/heal/complete/skill)는 helpers.ts로 분리.
 import { Rng } from "../rng.ts";
-import { createBattle } from "../engine.ts";
 import type { PartyMemberState, Phase, Pos, RunDef } from "../types.ts";
 import { CHARACTERS } from "../../data/characters.ts";
-import { NODE_ROSTERS } from "../../data/encounters.ts";
 import { DEFAULT_RUN } from "../../data/runs/index.ts";
 import { ENCOUNTER_EVENTS } from "../../data/events.ts";
 import { liveReachable } from "./graph.ts";
@@ -12,7 +10,7 @@ import type { RunState } from "./types.ts";
 import { genRewards } from "./rewards.ts";
 import { fireRunTrigger } from "./passives.ts";
 import { node, curFloor, healParty, completeNode, upgradeOwned, learnOwned, runInstantLayers } from "./helpers.ts";
-import { startCore, advanceCore, registerLayerStarter } from "./layers.ts";
+import { startCore, advanceCore, registerLayerStarter, nodeCore } from "./layers.ts";
 import { generateShop } from "./shop.ts";
 
 // 상호작용 레이어 스타터 등록(DI) — shop/event 시작 로직을 시퀀서에 주입(layers↔shop/encounter 사이클 차단).
@@ -82,10 +80,7 @@ export function enterNode(run: RunState, nodeId: string): void {
   fireRunTrigger(run, { on: "nodeEnter", nodeType: n.type });
   runInstantLayers(run, n.layers?.onEnter); // 진입 직후 부착 레이어(컷신·상태부여 등)
 
-  // 코어 시퀀스가 있으면 타입 분기 대신 시퀀서로(combat 웨이브 등, Phase A2)
-  if (n.core && n.core.length) { startCore(run, n); return; }
-
-  // 클리어(목표) 노드: 전투 없이 진입 = 층 종료(toFloor로 분기)
+  // 클리어(목표) 노드: 전투 없이 진입 = 층 종료(toFloor로 분기). 구조 노드라 시퀀서 밖.
   if (n.type === "clear") {
     if (!run.visited.includes(nodeId)) run.visited.push(nodeId);
     run.log.push("클리어 노드 도달 — 층 완료");
@@ -93,41 +88,9 @@ export function enterNode(run: RunState, nodeId: string): void {
     return;
   }
 
-  if (n.type === "battle" || n.type === "elite" || n.type === "boss") {
-    const battleSeed = run.rng.int(0, 2_000_000_000);
-    const enemies = n.roster && n.roster.length ? n.roster : (NODE_ROSTERS[n.type] ?? NODE_ROSTERS.battle); // 노드별 override 우선
-    const enc = { id: n.type, name: n.label ?? n.type, allies: [], enemies, boss: n.type === "boss" };
-    // 모험 패시브 계승(pendingStatuses) 주입 후 1회 소비
-    const allyStates = run.party.filter((m) => m.hp > 0).map((m) => ({ ...m, startStatuses: run.pendingStatuses[m.charId] }));
-    run.battle = createBattle(battleSeed, enc, allyStates); // 레거시 타입 노드 — 트리거 룰은 core combat 레이어가 소유
-    run.pendingStatuses = {};
-    run.phase = "battle";
-    run.log.push(`${n.type} 진입`);
-    return;
-  }
-
-  // 휴식: 즉시 해소
-  if (n.type === "rest") {
-    healParty(run, 0.5, true); // 재정비 거점: 전투불능도 부활 + 50% 회복
-    run.log.push("휴식 — 전투불능 부활 + 파티 50% 회복");
-    completeNode(run, nodeId);
-    return;
-  }
-  // 상점: 진열 생성 후 상호작용 화면 (구매는 buyShopOffer, 나갈 때 leaveShop)
-  if (n.type === "shop") {
-    run.shop = generateShop(run);
-    run.phase = "shop";
-    run.log.push("상점 진입");
-    return;
-  }
-  // 인카운터: 이벤트 추첨 후 선택지 화면 (chooseEncounterOption)
-  if (n.type === "encounter") {
-    run.encounter = ENCOUNTER_EVENTS[run.rng.int(0, ENCOUNTER_EVENTS.length - 1)];
-    run.phase = "encounter";
-    run.log.push(`인카운터 — ${run.encounter.title}`);
-    return;
-  }
-  completeNode(run, nodeId);
+  // 모든 콘텐츠 노드 = 레이어 시퀀서로 일원화(인라인 core 또는 타입 기본 시드 defaultCore). 레거시 타입 분기 폐지.
+  if (nodeCore(n).length) { startCore(run, n); return; }
+  completeNode(run, nodeId); // 콘텐츠 없는 구조 노드(start 등) — 즉시 통과
 }
 
 /** 층 완료(클리어 노드 진입): toFloor 있으면 그 층으로 분기(부활·50% 회복), 없으면 게임 클리어. 결정론. */

@@ -7,6 +7,10 @@ import type { InteractiveLayer, Layer, MapNode } from "../types.ts";
 import type { RunState } from "./types.ts";
 import { node, runInstantLayers, completeNode } from "./helpers.ts";
 import { genRewards } from "./rewards.ts";
+import { defaultCore } from "../../data/nodeCores.ts";
+
+/** 노드의 실행 core — 인라인 core 우선, 없으면 타입 기본 시드(레거시 type 노드 호환). */
+export const nodeCore = (n: MapNode): Layer[] => (n.core && n.core.length ? n.core : defaultCore(n.type));
 
 // 상호작용 레이어 스타터 DI 레지스트리 — shop/event는 시작 로직이 shop.ts/encounter.ts(이들은 재진입 위해
 // advanceCore를 import) 의존 → layers가 그걸 직접 import하면 사이클. 런타임 주입(run.ts)으로 정적 사이클 차단.
@@ -22,7 +26,7 @@ export function startCore(run: RunState, n: MapNode): void {
 
 /** 현재 커서부터 진행: 데코는 즉시 소비하며 전진, 상호작용 만나면 블록(return), 소진 시 노드 완료. */
 function stepCore(run: RunState, n: MapNode): void {
-  const core = n.core!;
+  const core = nodeCore(n);
   while (run.coreCursor! < core.length) {
     const L = core[run.coreCursor!];
     if (L.kind === "combat") { startCombat(run, L); return; } // 블록(전투 phase) — resolveBattleEnd가 advanceCore

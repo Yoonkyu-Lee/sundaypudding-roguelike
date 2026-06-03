@@ -9,7 +9,7 @@ export interface EditorRunCard { id: string; name: string; source: RunSource; fl
 export interface ListData { mode: "list"; runs: EditorRunCard[]; }
 
 export interface RosterEntry { charId: string; pos: { row: number; col: number }; }
-export interface EditNode { id: string; type: NodeType; q: number; r: number; icon: string; name: string; toFloor?: string; label?: string; roster?: RosterEntry[]; }
+export interface EditNode { id: string; type: NodeType; q: number; r: number; icon: string; name: string; toFloor?: string; label?: string; hasCore?: boolean; }
 export interface EditData {
   mode: "edit";
   id: string; // 편집 중 드래프트 id (repo 저장용)
@@ -27,7 +27,6 @@ export interface EditData {
   edges: { a: string; b: string }[]; // 연결된 인접쌍
   walls: { a: string; b: string }[]; // 인접·미연결 = 세워진 벽
   catalog: { type: NodeType; icon: string; name: string }[];
-  chars: { id: string; name: string }[]; // 적 구성 override 후보 캐릭터 목록
   camera: { zoom: number; x: number; y: number }; // 노드 맵 뷰포트 카메라(줌·팬) — 편집 중 보존
   floorCamera: { zoom: number; x: number; y: number }; // 층 그래프 뷰포트 카메라 — 편집 중 보존
   splitH: number | null; // 노드 맵 뷰포트 높이(px) — 스플리터 조절, null=CSS 기본
@@ -81,7 +80,6 @@ export interface EditorHandlers {
   onSetNodeToFloor: (id: string, toFloor: string | null) => void; // clear 노드 다음 층 (F1)
   // 노드 메타데이터 (F2)
   onSetNodeLabel: (id: string, label: string) => void; // 표시 라벨
-  onSetNodeRoster: (id: string, roster: RosterEntry[]) => void; // 적 구성 override(빈 배열=타입 기본)
   // 노드 에디터 (Phase E)
   onOpenNodeEditor: (id: string) => void; // 노드 더블클릭 → 전용 화면
   onAddLayer: (slot: LayerSlot, kind: string) => void; // 슬롯에 레이어 추가(기본값)

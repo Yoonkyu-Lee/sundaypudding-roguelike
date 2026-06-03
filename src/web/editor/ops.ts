@@ -1,6 +1,7 @@
 // 맵 에디터 — 층 그래프 순수 변이 + 그리드 계산 (DOM/상태 없음). 컨트롤러가 호출.
-import type { FloorDef, MapNode, NodeType, Pos, RunDef } from "../../core/types.ts";
+import type { FloorDef, MapNode, NodeType, RunDef } from "../../core/types.ts";
 import { hexAdjacent } from "../../core/run.ts";
+import { defaultCore } from "../../data/nodeCores.ts";
 
 let counter = 0;
 /** 드래프트 내 고유 노드 id (웹 전용 — Date.now 허용). */
@@ -21,11 +22,12 @@ export function autoConnectAdjacent(floor: FloorDef, id: string): void {
   for (const m of floor.nodes) if (m.id !== id && hexAdjacent(n, m) && !hasEdge(floor, id, m.id)) floor.edges.push({ from: id, to: m.id });
 }
 
-/** 빈 칸에 노드 추가(점유 칸이면 무시) → 인접 노드와 자동 연결. */
+/** 빈 칸에 노드 추가(점유 칸이면 무시) → 타입 기본 core 시드(편집 가능) + 인접 자동 연결. */
 export function addNode(floor: FloorDef, type: NodeType, q: number, r: number): void {
   if (nodeAt(floor, q, r)) return;
   const id = newNodeId();
-  floor.nodes.push({ id, type, q, r });
+  const core = defaultCore(type);
+  floor.nodes.push(core.length ? { id, type, q, r, core } : { id, type, q, r }); // 콘텐츠 노드는 core 시드, 구조 노드(clear)는 생략
   autoConnectAdjacent(floor, id);
 }
 
@@ -83,13 +85,6 @@ export function setNodeLabel(floor: FloorDef, id: string, label: string): void {
   if (!n) return;
   const t = label.trim();
   if (t) n.label = t; else delete n.label;
-}
-
-/** 전투 노드 적 구성 override 설정(빈 배열=제거→타입 기본 사용). 비전투 노드는 무시. */
-export function setNodeRoster(floor: FloorDef, id: string, roster: { charId: string; pos: Pos }[]): void {
-  const n = floor.nodes.find((x) => x.id === id);
-  if (!n || (n.type !== "battle" && n.type !== "elite" && n.type !== "boss")) return;
-  if (roster.length) n.roster = roster; else delete n.roster;
 }
 
 /** 인접한 두 노드 사이 무방향 변 토글(비인접/동일은 무시). */

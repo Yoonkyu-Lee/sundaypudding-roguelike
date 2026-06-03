@@ -85,7 +85,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   const nodeOverlays = d.nodes.map((n) => {
     const cxp = ccx(n.q, n.r), cyp = ccy(n.r);
     const lbl = n.label ?? n.name;
-    const badge = n.roster && n.roster.length ? `<span class="ednode-badge" aria-label="적 구성 지정됨">⚔</span>` : "";
+    const badge = n.hasCore ? `<span class="ednode-badge" aria-label="내용물 편집됨">⚙</span>` : "";
     return `<button class="ednode${selSet.has(n.id) ? " sel" : ""}" data-node="${n.id}" style="left:${(cxp - W / 2).toFixed(1)}px;top:${(cyp - SIZE).toFixed(1)}px;width:${W.toFixed(1)}px;height:${(2 * SIZE).toFixed(1)}px" aria-label="${esc(lbl)}${n.id === d.entryId ? " (입장)" : ""}">
       <span class="ednode-ico">${n.icon}</span><span class="ednode-lbl">${esc(lbl)}</span>${badge}</button>`;
   }).join("");
