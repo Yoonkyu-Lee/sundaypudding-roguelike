@@ -1,8 +1,8 @@
 // 런 영속/메타/다층 테스트 — 세이브 라운드트립, 숙련도 게이팅, 액트 진행.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRun, enterNode, movePartyMember, serializeRun, deserializeRun, genRewards, unlockedTier } from "./run.ts";
-import { SKILLS } from "../data/skills.ts";
+import { createRun, enterNode, movePartyMember, serializeRun, deserializeRun, genRewards, unlockedTier } from "../run.ts";
+import { SKILLS } from "../../data/skills.ts";
 
 const ROSTER = [
   { charId: "kim", pos: { row: 1, col: 0 } },

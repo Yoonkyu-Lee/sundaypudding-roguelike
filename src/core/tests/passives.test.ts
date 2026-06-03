@@ -1,13 +1,13 @@
 // 특성/패시브 룰 엔진 — 결정론·발동·재진입 가드·보유 기준·active 배제 테스트.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createBattle, getLegalActions, step } from "./engine.ts";
-import { applyEffect, validateCastSkill } from "./combat/passives/index.ts";
-import { createRun, enterNode, resolveBattleEnd, chooseReward, leaveShop, chooseEncounterOption, fireRunTrigger, type RunState } from "./run.ts";
-import { chooseAction } from "./ai.ts";
-import type { GameState, PartyMemberState } from "./types.ts";
-import type { Encounter } from "../data/encounters.ts";
-import { ENCOUNTER_EVENTS } from "../data/events.ts";
+import { createBattle, getLegalActions, step } from "../engine.ts";
+import { applyEffect, validateCastSkill } from "../combat/passives/index.ts";
+import { createRun, enterNode, resolveBattleEnd, chooseReward, leaveShop, chooseEncounterOption, fireRunTrigger, type RunState } from "../run.ts";
+import { chooseAction } from "../ai.ts";
+import type { GameState, PartyMemberState } from "../types.ts";
+import type { Encounter } from "../../data/encounters.ts";
+import { ENCOUNTER_EVENTS } from "../../data/events.ts";
 
 function ally(charId: string, pos: { row: number; col: number }, owned: string[], active = owned): PartyMemberState {
   return { charId, pos, hp: 60, maxHp: 60, skillDmgBonus: {}, ownedSkillIds: owned, activeSkillIds: active, equipped: {}, masteryLevel: 0 };

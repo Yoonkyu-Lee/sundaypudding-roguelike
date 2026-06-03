@@ -2,9 +2,9 @@
 // 끼어들기/상태이상/포메이션/면적은 각각 *.test.ts로 분리.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createBattle, getLegalActions, step, computeHitChance } from "./engine.ts";
-import { DEMO_ENCOUNTER } from "../data/encounters.ts";
-import { SKILLS } from "../data/skills.ts";
+import { createBattle, getLegalActions, step, computeHitChance } from "../engine.ts";
+import { DEMO_ENCOUNTER } from "../../data/encounters.ts";
+import { SKILLS } from "../../data/skills.ts";
 import { playToEnd, forceTurn } from "./testutil.ts";
 
 test("결정론: 같은 시드 + 같은 정책 = 동일한 이벤트 로그 (8.3)", () => {

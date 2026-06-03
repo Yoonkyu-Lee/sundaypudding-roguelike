@@ -2,8 +2,8 @@
 // 변=맞닿은 헥스끼리 무방향 연결, 이동=미방문 이웃(재방문 불가), 막힌 이웃 비활성.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { neighborIds, hexAdjacent, clearNodeIds, reachableFromEntry, canReachClear, liveReachable, validateFloor, validateRun } from "./run.ts";
-import type { FloorDef, MapNode, RunDef } from "./types.ts";
+import { neighborIds, hexAdjacent, clearNodeIds, reachableFromEntry, canReachClear, liveReachable, validateFloor, validateRun } from "../run.ts";
+import type { FloorDef, MapNode, RunDef } from "../types.ts";
 
 // entry(0,0) ─ A(1,0) ─ clearA(2,0)   /   entry ─ B(0,1) ─ clearB(0,2)  (갈림길, 모든 변 인접)
 function branchFloor(): FloorDef {

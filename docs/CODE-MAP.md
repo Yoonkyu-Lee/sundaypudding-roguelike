@@ -76,18 +76,22 @@ src/core/
     policy.ts       chooseAction (프로파일 우선 → 공유 그리디 fallback; 결정론, rng 미사용)
     profile.ts      applyProfile (AiProfile 우선순위 룰 해석: skillKinds·evalCond·baseScore·weightBonus)
     index.ts        ▸배럴
-  testutil.ts       테스트 공용 헬퍼(playToEnd·forceTurn)
-  engine.test.ts    전투 흐름(결정론·종료·명중·합법·SPD·대기)
-  interrupt.test.ts 끼어들기(연격·버프출처·대상끼어들기·웹 경로)
-  status.test.ts    상태이상(빙결·공포·관통·불사·재생)
-  formation.test.ts 포메이션 총량보존·보스전 적용·데미지 미리보기
-  area.test.ts      면적/타겟팅(재배치·AoE 모양·자유선택·빈칸앵커·쉴드→HP)
-  run.test.ts       런 맵/흐름/진형(결정론·연결성·완주 루프·진형 편성)
-  run-progression.test.ts 육성/상점(보상 강화·학습 다운그레이드·구매·RunView·인카운터)
-  run-meta.test.ts  영속/메타/다층(세이브 왕복·숙련도 게이팅·액트 진행)
-  equip.test.ts     장착(스탯/데미지/쉴드 보정·equip 왕복)
+  tests/            ▸코어 결정론 테스트 모음(파사드 경유 공개 API). 루트엔 파사드+프리미티브만 남김
+    testutil.ts       테스트 공용 헬퍼(playToEnd·forceTurn)
+    engine.test.ts    전투 흐름(결정론·종료·명중·합법·SPD·대기)
+    interrupt.test.ts 끼어들기(연격·버프출처·대상끼어들기·웹 경로)
+    status.test.ts    상태이상(빙결·공포·관통·불사·재생)
+    formation.test.ts 포메이션 총량보존·보스전 적용·데미지 미리보기
+    area.test.ts      면적/타겟팅(재배치·AoE 모양·자유선택·빈칸앵커·쉴드→HP)
+    ai.test.ts        AI 우선순위 룰 정책(prefer/target/조건·동점 결정론)
+    passives.test.ts  특성/패시브 룰 엔진(트리거·조건·효과·모험 스코프)
+    map.test.ts       층-그래프 검증(도달성·분기·toFloor 무결성)
+    run.test.ts       런 맵/흐름/진형(결정론·연결성·완주 루프·진형 편성·노드 적override)
+    run-progression.test.ts 육성/상점(보상 강화·학습 다운그레이드·구매·RunView·인카운터)
+    run-meta.test.ts  영속/메타/다층(세이브 왕복·숙련도 게이팅·액트 진행)
+    equip.test.ts     장착(스탯/데미지/쉴드 보정·equip 왕복)
 ```
-> 테스트는 `node --test` 자동 디스커버리(`*.test.ts`) — 새 파일은 목록 갱신 불필요.
+> 테스트 배치: **코어=`core/tests/`에 모음**(파사드 경유 통합), **단일 모듈 단위테스트는 코로케이트**(`web/editor/{hexgeo,ops}.test.ts`). `node --test` 자동 디스커버리(`*.test.ts`) — 새 파일은 목록 갱신 불필요.
 
 ## data / view 파일
 

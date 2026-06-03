@@ -2,12 +2,12 @@
 // (육성/상점 → run-progression.test.ts · 영속/메타/다층 → run-meta.test.ts · 그래프 원자 → map.test.ts)
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRun, enterNode, resolveBattleEnd, chooseReward, leaveShop, chooseEncounterOption, movePartyMember, curFloor, validateRun, liveReachable, getRunView } from "./run.ts";
-import { step, createBattle, getFormationBonus } from "./engine.ts";
-import { chooseAction } from "./ai.ts";
-import { ENCOUNTER_EVENTS } from "../data/events.ts";
-import { DEFAULT_RUN } from "../data/runs/index.ts";
-import type { RunDef } from "./types.ts";
+import { createRun, enterNode, resolveBattleEnd, chooseReward, leaveShop, chooseEncounterOption, movePartyMember, curFloor, validateRun, liveReachable, getRunView } from "../run.ts";
+import { step, createBattle, getFormationBonus } from "../engine.ts";
+import { chooseAction } from "../ai.ts";
+import { ENCOUNTER_EVENTS } from "../../data/events.ts";
+import { DEFAULT_RUN } from "../../data/runs/index.ts";
+import type { RunDef } from "../types.ts";
 
 const ROSTER = [
   { charId: "kim", pos: { row: 1, col: 0 } },

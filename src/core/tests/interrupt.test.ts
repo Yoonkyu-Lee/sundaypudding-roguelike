@@ -1,8 +1,8 @@
 // 끼어들기(2.11) — self출처/버프출처/대상끼어들기/웹 targetCell 경로.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createBattle, step } from "./engine.ts";
-import { DEMO_ENCOUNTER } from "../data/encounters.ts";
+import { createBattle, step } from "../engine.ts";
+import { DEMO_ENCOUNTER } from "../../data/encounters.ts";
 import { forceTurn } from "./testutil.ts";
 
 test("끼어들기: grantsInterrupt(self) 스킬 사용 시 서열에 interrupt 삽입, 쿨 미차감 (2.11)", () => {

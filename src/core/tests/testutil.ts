@@ -1,8 +1,8 @@
 // 테스트 공용 헬퍼 (결정론 전투 구동·강제 턴). 여러 *.test.ts가 공유.
-import { createBattle, step } from "./engine.ts";
-import { chooseAction } from "./ai.ts";
-import { DEMO_ENCOUNTER } from "../data/encounters.ts";
-import type { GameState } from "./types.ts";
+import { createBattle, step } from "../engine.ts";
+import { chooseAction } from "../ai.ts";
+import { DEMO_ENCOUNTER } from "../../data/encounters.ts";
+import type { GameState } from "../types.ts";
 
 /** 데모 인코딩으로 시드 전투를 종료까지 자동 플레이. */
 export function playToEnd(seed: number, cap = 500): GameState {

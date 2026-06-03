@@ -1,10 +1,10 @@
 // 포메이션(6.1/6.3) + 데미지 미리보기 — 열 총량보존·보스전 적 적용·비크리 결정론.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createBattle, getFormationBonus, previewDamage, previewDamageParts } from "./engine.ts";
-import { DEMO_ENCOUNTER } from "../data/encounters.ts";
-import type { Encounter } from "../data/encounters.ts";
-import { SKILLS } from "../data/skills.ts";
+import { createBattle, getFormationBonus, previewDamage, previewDamageParts } from "../engine.ts";
+import { DEMO_ENCOUNTER } from "../../data/encounters.ts";
+import type { Encounter } from "../../data/encounters.ts";
+import { SKILLS } from "../../data/skills.ts";
 
 test("포메이션 총량보존: 같은 열 1명=전부, 2명=절반 (6.1)", () => {
   // 표준 배치: 0열 attackPower 4

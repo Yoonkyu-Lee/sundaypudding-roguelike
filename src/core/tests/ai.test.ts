@@ -2,11 +2,11 @@
 // 메커니즘=core/ai(프로파일 인터프리터 + 그리디 fallback), 정책 값=data/ai.ts.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createBattle } from "./engine.ts";
-import { chooseAction } from "./ai.ts";
+import { createBattle } from "../engine.ts";
+import { chooseAction } from "../ai.ts";
 import { forceTurn } from "./testutil.ts";
-import type { Encounter } from "../data/encounters.ts";
-import type { Action } from "./types.ts";
+import type { Encounter } from "../../data/encounters.ts";
+import type { Action } from "../types.ts";
 
 const SEED = 7;
 const skillOf = (a: Action) => (a.type === "skill" ? a.skillId : "skip");

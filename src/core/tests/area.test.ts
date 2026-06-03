@@ -1,8 +1,8 @@
 // 면적/타겟팅(6.4 재배치 · AoE 모양 · 자유선택 · 빈칸 앵커 · 쉴드→HP 순).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createBattle, step, computeAreaCells, reachableColumns, getLegalActions } from "./engine.ts";
-import { DEMO_ENCOUNTER } from "../data/encounters.ts";
+import { createBattle, step, computeAreaCells, reachableColumns, getLegalActions } from "../engine.ts";
+import { DEMO_ENCOUNTER } from "../../data/encounters.ts";
 import { forceTurn } from "./testutil.ts";
 
 test("동적 재배치: 넉백(thug_throw)이 대상을 뒤 열로 이동 (6.4)", () => {

@@ -1,9 +1,9 @@
 // 장착 아이템 결정론 테스트 (4.3) — 스탯/데미지/쉴드 보정 + equip/해제/교체 불변식.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRun, equipItem, unequipItem } from "./run.ts";
-import { createBattle, computeDamage } from "./engine.ts";
-import { CHARACTERS } from "../data/characters.ts";
+import { createRun, equipItem, unequipItem } from "../run.ts";
+import { createBattle, computeDamage } from "../engine.ts";
+import { CHARACTERS } from "../../data/characters.ts";
 
 const ROSTER = [{ charId: "kim", pos: { row: 1, col: 0 } }];
 

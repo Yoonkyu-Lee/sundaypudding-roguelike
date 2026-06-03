@@ -1,8 +1,8 @@
 // 상태이상(3.5/3.6) — 빙결/공포/관통/불사/재생.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createBattle, getLegalActions, step } from "./engine.ts";
-import { DEMO_ENCOUNTER } from "../data/encounters.ts";
+import { createBattle, getLegalActions, step } from "../engine.ts";
+import { DEMO_ENCOUNTER } from "../../data/encounters.ts";
 import { forceTurn } from "./testutil.ts";
 
 test("빙결: 행동불가 → 합법행동은 스킵뿐, 1턴 후 해제 (3.5)", () => {

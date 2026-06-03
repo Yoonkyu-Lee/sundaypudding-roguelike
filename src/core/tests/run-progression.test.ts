@@ -1,7 +1,7 @@
 // 런 육성/상점 테스트 — 보상(강화·학습), 상점 구매, RunView 계약, 인카운터.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRun, chooseReward, buyShopOffer, chooseEncounterOption, genRewards, ownsUpgradeLine, getRunView } from "./run.ts";
+import { createRun, chooseReward, buyShopOffer, chooseEncounterOption, genRewards, ownsUpgradeLine, getRunView } from "../run.ts";
 
 const ROSTER = [
   { charId: "kim", pos: { row: 1, col: 0 } },
