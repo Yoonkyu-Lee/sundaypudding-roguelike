@@ -197,9 +197,17 @@ const shellHandlers: ShellHandlers = {
   },
 };
 
+// 입력 필드(라벨 input·드롭다운 등) 포커스 중엔 단축키를 가로채지 않음 — 백스페이스=글자 삭제
+const inEditableField = (e: KeyboardEvent): boolean => {
+  const t = e.target as HTMLElement | null;
+  const tag = t?.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || !!t?.isContentEditable;
+};
+
 // Esc: 오버레이(파티뷰>시트>타겟팅)를 먼저 닫고, 런 중 다 닫혀 있으면 일시정지 토글
 window.addEventListener("keydown", (e) => {
   if (appState === "editor") {
+    if (inEditableField(e)) return; // 라벨 편집 중 Backspace/Ctrl+A는 텍스트 입력에 양보
     if ((e.ctrlKey || e.metaKey) && (e.key === "a" || e.key === "A")) { e.preventDefault(); editor.handlers.onSelectAll(); }
     else if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); editor.handlers.onDeleteSel(); }
     return;
