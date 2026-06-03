@@ -16,8 +16,10 @@ export const LAYER_SPECS: Record<string, LayerSpec> = {
   text: { label: "💬 대사/로그", fields: [{ key: "text", label: "내용", type: "text" }], make: () => ({ kind: "text", text: "" }) },
 };
 
-/** 추가 카탈로그(표시 순서) — 상호작용 먼저, 데코 뒤. */
+/** core 슬롯 추가 카탈로그(상호작용 먼저, 데코 뒤). */
 export const LAYER_KINDS: string[] = ["combat", "reward", "shop", "event", "gold", "heal", "grantStatus", "text"];
+/** onEnter/onResolve 슬롯 카탈로그 — 데코레이터만(즉시 실행). */
+export const DECO_KINDS: string[] = ["gold", "heal", "grantStatus", "text"];
 
 /** 레이어 1줄 요약(리스트 표기). */
 export function layerSummary(L: Layer): string {

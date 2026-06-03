@@ -581,6 +581,8 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 /* 전용 노드 에디터 (Phase E) — 좌 레이어 리스트 + 우 폼 */
 .node-editor .ne-body { display: flex; gap: 16px; align-items: flex-start; }
 .ne-list { width: 340px; flex: none; }
+.ne-slot { margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.ne-slot:last-child { border-bottom: 0; }
 .ne-list h3, .ne-form h3 { font-size: 13px; color: var(--dim); margin: 0 0 8px; }
 .ne-layers { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .ne-layer { display: flex; align-items: center; justify-content: space-between; gap: 6px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; cursor: pointer; }

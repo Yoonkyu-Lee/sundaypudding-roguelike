@@ -1,8 +1,8 @@
 // 전용 노드 에디터 화면 (Phase E1) — 노드 core[] 레이어를 리스트(추가/삭제/순서) + 스키마 구동 폼으로 편집.
 import { esc } from "../battle/shared.ts";
 import type { Layer } from "../../core/types.ts";
-import type { NodeEditData, EditorHandlers, RosterEntry } from "./editorRender.ts";
-import { LAYER_SPECS, LAYER_KINDS, layerSummary, type FieldSpec } from "./layerSchema.ts";
+import type { NodeEditData, EditorHandlers, RosterEntry, LayerSlot } from "./editorRender.ts";
+import { LAYER_SPECS, LAYER_KINDS, DECO_KINDS, layerSummary, type FieldSpec } from "./layerSchema.ts";
 import { rosterWidget, wireRoster } from "./rosterWidget.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { STATUS_DEFS } from "../../data/statuses.ts";
@@ -29,42 +29,54 @@ function fieldInput(L: Layer, idx: number): string {
   }).join("");
 }
 
-export function renderNodeEditView(app: HTMLElement, d: NodeEditData, h: EditorHandlers): void {
-  const items = d.core.map((L, i) => `<li class="ne-layer${i === d.selLayer ? " sel" : ""}" data-li="${i}">
+const SLOTS: { slot: LayerSlot; title: string; hint: string; kinds: string[] }[] = [
+  { slot: "onEnter", title: "진입(onEnter)", hint: "진입 직후 즉시", kinds: DECO_KINDS },
+  { slot: "core", title: "코어(core)", hint: "순서 실행 — 본체", kinds: LAYER_KINDS },
+  { slot: "onResolve", title: "완료(onResolve)", hint: "노드 끝날 때", kinds: DECO_KINDS },
+];
+
+function slotSection(slot: LayerSlot, title: string, hint: string, kinds: string[], layers: Layer[], sel: NodeEditData["sel"]): string {
+  const items = layers.map((L, i) => `<li class="ne-layer${sel && sel.slot === slot && sel.idx === i ? " sel" : ""}" data-slot="${slot}" data-li="${i}">
       <span class="ne-li-name">${i + 1}. ${esc(layerSummary(L))}</span>
-      <span class="ne-li-acts"><button data-up="${i}" aria-label="위로">↑</button><button data-down="${i}" aria-label="아래로">↓</button><button data-rm="${i}" class="ne-x" aria-label="삭제">✕</button></span>
-    </li>`).join("") || `<li class="hint">레이어 없음 — 아래에서 추가하세요. 진입 시 위→아래 순서로 실행됩니다.</li>`;
-  const addOpts = LAYER_KINDS.map((k) => `<option value="${k}">${esc(LAYER_SPECS[k].label)}</option>`).join("");
-  const sel = d.selLayer !== null ? d.core[d.selLayer] : null;
-  const form = sel ? `<h3>${esc(LAYER_SPECS[sel.kind].label)} 편집</h3>${fieldInput(sel, d.selLayer!)}` : `<div class="hint">왼쪽에서 레이어를 선택하세요.</div>`;
+      <span class="ne-li-acts"><button data-mv="${i}" data-dir="-1" data-slot="${slot}" aria-label="위로">↑</button><button data-mv="${i}" data-dir="1" data-slot="${slot}" aria-label="아래로">↓</button><button data-rm="${i}" data-slot="${slot}" class="ne-x" aria-label="삭제">✕</button></span>
+    </li>`).join("") || `<li class="hint">비어 있음</li>`;
+  const addOpts = kinds.map((k) => `<option value="${k}">${esc(LAYER_SPECS[k].label)}</option>`).join("");
+  return `<div class="ne-slot"><h3>${esc(title)} <span class="hint">${esc(hint)}</span></h3>
+    <ul class="ne-layers">${items}</ul>
+    <div class="ne-add"><select data-addslot="${slot}">${addOpts}</select><button class="ed-btn" data-addbtn="${slot}">＋ 추가</button></div></div>`;
+}
+
+export function renderNodeEditView(app: HTMLElement, d: NodeEditData, h: EditorHandlers): void {
+  const arr = (s: LayerSlot) => (s === "onEnter" ? d.onEnter : s === "core" ? d.core : d.onResolve);
+  const sel = d.sel ? arr(d.sel.slot)[d.sel.idx] : null;
+  const form = sel ? `<h3>${esc(LAYER_SPECS[sel.kind].label)} 편집</h3>${fieldInput(sel, d.sel!.idx)}` : `<div class="hint">왼쪽에서 레이어를 선택하세요.</div>`;
+  const sections = SLOTS.map((s) => slotSection(s.slot, s.title, s.hint, s.kinds, arr(s.slot), d.sel)).join("");
 
   app.innerHTML = `<div class="editor node-editor">
     <header><h1>🧩 노드 내용 — <span class="dim">${esc(d.nodeName)}</span></h1>
       <button class="hub-link" id="ne-back">← 맵으로</button></header>
     <div class="ne-body">
-      <section class="ne-list">
-        <h3>코어 레이어 <span class="hint">진입 시 순서 실행</span></h3>
-        <ul class="ne-layers">${items}</ul>
-        <div class="ne-add"><select id="ne-addkind">${addOpts}</select><button class="ed-btn" id="ne-addbtn">＋ 레이어 추가</button></div>
-      </section>
+      <section class="ne-list">${sections}</section>
       <section class="ne-form">${form}</section>
     </div>
   </div>`;
 
   app.querySelector("#ne-back")!.addEventListener("click", () => h.onBack());
-  app.querySelector("#ne-addbtn")!.addEventListener("click", () => h.onAddLayer(app.querySelector<HTMLSelectElement>("#ne-addkind")!.value));
+  app.querySelectorAll<HTMLElement>("[data-addbtn]").forEach((b) => b.addEventListener("click", () => {
+    const slot = b.dataset.addbtn as LayerSlot;
+    h.onAddLayer(slot, app.querySelector<HTMLSelectElement>(`[data-addslot="${slot}"]`)!.value);
+  }));
   app.querySelectorAll<HTMLElement>(".ne-layer[data-li]").forEach((el) => el.addEventListener("click", (e) => {
     if ((e.target as HTMLElement).closest("button")) return; // 버튼은 자체 핸들러
-    h.onSelectLayer(Number(el.dataset.li));
+    h.onSelectLayer(el.dataset.slot as LayerSlot, Number(el.dataset.li));
   }));
-  app.querySelectorAll<HTMLElement>("[data-rm]").forEach((b) => b.addEventListener("click", () => h.onRemoveLayer(Number(b.dataset.rm))));
-  app.querySelectorAll<HTMLElement>("[data-up]").forEach((b) => b.addEventListener("click", () => h.onMoveLayer(Number(b.dataset.up), -1)));
-  app.querySelectorAll<HTMLElement>("[data-down]").forEach((b) => b.addEventListener("click", () => h.onMoveLayer(Number(b.dataset.down), 1)));
+  app.querySelectorAll<HTMLElement>("[data-rm]").forEach((b) => b.addEventListener("click", () => h.onRemoveLayer(b.dataset.slot as LayerSlot, Number(b.dataset.rm))));
+  app.querySelectorAll<HTMLElement>("[data-mv]").forEach((b) => b.addEventListener("click", () => h.onMoveLayer(b.dataset.slot as LayerSlot, Number(b.dataset.mv), Number(b.dataset.dir))));
   app.querySelectorAll<HTMLInputElement | HTMLSelectElement>(".ne-field [data-fkey]").forEach((el) => el.addEventListener("change", () => {
     const key = el.dataset.fkey!;
     const val = el instanceof HTMLInputElement && el.type === "checkbox" ? el.checked : el instanceof HTMLInputElement && el.type === "number" ? Number(el.value) : el.value;
-    h.onSetLayerField(d.selLayer!, key, val);
+    h.onSetLayerField(d.sel!.slot, d.sel!.idx, key, val);
   }));
-  // 리치 위젯: combat roster(있으면 프리셋 무시) — 추가/제거 → onSetLayerField("roster", …)
-  if (sel?.kind === "combat") wireRoster(app, ((sel as Record<string, unknown>).roster as RosterEntry[]) ?? [], (next) => h.onSetLayerField(d.selLayer!, "roster", next));
+  // 리치 위젯: combat roster(있으면 프리셋 무시)
+  if (sel?.kind === "combat" && d.sel) wireRoster(app, ((sel as Record<string, unknown>).roster as RosterEntry[]) ?? [], (next) => h.onSetLayerField(d.sel!.slot, d.sel!.idx, "roster", next));
 }

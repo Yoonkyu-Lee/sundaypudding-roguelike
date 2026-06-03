@@ -141,7 +141,8 @@ registerLayer("combat", { schema:[{roster:'rosterGrid'},{formationBonus:'bool'},
 - **✅ E1+E2(단순 폼) (완료)**: 노드 **더블클릭 → 전용 화면**(`nodeEditView.ts`). 좌=core 레이어 리스트(추가/삭제/순서 ↑↓·선택), 우=선택 레이어 **스키마 구동 폼**(숫자/텍스트/토글/select). 스키마 진실원=`layerSchema.ts`(kind별 FieldSpec + 카탈로그 + 요약 + 기본값 make). 컨트롤러 mode `"nodeEdit"`. 레이어 추가=기본값으로 즉시 작곡 가능.
 - **✅ E3-(부분) (완료)**: 공용 `rosterWidget.ts` 추출(nodePanel·nodeEditView 공유). combat `roster` **인라인 적 배치 위젯**(charId+행/열, 있으면 프리셋 무시) + grantStatus charId/statusId **데이터 기반 select**(CHARACTERS/STATUS_DEFS, 오타 방지). FieldSpec에 `roster`/`optionsFrom`/`allowEmpty` 타입.
 - **E3-나머지(다음)**: event 선택지 트리 에디터(D와 묶임).
-- **E4. 트리거 룰 에디터**: when/if/then 조립 UI(특성/패시브 작성과 일관) + onEnter/onResolve 데코 슬롯 편집.
+- **✅ E4-(부분) (완료)**: 노드 에디터를 **3슬롯**(진입 onEnter · 코어 core · 완료 onResolve)으로. onEnter/onResolve = 데코 전용 카탈로그(`DECO_KINDS`), core = 전체. 레이어 핸들러를 `slot` 인지로 일반화(`selLayerRef={slot,idx}`, `slotArray` 헬퍼). 진입 연출·도착 보상 작곡 완성.
+- **E4-나머지(다음)**: 트리거 룰(when/if/then) 조립 UI — Phase C(노드 트리거 엔진) 선행.
 
 ### 권장 순서
 A(골격) → B(combat+데코, 즉시 가치: 엘리트 차별화·보물 노드) → E1~E2(GUI 기반, B와 평행) → C(스토리텔링) → D(event) → E3~E4(리치 폼). 각 단계 종료 시 `docs/GAME-DESIGN.md`(노드 모델)·`CODE-MAP` 승격.

@@ -32,13 +32,16 @@ export interface EditData {
   floorCamera: { zoom: number; x: number; y: number }; // 층 그래프 뷰포트 카메라 — 편집 중 보존
   splitH: number | null; // 노드 맵 뷰포트 높이(px) — 스플리터 조절, null=CSS 기본
 }
-// 전용 노드 에디터(Phase E) — 더블클릭한 노드의 core 레이어 편집
+// 전용 노드 에디터(Phase E) — 더블클릭한 노드의 레이어(onEnter·core·onResolve 슬롯) 편집
+export type LayerSlot = "onEnter" | "core" | "onResolve";
 export interface NodeEditData {
   mode: "nodeEdit";
   nodeId: string;
   nodeName: string;
+  onEnter: import("../../core/types.ts").Layer[];
   core: import("../../core/types.ts").Layer[];
-  selLayer: number | null;
+  onResolve: import("../../core/types.ts").Layer[];
+  sel: { slot: LayerSlot; idx: number } | null; // 선택 레이어
 }
 export type EditorData = ListData | EditData | NodeEditData;
 
@@ -76,11 +79,11 @@ export interface EditorHandlers {
   onSetNodeRoster: (id: string, roster: RosterEntry[]) => void; // 적 구성 override(빈 배열=타입 기본)
   // 노드 에디터 (Phase E)
   onOpenNodeEditor: (id: string) => void; // 노드 더블클릭 → 전용 화면
-  onAddLayer: (kind: string) => void; // core에 레이어 추가(기본값)
-  onRemoveLayer: (idx: number) => void;
-  onMoveLayer: (idx: number, dir: number) => void; // 순서 ↑(-1)/↓(+1)
-  onSelectLayer: (idx: number) => void;
-  onSetLayerField: (idx: number, key: string, value: string | number | boolean | RosterEntry[]) => void;
+  onAddLayer: (slot: LayerSlot, kind: string) => void; // 슬롯에 레이어 추가(기본값)
+  onRemoveLayer: (slot: LayerSlot, idx: number) => void;
+  onMoveLayer: (slot: LayerSlot, idx: number, dir: number) => void; // 순서 ↑(-1)/↓(+1)
+  onSelectLayer: (slot: LayerSlot, idx: number) => void;
+  onSetLayerField: (slot: LayerSlot, idx: number, key: string, value: string | number | boolean | RosterEntry[]) => void;
 }
 
 function card(r: EditorRunCard): string {
