@@ -30,6 +30,7 @@ export interface EditData {
   camera: { zoom: number; x: number; y: number }; // 노드 맵 뷰포트 카메라(줌·팬) — 편집 중 보존
   floorCamera: { zoom: number; x: number; y: number }; // 층 그래프 뷰포트 카메라 — 편집 중 보존
   splitH: number | null; // 노드 맵 뷰포트 높이(px) — 스플리터 조절, null=CSS 기본
+  showEdges: boolean; // 노드 중심 연결선 표시(기본 off)
 }
 export type EditorData = ListData | EditData;
 
@@ -51,6 +52,7 @@ export interface EditorHandlers {
   onCamera: (cam: { zoom: number; x: number; y: number }) => void; // 노드 맵 카메라 변경 영속(재렌더 없음)
   onFloorCamera: (cam: { zoom: number; x: number; y: number }) => void; // 층 그래프 카메라 변경 영속(재렌더 없음)
   onSplit: (px: number) => void; // 뷰포트 분할 높이 영속(재렌더 없음)
+  onToggleEdges: () => void; // 노드 중심 연결선 표시 토글
   onSetRunName: (name: string) => void; // 런 제목 편집
   onSetFloorName: (name: string) => void; // 현재 층 제목 편집
   onDeleteSel: () => void; // 선택 전부 삭제(입장 제외)

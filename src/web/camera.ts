@@ -1,5 +1,5 @@
-// 에디터 뷰포트 카메라(줌·팬) — 고정 크기 viewport 안에서 field를 translate+scale.
-// 노드 맵·층 그래프가 공유. cam은 영속 상태(편집 중 보존); 변경분만 onChange로 통지.
+// 뷰포트 카메라(줌·팬) — 고정 크기 viewport 안에서 field를 translate+scale. 공용(web).
+// 에디터 노드 맵·층 그래프 + 인게임 맵이 공유. cam은 영속 상태; 변경분만 onChange로 통지.
 export interface Cam { zoom: number; x: number; y: number; }
 
 export interface CameraOpts {

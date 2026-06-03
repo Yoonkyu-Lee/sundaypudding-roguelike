@@ -2,8 +2,13 @@
 import type { RunView } from "../core/run.ts";
 import { avatarHtml } from "./render.ts";
 import { TYPE_ICON, TYPE_NAME } from "./nodeMeta.ts";
+import { attachCamera } from "./camera.ts";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
+// 인게임 맵 카메라 — 모듈 영속(같은 층 내 재렌더에도 줌/팬 유지). 층 바뀌면 리셋(NaN=중앙 정렬).
+let mapCam = { zoom: 1, x: NaN, y: NaN };
+let mapKey = "";
 
 export interface RunHandlers {
   onNode: (id: string) => void;
@@ -116,7 +121,15 @@ function mapScreen(view: RunView, h: RunHandlers): string {
       </button>`;
     })
     .join("");
-  return `<div class="mapwrap"><div class="hexfield" style="width:${cw}px;height:${ch}px">${edgesSvg}${hexes}</div></div>
+  // 카메라 초기 중앙 = 현재 위치 노드(없으면 콘텐츠 중앙)
+  const curId = view.nodes.find((n) => n.status === "current")?.id;
+  const cc = curId ? ctr.get(curId) : null;
+  const dataCtr = cc ? ` data-cx="${cc.x.toFixed(1)}" data-cy="${cc.y.toFixed(1)}"` : "";
+  return `<div class="mapview">
+    <div class="hexfield" id="run-field" style="width:${cw}px;height:${ch}px"${dataCtr}>${edgesSvg}${hexes}</div>
+    <div class="ed-zoom"><button id="map-zin" aria-label="확대">＋</button><button id="map-zout" aria-label="축소">－</button><button id="map-zreset" aria-label="리셋">⤢</button></div>
+    <div class="ed-vphint">휠=줌 · 드래그=이동</div>
+  </div>
   <div class="hint">맞닿은 길을 따라 클리어(🚩) 노드에 도달하면 층 완료(지나온 칸은 잠김). 빛나는 육각 셀을 클릭하세요.</div>`;
 }
 
@@ -175,4 +188,23 @@ export function renderRunScreen(app: HTMLElement, view: RunView, h: RunHandlers)
   );
   app.querySelector("#tohub")?.addEventListener("click", () => h.onToHub());
   app.querySelector("#pausebtn")?.addEventListener("click", () => h.onPause());
+
+  // 맵 뷰포트 카메라(고정 크기 + 휠 줌 + 드래그 팬). 층 바뀌면 카메라 리셋(중앙 정렬).
+  if (view.phase === "map") {
+    const mvp = app.querySelector<HTMLElement>(".mapview");
+    const field = app.querySelector<HTMLElement>("#run-field");
+    if (mvp && field) {
+      const key = `${view.floor}:${view.nodes.map((n) => n.id).join(",")}`;
+      if (key !== mapKey) { mapKey = key; mapCam = { zoom: 1, x: NaN, y: NaN }; }
+      const cam = attachCamera({
+        viewport: mvp, field, cam: { ...mapCam }, onChange: (c) => { mapCam = c; },
+        contentSize: { w: field.offsetWidth, h: field.offsetHeight },
+        initialCenter: () => { const cx = Number(field.dataset.cx), cy = Number(field.dataset.cy); return Number.isFinite(cx) && Number.isFinite(cy) ? { x: cx, y: cy } : null; },
+        canPan: (e) => e.button === 1 || (e.button === 0 && !(e.target as HTMLElement).closest(".mnode")),
+      });
+      app.querySelector("#map-zin")?.addEventListener("click", () => cam.zoomAtCenter(1.2));
+      app.querySelector("#map-zout")?.addEventListener("click", () => cam.zoomAtCenter(1 / 1.2));
+      app.querySelector("#map-zreset")?.addEventListener("click", () => cam.reset());
+    }
+  }
 }
