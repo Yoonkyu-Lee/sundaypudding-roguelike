@@ -27,7 +27,8 @@ export interface EditData {
   walls: { a: string; b: string }[]; // 인접·미연결 = 세워진 벽
   catalog: { type: NodeType; icon: string; name: string }[];
   chars: { id: string; name: string }[]; // 적 구성 override 후보 캐릭터 목록
-  camera: { zoom: number; x: number; y: number }; // 뷰포트 카메라(줌·팬) — 편집 중 보존
+  camera: { zoom: number; x: number; y: number }; // 노드 맵 뷰포트 카메라(줌·팬) — 편집 중 보존
+  floorCamera: { zoom: number; x: number; y: number }; // 층 그래프 뷰포트 카메라 — 편집 중 보존
 }
 export type EditorData = ListData | EditData;
 
@@ -46,7 +47,8 @@ export interface EditorHandlers {
   onSelectAll: () => void;
   onClearSel: () => void;
   onToggleEdge: (a: string, b: string) => void;
-  onCamera: (cam: { zoom: number; x: number; y: number }) => void; // 카메라 변경 영속(재렌더 없음)
+  onCamera: (cam: { zoom: number; x: number; y: number }) => void; // 노드 맵 카메라 변경 영속(재렌더 없음)
+  onFloorCamera: (cam: { zoom: number; x: number; y: number }) => void; // 층 그래프 카메라 변경 영속(재렌더 없음)
   onDeleteSel: () => void; // 선택 전부 삭제(입장 제외)
   onTestCurrent: () => void;
   // 층 그래프 패널 (E3 + F1)

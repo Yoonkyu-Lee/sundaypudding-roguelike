@@ -555,7 +555,10 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 /* 층 그래프 뷰포트(블럭 다이어그램) */
 .ed-floors { padding: 10px; background: var(--panel); border-radius: 10px; }
 .ed-floors-h { font-size: 13px; color: var(--dim); margin-bottom: 8px; }
-.fg-canvas { position: relative; overflow: auto; max-height: 220px; }
+/* 고정 크기 층 그래프 뷰포트(노드 맵과 동일 패턴) — 휠 줌·드래그 팬, fg-canvas가 변환 대상 */
+.fg-viewport { position: relative; height: 220px; overflow: hidden; background: var(--panel2); border-radius: 8px; }
+.fg-viewport .fg-canvas { position: absolute; left: 0; top: 0; will-change: transform; }
+.fg-canvas { position: relative; }
 .fg-edges { position: absolute; left: 0; top: 0; pointer-events: none; }
 .fg-edges line { stroke: var(--dim); stroke-width: 2; opacity: .7; }
 .fg-edges .fgah { fill: var(--dim); }

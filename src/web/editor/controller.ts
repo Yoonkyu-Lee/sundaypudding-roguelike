@@ -21,6 +21,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
   let floorIdx = 0;
   let sel: string[] = [];
   let camera = { zoom: 1, x: 0, y: 0 };
+  let floorCamera = { zoom: 1, x: 0, y: 0 }; // 층 그래프 뷰포트 카메라(편집 중 보존)
 
   const floor = (): FloorDef => draft!.floors[floorIdx];
   const save = () => { if (draft) saveDraft(draft); };
@@ -30,7 +31,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
     if (!def) return;
     if (isDraft(id)) draft = def;
     else { draft = cloneAsDraft(def); saveDraft(draft); } // repo 런은 드래프트로 복제 후 편집
-    floorIdx = 0; sel = []; camera = { zoom: 1, x: NaN, y: NaN }; mode = "edit"; // NaN=뷰가 첫 진입 시 중앙 정렬
+    floorIdx = 0; sel = []; camera = { zoom: 1, x: NaN, y: NaN }; floorCamera = { zoom: 1, x: NaN, y: NaN }; mode = "edit"; // NaN=뷰가 첫 진입 시 중앙 정렬
     deps.rerender();
   }
 
@@ -68,6 +69,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       catalog: CATALOG_TYPES.map((t) => ({ type: t, icon: TYPE_ICON[t], name: TYPE_NAME[t] })),
       chars: Object.values(CHARACTERS).map((c) => ({ id: c.id, name: c.name })),
       camera: { ...camera },
+      floorCamera: { ...floorCamera },
     };
   }
 
@@ -110,6 +112,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       onClearSel() { if (!sel.length) return; sel = []; deps.rerender(); },
       onToggleEdge(a, b) { if (!draft) return; toggleEdge(floor(), a, b); save(); deps.rerender(); }, // 변 클릭=연결/벽 토글
       onCamera(cam) { camera = cam; }, // 영속만(DOM은 호출자가 직접 갱신 — 재렌더 없음)
+      onFloorCamera(cam) { floorCamera = cam; }, // 층 그래프 카메라 영속(재렌더 없음)
       onDeleteSel() { if (!draft || !sel.length) return; for (const id of sel) if (id !== floor().entryNodeId) deleteNode(floor(), id); sel = []; save(); deps.rerender(); },
       onTestCurrent() { if (draft && validateRun(draft).ok) deps.testRun(draft); },
       onAddFloor() { if (!draft) return; addFloor(draft); floorIdx = draft.floors.length - 1; sel = []; save(); deps.rerender(); },

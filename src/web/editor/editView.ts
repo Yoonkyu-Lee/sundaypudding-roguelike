@@ -4,6 +4,7 @@ import { esc } from "../battle/shared.ts";
 import type { NodeType } from "../../core/types.ts";
 import type { EditData, EditorHandlers } from "./editorRender.ts";
 import { nodeMetaPanel, wireNodeMeta } from "./nodePanel.ts";
+import { attachCamera } from "./camera.ts";
 import { SIZE, W, FW, FH, ccx, ccy, hexPoints, hexEdge, EDGE_DIRS, gridPathStr, pixelToAxial } from "./hexgeo.ts";
 
 const WALL_SW = 3.5; // 벽 선 두께(.ed-wallvis와 일치)
@@ -46,7 +47,11 @@ function floorGraph(d: EditData): string {
       <div class="fg-acts">${entry ? `<span class="fg-entry">입장</span>` : `<button class="fg-mini" data-fentry="${f.id}">입장 지정</button>`}${d.floors.length > 1 ? `<button class="fg-mini" data-fdel="${i}">🗑</button>` : ""}</div>
     </div>`;
   }).join("");
-  return `<div class="fg-canvas" style="width:${cw}px;height:${ch}px">${edgesSvg}${boxes}</div><button class="ed-addfloor" id="ed-addfloor">＋ 층</button>`;
+  return `<div class="fg-viewport">
+      <div class="fg-canvas" style="width:${cw}px;height:${ch}px">${edgesSvg}${boxes}</div>
+      <div class="ed-zoom"><button id="fg-zin" aria-label="확대">＋</button><button id="fg-zout" aria-label="축소">－</button><button id="fg-zreset" aria-label="리셋">⤢</button></div>
+      <div class="ed-vphint">휠=줌 · 드래그=이동</div>
+    </div><button class="ed-addfloor" id="ed-addfloor">＋ 층</button>`;
 }
 
 export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers): void {
@@ -195,29 +200,27 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   field.addEventListener("pointermove", onMove);
   field.addEventListener("pointerup", onUp);
 
-  // ── 카메라(줌·팬) — translate 정수 스냅, 변경분만 영속. 첫 진입은 입장 노드 중앙 정렬 ──
-  const cam = { ...d.camera };
-  const clamp = (z: number) => Math.max(0.3, Math.min(2.5, z));
-  const apply = () => { field.style.transformOrigin = "0 0"; field.style.transform = `translate(${Math.round(cam.x)}px,${Math.round(cam.y)}px) scale(${cam.zoom})`; };
-  if (Number.isNaN(cam.x)) {
-    const e0 = d.nodes.find((n) => n.id === d.entryId) ?? d.nodes[0];
-    const r0 = vp.getBoundingClientRect();
-    cam.zoom = 1; cam.x = r0.width / 2 - (e0 ? ccx(e0.q, e0.r) : FW / 2); cam.y = r0.height / 2 - (e0 ? ccy(e0.r) : FH / 2);
-    h.onCamera({ ...cam });
+  // ── 노드 맵 카메라(줌·팬) — 첫 진입은 입장 노드 중앙 정렬. (공용 attachCamera) ──
+  const nodeCam = attachCamera({
+    viewport: vp, field, cam: { ...d.camera }, onChange: (c) => h.onCamera(c),
+    contentSize: { w: FW, h: FH },
+    initialCenter: () => { const e0 = d.nodes.find((n) => n.id === d.entryId) ?? d.nodes[0]; return e0 ? { x: ccx(e0.q, e0.r), y: ccy(e0.r) } : null; },
+  });
+  app.querySelector("#ed-zin")!.addEventListener("click", () => nodeCam.zoomAtCenter(1.2));
+  app.querySelector("#ed-zout")!.addEventListener("click", () => nodeCam.zoomAtCenter(1 / 1.2));
+  app.querySelector("#ed-zreset")!.addEventListener("click", () => nodeCam.reset());
+
+  // ── 층 그래프 카메라 — 빈 배경 좌드래그 또는 중클릭으로 팬, 휠 줌. 박스/버튼 클릭과 충돌 없음 ──
+  const fgvp = app.querySelector<HTMLElement>(".fg-viewport");
+  const fgfield = app.querySelector<HTMLElement>(".fg-canvas");
+  if (fgvp && fgfield) {
+    const fgCam = attachCamera({
+      viewport: fgvp, field: fgfield, cam: { ...d.floorCamera }, onChange: (c) => h.onFloorCamera(c),
+      contentSize: { w: fgfield.offsetWidth, h: fgfield.offsetHeight },
+      canPan: (e) => e.button === 1 || (e.button === 0 && !(e.target as HTMLElement).closest(".fg-box,.fg-mini")),
+    });
+    app.querySelector("#fg-zin")?.addEventListener("click", () => fgCam.zoomAtCenter(1.2));
+    app.querySelector("#fg-zout")?.addEventListener("click", () => fgCam.zoomAtCenter(1 / 1.2));
+    app.querySelector("#fg-zreset")?.addEventListener("click", () => fgCam.reset());
   }
-  apply();
-  const zoomAt = (mx: number, my: number, factor: number) => {
-    const nz = clamp(cam.zoom * factor), k = nz / cam.zoom;
-    cam.x = mx - (mx - cam.x) * k; cam.y = my - (my - cam.y) * k; cam.zoom = nz;
-    apply(); h.onCamera({ ...cam });
-  };
-  vp.addEventListener("wheel", (e) => { e.preventDefault(); const r = vp.getBoundingClientRect(); zoomAt(e.clientX - r.left, e.clientY - r.top, e.deltaY < 0 ? 1.1 : 1 / 1.1); }, { passive: false });
-  let panning = false, lastX = 0, lastY = 0;
-  vp.addEventListener("pointerdown", (e) => { if (e.button !== 1) return; e.preventDefault(); panning = true; lastX = e.clientX; lastY = e.clientY; vp.setPointerCapture(e.pointerId); });
-  vp.addEventListener("pointermove", (e) => { if (!panning) return; cam.x += e.clientX - lastX; cam.y += e.clientY - lastY; lastX = e.clientX; lastY = e.clientY; apply(); });
-  vp.addEventListener("pointerup", () => { if (panning) { panning = false; h.onCamera({ ...cam }); } });
-  const ctr = () => { const r = vp.getBoundingClientRect(); return [r.width / 2, r.height / 2] as const; };
-  app.querySelector("#ed-zin")!.addEventListener("click", () => zoomAt(...ctr(), 1.2));
-  app.querySelector("#ed-zout")!.addEventListener("click", () => zoomAt(...ctr(), 1 / 1.2));
-  app.querySelector("#ed-zreset")!.addEventListener("click", () => { cam.zoom = 1; const [mx, my] = ctr(); cam.x = mx - FW / 2; cam.y = my - FH / 2; apply(); h.onCamera({ ...cam }); });
 }
