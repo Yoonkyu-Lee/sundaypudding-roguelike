@@ -1,7 +1,7 @@
 // 맵 에디터 컨트롤러 — 목록↔편집 모드 상태 + 핸들러. main은 run 수명주기 콜백만 주입.
 import { validateRun } from "../../core/run.ts";
 import type { FloorDef, RunDef } from "../../core/types.ts";
-import { listRuns, getRun, saveDraft, deleteDraft, blankRun, exportRun, isDraft, cloneAsDraft } from "./store.ts";
+import { listRuns, getRun, saveDraft, deleteDraft, blankRun, exportRun, isDraft, cloneAsDraft, saveToRepo } from "./store.ts";
 import { addNode, moveNode, moveNodes, deleteNode, toggleEdge, adjacentPairs, addFloor, deleteFloor, moveFloor, setNodeLabel, setNodeRoster } from "./ops.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 
@@ -51,6 +51,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
     const connected = new Set(f.edges.map((e) => edgeKey(e.from, e.to)));
     return {
       mode: "edit",
+      id: draft!.id,
       name: draft!.name,
       floorName: f.name ?? `층 ${floorIdx + 1}`,
       valid: v.ok,
@@ -76,6 +77,15 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       onNew() { saveDraft(blankRun()); deps.rerender(); },
       onTest(id) { const d = getRun(id); if (d && validateRun(d).ok) deps.testRun(d); },
       onExport(id) { exportRun(id); },
+      async onSaveToRepo(id) {
+        const def = getRun(id); if (!def) return;
+        const suggested = def.id.replace(/^draft_/, "").replace(/[^a-zA-Z0-9_-]/g, "_") || "myrun";
+        const fileId = prompt("repo 파일명 (런 id) — 영숫자·_·- 만:", suggested);
+        if (!fileId) return;
+        const r = await saveToRepo(id, fileId);
+        if (r.ok) alert(`저장됨 → src/data/runs/${fileId}.json (레지스트리 자동 갱신). git에 커밋하세요.`);
+        else { alert(`repo 저장 실패: ${r.error}\nJSON 다운로드로 폴백합니다.`); exportRun(id); }
+      },
       onDelete(id) { deleteDraft(id); deps.rerender(); },
       onEdit(id) { openEdit(id); },
       onBack() {

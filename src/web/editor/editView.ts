@@ -117,7 +117,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
 
   app.innerHTML = `<div class="editor edit-mode">
     <header><h1>🗺 ${esc(d.name)} <span class="dim">— ${esc(d.floorName)}</span></h1>
-      <div><button class="ed-btn"${d.valid ? "" : " disabled"} id="ed-test">▶ 테스트플레이</button><button class="hub-link" id="ed-back">← 목록</button></div></header>
+      <div><button class="ed-btn"${d.valid ? "" : " disabled"} id="ed-test">▶ 테스트플레이</button><button class="ed-btn ghost" id="ed-saverepo">💾 repo에 저장</button><button class="hub-link" id="ed-back">← 목록</button></div></header>
     <div class="ed-edit">
       <div class="ed-left">
         <div class="ed-viewport">
@@ -137,6 +137,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
 
   app.querySelector("#ed-back")!.addEventListener("click", () => h.onBack());
   app.querySelector("#ed-test")!.addEventListener("click", () => h.onTestCurrent());
+  app.querySelector("#ed-saverepo")?.addEventListener("click", () => h.onSaveToRepo(d.id));
   app.querySelector("#ed-delnode")?.addEventListener("click", () => h.onDeleteSel());
   app.querySelector("#ed-addfloor")?.addEventListener("click", () => h.onAddFloor());
   app.querySelectorAll<HTMLElement>(".fg-box[data-floor-idx]").forEach((b) => b.addEventListener("click", () => h.onSelectFloor(Number(b.dataset.floorIdx))));

@@ -77,6 +77,20 @@ export function cloneAsDraft(def: RunDef): RunDef {
   return copy;
 }
 
+/** dev 서버에 repo 기록 요청 — src/data/runs/{fileId}.json 작성 + 레지스트리 재생성(F3 미들웨어).
+ *  성공 시 def.id가 fileId로 고정됨. 빌드 단일 HTML/프로덕션은 fetch 실패 → ok:false(호출자가 다운로드 폴백). */
+export async function saveToRepo(id: string, fileId: string): Promise<{ ok: boolean; error?: string }> {
+  const def = getRun(id);
+  if (!def) return { ok: false, error: "런을 찾을 수 없음" };
+  try {
+    const res = await fetch("/api/save-run", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ fileId, def }) });
+    if (!res.ok) return { ok: false, error: await res.text() };
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "dev 서버 아님(빌드본) — 다운로드로 폴백하세요" };
+  }
+}
+
 /** {id}.json 다운로드 — repo src/data/runs/에 넣어 커밋(공유·배포 진실). */
 export function exportRun(id: string): void {
   const def = getRun(id);

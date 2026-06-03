@@ -11,6 +11,7 @@ export interface RosterEntry { charId: string; pos: { row: number; col: number }
 export interface EditNode { id: string; type: NodeType; q: number; r: number; icon: string; name: string; toFloor?: string; label?: string; roster?: RosterEntry[]; }
 export interface EditData {
   mode: "edit";
+  id: string; // 편집 중 드래프트 id (repo 저장용)
   name: string;
   floorName: string;
   valid: boolean;
@@ -34,6 +35,7 @@ export interface EditorHandlers {
   onNew: () => void;
   onTest: (id: string) => void;
   onExport: (id: string) => void;
+  onSaveToRepo: (id: string) => void; // dev: repo JSON 자동 기록 (F3)
   onDelete: (id: string) => void;
   onEdit: (id: string) => void;
   onBack: () => void;
@@ -64,7 +66,7 @@ function card(r: EditorRunCard): string {
   const valid = r.valid ? `<span class="ed-ok">✓ 유효</span>` : `<span class="ed-bad">✗ 오류</span>`;
   const editLabel = r.source === "draft" ? "편집" : "복제→편집";
   const draftActions = r.source === "draft" ? `<button class="ed-btn ghost" data-del="${r.id}">삭제</button>` : "";
-  const exportBtn = r.source === "draft" ? `<button class="ed-btn ghost" data-export="${r.id}">내보내기</button>` : "";
+  const exportBtn = r.source === "draft" ? `<button class="ed-btn ghost" data-saverepo="${r.id}">💾 repo에 저장</button><button class="ed-btn ghost" data-export="${r.id}">내보내기</button>` : "";
   return `<div class="ed-card">
     <div class="ed-card-head">${badge}<span class="ed-name">${esc(r.name)}</span>${valid}</div>
     <div class="ed-card-meta">층 ${r.floors}개 · <span class="dim">${esc(r.id)}</span></div>
@@ -91,6 +93,7 @@ function renderList(app: HTMLElement, data: ListData, h: EditorHandlers): void {
   app.querySelectorAll<HTMLElement>("[data-edit]").forEach((b) => b.addEventListener("click", () => h.onEdit(b.dataset.edit!)));
   app.querySelectorAll<HTMLElement>("[data-test]").forEach((b) => b.addEventListener("click", () => h.onTest(b.dataset.test!)));
   app.querySelectorAll<HTMLElement>("[data-export]").forEach((b) => b.addEventListener("click", () => h.onExport(b.dataset.export!)));
+  app.querySelectorAll<HTMLElement>("[data-saverepo]").forEach((b) => b.addEventListener("click", () => h.onSaveToRepo(b.dataset.saverepo!)));
   app.querySelectorAll<HTMLElement>("[data-del]").forEach((b) => b.addEventListener("click", () => h.onDelete(b.dataset.del!)));
 }
 

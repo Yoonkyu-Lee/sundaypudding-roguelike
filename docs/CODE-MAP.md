@@ -100,8 +100,9 @@ src/core/
 | `src/data/ai.ts` | data | **AI 행동결정 정책(우선순위 룰)** — `AiProfile`. 캐릭터가 aiProfileId로 참조(적/자동플레이) | `AI_PROFILES` |
 | `src/data/encounters.ts` | data | 전투 배치 + **노드 타입별 적 구성(`NODE_ROSTERS`)** + 보스/포메이션 override | `DEMO_ENCOUNTER` · `NODE_ROSTERS` · `Encounter`/`Placement` |
 | `src/data/events.ts` | data | 인카운터 이벤트(7.2) — 제목·텍스트·선택지(확정/도박)·결과(heal/hurt/gold/강화/학습) | `ENCOUNTER_EVENTS` · `EncounterEvent`/`EncounterOutcome` |
-| `src/data/runs/*.json` | data | **저작 런(7장)** — 자유 방향그래프 맵. 진실=레포 JSON(에디터가 편집·내보내기). `RunDef`(층 선형체인) | (JSON) |
-| `src/data/runs/index.ts` | data | 런 레지스트리 — JSON import → `RUNS`. 본거지 편성 배치 `rosterFromIds` | `RUNS` · `DEFAULT_RUN` · `rosterFromIds` |
+| `src/data/runs/*.json` | data | **저작 런(7장)** — 헥스 무방향그래프 맵·층 그래프. 진실=레포 JSON(에디터가 편집·내보내기·**repo 자동 기록 F3**). `RunDef` | (JSON) |
+| `src/data/runs/runs.generated.ts` | data | **자동 생성 레지스트리(F3)** — dev-write 미들웨어가 `*.json` 스캔해 통째로 재생성(키=각 json id). 직접 편집 금지 | `RUNS` |
+| `src/data/runs/index.ts` | data | 런 레지스트리 **파사드** — `runs.generated.ts`의 `RUNS` 재노출 + `DEFAULT_RUN` + 본거지 편성 배치 `rosterFromIds` | `RUNS` · `DEFAULT_RUN` · `rosterFromIds` |
 | `src/data/formations.ts` | data | 포메이션 열보너스 배치(총량보존, 6장) | `STANDARD_FORMATION` |
 | `src/web/meta.ts` | web | **영구 메타**(레벨/XP + 편성 로스터, 별도 세이브 `spr_meta_v1`) — `grantWin`(전투 승리 XP)·`masteryMap`/`masteryInfo`(허브)·`getRoster`/`setRoster`(편성 선택 영구) | `grantWin` · `masteryMap` · `masteryInfo` · `getRoster` · `setRoster` |
 | `src/data/items.ts` | data | 장착 아이템(4.3) — 무기(dmgFlat·crit) / 방어구(hp·쉴드획득). `ItemDef`는 content.ts | `ITEMS` · `ITEM_POOL` |
@@ -109,7 +110,7 @@ src/core/
 | `src/cli/ascii.ts` | cli | ASCII 보드 렌더(뷰 — core 아님) | `renderAscii` |
 | `src/web/main.ts` | web | 웹 엔트리·**앱 상태기계**(title↔hub↔editor↔run, `appState`/`runActive`/`pauseOpen`)+런 컨트롤러·전투 루프·핸들러. 편성=`hub.ts`·영속=`save.ts`·오버레이=`overlay.ts`·에디터=`editor/`·테스트플레이=`testRun` | (엔트리) |
 | `src/web/nodeMeta.ts` | web | 노드 종류 표시(아이콘/이름) — 런렌더·에디터 공용 | `TYPE_ICON` · `TYPE_NAME` · `CATALOG_TYPES` |
-| `src/web/editor/` | web | **맵 에디터 GUI**(구조 에디터) — `hexgeo.ts`(**헥스 기하 SoT**: `hexCorners`/`hexPoints`/`pixelToAxial`/`gridPathStr` — 격자·노드·벽 공유 → 완벽 벌집, `hexgeo.test`로 인접 변 공유 검증) · `store.ts`(드래프트 localStorage·repo 병합·blankRun·JSON 내보내기) · `ops.ts`(노드/변/층 순수 변이·`addNode`/`moveNode`·`autoConnectAdjacent`·`adjacentPairs`·**F2: `setNodeLabel`/`setNodeRoster`**) · `controller.ts`(목록↔편집 상태·핸들러) · `editorRender.ts`(목록) · `editView.ts`(SVG 단일 렌더: 격자 path·노드 폴리곤·벽이 hexgeo 공유 → 완벽 벌집. 테두리=별도 하이라이트 레이어(시작 파랑/클리어 초록 z2·선택 노랑 군집외곽 z5, 클리핑 없음). **포인터 기반 드래그**(공용 `drag.ts`)·다중선택(Ctrl·Ctrl+A·빈칸 해제)·일괄 이동/삭제·고정 뷰포트 카메라·벽 호버/클릭. **F1: clear 노드 "다음 층" 드롭다운(toFloor) · 층 그래프 뷰포트(블럭 다이어그램 — 층=박스, clear→toFloor=방향 화살표, 입장 ★, 박스 클릭=편집·입장 지정·추가/삭제; BFS 레벨 좌→우 배치) · 선택 clear→대응 화살표 노랑 하이라이트**) · `nodePanel.ts`(**F2: 노드 메타 사이드바 — 라벨 입력 + 적 구성 override 미니 에디터(charId+행/열 추가·제거); 전투 노드만 적 편집**). `validateRun`/`hexAdjacent` 재사용 | `createEditor` · `renderEditor` |
+| `src/web/editor/` | web | **맵 에디터 GUI**(구조 에디터) — `hexgeo.ts`(**헥스 기하 SoT**: `hexCorners`/`hexPoints`/`pixelToAxial`/`gridPathStr` — 격자·노드·벽 공유 → 완벽 벌집, `hexgeo.test`로 인접 변 공유 검증) · `store.ts`(드래프트 localStorage·repo 병합·blankRun·JSON 내보내기·**F3 `saveToRepo`**=dev fetch POST→실패 시 다운로드 폴백) · `ops.ts`(노드/변/층 순수 변이·`addNode`/`moveNode`·`autoConnectAdjacent`·`adjacentPairs`·**F2: `setNodeLabel`/`setNodeRoster`**) · `controller.ts`(목록↔편집 상태·핸들러) · `editorRender.ts`(목록) · `editView.ts`(SVG 단일 렌더: 격자 path·노드 폴리곤·벽이 hexgeo 공유 → 완벽 벌집. 테두리=별도 하이라이트 레이어(시작 파랑/클리어 초록 z2·선택 노랑 군집외곽 z5, 클리핑 없음). **포인터 기반 드래그**(공용 `drag.ts`)·다중선택(Ctrl·Ctrl+A·빈칸 해제)·일괄 이동/삭제·고정 뷰포트 카메라·벽 호버/클릭. **F1: clear 노드 "다음 층" 드롭다운(toFloor) · 층 그래프 뷰포트(블럭 다이어그램 — 층=박스, clear→toFloor=방향 화살표, 입장 ★, 박스 클릭=편집·입장 지정·추가/삭제; BFS 레벨 좌→우 배치) · 선택 clear→대응 화살표 노랑 하이라이트**) · `nodePanel.ts`(**F2: 노드 메타 사이드바 — 라벨 입력 + 적 구성 override 미니 에디터(charId+행/열 추가·제거); 전투 노드만 적 편집**). **F3: "💾 repo에 저장" 버튼(목록 카드 + 편집 헤더) → `onSaveToRepo`(파일명 prompt → `saveToRepo`).** `validateRun`/`hexAdjacent` 재사용 | `createEditor` · `renderEditor` |
 | `src/web/hub.ts` | web | **본거지 편성 컨트롤러**(`createHub`) — playable 풀에서 1~4명 선택(영구) 캡슐화 + 선택 로스터로 런 생성. `makeRun`·`data`·`toggle` | `createHub` |
 | `src/web/save.ts` | web | **런 이어하기 영속화**(`spr_save_v1`) — 순수(run 인자). `saveRun`·`loadRun`·`clearSave` | `saveRun` · `loadRun` · `clearSave` |
 | `src/web/shell.ts` | web | **게임 흐름 셸** — 타이틀·본거지(집)·일시정지 화면. 본거지=캐릭터 편성 선택 그리드(playable 풀 1~4명 토글, 숙련도 표시) / 런 중=현재 파티+이어하기. 런 바깥 | `renderTitle` · `renderHub` · `renderPause` · `ShellHandlers` |
@@ -128,7 +129,7 @@ src/core/
 | `src/web/drag.ts` | web | **공용 포인터 드래그**(`beginPointerDrag`) — 네이티브 HTML5 DnD 대체. 커서 따라오는 `.drag-avatar`·`elementFromPoint` 드롭 라우팅·클릭 폴백. 에디터·파티편성 공용 | `beginPointerDrag` |
 | `src/web/partyView.ts` | web | **파티 편성(통합 파티뷰, 모달)** — 3칼럼: 좌 4×4 진형 보드(포인터 드래그 배치/교대) / 중 선택 캐릭 상세(charSheet 인라인) / 우 장착 인벤토리. 드래그=`drag.ts` 포인터(고스트 없음). 맵 전용 | `renderPartyView` · `PartyViewData` |
 | `src/web/style.css` | web | 다크 테마 스타일 | — |
-| `index.html` · `vite.config.ts` | web | Vite 진입/설정 (`npm run dev`) | — |
+| `index.html` · `vite.config.ts` | web | Vite 진입/설정 (`npm run dev`). **F3 dev-write 미들웨어**(`apply:"serve"` 전용 — `POST /api/save-run` → `src/data/runs/{fileId}.json` 기록 + `runs.generated.ts` 재생성, 빌드 무영향) | `devWriteRuns` |
 
 ## 기능 → 위치 색인
 
@@ -181,7 +182,7 @@ src/core/
 
 | 기능 | 예정 위치 |
 |---|---|
-| **맵 에디터 — dev-write 미들웨어(F3)** (E1–E3 구조 에디터 + F1 분기 층 그래프 + F2 노드 메타데이터는 구현됨, `src/web/editor/`) | F3=브라우저→repo 자동 기록(vite `configureServer` POST + index.ts 자동 등록) · 허브 런 선택(F4)은 구현됨 |
+| **맵 에디터 — F-시리즈 완료** (E1–E3 구조 + F1 분기 층 그래프 + F2 노드 메타 + F3 dev-write + F4 허브 런 선택 모두 구현, `src/web/editor/`) | 후속 후보: 상점/인카운터 노드 메타·웨이브(전투 노드 연속 파)·노드 보상 override 등(필요 시 신규 슬라이스) |
 | 메타/본산/기억회랑 (5장) | 신규 `core/meta/` (런 위 레이어) |
 | 상점/인카운터 본구현 (현재 즉시해소 stub) | `core/run/` (커지면 비전투 해소를 `run/nodes.ts`로 분리) |
 | 웹 렌더러 고도화(스프라이트/애니메이션) | `src/web/` (현재 v2: DOM 카드 + 피격 플래시 + 로그 재생) |
