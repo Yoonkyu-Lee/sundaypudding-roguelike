@@ -32,7 +32,7 @@ src/core/
                     AreaShape·SkillTarget·Skill(+active/passives)·FormationLayout·Character(+traitIds/aiProfileId)
     passives.ts     특성/패시브 룰 스키마: PassiveRule·Trigger·Condition·Effect·TraitDef·EffTarget·StatKey
     ai.ts           AI 행동결정 정책 스키마: AiProfile·AiRule·AiCondition·SkillKindPref·TargetPref·AiWeightKey
-    map.ts          헥스 인접 무방향그래프 맵 스키마: RunDef(entryFloorId+층 그래프)·FloorDef·MapNode(q,r 헥스·toFloor?·roster?·label?·**layers?(NODE-DESIGN Phase A)**)·MapEdge. **Layer(gold/heal/grantStatus/text)·LayerKind·NodeLayers(onEnter/onResolve)**. NodeType는 content(+clear)
+    map.ts          헥스 인접 무방향그래프 맵 스키마: RunDef·FloorDef·MapNode(q,r·toFloor?·roster?·label?·**layers?·core?(Phase A)**)·MapEdge. **DecoratorLayer(gold/heal/grantStatus/text)·InteractiveLayer(combat)·Layer·NodeLayers(onEnter/onResolve)**. NodeType는 content(+clear)
     runtime.ts      엔진 상태: StatusInstance·Unit·PartyMemberState·TurnKind·QueueEntry·
                     Action·Phase·GameEvent·GameState·UnitView·LegalAction·Observation
   engine.ts         ▸배럴(파사드): export * from combat/index
@@ -64,6 +64,7 @@ src/core/
     rewards.ts      genRewards(강화/학습 3택1) · damagingSkills (순수 생성; 적용은 run.ts)
     run.ts          오케스트레이터: createRun(seed,roster,runDef) · enterNode(clear→completeFloor) · completeFloor(층종료/다음층, 구 advanceAct) · resolveBattleEnd · chooseReward · setActiveSkill · movePartyMember
     helpers.ts      공유 변이(leaf): curFloor · node · healParty(+partyHpChange) · completeNode(미방문 이웃·재방문 불가·막힌노드 비활성; **onResolve 레이어 발동**) · upgradeOwned · learnOwned · **runInstantLayers(즉시 데코 레이어 gold/heal/grantStatus/text — Phase A, enterNode=onEnter·completeNode=onResolve)**
+    layers.ts       ▸코어 레이어 시퀀서(Phase A2): startCore/stepCore/advanceCore/finishCore — core[] 순서 실행(데코 즉시, combat 블록→resolveBattleEnd가 advanceCore로 복귀=웨이브). run 미import(engine·helpers·data만)
     shop.ts         상점(7.2): generateShop · buyShopOffer · leaveShop
     encounter.ts    인카운터(7.2): applyOutcome · chooseEncounterOption
     items.ts        장착(4.3): equipItem/unequipItem(maxHp 재계산) · genItemOffers(상점)/itemRewardOptions(보상) · 인벤토리 왕복

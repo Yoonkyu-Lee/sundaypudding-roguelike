@@ -12,6 +12,7 @@ import type { RunState } from "./types.ts";
 import { genRewards } from "./rewards.ts";
 import { fireRunTrigger } from "./passives.ts";
 import { node, curFloor, healParty, completeNode, upgradeOwned, learnOwned, runInstantLayers } from "./helpers.ts";
+import { startCore, advanceCore } from "./layers.ts";
 import { generateShop } from "./shop.ts";
 
 export function createRun(seed: number, roster: { charId: string; pos: Pos }[] = DEFAULT_RUN.roster, runDef: RunDef = DEFAULT_RUN, opts: { mastery?: Record<string, number>; useMastery?: boolean } = {}): RunState {
@@ -34,6 +35,7 @@ export function createRun(seed: number, roster: { charId: string; pos: Pos }[] =
     reachable: liveReachable(f0, f0.entryNodeId, new Set([f0.entryNodeId])), // 입장 노드의 미방문 이웃(클리어 도달 가능만)
     currentNodeId: f0.entryNodeId,
     activeNodeId: null,
+    coreCursor: null,
     phase: "map",
     battle: null,
     rewards: null,
@@ -75,6 +77,9 @@ export function enterNode(run: RunState, nodeId: string): void {
   run.activeNodeId = nodeId;
   fireRunTrigger(run, { on: "nodeEnter", nodeType: n.type });
   runInstantLayers(run, n.layers?.onEnter); // 진입 직후 부착 레이어(컷신·상태부여 등)
+
+  // 코어 시퀀스가 있으면 타입 분기 대신 시퀀서로(combat 웨이브 등, Phase A2)
+  if (n.core && n.core.length) { startCore(run, n); return; }
 
   // 클리어(목표) 노드: 전투 없이 진입 = 층 종료(toFloor로 분기)
   if (n.type === "clear") {
@@ -159,7 +164,9 @@ export function resolveBattleEnd(run: RunState): void {
     run.log.push("전멸 — 런 실패");
     return;
   }
-  // allyWin — 보스도 길목(층 종료는 클리어 노드가). 모든 전투 승리 = 골드 + 보상 3택1. 보스가 가장 큰 골드.
+  // 코어 시퀀스 전투(Phase A2): 보상/종료는 시퀀서가 — 다음 코어 스텝으로 복귀(웨이브/데코/노드 완료)
+  if (run.coreCursor !== null) { advanceCore(run); return; }
+  // allyWin(레거시 타입 노드) — 보스도 길목(층 종료는 클리어 노드가). 전투 승리 = 골드 + 보상 3택1. 보스가 가장 큰 골드.
   const n = node(run, run.activeNodeId!);
   const goldGain = n.type === "boss" ? 24 : n.type === "elite" ? 16 : 8;
   run.gold += goldGain;

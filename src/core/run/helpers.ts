@@ -1,6 +1,6 @@
 // 런 공유 변이 헬퍼 (leaf — run.ts·shop.ts·encounter.ts 공용, 사이클 방지).
 // 노드 조회 + 파티 회복(+모험 트리거) + 노드 완료(+nodeClear) + 스킬 보유/강화 변이.
-import type { FloorDef, Layer, MapNode, PartyMemberState } from "../types.ts";
+import type { DecoratorLayer, FloorDef, MapNode, PartyMemberState } from "../types.ts";
 import type { RunState } from "./types.ts";
 import { liveReachable } from "./graph.ts";
 import { fireRunTrigger } from "./passives.ts";
@@ -8,7 +8,7 @@ import { fireRunTrigger } from "./passives.ts";
 /** 즉시 레이어 실행 (Phase A 슬라이스1) — 데코레이터 효과를 순서대로 적용 + 로그.
  *  러너가 leaf인 helpers에 사는 이유: completeNode(여기)가 onResolve를 발동 → 별 모듈로 빼면 사이클.
  *  상호작용 레이어(combat 등)는 A2의 호스트(run.ts 조율)에서 다룸. */
-export function runInstantLayers(run: RunState, layers: Layer[] | undefined): void {
+export function runInstantLayers(run: RunState, layers: DecoratorLayer[] | undefined): void {
   if (!layers) return;
   for (const L of layers) {
     switch (L.kind) {

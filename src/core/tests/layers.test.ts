@@ -1,7 +1,7 @@
 // 노드 레이어 (NODE-DESIGN Phase A 슬라이스1) — 즉시 레이어 onEnter/onResolve 실행·순서·세이브 왕복.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRun, enterNode, serializeRun, deserializeRun, curFloor } from "../run.ts";
+import { createRun, enterNode, resolveBattleEnd, serializeRun, deserializeRun, curFloor } from "../run.ts";
 import type { RunDef } from "../run.ts";
 
 // start(0,0) → rest(0,1) → clear(0,2). rest에 레이어 부착.
@@ -59,4 +59,56 @@ test("레이어 없는 노드는 기존 거동 동일(회귀 가드)", () => {
   enterNode(run, "r");
   assert.equal(run.gold, g0, "레이어 없으면 골드 불변");
   assert.equal(run.pendingStatuses["kim"], undefined);
+});
+
+// ── Phase A2: 코어 시퀀서(combat 웨이브) — RNG 회피 위해 battle.phase 강제 주입 ──
+// start(0,0) → b(0,1) [core] → clear(0,2).
+function coreDef(core: RunDef["floors"][0]["nodes"][0]["core"]): RunDef {
+  return {
+    id: "C", name: "코어", useMastery: false, entryFloorId: "f",
+    roster: [{ charId: "kim", pos: { row: 1, col: 0 } }, { charId: "shanghai", pos: { row: 2, col: 0 } }],
+    floors: [{ id: "f", entryNodeId: "s", nodes: [
+      { id: "s", type: "start", q: 0, r: 0 },
+      { id: "b", type: "battle", q: 0, r: 1, core },
+      { id: "c", type: "clear", q: 0, r: 2 },
+    ], edges: [{ from: "s", to: "b" }, { from: "b", to: "c" }] }],
+  };
+}
+const winBattle = (run: { battle: { phase: string } | null }) => { run.battle!.phase = "allyWin"; };
+
+test("코어 시퀀서: 2웨이브 — 전투1 블록→승리→전투2 생성→승리→노드 완료(맵)", () => {
+  const run = createRun(1, coreDef([{ kind: "combat" }, { kind: "combat" }]).roster, coreDef([{ kind: "combat" }, { kind: "combat" }]));
+  enterNode(run, "b");
+  assert.equal(run.phase, "battle"); assert.equal(run.coreCursor, 0); assert.notEqual(run.battle, null);
+  const b1 = run.battle;
+  winBattle(run); resolveBattleEnd(run); // 웨이브1 승 → 웨이브2
+  assert.equal(run.phase, "battle"); assert.equal(run.coreCursor, 1); assert.notEqual(run.battle, b1, "새 전투(웨이브2) 생성");
+  winBattle(run); resolveBattleEnd(run); // 웨이브2 승 → 코어 소진 → 완료
+  assert.equal(run.phase, "map"); assert.equal(run.coreCursor, null);
+  assert.ok(run.visited.includes("b"));
+});
+
+test("코어 시퀀서: 전투 사이 데코레이터(gold) 실행", () => {
+  const run = createRun(2, coreDef([{ kind: "combat" }, { kind: "gold", amount: 10 }]).roster, coreDef([{ kind: "combat" }, { kind: "gold", amount: 10 }]));
+  const g0 = run.gold;
+  enterNode(run, "b");
+  winBattle(run); resolveBattleEnd(run); // 전투 후 gold 데코 실행 → 코어 소진
+  assert.equal(run.gold, g0 + 10);
+  assert.equal(run.phase, "map"); assert.equal(run.coreCursor, null);
+});
+
+test("코어 시퀀서: 전멸(enemyWin) = 런 실패(시퀀스 중단)", () => {
+  const run = createRun(3, coreDef([{ kind: "combat" }, { kind: "combat" }]).roster, coreDef([{ kind: "combat" }, { kind: "combat" }]));
+  enterNode(run, "b");
+  run.battle!.phase = "enemyWin"; resolveBattleEnd(run);
+  assert.equal(run.phase, "lost");
+});
+
+test("코어 커서는 세이브 왕복 보존(웨이브 도중 재개 가능)", () => {
+  const run = createRun(5, coreDef([{ kind: "combat" }, { kind: "combat" }]).roster, coreDef([{ kind: "combat" }, { kind: "combat" }]));
+  enterNode(run, "b"); // 웨이브1 진행 중(coreCursor 0, phase battle)
+  const back = deserializeRun(serializeRun(run))!;
+  assert.equal(back.coreCursor, 0);
+  assert.equal(back.phase, "battle");
+  assert.equal(curFloor(back).nodes.find((n) => n.id === "b")!.core!.length, 2);
 });

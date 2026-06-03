@@ -8,17 +8,23 @@ import type { NodeType, Pos } from "./content.ts";
 // ── 노드 레이어 (NODE-DESIGN Phase A) ─────────────────────────────────────
 // 노드 = 타입 코어 + 부착 레이어. 레이어 = 진입/완료 슬롯에 순서 실행하는 효과.
 // Phase A 슬라이스1 = 즉시(데코레이터) 레이어만. 상호작용 모듈(combat 등)은 A2~.
-/** 즉시 실행 데코레이터 레이어 — 어느 노드든 부착 가능(전역). 해석=core/run/helpers runInstantLayers. */
-export type Layer =
+// 레이어 = 데코레이터(즉시 실행) + 상호작용 모듈(완료까지 블록). 해석: 데코=helpers.runInstantLayers, 상호작용=run/layers.ts 시퀀서.
+/** 즉시 실행 데코레이터 레이어 — 어느 노드든 부착 가능(전역). */
+export type DecoratorLayer =
   | { kind: "gold"; amount: number } // 골드 ±(0 미만 클램프)
   | { kind: "heal"; pct: number; revive?: boolean } // 파티 회복(maxHp 비율, revive=전투불능 부활)
   | { kind: "grantStatus"; charId?: string; statusId: string; stacks: number; duration: number } // 다음 전투 계승(charId 없으면 전원)
   | { kind: "text"; text: string }; // 로그/대사(컷신 뷰 강화는 Phase C)
+/** 상호작용 레이어 — 완료까지 블록(phase 전환). A2 = combat만(웨이브). shop/event는 A3~. */
+export type InteractiveLayer =
+  | { kind: "combat"; roster?: { charId: string; pos: Pos }[]; boss?: boolean }; // 적 구성(없으면 NODE_ROSTERS.battle), 보스=진형보너스
+/** 노드 레이어 — onEnter/onResolve는 데코만(즉시), core는 데코+상호작용 혼합(순서 실행). */
+export type Layer = DecoratorLayer | InteractiveLayer;
 export type LayerKind = Layer["kind"];
 /** 노드의 부착 레이어 — 슬롯별 순서 리스트. onEnter=진입 직후, onResolve=노드 완료 시. */
 export interface NodeLayers {
-  onEnter?: Layer[];
-  onResolve?: Layer[];
+  onEnter?: DecoratorLayer[];
+  onResolve?: DecoratorLayer[];
 }
 
 /** 맵 노드 — q,r은 에디터 캔버스/렌더 좌표(위상 아님; 위상은 edges가 정의). */
@@ -35,6 +41,8 @@ export interface MapNode {
   label?: string;
   /** 부착 레이어(선택, Phase A). 없으면 순수 타입 코어 동작(기존과 동일). */
   layers?: NodeLayers;
+  /** 코어 시퀀스(선택, Phase A2). 있으면 타입 분기 대신 이 레이어들을 순서 실행(combat 웨이브 등). */
+  core?: Layer[];
 }
 
 /** 방향 있는 간선 — from에서 to로만 전진(복귀 불가). */

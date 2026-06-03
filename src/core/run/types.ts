@@ -28,6 +28,7 @@ export interface RunState {
   reachable: string[]; // 지금 선택 가능한 노드 (다음 선택지)
   currentNodeId: string; // 지금 서 있는(클리어한) 위치
   activeNodeId: string | null; // 전투/보상 중인 노드
+  coreCursor: number | null; // 코어 레이어 시퀀스 진행 인덱스(Phase A2). null=레거시 타입 노드
   phase: RunPhase;
   battle: GameState | null;
   rewards: RewardOption[] | null;
