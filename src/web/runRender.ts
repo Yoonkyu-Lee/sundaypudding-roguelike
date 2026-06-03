@@ -106,10 +106,10 @@ function mapScreen(view: RunView, h: RunHandlers): string {
       const attrs = clickable ? `data-node="${n.id}"` : "disabled";
       return `<button class="mnode ${n.status} ${n.type}"
         style="left:${px(x)}px;top:${py(y)}px;width:${W}px;height:${H}px"
-        ${attrs} data-uid="${n.id}" aria-label="${TYPE_NAME[n.type]}">
+        ${attrs} data-uid="${n.id}" aria-label="${esc(n.label ?? TYPE_NAME[n.type])}">
         <span class="mhex">
           <span class="mico">${TYPE_ICON[n.type]}</span>
-          <span class="mlabel">${TYPE_NAME[n.type]}</span>
+          <span class="mlabel">${esc(n.label ?? TYPE_NAME[n.type])}</span>
           ${n.status === "visited" ? '<span class="mdone">✓</span>' : ""}
           ${n.status === "current" ? '<span class="mhere">▾</span>' : ""}
         </span>

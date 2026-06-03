@@ -2,7 +2,7 @@
 // (육성/상점 → run-progression.test.ts · 영속/메타/다층 → run-meta.test.ts · 그래프 원자 → map.test.ts)
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRun, enterNode, resolveBattleEnd, chooseReward, leaveShop, chooseEncounterOption, movePartyMember, curFloor, validateRun, liveReachable } from "./run.ts";
+import { createRun, enterNode, resolveBattleEnd, chooseReward, leaveShop, chooseEncounterOption, movePartyMember, curFloor, validateRun, liveReachable, getRunView } from "./run.ts";
 import { step, createBattle, getFormationBonus } from "./engine.ts";
 import { chooseAction } from "./ai.ts";
 import { ENCOUNTER_EVENTS } from "../data/events.ts";
@@ -94,6 +94,26 @@ test("보스전은 적 진형 보너스 활성(6.3) — boss 노드 진입 시 e
   enterNode(run, "f1_boss");
   assert.notEqual(run.battle, null);
   assert.notEqual(run.battle!.enemyFormation, null);
+});
+
+test("노드 적 구성 override(F2): roster 지정 battle 노드 = 타입 기본 대신 그 적으로 전투 생성", () => {
+  const def: RunDef = {
+    id: "t", name: "t", useMastery: false, entryFloorId: "fa",
+    roster: [{ charId: "kim", pos: { row: 1, col: 0 } }],
+    floors: [{ id: "fa", entryNodeId: "e", nodes: [
+      { id: "e", type: "start", q: 0, r: 0 },
+      { id: "b", type: "battle", q: 1, r: 0, label: "두목 호위대", roster: [{ charId: "chunho", pos: { row: 0, col: 0 } }] },
+      { id: "c", type: "clear", q: 2, r: 0 },
+    ], edges: [{ from: "e", to: "b" }, { from: "b", to: "c" }] }],
+  };
+  const run = createRun(1, def.roster, def);
+  // 맵 뷰에 라벨 노출(웹 표기용)
+  assert.equal(getRunView(run).nodes.find((n) => n.id === "b")!.label, "두목 호위대");
+  run.reachable = ["b"];
+  enterNode(run, "b");
+  const enemies = run.battle!.units.filter((u) => u.side === "enemy");
+  assert.equal(enemies.length, 1); // 타입 기본(thug×2+thug2)이 아니라 override 1명
+  assert.equal(enemies[0].charId, "chunho");
 });
 
 test("진형 편성: movePartyMember 이동/교대/같은칸 무시 (맵)", () => {

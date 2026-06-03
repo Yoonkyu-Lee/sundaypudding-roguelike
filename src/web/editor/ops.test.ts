@@ -1,7 +1,7 @@
 // 맵 에디터 순수 변이(ops.ts) 단위 테스트 — DOM 무관(노드/변/층 그래프 조작).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { addNode, moveNode, deleteNode, toggleEdge, nodeAt, adjacentPairs, addFloor, deleteFloor, moveFloor } from "./ops.ts";
+import { addNode, moveNode, deleteNode, toggleEdge, nodeAt, adjacentPairs, addFloor, deleteFloor, moveFloor, setNodeLabel, setNodeRoster } from "./ops.ts";
 import type { FloorDef, RunDef } from "../../core/types.ts";
 
 function floor(): FloorDef {
@@ -74,6 +74,26 @@ test("adjacentPairs: 무방향 인접쌍 열거(연결 여부 무관)", () => {
   assert.equal(adjacentPairs(f).length, 1);
   addNode(f, "battle", 1, 0); // s·c와 인접 → 쌍 3
   assert.equal(adjacentPairs(f).length, 3);
+});
+
+test("setNodeLabel: 설정/공백 제거(트림), 모든 노드 가능", () => {
+  const f = floor();
+  setNodeLabel(f, "c", "  최종 관문 ");
+  assert.equal(nodeAt(f, 0, 1)!.label, "최종 관문"); // 트림
+  setNodeLabel(f, "c", "   "); // 공백만 → 제거
+  assert.equal(nodeAt(f, 0, 1)!.label, undefined);
+});
+
+test("setNodeRoster: 전투 노드만 override 설정, 빈 배열=제거, 비전투는 무시", () => {
+  const f = floor();
+  addNode(f, "battle", 1, 0);
+  const b = nodeAt(f, 1, 0)!.id;
+  setNodeRoster(f, b, [{ charId: "chunho", pos: { row: 0, col: 0 } }]);
+  assert.equal(nodeAt(f, 1, 0)!.roster!.length, 1);
+  setNodeRoster(f, b, []); // 빈 → 제거(타입 기본 복귀)
+  assert.equal(nodeAt(f, 1, 0)!.roster, undefined);
+  setNodeRoster(f, "c", [{ charId: "thug", pos: { row: 0, col: 0 } }]); // clear=비전투 → 무시
+  assert.equal(nodeAt(f, 0, 1)!.roster, undefined);
 });
 
 test("addFloor/deleteFloor/moveFloor: 선형 층 편집", () => {

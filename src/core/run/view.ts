@@ -18,7 +18,7 @@ export function getRunView(run: RunState): RunView {
       else if (run.reachable.includes(n.id)) status = "reachable"; // 다음 선택지 (다른 색 테두리)
       else if (run.activeNodeId === n.id) status = "active";
       else if (run.visited.includes(n.id)) status = "visited";
-      return { id: n.id, q: n.q, r: n.r, type: n.type, status };
+      return { id: n.id, q: n.q, r: n.r, type: n.type, status, label: n.label };
     }),
     party: run.party.map((m) => ({
       name: CHARACTERS[m.charId].name,

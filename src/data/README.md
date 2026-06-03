@@ -65,7 +65,7 @@
 - **Skill 필드**: `cooldown` · `accuracy` · `alwaysHit` · `usableFrom`(시전 칸) · `targetCells`(타겟 칸) · `reach`(근접 사정권) · `grantsInterrupt`/`grantsInterruptTo`(끼어들기 부여) · `tier`/`nextTierId` · `exclusiveTo`
 - **StatusDef 거동**: `dot`(지속피해) · `hot`(재생) · `actionDenial`(행동봉쇄) · `damageDealtMult` · `dmgDealtFlat` · `critChanceAdd`/`critMultiplierAdd` · `shieldShred`(쉴드 잠식) · `pierce`(쉴드 무시) · `undying`(불사) · `invincible`(무적) · `taunt`(도발) · `speedMod`(SPD 보정, +상승/−하락) · `grantsInterrupt`
 - **ItemDef**: 능력치 `mods`(hp/회피/명중/치명/속도) · `dmgFlat`(무기) · `shieldGainAdd`(방어구)
-- **맵/런**: `RunDef`(floors[] = 층 선형체인) · `FloorDef`(nodes + 무방향 edges) · `MapNode`(type·q·r 헥스) · `MapEdge`(맞닿은 헥스끼리만) · `clear` 노드=목표 · 재방문 불가 이동
+- **맵/런**: `RunDef`(entryFloorId + 층 그래프) · `FloorDef`(nodes + 무방향 edges) · `MapNode`(type·q·r 헥스·toFloor?·roster?·label?) · `MapEdge`(맞닿은 헥스끼리만) · `clear` 노드=목표 · 재방문 불가 이동
 - **AiProfile**(`ai.ts`): `rules[]` 우선순위 룰 — `if`(조건) · `prefer`(스킬 종류) · `target`(타겟 선호) · `weight`(보조 가중치). 캐릭터 `aiProfileId`로 연결
 
 ## 🔧 디자이너 혼자 못 하는 것 (엔진 개발 필요 → 엔지니어에게 요청)
@@ -216,12 +216,12 @@
 | `floors` | `FloorDef[]` | 층 집합(순서 무의미 — `entryFloorId`·`toFloor`로 탐색) |
 
 **`FloorDef`** = `{ id, name?, entryNodeId, nodes: MapNode[], edges: MapEdge[] }`
-**`MapNode`** = `{ id, type: NodeType, q, r, toFloor? }` — `q,r`은 **렌더 위치**(위상 아님), `toFloor`=clear 전용 다음 층 id
+**`MapNode`** = `{ id, type: NodeType, q, r, toFloor?, roster?, label? }` — `q,r`은 **렌더 위치**(위상 아님), `toFloor`=clear 전용 다음 층 id, `roster`=전투 노드 적 구성 override(`{charId,pos}[]`; 없으면 타입 기본 `NODE_ROSTERS[type]`), `label`=표시명(예: "두목 호위대"; 맵·에디터 노드 위에 타입명 대신 표기)
 **`MapEdge`** = `{ from, to }` — **무방향 변**. **맞닿은(인접) 헥스끼리만** 연결 가능(전부 켜면 곧 "맞닿으면 이동"). 방향 없음.
 
 **`NodeType`**: `"start"`(입장) · `"battle"` · `"elite"` · `"boss"`(길목) · `"shop"` · `"encounter"` · `"rest"` · `"clear"`(목표 마커 — 진입 시 층 종료).
 
-규칙: ① 입장(`entryNodeId`)에서 **맞닿은 길**을 따라 **클리어 노드**에 도달하면 층 완료(보스는 강적이지만 길목). **재방문 불가**(지나온 칸 잠김 → 전진만). ② 갈림길로 보스/클리어 여러 개 → **아무 클리어든 진입하면 완료**. ③ **클리어 노드의 `toFloor`**가 다음 층(없으면 그 클리어=런 승리) — 여러 클리어가 다른 층을 가리키면 **층 분기**. ④ 변은 **맞닿은 헥스끼리만**, 모든 노드는 입장과 연결+클리어 도달; **층 그래프**는 `entryFloorId`에서 전 층 도달+승리 클리어(toFloor 없는) ≥1 (엔진 `validateRun`이 저장 시 검증).
+규칙: ① 입장(`entryNodeId`)에서 **맞닿은 길**을 따라 **클리어 노드**에 도달하면 층 완료(보스는 강적이지만 길목). **재방문 불가**(지나온 칸 잠김 → 전진만). ② 갈림길로 보스/클리어 여러 개 → **아무 클리어든 진입하면 완료**. ③ **클리어 노드의 `toFloor`**가 다음 층(없으면 그 클리어=런 승리) — 여러 클리어가 다른 층을 가리키면 **층 분기**. ④ 변은 **맞닿은 헥스끼리만**, 모든 노드는 입장과 연결+클리어 도달; **층 그래프**는 `entryFloorId`에서 전 층 도달+승리 클리어(toFloor 없는) ≥1 (엔진 `validateRun`이 저장 시 검증). ⑤ **노드별 적 구성**: 전투 노드(`battle`/`elite`/`boss`)에 `roster`를 주면 그 노드만의 적으로 전투(없으면 타입 기본). 같은 `battle`이라도 노드마다 다른 적을 둘 수 있다. **라벨**: 어느 노드든 `label`로 표시명 지정.
 
 **에디터 조작**: **광활한 육각 격자**(엑셀식) 어디든 카탈로그를 **드래그**해 배치, 배치된 노드는 **드래그로 이동**(커서를 따라오는 오브젝트). 노드 **클릭**=선택(**Ctrl**=다중, **Ctrl+A**=전체, 빈칸 클릭=해제) → **Del** 일괄 삭제(입장 제외). 선택군은 함께 이동. 시작=파랑·클리어=초록·선택=노랑 테두리(부위 강조). **인접하면 기본 연결**, 두 칸 사이 변에 **호버(점선)→클릭(실선 벽)**으로 차단/연결(연결됨=선 없음, 벽=어두운 빨강). 뷰포트 고정 — **휠=줌**, **휠(가운데) 드래그=이동**.
 

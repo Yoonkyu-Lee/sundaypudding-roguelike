@@ -32,7 +32,7 @@ src/core/
                     AreaShape·SkillTarget·Skill(+active/passives)·FormationLayout·Character(+traitIds/aiProfileId)
     passives.ts     특성/패시브 룰 스키마: PassiveRule·Trigger·Condition·Effect·TraitDef·EffTarget·StatKey
     ai.ts           AI 행동결정 정책 스키마: AiProfile·AiRule·AiCondition·SkillKindPref·TargetPref·AiWeightKey
-    map.ts          헥스 인접 무방향그래프 맵 스키마: RunDef(층 선형체인)·FloorDef·MapNode(q,r 헥스)·MapEdge(무방향, 맞닿은 헥스끼리). NodeType는 content(+clear)
+    map.ts          헥스 인접 무방향그래프 맵 스키마: RunDef(entryFloorId+층 그래프)·FloorDef·MapNode(q,r 헥스·toFloor?·roster?(적override)·label?)·MapEdge(무방향, 맞닿은 헥스끼리). NodeType는 content(+clear)
     runtime.ts      엔진 상태: StatusInstance·Unit·PartyMemberState·TurnKind·QueueEntry·
                     Action·Phase·GameEvent·GameState·UnitView·LegalAction·Observation
   engine.ts         ▸배럴(파사드): export * from combat/index
@@ -109,7 +109,7 @@ src/core/
 | `src/cli/ascii.ts` | cli | ASCII 보드 렌더(뷰 — core 아님) | `renderAscii` |
 | `src/web/main.ts` | web | 웹 엔트리·**앱 상태기계**(title↔hub↔editor↔run, `appState`/`runActive`/`pauseOpen`)+런 컨트롤러·전투 루프·핸들러. 편성=`hub.ts`·영속=`save.ts`·오버레이=`overlay.ts`·에디터=`editor/`·테스트플레이=`testRun` | (엔트리) |
 | `src/web/nodeMeta.ts` | web | 노드 종류 표시(아이콘/이름) — 런렌더·에디터 공용 | `TYPE_ICON` · `TYPE_NAME` · `CATALOG_TYPES` |
-| `src/web/editor/` | web | **맵 에디터 GUI**(구조 에디터) — `hexgeo.ts`(**헥스 기하 SoT**: `hexCorners`/`hexPoints`/`pixelToAxial`/`gridPathStr` — 격자·노드·벽 공유 → 완벽 벌집, `hexgeo.test`로 인접 변 공유 검증) · `store.ts`(드래프트 localStorage·repo 병합·blankRun·JSON 내보내기) · `ops.ts`(노드/변/층 순수 변이·`addNode`/`moveNode`·`autoConnectAdjacent`·`adjacentPairs`) · `controller.ts`(목록↔편집 상태·핸들러) · `editorRender.ts`(목록) · `editView.ts`(SVG 단일 렌더: 격자 path·노드 폴리곤·벽이 hexgeo 공유 → 완벽 벌집. 테두리=별도 하이라이트 레이어(시작 파랑/클리어 초록 z2·선택 노랑 군집외곽 z5, 클리핑 없음). **포인터 기반 드래그**(공용 `drag.ts`)·다중선택(Ctrl·Ctrl+A·빈칸 해제)·일괄 이동/삭제·고정 뷰포트 카메라·벽 호버/클릭. **F1: clear 노드 "다음 층" 드롭다운(toFloor) · 층 그래프 뷰포트(블럭 다이어그램 — 층=박스, clear→toFloor=방향 화살표, 입장 ★, 박스 클릭=편집·입장 지정·추가/삭제; BFS 레벨 좌→우 배치)**). `validateRun`/`hexAdjacent` 재사용 | `createEditor` · `renderEditor` |
+| `src/web/editor/` | web | **맵 에디터 GUI**(구조 에디터) — `hexgeo.ts`(**헥스 기하 SoT**: `hexCorners`/`hexPoints`/`pixelToAxial`/`gridPathStr` — 격자·노드·벽 공유 → 완벽 벌집, `hexgeo.test`로 인접 변 공유 검증) · `store.ts`(드래프트 localStorage·repo 병합·blankRun·JSON 내보내기) · `ops.ts`(노드/변/층 순수 변이·`addNode`/`moveNode`·`autoConnectAdjacent`·`adjacentPairs`·**F2: `setNodeLabel`/`setNodeRoster`**) · `controller.ts`(목록↔편집 상태·핸들러) · `editorRender.ts`(목록) · `editView.ts`(SVG 단일 렌더: 격자 path·노드 폴리곤·벽이 hexgeo 공유 → 완벽 벌집. 테두리=별도 하이라이트 레이어(시작 파랑/클리어 초록 z2·선택 노랑 군집외곽 z5, 클리핑 없음). **포인터 기반 드래그**(공용 `drag.ts`)·다중선택(Ctrl·Ctrl+A·빈칸 해제)·일괄 이동/삭제·고정 뷰포트 카메라·벽 호버/클릭. **F1: clear 노드 "다음 층" 드롭다운(toFloor) · 층 그래프 뷰포트(블럭 다이어그램 — 층=박스, clear→toFloor=방향 화살표, 입장 ★, 박스 클릭=편집·입장 지정·추가/삭제; BFS 레벨 좌→우 배치) · 선택 clear→대응 화살표 노랑 하이라이트**) · `nodePanel.ts`(**F2: 노드 메타 사이드바 — 라벨 입력 + 적 구성 override 미니 에디터(charId+행/열 추가·제거); 전투 노드만 적 편집**). `validateRun`/`hexAdjacent` 재사용 | `createEditor` · `renderEditor` |
 | `src/web/hub.ts` | web | **본거지 편성 컨트롤러**(`createHub`) — playable 풀에서 1~4명 선택(영구) 캡슐화 + 선택 로스터로 런 생성. `makeRun`·`data`·`toggle` | `createHub` |
 | `src/web/save.ts` | web | **런 이어하기 영속화**(`spr_save_v1`) — 순수(run 인자). `saveRun`·`loadRun`·`clearSave` | `saveRun` · `loadRun` · `clearSave` |
 | `src/web/shell.ts` | web | **게임 흐름 셸** — 타이틀·본거지(집)·일시정지 화면. 본거지=캐릭터 편성 선택 그리드(playable 풀 1~4명 토글, 숙련도 표시) / 런 중=현재 파티+이어하기. 런 바깥 | `renderTitle` · `renderHub` · `renderPause` · `ShellHandlers` |
@@ -173,7 +173,7 @@ src/core/
 | 장착 아이템 (4.3) | `ItemDef`(content.ts)·`data/items.ts` `ITEMS` · `PartyMemberState.equipped`+`RunState.inventory` · `combat/state.ts` makeUnit가 비-HP 스탯 합산+`Unit.equipDmgFlat`/`equipShieldGainAdd` · `damage.ts`/`skills.ts` read훅 · `run/items.ts` equip/오퍼 · 웹=`charSheet.ts` 장착칸. 지닌물건=후속 |
 | 아군 진형 편성 (6장) | `PartyMemberState.pos`(열=진형 보너스) · `run/run.ts` `movePartyMember`(맵전용 이동/교대) · `combat/formation.ts` 열 총량÷인원 분배 · 웹=`partyView.ts` 드래그앤드롭 보드 |
 | 상점·인카운터 + 골드 (7.2) | `RunState.gold`(전투승리/인카운터 획득) · 상점=`generateShop`+`buyShopOffer`(강화권/범용기/회복, 골드)·`leaveShop` · 인카운터=`data/events.ts` 이벤트 추첨+`chooseEncounterOption`(확정/도박, 생존보장) · 웹: runRender `shopScreen`/`encounterScreen` |
-| 적 구성(노드별, 데이터) | `data/encounters.ts`: `NODE_ROSTERS` (run.ts가 키로 조회) |
+| 적 구성(노드별, 데이터) | `data/encounters.ts`: `NODE_ROSTERS` (run.ts가 타입 키로 조회) · **노드별 override**=`MapNode.roster`(`enterNode`가 타입 기본보다 우선; F2) |
 | 결정론 휴리스틱 AI (그리디 fallback) | `ai/policy.ts`: `chooseAction`/`greedy` |
 | 적 전용 AI 패턴(우선순위 룰 프로파일) | `data/ai.ts` `AI_PROFILES` + `Character.aiProfileId` → `ai/profile.ts` `applyProfile`(인터프리터) · `core/types/ai.ts` 스키마 |
 
@@ -181,7 +181,7 @@ src/core/
 
 | 기능 | 예정 위치 |
 |---|---|
-| **맵 에디터 — 분기 층 그래프·노드 메타데이터** (구조 에디터 E1–E3는 구현됨, `src/web/editor/`) | 분기=`RunDef` 층 그래프 확장(스키마+런타임+UI), 메타=노드별 적 구성 override 등. dev-write 미들웨어(자동 repo 기록)도 후속 |
+| **맵 에디터 — dev-write 미들웨어(F3)** (E1–E3 구조 에디터 + F1 분기 층 그래프 + F2 노드 메타데이터는 구현됨, `src/web/editor/`) | F3=브라우저→repo 자동 기록(vite `configureServer` POST + index.ts 자동 등록) · 허브 런 선택(F4)은 구현됨 |
 | 메타/본산/기억회랑 (5장) | 신규 `core/meta/` (런 위 레이어) |
 | 상점/인카운터 본구현 (현재 즉시해소 stub) | `core/run/` (커지면 비전투 해소를 `run/nodes.ts`로 분리) |
 | 웹 렌더러 고도화(스프라이트/애니메이션) | `src/web/` (현재 v2: DOM 카드 + 피격 플래시 + 로그 재생) |

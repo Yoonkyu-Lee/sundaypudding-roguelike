@@ -3,6 +3,7 @@
 import { esc } from "../battle/shared.ts";
 import type { NodeType } from "../../core/types.ts";
 import type { EditData, EditorHandlers } from "./editorRender.ts";
+import { nodeMetaPanel, wireNodeMeta } from "./nodePanel.ts";
 import { SIZE, W, FW, FH, ccx, ccy, hexPoints, hexEdge, EDGE_DIRS, gridPathStr, pixelToAxial } from "./hexgeo.ts";
 
 const WALL_SW = 3.5; // 벽 선 두께(.ed-wallvis와 일치)
@@ -76,8 +77,10 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   // 노드 상호작용/아이콘 = 투명 오버레이 div(드래그=이동, 클릭=선택)
   const nodeOverlays = d.nodes.map((n) => {
     const cxp = ccx(n.q, n.r), cyp = ccy(n.r);
-    return `<button class="ednode${selSet.has(n.id) ? " sel" : ""}" data-node="${n.id}" style="left:${(cxp - W / 2).toFixed(1)}px;top:${(cyp - SIZE).toFixed(1)}px;width:${W.toFixed(1)}px;height:${(2 * SIZE).toFixed(1)}px" aria-label="${n.name}${n.id === d.entryId ? " (입장)" : ""}">
-      <span class="ednode-ico">${n.icon}</span><span class="ednode-lbl">${n.name}</span></button>`;
+    const lbl = n.label ?? n.name;
+    const badge = n.roster && n.roster.length ? `<span class="ednode-badge" aria-label="적 구성 지정됨">⚔</span>` : "";
+    return `<button class="ednode${selSet.has(n.id) ? " sel" : ""}" data-node="${n.id}" style="left:${(cxp - W / 2).toFixed(1)}px;top:${(cyp - SIZE).toFixed(1)}px;width:${W.toFixed(1)}px;height:${(2 * SIZE).toFixed(1)}px" aria-label="${esc(lbl)}${n.id === d.entryId ? " (입장)" : ""}">
+      <span class="ednode-ico">${n.icon}</span><span class="ednode-lbl">${esc(lbl)}</span>${badge}</button>`;
   }).join("");
 
   // 하이라이트(테두리=부위 강조, 노드 위 레이어 → 클리핑 없음): 시작=파랑·클리어=초록 전체 윤곽, 선택=노랑 군집 외곽
@@ -106,8 +109,9 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
     : "";
   const selInfo = selN === 0
     ? `<div class="ed-selinfo hint">카탈로그를 격자에 <b>드래그</b>해 배치 · 노드 <b>드래그</b>=이동 · <b>클릭</b>=선택(<b>Ctrl</b>=다중, <b>Ctrl+A</b>=전체, 빈칸=해제) · 두 칸 사이 변 <b>호버→클릭</b>=벽/연결.</div>`
-    : `<div class="ed-selinfo">${selN === 1 ? `선택: ${esc(one!.name)}` : `${selN}개 선택`}
+    : `<div class="ed-selinfo">${selN === 1 ? `선택: ${esc(one!.label ?? one!.name)}` : `${selN}개 선택`}
         ${floorPick}
+        ${one ? nodeMetaPanel(d, one) : ""}
         ${hasDeletable ? `<button class="ed-btn ghost" id="ed-delnode">🗑 삭제 (Del)</button>` : " (입장 노드 — 삭제 불가)"}</div>`;
   const errs = d.valid ? `<div class="ed-ok">✓ 유효한 맵</div>` : `<div class="ed-bad">✗ ${d.errors.map(esc).join("<br>")}</div>`;
 
@@ -139,6 +143,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   app.querySelectorAll<HTMLElement>("[data-fdel]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); h.onDeleteFloor(Number(b.dataset.fdel)); }));
   app.querySelectorAll<HTMLElement>("[data-fentry]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); h.onSetEntryFloor(b.dataset.fentry!); }));
   app.querySelector<HTMLSelectElement>("#ed-tofloor")?.addEventListener("change", (e) => h.onSetNodeToFloor(d.sel[0], (e.target as HTMLSelectElement).value || null));
+  wireNodeMeta(app, d, h);
   app.querySelectorAll<SVGElement>(".ed-ehit[data-edge]").forEach((b) =>
     b.addEventListener("click", () => { const [a, c] = b.dataset.edge!.split("|"); h.onToggleEdge(a, c); }));
 

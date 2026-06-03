@@ -2,7 +2,8 @@
 import { validateRun } from "../../core/run.ts";
 import type { FloorDef, RunDef } from "../../core/types.ts";
 import { listRuns, getRun, saveDraft, deleteDraft, blankRun, exportRun, isDraft, cloneAsDraft } from "./store.ts";
-import { addNode, moveNode, moveNodes, deleteNode, toggleEdge, adjacentPairs, addFloor, deleteFloor, moveFloor } from "./ops.ts";
+import { addNode, moveNode, moveNodes, deleteNode, toggleEdge, adjacentPairs, addFloor, deleteFloor, moveFloor, setNodeLabel, setNodeRoster } from "./ops.ts";
+import { CHARACTERS } from "../../data/characters.ts";
 
 const edgeKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 import { CATALOG_TYPES, TYPE_ICON, TYPE_NAME } from "../nodeMeta.ts";
@@ -60,10 +61,11 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       floors: draft!.floors.map((fl, i) => ({ id: fl.id, name: fl.name ?? `층 ${i + 1}`, valid: v.floors[i].ok, toFloors: [...new Set(fl.nodes.filter((n) => n.type === "clear" && n.toFloor).map((n) => n.toFloor!))] })),
       floorIdx,
       entryFloorId: draft!.entryFloorId,
-      nodes: f.nodes.map((n) => ({ id: n.id, type: n.type, q: n.q, r: n.r, icon: TYPE_ICON[n.type], name: TYPE_NAME[n.type], toFloor: n.toFloor })),
+      nodes: f.nodes.map((n) => ({ id: n.id, type: n.type, q: n.q, r: n.r, icon: TYPE_ICON[n.type], name: TYPE_NAME[n.type], toFloor: n.toFloor, label: n.label, roster: n.roster })),
       edges: f.edges.map((e) => ({ a: e.from, b: e.to })), // 연결(실선)
       walls: adjacentPairs(f).filter((p) => !connected.has(edgeKey(p.a, p.b))), // 인접·미연결 = 세워진 벽
       catalog: CATALOG_TYPES.map((t) => ({ type: t, icon: TYPE_ICON[t], name: TYPE_NAME[t] })),
+      chars: Object.values(CHARACTERS).map((c) => ({ id: c.id, name: c.name })),
       camera: { ...camera },
     };
   }
@@ -106,6 +108,8 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       onMoveFloor(i, dir) { if (!draft) return; moveFloor(draft, i, dir); if (i === floorIdx) floorIdx = Math.max(0, Math.min(draft.floors.length - 1, i + dir)); save(); deps.rerender(); },
       onSetEntryFloor(id) { if (!draft) return; draft.entryFloorId = id; save(); deps.rerender(); },
       onSetNodeToFloor(id, toFloor) { if (!draft) return; const nd = floor().nodes.find((n) => n.id === id); if (nd && nd.type === "clear") { if (toFloor) nd.toFloor = toFloor; else delete nd.toFloor; save(); deps.rerender(); } },
+      onSetNodeLabel(id, label) { if (!draft) return; setNodeLabel(floor(), id, label); save(); deps.rerender(); },
+      onSetNodeRoster(id, roster) { if (!draft) return; setNodeRoster(floor(), id, roster); save(); deps.rerender(); },
     },
   };
 }

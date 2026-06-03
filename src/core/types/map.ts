@@ -13,6 +13,10 @@ export interface MapNode {
   r: number;
   /** clear 노드 전용: 진입 시 갈 다음 층 id. 없으면 그 클리어 = 런 승리(종료). 여러 clear = 분기. */
   toFloor?: string;
+  /** 전투 노드 전용: 적 구성 override. 없으면 타입 기본(NODE_ROSTERS[type])을 쓴다. */
+  roster?: { charId: string; pos: Pos }[];
+  /** 표시 라벨(선택). 노드 위에 표기 — 같은 타입 노드를 구분(예: "두목 호위대"). */
+  label?: string;
 }
 
 /** 방향 있는 간선 — from에서 to로만 전진(복귀 불가). */

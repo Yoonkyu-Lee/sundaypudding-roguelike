@@ -1,5 +1,5 @@
 // 맵 에디터 — 층 그래프 순수 변이 + 그리드 계산 (DOM/상태 없음). 컨트롤러가 호출.
-import type { FloorDef, MapNode, NodeType, RunDef } from "../../core/types.ts";
+import type { FloorDef, MapNode, NodeType, Pos, RunDef } from "../../core/types.ts";
 import { hexAdjacent } from "../../core/run.ts";
 
 let counter = 0;
@@ -75,6 +75,21 @@ export function deleteNode(floor: FloorDef, id: string): void {
   if (floor.entryNodeId === id) return;
   floor.nodes = floor.nodes.filter((n) => n.id !== id);
   floor.edges = floor.edges.filter((e) => e.from !== id && e.to !== id);
+}
+
+/** 노드 표시 라벨 설정(빈 문자열=제거). 모든 노드 가능. */
+export function setNodeLabel(floor: FloorDef, id: string, label: string): void {
+  const n = floor.nodes.find((x) => x.id === id);
+  if (!n) return;
+  const t = label.trim();
+  if (t) n.label = t; else delete n.label;
+}
+
+/** 전투 노드 적 구성 override 설정(빈 배열=제거→타입 기본 사용). 비전투 노드는 무시. */
+export function setNodeRoster(floor: FloorDef, id: string, roster: { charId: string; pos: Pos }[]): void {
+  const n = floor.nodes.find((x) => x.id === id);
+  if (!n || (n.type !== "battle" && n.type !== "elite" && n.type !== "boss")) return;
+  if (roster.length) n.roster = roster; else delete n.roster;
 }
 
 /** 인접한 두 노드 사이 무방향 변 토글(비인접/동일은 무시). */

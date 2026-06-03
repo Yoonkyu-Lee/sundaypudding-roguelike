@@ -46,7 +46,7 @@ export interface RunView {
   phase: RunPhase;
   floor: number; // 현재 층 (1-base)
   totalFloors: number; // 총 층 수
-  nodes: { id: string; q: number; r: number; type: NodeType; status: NodeStatus }[];
+  nodes: { id: string; q: number; r: number; type: NodeType; status: NodeStatus; label?: string }[];
   edges: MapEdge[]; // 현재 층 방향 간선 (웹 화살표 렌더용)
   party: {
     name: string;

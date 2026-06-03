@@ -7,7 +7,8 @@ import { renderEditView } from "./editView.ts";
 export interface EditorRunCard { id: string; name: string; source: RunSource; floors: number; valid: boolean; }
 export interface ListData { mode: "list"; runs: EditorRunCard[]; }
 
-export interface EditNode { id: string; type: NodeType; q: number; r: number; icon: string; name: string; toFloor?: string; }
+export interface RosterEntry { charId: string; pos: { row: number; col: number }; }
+export interface EditNode { id: string; type: NodeType; q: number; r: number; icon: string; name: string; toFloor?: string; label?: string; roster?: RosterEntry[]; }
 export interface EditData {
   mode: "edit";
   name: string;
@@ -24,6 +25,7 @@ export interface EditData {
   edges: { a: string; b: string }[]; // 연결된 인접쌍
   walls: { a: string; b: string }[]; // 인접·미연결 = 세워진 벽
   catalog: { type: NodeType; icon: string; name: string }[];
+  chars: { id: string; name: string }[]; // 적 구성 override 후보 캐릭터 목록
   camera: { zoom: number; x: number; y: number }; // 뷰포트 카메라(줌·팬) — 편집 중 보존
 }
 export type EditorData = ListData | EditData;
@@ -52,6 +54,9 @@ export interface EditorHandlers {
   onMoveFloor: (idx: number, dir: number) => void;
   onSetEntryFloor: (id: string) => void; // 입장 층 지정 (F1)
   onSetNodeToFloor: (id: string, toFloor: string | null) => void; // clear 노드 다음 층 (F1)
+  // 노드 메타데이터 (F2)
+  onSetNodeLabel: (id: string, label: string) => void; // 표시 라벨
+  onSetNodeRoster: (id: string, roster: RosterEntry[]) => void; // 적 구성 override(빈 배열=타입 기본)
 }
 
 function card(r: EditorRunCard): string {

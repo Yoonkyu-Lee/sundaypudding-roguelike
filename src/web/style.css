@@ -575,6 +575,18 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .ed-tofloor select { background: var(--panel2); color: var(--txt); border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; }
 .ed-addfloor { margin-top: 8px; background: transparent; border: 1px dashed var(--line); color: var(--dim); border-radius: 8px; padding: 5px 12px; cursor: pointer; }
 
+/* 노드 메타데이터 패널 (F2) */
+.ednode-badge { position: absolute; top: -2px; right: 2px; font-size: 10px; }
+.ed-meta { display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
+.ed-meta-row { color: var(--dim); display: flex; align-items: center; gap: 6px; }
+.ed-meta-row input { flex: 1; background: var(--panel2); color: var(--txt); border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; }
+.ed-roster { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.ed-roster li { display: flex; align-items: center; justify-content: space-between; gap: 6px; background: var(--panel2); border-radius: 6px; padding: 3px 8px; }
+.ed-meta-x { background: transparent; border: 0; color: var(--bad, #d66); cursor: pointer; font-size: 12px; padding: 0 2px; }
+.ed-meta-add { display: flex; gap: 4px; align-items: center; }
+.ed-meta-add select { background: var(--panel2); color: var(--txt); border: 1px solid var(--line); border-radius: 6px; padding: 3px 4px; }
+.ed-meta-add #ednm-char { flex: 1; }
+
 .hub header { margin-bottom: 16px; }
 .hub h1 { color: var(--accent); }
 .hub-link { background: transparent; border: 1px solid var(--line); color: var(--dim); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
