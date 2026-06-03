@@ -126,6 +126,17 @@ test("보상 레이어: treasure 노드 = core:[reward] (전투 없이 보상)",
   assert.equal(run.phase, "map"); assert.equal(run.coreCursor, null);
 });
 
+test("yain 마이그레이션: f1_boss가 core 경로 + boss 프리셋 roster + 진형 보너스", () => {
+  const run = createRun(2); // DEFAULT_RUN(야인시대)
+  run.reachable = ["f1_boss"];
+  enterNode(run, "f1_boss");
+  assert.equal(run.phase, "battle");
+  assert.equal(run.coreCursor, 0, "core 경로(레거시 type 분기 아님)");
+  const enemyIds = run.battle!.units.filter((u) => u.side === "enemy").map((u) => u.charId);
+  assert.ok(enemyIds.includes("shim") && enemyIds.includes("chunho"), "rosterPreset 'boss' 적용");
+  assert.notEqual(run.battle!.enemyFormation, null, "보스=진형 보너스");
+});
+
 test("코어 커서는 세이브 왕복 보존(웨이브 도중 재개 가능)", () => {
   const run = createRun(5, coreDef([{ kind: "combat" }, { kind: "combat" }]).roster, coreDef([{ kind: "combat" }, { kind: "combat" }]));
   enterNode(run, "b"); // 웨이브1 진행 중(coreCursor 0, phase battle)

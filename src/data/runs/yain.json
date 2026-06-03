@@ -17,11 +17,11 @@
       "entryNodeId": "f1_entry",
       "nodes": [
         { "id": "f1_entry", "type": "start", "q": 0, "r": 0 },
-        { "id": "f1_b1", "type": "battle", "q": 1, "r": 0 },
-        { "id": "f1_b2", "type": "battle", "q": 0, "r": 1 },
+        { "id": "f1_b1", "type": "battle", "q": 1, "r": 0, "core": [{ "kind": "combat", "rosterPreset": "battle" }, { "kind": "gold", "amount": 8 }, { "kind": "reward" }] },
+        { "id": "f1_b2", "type": "battle", "q": 0, "r": 1, "core": [{ "kind": "combat", "rosterPreset": "battle" }, { "kind": "gold", "amount": 8 }, { "kind": "reward" }] },
         { "id": "f1_shop", "type": "shop", "q": 2, "r": 0 },
         { "id": "f1_rest", "type": "rest", "q": 0, "r": 2 },
-        { "id": "f1_boss", "type": "boss", "q": 1, "r": 1 },
+        { "id": "f1_boss", "type": "boss", "q": 1, "r": 1, "core": [{ "kind": "combat", "rosterPreset": "boss", "boss": true }, { "kind": "gold", "amount": 24 }, { "kind": "reward" }] },
         { "id": "f1_clear", "type": "clear", "q": 2, "r": 1, "toFloor": "f2" }
       ],
       "edges": [
@@ -40,10 +40,10 @@
       "entryNodeId": "f2_entry",
       "nodes": [
         { "id": "f2_entry", "type": "start", "q": 0, "r": 0 },
-        { "id": "f2_a", "type": "battle", "q": 1, "r": 0 },
+        { "id": "f2_a", "type": "battle", "q": 1, "r": 0, "core": [{ "kind": "combat", "rosterPreset": "battle" }, { "kind": "gold", "amount": 8 }, { "kind": "reward" }] },
         { "id": "f2_e", "type": "encounter", "q": 0, "r": 1 },
-        { "id": "f2_bossA", "type": "boss", "q": 2, "r": 0 },
-        { "id": "f2_bossB", "type": "boss", "q": 0, "r": 2 },
+        { "id": "f2_bossA", "type": "boss", "q": 2, "r": 0, "core": [{ "kind": "combat", "rosterPreset": "boss", "boss": true }, { "kind": "gold", "amount": 24 }, { "kind": "reward" }] },
+        { "id": "f2_bossB", "type": "boss", "q": 0, "r": 2, "core": [{ "kind": "combat", "rosterPreset": "boss", "boss": true }, { "kind": "gold", "amount": 24 }, { "kind": "reward" }] },
         { "id": "f2_clearA", "type": "clear", "q": 3, "r": 0, "toFloor": "f3" },
         { "id": "f2_clearB", "type": "clear", "q": 0, "r": 3, "toFloor": "f3" }
       ],
@@ -62,8 +62,8 @@
       "entryNodeId": "f3_entry",
       "nodes": [
         { "id": "f3_entry", "type": "start", "q": 0, "r": 0 },
-        { "id": "f3_elite", "type": "elite", "q": 1, "r": 0 },
-        { "id": "f3_boss", "type": "boss", "q": 2, "r": 0 },
+        { "id": "f3_elite", "type": "elite", "q": 1, "r": 0, "core": [{ "kind": "combat", "rosterPreset": "elite" }, { "kind": "gold", "amount": 16 }, { "kind": "reward" }] },
+        { "id": "f3_boss", "type": "boss", "q": 2, "r": 0, "core": [{ "kind": "combat", "rosterPreset": "boss", "boss": true }, { "kind": "gold", "amount": 24 }, { "kind": "reward" }] },
         { "id": "f3_clear", "type": "clear", "q": 3, "r": 0 }
       ],
       "edges": [

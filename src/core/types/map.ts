@@ -17,7 +17,7 @@ export type DecoratorLayer =
   | { kind: "text"; text: string }; // 로그/대사(컷신 뷰 강화는 Phase C)
 /** 상호작용 레이어 — 완료까지 블록(phase 전환). combat·reward(B). shop/event는 후속. */
 export type InteractiveLayer =
-  | { kind: "combat"; roster?: { charId: string; pos: Pos }[]; boss?: boolean } // 적 구성(없으면 NODE_ROSTERS.battle), 보스=진형보너스
+  | { kind: "combat"; roster?: { charId: string; pos: Pos }[]; rosterPreset?: string; boss?: boolean } // 적: roster(인라인) > rosterPreset(NODE_ROSTERS 키) > battle. 보스=진형보너스
   | { kind: "reward" }; // 보상 3택1(genRewards) — 플레이어 선택까지 블록. treasure 노드 = core:[reward]
 /** 노드 레이어 — onEnter/onResolve는 데코만(즉시), core는 데코+상호작용 혼합(순서 실행). */
 export type Layer = DecoratorLayer | InteractiveLayer;
