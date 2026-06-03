@@ -2,13 +2,12 @@
 // 전투는 render.ts(renderApp) 재사용, 맵/보상/결과는 runRender.ts. (7장)
 import { step } from "../core/engine.ts";
 import { chooseAction } from "../core/ai.ts";
-import { createRun, enterNode, resolveBattleEnd, chooseReward, setActiveSkill, buyShopOffer, leaveShop, chooseEncounterOption, getRunView, type RunState } from "../core/run.ts";
+import { createRun, resolveBattleEnd, getRunView, type RunState } from "../core/run.ts";
 import type { Action, RunDef } from "../core/types.ts";
-import { SKILLS } from "../data/skills.ts";
 import { CHARACTERS } from "../data/characters.ts";
 import { grantWin, masteryMap } from "./meta.ts";
-import { renderApp, type Handlers, type Ui } from "./render.ts";
-import { renderRunScreen, type RunHandlers } from "./runRender.ts";
+import { renderApp, type Ui } from "./render.ts";
+import { renderRunScreen } from "./runRender.ts";
 import { createTimelinePanel, type RollView } from "./battle/timelinePanel.ts";
 import { createOverlay } from "./overlay.ts";
 import { renderTitle, renderHub, renderPause, type ShellHandlers } from "./shell.ts";
@@ -16,6 +15,7 @@ import { createHub } from "./hub.ts";
 import { saveRun, clearSave, loadRun } from "./save.ts";
 import { renderEditor } from "./editor/editorRender.ts";
 import { createEditor } from "./editor/controller.ts";
+import { makeBattleHandlers, makeRunHandlers, type AppCtx } from "./handlers/index.ts";
 
 const app = document.getElementById("app")!;
 const panel = createTimelinePanel(); // 행동서열 패널 — 주사위(rolling)↔전투(live) 한 컴포넌트, 전투 셸에 영속 마운트
@@ -141,110 +141,18 @@ function battleStep(action: Action): void {
   render();
 }
 
-const battleHandlers: Handlers = {
-  onSkill(skillId) {
-    if (busy || !run.battle || run.battle.phase !== "inProgress") return;
-    const sk = SKILLS[skillId];
-    if (sk?.target === "self") {
-      // 자기 대상은 즉시 시전 (앵커=자신 위치)
-      const actor = run.battle.units.find((u) => u.uid === run.battle!.current!.uid)!;
-      battleStep({ type: "skill", skillId, targetCell: { ...actor.pos } });
-      return;
-    }
-    ui.selectedSkillId = skillId;
-    ui.hoverCell = null;
-    ui.pickedCells = [];
-    render();
-  },
-  onCellClick(pos) {
-    if (busy || !ui.selectedSkillId) return;
-    const sk = SKILLS[ui.selectedSkillId];
-    if (sk.area?.kind === "free") {
-      const count = sk.area.count;
-      if (!ui.pickedCells.some((p) => p.row === pos.row && p.col === pos.col)) ui.pickedCells.push(pos);
-      if (ui.pickedCells.length >= count) battleStep({ type: "skill", skillId: ui.selectedSkillId, cells: ui.pickedCells.slice() });
-      else render();
-    } else {
-      battleStep({ type: "skill", skillId: ui.selectedSkillId, targetCell: pos });
-    }
-  },
-  onCellHover(pos) {
-    if (!ui.selectedSkillId) return;
-    const cur = ui.hoverCell;
-    if ((pos?.row ?? -9) !== (cur?.row ?? -9) || (pos?.col ?? -9) !== (cur?.col ?? -9)) {
-      ui.hoverCell = pos;
-      render();
-    }
-  },
-  onCancel() {
-    endTargeting();
-    render();
-  },
-  onSkip() {
-    if (!busy) battleStep({ type: "skip" });
-  },
-  onNewBattle() {
-    runHandlers.onRestart(); // 전투 화면의 '새 전투' = 런 재시작
-  },
-  onOpenSheet(uid) {
-    ui.sheetUid = uid; // 전투 유닛 프로필(아군/적)
-    render();
-  },
-  onToggleDetail() {
-    ui.sheetDetail = !ui.sheetDetail; // 전역 자세히(피해 분해/스탯 원본 병기)
-    render();
-  },
-  onPause() { pauseOpen = true; render(); },
+// ── 앱 액션(핸들러 간 공유) + 핸들러 생성 ──
+function restart(): void { seed += 1; newRun(seed); }
+function openPause(): void { pauseOpen = true; render(); }
+const ctx: AppCtx = {
+  ui,
+  getRun: () => run,
+  isBusy: () => busy,
+  render, resetUi, endTargeting, battleStep, restart, openPause,
+  toHub: () => shellHandlers.onToHub(),
 };
-
-// ── 런 핸들러 ──
-const runHandlers: RunHandlers = {
-  onNode(id) {
-    if (busy || run.phase !== "map") return;
-    enterNode(run, id);
-    resetUi();
-    render();
-  },
-  onReward(id) {
-    if (busy || run.phase !== "reward") return;
-    chooseReward(run, id);
-    render();
-  },
-  onRestart() {
-    seed += 1;
-    newRun(seed);
-  },
-  onToggleSkill(charId, skillId) {
-    if (busy || run.phase !== "map") return;
-    setActiveSkill(run, charId, skillId);
-    render();
-  },
-  onBuy(offerId) {
-    if (busy || run.phase !== "shop") return;
-    buyShopOffer(run, offerId);
-    render();
-  },
-  onLeaveShop() {
-    if (busy || run.phase !== "shop") return;
-    leaveShop(run);
-    resetUi();
-    render();
-  },
-  onEncounterChoice(choiceId) {
-    if (busy || run.phase !== "encounter") return;
-    chooseEncounterOption(run, choiceId);
-    resetUi();
-    render();
-  },
-  onOpenParty(charId) {
-    if (run.phase === "battle") return; // 비전투면 어디서나 편성
-    ui.partyOpen = true;
-    ui.sheetCharId = charId;
-    render();
-  },
-  onToHub() { shellHandlers.onToHub(); }, // 승패 화면 "집으로"
-  onPause() { pauseOpen = true; render(); }, // 헤더 ⏸
-};
+const battleHandlers = makeBattleHandlers(ctx);
+const runHandlers = makeRunHandlers(ctx);
 
 function newRun(s: number): void {
   seed = s;
