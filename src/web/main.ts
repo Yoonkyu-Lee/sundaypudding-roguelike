@@ -275,6 +275,7 @@ const editor = createEditor({ testRun, rerender: render, toTitle: () => { appSta
 const shellHandlers: ShellHandlers = {
   onStart() { appState = "hub"; render(); },
   onEditor() { appState = "editor"; render(); },
+  onSelectRun(id) { if (runActive) return; hub.setRun(id); render(); }, // 비전투에서만 런 전환
   onNewRun() { newRun(seed + 1); },
   onResumeRun() { appState = "run"; pauseOpen = false; render(); },
   onAbandonRun() { runActive = false; clearSave(); render(); },
