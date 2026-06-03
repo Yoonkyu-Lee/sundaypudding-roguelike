@@ -147,7 +147,8 @@ registerLayer("combat", { schema:[{roster:'rosterGrid'},{formationBonus:'bool'},
 - **✅ E4-(부분) (완료)**: 노드 에디터를 **3슬롯**(진입 onEnter · 코어 core · 완료 onResolve)으로. onEnter/onResolve = 데코 전용 카탈로그(`DECO_KINDS`), core = 전체. 레이어 핸들러를 `slot` 인지로 일반화(`selLayerRef={slot,idx}`, `slotArray` 헬퍼). 진입 연출·도착 보상 작곡 완성.
 - **✅ E4-나머지 (완료)**: **트리거 룰 에디터** — 노드 에디터에 `rules[]` 섹션(추가/삭제/선택) + when(트리거 select+파라미터)·if(조건 리스트)·then(효과 리스트, showDialog 간판) 폼. 큐레이트 카탈로그(`ruleSchema.ts` WHEN/COND/EFFECT 스펙) + 스키마 구동 폼(`ruleEditor.ts`), 룰 요약=`describeRule` 재사용. **이제 JSON 없이 전투 중 대사·개입 저작.** 컨트롤러 룰 CRUD 11핸들러.
   - 범위 밖: 전 트리거/조건/효과 망라(subset만, 스펙 행 추가로 확장)·룰 순서 재배치.
-- **✅ 룰=combat 레이어 소유 (완료)**: 트리거 룰을 노드 전역(`MapNode.rules`) → **combat `InteractiveLayer.rules`**로 이전. `startCombat`이 `L.rules` 주입 → **페이즈/웨이브별 다른 대사**(2페이즈 각성 등). 노드 에디터 룰 섹션은 **선택 combat 레이어 폼 안**에 표시(레이어 소유 명확). `MapNode.rules` 폐기. yain f1_boss 룰을 그 combat 레이어로 이전.
+- **✅ 룰=combat 레이어 소유 (완료)**: 트리거 룰을 노드 전역 → **combat `InteractiveLayer.rules`**로. `startCombat`이 `L.rules` 주입 → 페이즈/웨이브별 대사. 룰 섹션은 선택 combat 레이어 폼 안.
+- **✅ 룰 소유자(개체 기준) (완료)**: `NodeRule = PassiveRule & { owner?: {side, charId} }`. `createBattle`이 **룰마다 owner(side+charId) 유닛에 주입** → **`self`=그 개체**(owner 없으면 첫 적=앰비언트, 소유자 부재면 스킵). 룰 에디터에 **화자/기준 드롭다운**(전장 적+아군). "self가 누구냐" 모호함 해소. yain f1_boss 룰에 소유자(심영=enemy, 김두한=ally) 부여.
 
 ### 권장 순서
 A(골격) → B(combat+데코, 즉시 가치: 엘리트 차별화·보물 노드) → E1~E2(GUI 기반, B와 평행) → C(스토리텔링) → D(event) → E3~E4(리치 폼). 각 단계 종료 시 `docs/GAME-DESIGN.md`(노드 모델)·`CODE-MAP` 승격.

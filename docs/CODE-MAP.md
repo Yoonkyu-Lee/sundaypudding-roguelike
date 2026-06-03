@@ -32,7 +32,7 @@ src/core/
                     AreaShape·SkillTarget·Skill(+active/passives)·FormationLayout·Character(+traitIds/aiProfileId)
     passives.ts     특성/패시브 룰 스키마: PassiveRule·Trigger·Condition·Effect·TraitDef·EffTarget·StatKey
     ai.ts           AI 행동결정 정책 스키마: AiProfile·AiRule·AiCondition·SkillKindPref·TargetPref·AiWeightKey
-    map.ts          헥스 인접 무방향그래프 맵 스키마: RunDef·FloorDef·MapNode(q,r·toFloor?·roster?·label?·**layers?·core?**)·MapEdge. **combat 레이어가 rules?(트리거 룰) 소유 — 페이즈/웨이브별 대사**. **DecoratorLayer(gold/heal/grantStatus/text)·InteractiveLayer(combat[roster/rosterPreset/boss]/reward/shop/event)·Layer·NodeLayers(onEnter/onResolve)**. NodeType는 content(+clear). yain 전 노드=core 이전 완료(type=표시용 잔존)
+    map.ts          헥스 인접 무방향그래프 맵 스키마: RunDef·FloorDef·MapNode(q,r·toFloor?·roster?·label?·**layers?·core?**)·MapEdge. **combat 레이어가 rules?(NodeRule=PassiveRule+owner) 소유 — 페이즈별 대사, owner(side+charId)로 self=배치 개체 지정**. **DecoratorLayer(gold/heal/grantStatus/text)·InteractiveLayer(combat[roster/rosterPreset/boss]/reward/shop/event)·Layer·NodeLayers(onEnter/onResolve)**. NodeType는 content(+clear). yain 전 노드=core 이전 완료(type=표시용 잔존)
     runtime.ts      엔진 상태: StatusInstance·Unit·PartyMemberState·TurnKind·QueueEntry·
                     Action·Phase·GameEvent·GameState·UnitView·LegalAction·Observation
   engine.ts         ▸배럴(파사드): export * from combat/index

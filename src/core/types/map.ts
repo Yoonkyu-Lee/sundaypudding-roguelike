@@ -16,9 +16,13 @@ export type DecoratorLayer =
   | { kind: "heal"; pct: number; revive?: boolean } // 파티 회복(maxHp 비율, revive=전투불능 부활)
   | { kind: "grantStatus"; charId?: string; statusId: string; stacks: number; duration: number } // 다음 전투 계승(charId 없으면 전원)
   | { kind: "text"; text: string }; // 로그/대사(컷신 뷰 강화는 Phase C)
+/** 노드 트리거 룰 = PassiveRule + 소유자(화자/기준). owner의 side+charId 유닛에 주입 → self=그 개체.
+ *  owner 없으면 첫 적(앰비언트/내레이터). 소유자 부재(미편성 등)면 그 룰 스킵. (Phase C/E4 — 개체 기준) */
+export type NodeRule = PassiveRule & { owner?: { side: "ally" | "enemy"; charId: string } };
+
 /** 상호작용 레이어 — 완료까지 블록(phase 전환). combat·reward(B). shop/event는 후속. */
 export type InteractiveLayer =
-  | { kind: "combat"; roster?: { charId: string; pos: Pos }[]; boss?: boolean; rules?: PassiveRule[] } // 적=인라인 roster(노드 소유, 단일 소스). 비면 엔진 fallback=NODE_ROSTERS.battle. 보스=진형보너스. rules=이 전투의 트리거 룰(Phase C/E4)
+  | { kind: "combat"; roster?: { charId: string; pos: Pos }[]; boss?: boolean; rules?: NodeRule[] } // 적=인라인 roster(노드 소유, 단일 소스). 비면 엔진 fallback=NODE_ROSTERS.battle. 보스=진형보너스. rules=이 전투의 트리거 룰(Phase C/E4)
   | { kind: "reward" } // 보상 3택1(genRewards) — 플레이어 선택까지 블록. treasure 노드 = core:[reward]
   | { kind: "shop" } // 상점 진열(generateShop) — leaveShop까지 블록. 스타터는 DI 등록(run.ts)
   | { kind: "event" }; // 인카운터 추첨(랜덤) — chooseEncounterOption까지 블록. 노드별 저작은 Phase D

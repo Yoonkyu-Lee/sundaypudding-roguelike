@@ -1,6 +1,6 @@
 // 전투 상태 생성 — 인코딩(Encounter) → GameState. 유닛 빌드, 포메이션 배정.
 import { Rng } from "../rng.ts";
-import type { Equipped, GameState, PassiveRule, Pos, Unit } from "../types.ts";
+import type { Equipped, GameState, NodeRule, Pos, Unit } from "../types.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { ITEMS } from "../../data/items.ts";
 import { STANDARD_FORMATION } from "../../data/formations.ts";
@@ -72,7 +72,7 @@ export function createBattle(
   seed: number,
   enc: Encounter,
   allyStates?: { charId: string; pos: Pos; hp: number; maxHp: number; skillDmgBonus: Record<string, number>; activeSkillIds?: string[]; equipped?: Equipped; startStatuses?: { statusId: string; stacks: number; duration: number }[] }[],
-  nodeRules?: PassiveRule[], // Phase C: 노드 트리거 룰 — 한 유닛(첫 적)에 주입해 전투 중 발동(대사 등)
+  nodeRules?: NodeRule[], // Phase C: 노드 트리거 룰 — 룰별 소유자(owner) 유닛에 주입(self=그 개체), owner 없으면 첫 적
 ): GameState {
   const allyUnits = allyStates
     ? allyStates.map((m, i) =>
@@ -93,8 +93,14 @@ export function createBattle(
     allyFormation: enc.allyFormation ?? STANDARD_FORMATION,
     enemyFormation: enc.boss ? (enc.enemyFormation ?? STANDARD_FORMATION) : null,
   };
-  // 노드 트리거 룰 주입 — 첫 적 유닛에 부착(없으면 첫 유닛). showDialog는 owner 무관, battleStart 전 주입 필수.
-  if (nodeRules?.length) { const owner = units.find((u) => u.side === "enemy") ?? units[0]; if (owner) owner.rules.push(...compileInline(nodeRules)); }
+  // 노드 트리거 룰 주입 — 룰마다 owner(side+charId) 유닛에, 없으면 첫 적. self=그 개체. battleStart 전 주입 필수.
+  if (nodeRules?.length) {
+    const firstEnemy = units.find((u) => u.side === "enemy") ?? units[0];
+    for (const nr of nodeRules) {
+      const owner = nr.owner ? units.find((u) => u.side === nr.owner!.side && u.charId === nr.owner!.charId) : firstEnemy;
+      if (owner) owner.rules.push(...compileInline([nr])); // 소유자 부재(미편성 등)면 스킵
+    }
+  }
   fireTrigger(state, { on: "battleStart" });
   startRound(state);
   return state;

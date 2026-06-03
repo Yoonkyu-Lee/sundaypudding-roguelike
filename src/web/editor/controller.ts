@@ -4,6 +4,7 @@ import type { Condition, Effect, FloorDef, Layer, MapNode, RunDef, Trigger } fro
 import { listRuns, getRun, saveDraft, deleteDraft, blankRun, exportRun, isDraft, cloneAsDraft, saveToRepo } from "./store.ts";
 import { addNode, moveNode, moveNodes, deleteNode, toggleEdge, adjacentPairs, addFloor, deleteFloor, moveFloor, setNodeLabel, setNodeRoster } from "./ops.ts";
 import { CHARACTERS } from "../../data/characters.ts";
+import { NODE_ROSTERS } from "../../data/encounters.ts";
 
 const edgeKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 import { CATALOG_TYPES, TYPE_ICON, TYPE_NAME } from "../nodeMeta.ts";
@@ -104,6 +105,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       rules: (() => { const lay = layerAt(); return lay && lay.kind === "combat" ? lay.rules ?? [] : []; })(), // 선택 combat 레이어의 룰
       selRule,
       allies: draft!.roster.map((m) => ({ charId: m.charId, pos: { ...m.pos } })), // 전장 아군(읽기전용)
+      combatRoster: (() => { const lay = layerAt(); if (lay?.kind !== "combat") return []; return lay.roster && lay.roster.length ? lay.roster : (NODE_ROSTERS.battle as { charId: string; pos: { row: number; col: number } }[]); })(), // 룰 소유자 후보(적)
     };
   }
 
@@ -180,6 +182,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       onAddEffect(kind) { const r = editRule(); const s = EFFECT_SPECS[kind]; if (!r || !s) return; r.then.push(s.make() as Effect); save(); deps.rerender(); },
       onRemoveEffect(ei) { const r = editRule(); if (!r) return; r.then.splice(ei, 1); save(); deps.rerender(); },
       onSetEffectField(ei, key, value) { const r = editRule(); if (!r?.then?.[ei]) return; (r.then[ei] as Record<string, unknown>)[key] = value; save(); deps.rerender(); },
+      onSetRuleOwner(owner) { const r = editRule() as { owner?: { side: "ally" | "enemy"; charId: string } } | null; if (!r) return; if (owner) r.owner = owner; else delete r.owner; save(); deps.rerender(); },
     },
   };
 }

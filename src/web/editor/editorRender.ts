@@ -42,9 +42,10 @@ export interface NodeEditData {
   core: import("../../core/types.ts").Layer[];
   onResolve: import("../../core/types.ts").Layer[];
   sel: { slot: LayerSlot; idx: number } | null; // 선택 레이어
-  rules: import("../../core/types.ts").PassiveRule[]; // 노드 트리거 룰(Phase C/E4)
+  rules: import("../../core/types.ts").NodeRule[]; // 노드 트리거 룰(Phase C/E4) — owner 포함
   selRule: number | null; // 편집 중 룰 인덱스
   allies: RosterEntry[]; // RunDef.roster — 전장 아군(읽기전용 표시·룰 소유자 후보)
+  combatRoster: RosterEntry[]; // 선택 combat 레이어의 적(룰 소유자 후보)
 }
 export type EditorData = ListData | EditData | NodeEditData;
 
@@ -99,6 +100,7 @@ export interface EditorHandlers {
   onAddEffect: (kind: string) => void;
   onRemoveEffect: (ei: number) => void;
   onSetEffectField: (ei: number, key: string, value: string | number | boolean) => void;
+  onSetRuleOwner: (owner: { side: "ally" | "enemy"; charId: string } | null) => void; // 룰 소유자(화자/기준) 지정
 }
 
 function card(r: EditorRunCard): string {

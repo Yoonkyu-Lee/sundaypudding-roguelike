@@ -2,6 +2,7 @@
 import { esc } from "../battle/shared.ts";
 import { describeRule } from "../battle/passiveDesc.ts";
 import { STATUS_DEFS } from "../../data/statuses.ts";
+import { CHARACTERS } from "../../data/characters.ts";
 import type { NodeEditData, EditorHandlers } from "./editorRender.ts";
 import type { FieldSpec } from "./layerSchema.ts";
 import { WHEN_SPECS, WHEN_KINDS, COND_SPECS, COND_KINDS, EFFECT_SPECS, EFFECT_KINDS, whenKindOf, condKindOf, effectKindOf } from "./ruleSchema.ts";
@@ -26,12 +27,19 @@ export function ruleEditorHtml(d: NodeEditData): string {
   const r = d.selRule !== null ? d.rules[d.selRule] : null;
   let edit = `<div class="hint">왼쪽에서 룰을 선택하세요.</div>`;
   if (r) {
+    const nameOf = (id: string) => CHARACTERS[id]?.name ?? id;
+    const ownerVal = r.owner ? `${r.owner.side}:${r.owner.charId}` : "";
+    const uniq = (a: string[]) => [...new Set(a)];
+    const ownerOpts = uniq(d.combatRoster.map((e) => e.charId)).map((id) => `<option value="enemy:${id}"${ownerVal === `enemy:${id}` ? " selected" : ""}>적 ${esc(nameOf(id))}</option>`).join("")
+      + uniq(d.allies.map((e) => e.charId)).map((id) => `<option value="ally:${id}"${ownerVal === `ally:${id}` ? " selected" : ""}>아군 ${esc(nameOf(id))}</option>`).join("");
+    const ownerSel = `<div class="re-sec"><b>화자/기준</b> <select id="re-owner"><option value=""${ownerVal ? "" : " selected"}>앰비언트(첫 적)</option>${ownerOpts}</select> <span class="hint">self = 이 개체</span></div>`;
     const wkind = whenKindOf(r.when);
     const whenSel = `<select id="re-when">${WHEN_KINDS.map((k) => `<option value="${k}"${k === wkind ? " selected" : ""}>${esc(WHEN_SPECS[k].label)}</option>`).join("")}</select>`;
     const whenFields = specForm(WHEN_SPECS[wkind]?.fields ?? [], r.when as unknown as Record<string, unknown>, (k) => `data-whenf="${k}"`);
     const conds = (r.if ?? []).map((c, ci) => `<li class="re-row"><span class="re-kind">${esc(COND_SPECS[condKindOf(c)]?.label ?? condKindOf(c))}</span>${specForm(COND_SPECS[condKindOf(c)]?.fields ?? [], c as unknown as Record<string, unknown>, (k) => `data-cf="${ci}" data-key="${k}"`)}<button class="ne-x" data-crm="${ci}">✕</button></li>`).join("");
     const effs = r.then.map((e, ei) => `<li class="re-row"><span class="re-kind">${esc(EFFECT_SPECS[effectKindOf(e)]?.label ?? effectKindOf(e))}</span>${specForm(EFFECT_SPECS[effectKindOf(e)]?.fields ?? [], e as unknown as Record<string, unknown>, (k) => `data-ef="${ei}" data-key="${k}"`)}<button class="ne-x" data-erm="${ei}">✕</button></li>`).join("");
     edit = `<div class="re-edit">
+      ${ownerSel}
       <div class="re-sec"><b>WHEN</b> ${whenSel} ${whenFields}</div>
       <div class="re-sec"><b>IF</b> (모두 참) <ul class="re-list">${conds}</ul>
         <select id="re-addcond">${COND_KINDS.map((k) => `<option value="${k}">${esc(COND_SPECS[k].label)}</option>`).join("")}</select><button class="ed-btn ghost" id="re-addcond-b">＋ 조건</button></div>
@@ -51,6 +59,7 @@ export function wireRuleEditor(app: HTMLElement, h: EditorHandlers): void {
   app.querySelector("#re-addrule")?.addEventListener("click", () => h.onAddRule());
   app.querySelectorAll<HTMLElement>(".ne-layer[data-rule]").forEach((el) => el.addEventListener("click", (e) => { if ((e.target as HTMLElement).closest("button")) return; h.onSelectRule(Number(el.dataset.rule)); }));
   app.querySelectorAll<HTMLElement>("[data-rrm]").forEach((b) => b.addEventListener("click", () => h.onRemoveRule(Number(b.dataset.rrm))));
+  app.querySelector<HTMLSelectElement>("#re-owner")?.addEventListener("change", (e) => { const v = (e.target as HTMLSelectElement).value; if (!v) { h.onSetRuleOwner(null); return; } const [side, charId] = v.split(":"); h.onSetRuleOwner({ side: side as "ally" | "enemy", charId }); });
   app.querySelector<HTMLSelectElement>("#re-when")?.addEventListener("change", (e) => h.onSetWhen((e.target as HTMLSelectElement).value));
   app.querySelectorAll<HTMLInputElement | HTMLSelectElement>("[data-whenf]").forEach((el) => el.addEventListener("change", () => h.onSetWhenField(el.dataset.whenf!, val(el))));
   app.querySelector("#re-addcond-b")?.addEventListener("click", () => h.onAddCond(app.querySelector<HTMLSelectElement>("#re-addcond")!.value));

@@ -28,9 +28,9 @@
           },
           "core": [
             { "kind": "combat", "boss": true, "roster": [{ "charId": "shim", "pos": { "row": 1, "col": 0 } }, { "charId": "chunho", "pos": { "row": 2, "col": 0 } }, { "charId": "jung", "pos": { "row": 1, "col": 2 } }, { "charId": "doctor", "pos": { "row": 2, "col": 2 } }], "rules": [
-              { "when": { "on": "battleStart" }, "then": [{ "do": "showDialog", "speaker": "심영", "text": "감히 우익 나부랭이가 종로를 넘봐?" }] },
-              { "when": { "on": "roundStart" }, "if": [{ "c": "round", "cmp": "eq", "v": 2 }], "maxPerBattle": 1, "then": [{ "do": "showDialog", "speaker": "김두한", "text": "주먹 앞에 좌우가 어딨어. 덤벼!" }] },
-              { "when": { "on": "roundStart" }, "if": [{ "c": "hpPct", "who": "self", "cmp": "lte", "v": 40 }], "maxPerBattle": 1, "then": [{ "do": "showDialog", "speaker": "심영", "text": "크윽… 이게 김두한의 주먹인가…" }] }
+              { "owner": { "side": "enemy", "charId": "shim" }, "when": { "on": "battleStart" }, "then": [{ "do": "showDialog", "speaker": "심영", "text": "감히 우익 나부랭이가 종로를 넘봐?" }] },
+              { "owner": { "side": "ally", "charId": "kim" }, "when": { "on": "roundStart" }, "if": [{ "c": "round", "cmp": "eq", "v": 2 }], "maxPerBattle": 1, "then": [{ "do": "showDialog", "speaker": "김두한", "text": "주먹 앞에 좌우가 어딨어. 덤벼!" }] },
+              { "owner": { "side": "enemy", "charId": "shim" }, "when": { "on": "roundStart" }, "if": [{ "c": "hpPct", "who": "self", "cmp": "lte", "v": 40 }], "maxPerBattle": 1, "then": [{ "do": "showDialog", "speaker": "심영", "text": "크윽… 이게 김두한의 주먹인가…" }] }
             ] },
             { "kind": "gold", "amount": 24 },
             { "kind": "reward" }

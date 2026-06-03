@@ -161,6 +161,26 @@ test("노드 트리거 룰(Phase C): combat 진입 시 showDialog → battle.log
   assert.ok(dlg && dlg.t === "dialog" && dlg.text === "감히 여기까지…" && dlg.speaker === "적장", "battleStart 룰이 dialog 이벤트 push");
 });
 
+test("룰 소유자(개체 기준): owner 지정 유닛에 주입(self=그 개체), 소유자 부재 시 스킵", () => {
+  // 적 2명(thug@e0, jung@e1) + 룰 owner=jung → jung 유닛에만 주입(첫 적 thug 아님)
+  const d = coreDef([{ kind: "combat", roster: [{ charId: "thug", pos: { row: 1, col: 0 } }, { charId: "jung", pos: { row: 0, col: 0 } }],
+    rules: [{ owner: { side: "enemy", charId: "jung" }, when: { on: "battleStart" }, then: [{ do: "showDialog", text: "정진영 등장" }] }] }]);
+  const run = createRun(1, d.roster, d);
+  enterNode(run, "b");
+  const jung = run.battle!.units.find((u) => u.charId === "jung")!;
+  const thug = run.battle!.units.find((u) => u.charId === "thug")!;
+  assert.equal(jung.rules.some((cr) => cr.via.kind === "node"), true, "소유자(jung)에 노드 룰 주입");
+  assert.equal(thug.rules.some((cr) => cr.via.kind === "node"), false, "첫 적(thug)엔 주입 안 됨");
+  assert.ok(run.battle!.log.some((e) => e.t === "dialog" && e.text === "정진영 등장"));
+
+  // 소유자 부재(파티에 없는 charId)면 그 룰 스킵 — 에러 없이
+  const d2 = coreDef([{ kind: "combat", roster: [{ charId: "thug", pos: { row: 1, col: 0 } }],
+    rules: [{ owner: { side: "ally", charId: "doctor" }, when: { on: "battleStart" }, then: [{ do: "showDialog", text: "없는 화자" }] }] }]);
+  const run2 = createRun(2, d2.roster, d2);
+  enterNode(run2, "b");
+  assert.equal(run2.battle!.log.some((e) => e.t === "dialog"), false, "소유자 부재 → 룰 스킵");
+});
+
 test("shop 레이어(DI): core:[shop] 진입 → 상점 블록 → leaveShop이 advanceCore로 복귀", () => {
   const run = createRun(4, coreDef([{ kind: "shop" }]).roster, coreDef([{ kind: "shop" }]));
   enterNode(run, "b");
