@@ -120,16 +120,18 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
         ${hasDeletable ? `<button class="ed-btn ghost" id="ed-delnode">🗑 삭제 (Del)</button>` : " (입장 노드 — 삭제 불가)"}</div>`;
   const errs = d.valid ? `<div class="ed-ok">✓ 유효한 맵</div>` : `<div class="ed-bad">✗ ${d.errors.map(esc).join("<br>")}</div>`;
 
+  const vpStyle = d.splitH ? ` style="height:${d.splitH}px"` : "";
   app.innerHTML = `<div class="editor edit-mode">
-    <header><h1>🗺 ${esc(d.name)} <span class="dim">— ${esc(d.floorName)}</span></h1>
+    <header><h1>🗺 <input class="ed-title" id="ed-runname" value="${esc(d.name)}" aria-label="런 제목" maxlength="40"> <span class="dim">—</span> <input class="ed-title floor" id="ed-floorname" value="${esc(d.floorName)}" aria-label="현재 층 제목" maxlength="30"></h1>
       <div><button class="ed-btn"${d.valid ? "" : " disabled"} id="ed-test">▶ 테스트플레이</button><button class="ed-btn ghost" id="ed-saverepo">💾 repo에 저장</button><button class="hub-link" id="ed-back">← 목록</button></div></header>
     <div class="ed-edit">
       <div class="ed-left">
-        <div class="ed-viewport">
+        <div class="ed-viewport"${vpStyle}>
           <div class="hexfield" id="ed-field" style="width:${FW}px;height:${FH}px">${gridSvg}${nodesSvg}${typeSvg}${nodeOverlays}${wallsSvg}${selSvg}</div>
           <div class="ed-zoom"><button id="ed-zin" aria-label="확대">＋</button><button id="ed-zout" aria-label="축소">－</button><button id="ed-zreset" aria-label="리셋">⤢</button></div>
           <div class="ed-vphint">휠=줌 · 휠(가운데) 드래그=이동</div>
         </div>
+        <div class="ed-vsplit" id="ed-vsplit" role="separator" aria-label="영역 크기 조절" title="드래그하여 위/아래 영역 크기 조절"></div>
         <div class="ed-floors"><div class="ed-floors-h">층 그래프 <span class="hint">박스=층, 화살표=클리어의 다음 층. 박스 클릭=편집</span></div>${floorGraph(d)}</div>
       </div>
       <aside class="ed-side">
@@ -143,6 +145,8 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   app.querySelector("#ed-back")!.addEventListener("click", () => h.onBack());
   app.querySelector("#ed-test")!.addEventListener("click", () => h.onTestCurrent());
   app.querySelector("#ed-saverepo")?.addEventListener("click", () => h.onSaveToRepo(d.id));
+  app.querySelector<HTMLInputElement>("#ed-runname")?.addEventListener("change", (e) => h.onSetRunName((e.target as HTMLInputElement).value));
+  app.querySelector<HTMLInputElement>("#ed-floorname")?.addEventListener("change", (e) => h.onSetFloorName((e.target as HTMLInputElement).value));
   app.querySelector("#ed-delnode")?.addEventListener("click", () => h.onDeleteSel());
   app.querySelector("#ed-addfloor")?.addEventListener("click", () => h.onAddFloor());
   app.querySelectorAll<HTMLElement>(".fg-box[data-floor-idx]").forEach((b) => b.addEventListener("click", () => h.onSelectFloor(Number(b.dataset.floorIdx))));
@@ -222,5 +226,20 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
     app.querySelector("#fg-zin")?.addEventListener("click", () => fgCam.zoomAtCenter(1.2));
     app.querySelector("#fg-zout")?.addEventListener("click", () => fgCam.zoomAtCenter(1 / 1.2));
     app.querySelector("#fg-zreset")?.addEventListener("click", () => fgCam.reset());
+  }
+
+  // ── 뷰포트 사이 스플리터 — 드래그로 노드 맵 높이 조절(층 영역은 잔여 공간 flex-fill). 영속, 재렌더 없음 ──
+  const split = app.querySelector<HTMLElement>("#ed-vsplit");
+  const left = app.querySelector<HTMLElement>(".ed-left");
+  if (split && left) {
+    let dragging = false, startY = 0, startH = 0;
+    split.addEventListener("pointerdown", (e) => { dragging = true; startY = e.clientY; startH = vp.getBoundingClientRect().height; split.setPointerCapture(e.pointerId); e.preventDefault(); });
+    split.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      const max = left.getBoundingClientRect().height - 160; // 층 영역 최소 확보
+      const hpx = Math.max(220, Math.min(max, startH + (e.clientY - startY)));
+      vp.style.height = `${hpx}px`;
+    });
+    split.addEventListener("pointerup", () => { if (dragging) { dragging = false; h.onSplit(Math.round(vp.getBoundingClientRect().height)); } });
   }
 }

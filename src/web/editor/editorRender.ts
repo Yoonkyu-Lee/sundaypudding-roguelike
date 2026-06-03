@@ -29,6 +29,7 @@ export interface EditData {
   chars: { id: string; name: string }[]; // 적 구성 override 후보 캐릭터 목록
   camera: { zoom: number; x: number; y: number }; // 노드 맵 뷰포트 카메라(줌·팬) — 편집 중 보존
   floorCamera: { zoom: number; x: number; y: number }; // 층 그래프 뷰포트 카메라 — 편집 중 보존
+  splitH: number | null; // 노드 맵 뷰포트 높이(px) — 스플리터 조절, null=CSS 기본
 }
 export type EditorData = ListData | EditData;
 
@@ -49,6 +50,9 @@ export interface EditorHandlers {
   onToggleEdge: (a: string, b: string) => void;
   onCamera: (cam: { zoom: number; x: number; y: number }) => void; // 노드 맵 카메라 변경 영속(재렌더 없음)
   onFloorCamera: (cam: { zoom: number; x: number; y: number }) => void; // 층 그래프 카메라 변경 영속(재렌더 없음)
+  onSplit: (px: number) => void; // 뷰포트 분할 높이 영속(재렌더 없음)
+  onSetRunName: (name: string) => void; // 런 제목 편집
+  onSetFloorName: (name: string) => void; // 현재 층 제목 편집
   onDeleteSel: () => void; // 선택 전부 삭제(입장 제외)
   onTestCurrent: () => void;
   // 층 그래프 패널 (E3 + F1)

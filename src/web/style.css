@@ -502,7 +502,19 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 /* 편집 화면 */
 .editor.edit-mode header { gap: 12px; }
 .editor.edit-mode h1 .dim { font-size: 15px; opacity: .6; }
-.ed-edit { display: flex; gap: 16px; align-items: flex-start; }
+.editor.edit-mode h1 { display: flex; align-items: center; gap: 8px; min-width: 0; }
+/* 편집 가능한 제목 — 평소엔 텍스트처럼, 포커스 시 입력 테두리 */
+.ed-title { font: inherit; color: var(--accent); background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 2px 6px; min-width: 60px; }
+.ed-title:hover { border-color: var(--line); }
+.ed-title:focus { outline: none; border-color: var(--accent); background: var(--panel2); }
+.ed-title.floor { color: var(--txt); opacity: .8; font-size: 16px; }
+.ed-edit { display: flex; gap: 16px; align-items: stretch; }
+/* 좌측 = 노드 맵 + 스플리터 + 층 그래프(잔여 flex-fill). 바운드 높이 컬럼 */
+.ed-left { height: calc(100vh - 110px); }
+.ed-left .ed-floors { flex: 1 1 auto; min-height: 140px; display: flex; flex-direction: column; }
+.ed-left .ed-floors .fg-viewport { flex: 1 1 auto; height: auto; }
+.ed-vsplit { flex: none; height: 9px; border-radius: 5px; background: var(--line); cursor: row-resize; }
+.ed-vsplit:hover { background: var(--accent); }
 .ed-canvas { flex: 1; overflow: auto; }
 .ed-side { width: 270px; flex: none; display: flex; flex-direction: column; gap: 14px; }
 .ed-side section h3 { font-size: 13px; color: var(--dim); margin: 0 0 6px; }
@@ -535,7 +547,7 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .ednode-lbl { font-size: 10px; color: var(--dim); }
 .ednode.sel .ednode-lbl { color: var(--accent); }
 /* 고정 맵 뷰포트 + 카메라(줌·팬) */
-.ed-viewport { position: relative; height: 58vh; min-height: 360px; overflow: hidden; background: var(--panel); border-radius: 10px; }
+.ed-viewport { position: relative; flex: none; height: 58vh; min-height: 200px; overflow: hidden; background: var(--panel); border-radius: 10px; }
 .ed-viewport .hexfield { position: absolute; left: 0; top: 0; margin: 0; will-change: transform; }
 .ed-zoom { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 4px; z-index: 10; }
 .ed-zoom button { width: 30px; height: 30px; border: 1px solid var(--line); background: var(--panel2); color: var(--txt); border-radius: 7px; cursor: pointer; font-size: 16px; }
