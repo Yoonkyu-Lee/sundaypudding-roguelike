@@ -7,7 +7,7 @@ import { renderEditView } from "./editView.ts";
 export interface EditorRunCard { id: string; name: string; source: RunSource; floors: number; valid: boolean; }
 export interface ListData { mode: "list"; runs: EditorRunCard[]; }
 
-export interface EditNode { id: string; type: NodeType; q: number; r: number; icon: string; name: string; }
+export interface EditNode { id: string; type: NodeType; q: number; r: number; icon: string; name: string; toFloor?: string; }
 export interface EditData {
   mode: "edit";
   name: string;
@@ -17,8 +17,9 @@ export interface EditData {
   deadNodes: string[];
   entryId: string;
   sel: string[]; // 다중 선택
-  floors: { name: string; valid: boolean }[]; // 층 그래프 패널(선형)
+  floors: { id: string; name: string; valid: boolean }[]; // 층 패널
   floorIdx: number;
+  entryFloorId: string; // 입장 층(★)
   nodes: EditNode[];
   edges: { a: string; b: string }[]; // 연결된 인접쌍
   walls: { a: string; b: string }[]; // 인접·미연결 = 세워진 벽
@@ -44,11 +45,13 @@ export interface EditorHandlers {
   onCamera: (cam: { zoom: number; x: number; y: number }) => void; // 카메라 변경 영속(재렌더 없음)
   onDeleteSel: () => void; // 선택 전부 삭제(입장 제외)
   onTestCurrent: () => void;
-  // 층 그래프 패널 (E3)
+  // 층 그래프 패널 (E3 + F1)
   onAddFloor: () => void;
   onSelectFloor: (idx: number) => void;
   onDeleteFloor: (idx: number) => void;
   onMoveFloor: (idx: number, dir: number) => void;
+  onSetEntryFloor: (id: string) => void; // 입장 층 지정 (F1)
+  onSetNodeToFloor: (id: string, toFloor: string | null) => void; // clear 노드 다음 층 (F1)
 }
 
 function card(r: EditorRunCard): string {

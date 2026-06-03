@@ -94,9 +94,33 @@ test("validateFloor: clear 노드 없으면 실패", () => {
   assert.ok(v.errors.some((e) => e.includes("clear")));
 });
 
-test("validateRun: 빈 층 실패 / 다층 유효", () => {
-  const empty: RunDef = { id: "e", name: "빈", useMastery: false, roster: [], floors: [] };
-  assert.equal(validateRun(empty).ok, false);
-  const ok: RunDef = { id: "r", name: "런", useMastery: false, roster: [], floors: [branchFloor(), branchFloor()] };
-  assert.equal(validateRun(ok).ok, true);
+// 층-그래프(F1): fa의 clear→fb, fb는 승리 클리어(toFloor 없음)
+function fa(): FloorDef {
+  return { id: "fa", entryNodeId: "e", nodes: [{ id: "e", type: "start", q: 0, r: 0 }, { id: "c", type: "clear", q: 1, r: 0, toFloor: "fb" }], edges: [{ from: "e", to: "c" }] };
+}
+function fb(): FloorDef {
+  return { id: "fb", entryNodeId: "e2", nodes: [{ id: "e2", type: "start", q: 0, r: 0 }, { id: "c2", type: "clear", q: 1, r: 0 }], edges: [{ from: "e2", to: "c2" }] };
+}
+
+test("validateRun: 빈 런 실패 / 층-그래프 연결+승리 클리어면 유효 (F1)", () => {
+  assert.equal(validateRun({ id: "e", name: "빈", useMastery: false, entryFloorId: "x", roster: [], floors: [] }).ok, false);
+  const good: RunDef = { id: "r", name: "런", useMastery: false, entryFloorId: "fa", roster: [], floors: [fa(), fb()] };
+  const v = validateRun(good);
+  assert.equal(v.ok, true, v.errors.join("; "));
+});
+
+test("validateRun: 도달 불가 층 거부 (F1)", () => {
+  const f0 = fa(); f0.nodes = f0.nodes.map((n) => (n.id === "c" ? { ...n, toFloor: undefined } : n)); // c=승리 → fb 고립
+  assert.equal(validateRun({ id: "r", name: "런", useMastery: false, entryFloorId: "fa", roster: [], floors: [f0, fb()] }).ok, false);
+});
+
+test("validateRun: 승리 클리어 없음(순환) 거부 (F1)", () => {
+  const x1: FloorDef = { id: "x1", entryNodeId: "a", nodes: [{ id: "a", type: "start", q: 0, r: 0 }, { id: "k", type: "clear", q: 1, r: 0, toFloor: "x2" }], edges: [{ from: "a", to: "k" }] };
+  const x2: FloorDef = { id: "x2", entryNodeId: "b", nodes: [{ id: "b", type: "start", q: 0, r: 0 }, { id: "k2", type: "clear", q: 1, r: 0, toFloor: "x1" }], edges: [{ from: "b", to: "k2" }] };
+  assert.equal(validateRun({ id: "c", name: "순환", useMastery: false, entryFloorId: "x1", roster: [], floors: [x1, x2] }).ok, false);
+});
+
+test("validateRun: 존재하지 않는 toFloor 거부 (F1)", () => {
+  const bad: FloorDef = { id: "fa", entryNodeId: "e", nodes: [{ id: "e", type: "start", q: 0, r: 0 }, { id: "c", type: "clear", q: 1, r: 0, toFloor: "nope" }], edges: [{ from: "e", to: "c" }] };
+  assert.equal(validateRun({ id: "r", name: "런", useMastery: false, entryFloorId: "fa", roster: [], floors: [bad] }).ok, false);
 });

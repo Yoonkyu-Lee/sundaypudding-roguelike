@@ -16,7 +16,8 @@ import { generateShop } from "./shop.ts";
 
 export function createRun(seed: number, roster: { charId: string; pos: Pos }[] = DEFAULT_RUN.roster, runDef: RunDef = DEFAULT_RUN, opts: { mastery?: Record<string, number>; useMastery?: boolean } = {}): RunState {
   const rng = new Rng(seed ^ 0x9e3779b9);
-  const f0 = runDef.floors[0];
+  const entryIdx = Math.max(0, runDef.floors.findIndex((f) => f.id === runDef.entryFloorId));
+  const f0 = runDef.floors[entryIdx];
   const party: PartyMemberState[] = roster.map((m) => {
     const c = CHARACTERS[m.charId];
     const owned = c.skillIds.slice(0, 4); // 시작 보유 = learnset 앞 4 (나머지는 학습기, 보상으로 습득)
@@ -26,7 +27,7 @@ export function createRun(seed: number, roster: { charId: string; pos: Pos }[] =
     rng,
     seed,
     runDef,
-    floor: 0,
+    floor: entryIdx,
     useMastery: opts.useMastery ?? false,
     party,
     visited: [f0.entryNodeId],
@@ -74,11 +75,11 @@ export function enterNode(run: RunState, nodeId: string): void {
   run.activeNodeId = nodeId;
   fireRunTrigger(run, { on: "nodeEnter", nodeType: n.type });
 
-  // 클리어(목표) 노드: 전투 없이 진입 = 층 종료
+  // 클리어(목표) 노드: 전투 없이 진입 = 층 종료(toFloor로 분기)
   if (n.type === "clear") {
     if (!run.visited.includes(nodeId)) run.visited.push(nodeId);
     run.log.push("클리어 노드 도달 — 층 완료");
-    completeFloor(run);
+    completeFloor(run, n);
     return;
   }
 
@@ -119,16 +120,17 @@ export function enterNode(run: RunState, nodeId: string): void {
   completeNode(run, nodeId);
 }
 
-/** 층 완료(클리어 노드 진입): 최종 층이면 게임 클리어, 아니면 다음 층 로드 + 부활·50% 회복. 결정론. */
-function completeFloor(run: RunState): void {
+/** 층 완료(클리어 노드 진입): toFloor 있으면 그 층으로 분기(부활·50% 회복), 없으면 게임 클리어. 결정론. */
+function completeFloor(run: RunState, clear: { toFloor?: string }): void {
   fireRunTrigger(run, { on: "nodeClear", nodeType: "clear" });
-  if (run.floor >= run.runDef.floors.length - 1) {
+  const nextIdx = clear.toFloor ? run.runDef.floors.findIndex((f) => f.id === clear.toFloor) : -1;
+  if (nextIdx < 0) { // toFloor 없음(승리) 또는 미존재 id → 종료
     run.phase = "won";
     run.activeNodeId = null;
-    run.log.push("최종 층 클리어 — 게임 클리어!");
+    run.log.push("클리어 노드(종료) 도달 — 게임 클리어!");
     return;
   }
-  run.floor += 1;
+  run.floor = nextIdx;
   const f = curFloor(run);
   run.visited = [f.entryNodeId];
   run.reachable = liveReachable(f, f.entryNodeId, new Set([f.entryNodeId]));

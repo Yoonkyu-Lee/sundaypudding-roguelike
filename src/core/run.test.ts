@@ -64,17 +64,17 @@ test("런 완주: 클리어 노드 도달로 층 완료 → 3개 층 돌파 후 
 test("클리어 노드 진입 = 층 종료(전투 없음). 갈림길: 어느 클리어든 완료. 최종층 클리어 = won", () => {
   // entry → bossA → clearA  /  entry → bossB → clearB (보스 2, 클리어 2)
   const twoFloors: RunDef = {
-    id: "t", name: "t", useMastery: false,
+    id: "t", name: "t", useMastery: false, entryFloorId: "fa",
     roster: [{ charId: "kim", pos: { row: 1, col: 0 } }],
     floors: [
       { id: "fa", entryNodeId: "e", nodes: [
         { id: "e", type: "start", q: 0, r: 0 },
-        { id: "cA", type: "clear", q: 1, r: 0 },
-        { id: "cB", type: "clear", q: 0, r: 1 },
+        { id: "cA", type: "clear", q: 1, r: 0, toFloor: "fb" },
+        { id: "cB", type: "clear", q: 0, r: 1, toFloor: "fb" }, // 분기 둘 다 fb
       ], edges: [{ from: "e", to: "cA" }, { from: "e", to: "cB" }] },
       { id: "fb", entryNodeId: "e2", nodes: [
         { id: "e2", type: "start", q: 0, r: 0 },
-        { id: "c2", type: "clear", q: 1, r: 0 },
+        { id: "c2", type: "clear", q: 1, r: 0 }, // toFloor 없음 = 승리
       ], edges: [{ from: "e2", to: "c2" }] },
     ],
   };

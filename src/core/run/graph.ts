@@ -94,11 +94,36 @@ export interface RunValidation {
   floors: FloorValidation[];
 }
 
-/** 런 검증: 층≥1, 각 층 유효. (선형 체인이라 최종 층 도달성은 자명 — 분기는 후속) */
+/** 런 검증: 각 층 유효 + 층-그래프(clear.toFloor) 도달성 — 입장 층에서 전 층 도달 ∧ 승리 클리어(toFloor 없는) ≥1. */
 export function validateRun(runDef: RunDef): RunValidation {
   const errors: string[] = [];
-  if (runDef.floors.length === 0) errors.push("층이 하나도 없음");
   const floors = runDef.floors.map((f) => validateFloor(f));
   floors.forEach((v, i) => { if (!v.ok) errors.push(`층 ${i + 1}(${runDef.floors[i].id}): ${v.errors.join("; ")}`); });
+  if (runDef.floors.length === 0) { errors.push("층이 하나도 없음"); return { ok: false, errors, floors }; }
+
+  const byId = new Map(runDef.floors.map((f) => [f.id, f]));
+  const hasEntry = byId.has(runDef.entryFloorId);
+  if (!hasEntry) errors.push(`입장 층 없음: ${runDef.entryFloorId}`);
+
+  // clear.toFloor 링크로 입장 층에서 BFS — 도달 층 집합 + toFloor 무결성
+  const reach = new Set<string>();
+  if (hasEntry) {
+    const stack = [runDef.entryFloorId];
+    while (stack.length) {
+      const fid = stack.pop()!;
+      if (reach.has(fid)) continue;
+      reach.add(fid);
+      for (const n of byId.get(fid)!.nodes) {
+        if (n.type !== "clear" || !n.toFloor) continue;
+        if (!byId.has(n.toFloor)) errors.push(`존재하지 않는 다음 층(toFloor): ${n.toFloor}`);
+        else if (!reach.has(n.toFloor)) stack.push(n.toFloor);
+      }
+    }
+    const hasWin = [...reach].some((fid) => byId.get(fid)!.nodes.some((n) => n.type === "clear" && !n.toFloor));
+    if (!hasWin) errors.push("승리(종료) 클리어 노드 없음 — toFloor 없는 clear 1개 이상 필요");
+  }
+  const unreached = runDef.floors.filter((f) => !reach.has(f.id)).map((f) => f.id);
+  if (unreached.length) errors.push(`도달 불가 층: ${unreached.join(", ")}`);
+
   return { ok: errors.length === 0, errors, floors };
 }

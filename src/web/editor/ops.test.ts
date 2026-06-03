@@ -77,7 +77,7 @@ test("adjacentPairs: 무방향 인접쌍 열거(연결 여부 무관)", () => {
 });
 
 test("addFloor/deleteFloor/moveFloor: 선형 층 편집", () => {
-  const draft: RunDef = { id: "d", name: "d", useMastery: false, roster: [], floors: [floor()] };
+  const draft: RunDef = { id: "d", name: "d", useMastery: false, entryFloorId: "f", roster: [], floors: [floor()] };
   addFloor(draft);
   assert.equal(draft.floors.length, 2);
   assert.equal(draft.floors[1].nodes.length, 2); // start+clear 시드

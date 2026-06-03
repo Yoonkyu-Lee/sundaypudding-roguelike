@@ -49,6 +49,7 @@ export function blankRun(): RunDef {
     id,
     name: "새 런",
     useMastery: false,
+    entryFloorId: "f1",
     roster: [
       { charId: "kim", pos: { row: 1, col: 0 } },
       { charId: "shin", pos: { row: 2, col: 0 } },

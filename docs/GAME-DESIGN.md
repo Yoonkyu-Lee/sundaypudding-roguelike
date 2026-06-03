@@ -475,7 +475,7 @@
 
 | 항목 | 결정 | 상태 |
 |---|---|---|
-| 구조 | **다층(multi-layer)**. 층마다 클리어(목표) 노드 ≥1. 층 = **선형 체인**(클리어→다음 층 entry; 분기 층 그래프는 후속) | ✓ |
+| 구조 | **다층(multi-layer)**. 층마다 클리어(목표) 노드 ≥1. 층 = **그래프**(클리어 노드 `toFloor`로 다음 층 연결; 없으면 승리; 여러 클리어=다른 층=**분기**). `entryFloorId`=시작 층 | ✓ |
 | 기본값 | 한 런 = **3층** | ✓ |
 | 층별 노드 수 | 개발하며 결정 | ☐ |
 | **층 수 = parameterizable** | 챌린지 모드(몇 층까지 오르나) + **점수 제도** 가능 | ✓ |
@@ -594,7 +594,7 @@
 - **TurnOrderResolver**: 라운드제(상수/SPD 주사위 서열). `combat/turnOrder.ts`.
 - **특성/패시브 룰 엔진(when/if/then)**: 상시 효과의 디자이너 언어. `PassiveRule = {when:Trigger, if?:Condition[], then:Effect[]}`. **특성**=캐릭터(`data/traits.ts` `TraitDef`+`Character.traitIds`, 항상), **패시브**=스킬 **출전(활성 4)**(`Skill.passives`, `active` 태그로 능동/하이브리드 구분). 전투 훅이 `combat/passives/`의 `fireTrigger`를 인라인 호출(결정론 정렬·재진입 가드). **Trigger**(battleStart/round/turn/everyN/speedRoll/hit/miss/damage/heal/shield/status/move/kill/death/battleEnd…) · **Condition**(hpPct/round/everyN/hasStatus/위치/진영수/chance…) · **Effect**(damage/heal/shield/applyStatus/cleanse/removeStatus/move/grantInterrupt/statMod/modCooldown/modSpeedRoll/rerollSpeed/healByDamage(흡혈)/reflectByDamage(비율반사)/castSkill(액티브 자동시전; **leaf 스킬만**=passives 없는, `validateCastSkill`가 check 게이트서 강제·재귀 방지) · EffTarget other*=자신/대상 제외 광역). 적도 같은 엔진(skillIds passives + traitIds) — 적 특성 콘텐츠 가능. 카탈로그·작성법 = `src/data/README.md`. **모험(run) 스코프**: `run/passives.ts`가 `nodeEnter`/`nodeClear`/`actStart`/`goldGain`/`partyHpChange` 트리거 + `goldDelta`/`healParty`/`grantRunStatus`(계승) 효과 + `nodeTypeIs`/`goldAtLeast` 조건 해석. 전투/모험 같은 `PassiveRule` 스키마 공유.
 - **런 노드 해소**: 전투생성·휴식/상점/인카운터·보상 3택1. `core/run/*`.
-- **맵 그래프(헥스 인접 무방향그래프)**: `RunDef = { floors: FloorDef[] }`(층 선형체인), `FloorDef = { entryNodeId, nodes: MapNode[], edges: MapEdge[] }`, **무방향 변**(맞닿은 헥스끼리만). 엔진 `run/graph.ts`: `hexAdjacent`·`neighborIds`·`liveReachable`(재방문 불가·막힌노드 비활성)·`validateRun`(인접 변·도달성). 클리어 노드 진입=층 종료, 보스=길목. 저작=`data/runs/*.json`(레포 JSON, 에디터 출력). 스키마=`types/map.ts`. (구 `genMap`/`MapGenConfig`/`GameMode` 폐기)
+- **맵 그래프(헥스 인접 무방향그래프 + 층 그래프)**: `RunDef = { entryFloorId, floors: FloorDef[] }`(층 그래프 — clear `toFloor`로 연결, 없으면 승리, 분기 가능), `FloorDef = { entryNodeId, nodes: MapNode[], edges: MapEdge[] }`, **무방향 변**(맞닿은 헥스끼리만). 엔진 `run/graph.ts`: `hexAdjacent`·`neighborIds`·`liveReachable`(재방문 불가·막힌노드 비활성)·`validateRun`(인접 변·도달성). 클리어 노드 진입=층 종료, 보스=길목. 저작=`data/runs/*.json`(레포 JSON, 에디터 출력). 스키마=`types/map.ts`. (구 `genMap`/`MapGenConfig`/`GameMode` 폐기)
 - **AI 행동결정 정책(우선순위 룰)**: "턴이 왔을 때 합법 행동 중 무엇을 고를지"의 디자이너 언어(반응형 패시브와 별개의 *능동* 결정). `AiProfile = { rules: AiRule[] }`, `AiRule = {if?:AiCondition[], prefer?:SkillKindPref, target?:TargetPref, weight?}`. 위→아래 첫 적용가능(조건 참 AND 합법행동 존재) 룰이 결정, 없으면 **공유 그리디 fallback**(도발 우선·최저 HP·최고 명중). **prefer**(damage/heal/shield/applyStatus/cleanse/any) · **target**(lowest/highestHpEnemy·lowestHpAlly·front/backmostEnemy·self·anyEnemy/Ally) · **AiCondition**(selfHpPct·ally/enemyHpPctBelow·self/enemy HasStatus·selfMissingStatus·round·outnumbered·allyCount) · **weight**(backline/frontlineTarget·lowHpTarget·hitChance·critChance, 보조 정렬). 캐릭터가 `aiProfileId`로 참조(없으면 그리디=기존 동작). 결정론(rng 미사용, 동점=인덱스). 스키마=`core/types/ai.ts`, 해석=`ai/profile.ts`, 콘텐츠=`data/ai.ts`. 작성법=`src/data/README.md`.
 
 **프리미티브-갭 결정 프로토콜 (필수·사용자에게 명시):**

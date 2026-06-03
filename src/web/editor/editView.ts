@@ -8,11 +8,13 @@ import { SIZE, W, FW, FH, ccx, ccy, hexPoints, hexEdge, EDGE_DIRS, gridPathStr, 
 const WALL_SW = 3.5; // 벽 선 두께(.ed-wallvis와 일치)
 
 function floorBar(d: EditData): string {
-  const cards = d.floors.map((f, i) =>
-    `<div class="ed-floor${i === d.floorIdx ? " active" : ""}">
-      <button class="ed-fname" data-fsel="${i}">${esc(f.name)}${f.valid ? "" : ' <span class="ed-bad">✗</span>'}</button>
-      <span class="ed-fctl"><button data-fmove="${i}:-1" aria-label="앞으로">◀</button><button data-fmove="${i}:1" aria-label="뒤로">▶</button>${d.floors.length > 1 ? `<button data-fdel="${i}" aria-label="삭제">🗑</button>` : ""}</span>
-    </div>`).join("");
+  const cards = d.floors.map((f, i) => {
+    const isEntry = f.id === d.entryFloorId;
+    return `<div class="ed-floor${i === d.floorIdx ? " active" : ""}${isEntry ? " entry" : ""}">
+      <button class="ed-fname" data-fsel="${i}">${isEntry ? "★ " : ""}${esc(f.name)}${f.valid ? "" : ' <span class="ed-bad">✗</span>'}</button>
+      <span class="ed-fctl">${isEntry ? "" : `<button data-fentry="${f.id}" aria-label="입장 층으로">⌂</button>`}<button data-fmove="${i}:-1" aria-label="앞으로">◀</button><button data-fmove="${i}:1" aria-label="뒤로">▶</button>${d.floors.length > 1 ? `<button data-fdel="${i}" aria-label="삭제">🗑</button>` : ""}</span>
+    </div>`;
+  }).join("");
   return `${cards}<button class="ed-addfloor" id="ed-addfloor">＋ 층</button>`;
 }
 
@@ -67,10 +69,15 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   const catalog = d.catalog.map((c) =>
     `<div class="ed-chip" data-nt="${c.type}"><span class="mico">${c.icon}</span><span>${c.name}</span></div>`).join("");
   const selN = d.sel.length;
+  const one = selN === 1 ? d.nodes.find((n) => n.id === d.sel[0]) : null;
   const hasDeletable = d.sel.some((id) => id !== d.entryId);
+  const floorPick = one && one.type === "clear"
+    ? `<div class="ed-tofloor">다음 층 <select id="ed-tofloor"><option value="">🏁 승리(종료)</option>${d.floors.map((f) => `<option value="${f.id}"${one.toFloor === f.id ? " selected" : ""}>${esc(f.name)}</option>`).join("")}</select></div>`
+    : "";
   const selInfo = selN === 0
     ? `<div class="ed-selinfo hint">카탈로그를 격자에 <b>드래그</b>해 배치 · 노드 <b>드래그</b>=이동 · <b>클릭</b>=선택(<b>Ctrl</b>=다중, <b>Ctrl+A</b>=전체, 빈칸=해제) · 두 칸 사이 변 <b>호버→클릭</b>=벽/연결.</div>`
-    : `<div class="ed-selinfo">${selN === 1 ? `선택: ${esc(d.nodes.find((n) => n.id === d.sel[0])!.name)}` : `${selN}개 선택`}
+    : `<div class="ed-selinfo">${selN === 1 ? `선택: ${esc(one!.name)}` : `${selN}개 선택`}
+        ${floorPick}
         ${hasDeletable ? `<button class="ed-btn ghost" id="ed-delnode">🗑 삭제 (Del)</button>` : " (입장 노드 — 삭제 불가)"}</div>`;
   const errs = d.valid ? `<div class="ed-ok">✓ 유효한 맵</div>` : `<div class="ed-bad">✗ ${d.errors.map(esc).join("<br>")}</div>`;
 
@@ -101,6 +108,8 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   app.querySelectorAll<HTMLElement>("[data-fsel]").forEach((b) => b.addEventListener("click", () => h.onSelectFloor(Number(b.dataset.fsel))));
   app.querySelectorAll<HTMLElement>("[data-fdel]").forEach((b) => b.addEventListener("click", () => h.onDeleteFloor(Number(b.dataset.fdel))));
   app.querySelectorAll<HTMLElement>("[data-fmove]").forEach((b) => b.addEventListener("click", () => { const [i, dir] = b.dataset.fmove!.split(":").map(Number); h.onMoveFloor(i, dir); }));
+  app.querySelectorAll<HTMLElement>("[data-fentry]").forEach((b) => b.addEventListener("click", () => h.onSetEntryFloor(b.dataset.fentry!)));
+  app.querySelector<HTMLSelectElement>("#ed-tofloor")?.addEventListener("change", (e) => h.onSetNodeToFloor(d.sel[0], (e.target as HTMLSelectElement).value || null));
   app.querySelectorAll<SVGElement>(".ed-ehit[data-edge]").forEach((b) =>
     b.addEventListener("click", () => { const [a, c] = b.dataset.edge!.split("|"); h.onToggleEdge(a, c); }));
 
