@@ -94,7 +94,7 @@ function autoRun(seed: number): { phase: string; gold: number } {
     else if (run.phase === "battle") { let bg = 0; while (run.battle!.phase === "inProgress" && bg < 600) { step(run.battle!, chooseAction(run.battle!)); bg++; } resolveBattleEnd(run); }
     else if (run.phase === "reward") chooseReward(run, run.rewards![0].id);
     else if (run.phase === "shop") leaveShop(run);
-    else if (run.phase === "encounter") chooseEncounterOption(run, ENCOUNTER_EVENTS.find((e) => e.id === run.encounterId)!.choices[0].id);
+    else if (run.phase === "encounter") chooseEncounterOption(run, run.encounter!.choices[0].id);
   }
   assert.ok(guard < 400, `run 종료(재진입/무한루프 없음) guard=${guard}`);
   return { phase: run.phase, gold: run.gold };

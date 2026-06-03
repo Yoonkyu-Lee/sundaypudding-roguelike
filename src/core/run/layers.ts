@@ -3,14 +3,14 @@
 // run.ts가 호출(run→layers). 이 모듈은 run을 import하지 않음 → 사이클 없음(engine·helpers·data만 의존).
 import { createBattle } from "../engine.ts";
 import { NODE_ROSTERS } from "../../data/encounters.ts";
-import type { InteractiveLayer, MapNode } from "../types.ts";
+import type { InteractiveLayer, Layer, MapNode } from "../types.ts";
 import type { RunState } from "./types.ts";
 import { node, runInstantLayers, completeNode } from "./helpers.ts";
 import { genRewards } from "./rewards.ts";
 
 // 상호작용 레이어 스타터 DI 레지스트리 — shop/event는 시작 로직이 shop.ts/encounter.ts(이들은 재진입 위해
 // advanceCore를 import) 의존 → layers가 그걸 직접 import하면 사이클. 런타임 주입(run.ts)으로 정적 사이클 차단.
-type LayerStarter = (run: RunState) => void;
+type LayerStarter = (run: RunState, layer: Layer) => void;
 const starters: Record<string, LayerStarter> = {};
 export function registerLayerStarter(kind: string, fn: LayerStarter): void { starters[kind] = fn; }
 
@@ -27,7 +27,7 @@ function stepCore(run: RunState, n: MapNode): void {
     const L = core[run.coreCursor!];
     if (L.kind === "combat") { startCombat(run, L); return; } // 블록(전투 phase) — resolveBattleEnd가 advanceCore
     if (L.kind === "reward") { run.rewards = genRewards(run); run.phase = "reward"; run.log.push("보상 선택"); return; } // 블록 — chooseReward가 advanceCore
-    if (L.kind === "shop" || L.kind === "event") { starters[L.kind]?.(run); return; } // 블록 — leaveShop/chooseEncounterOption이 advanceCore (DI 스타터)
+    if (L.kind === "shop" || L.kind === "event") { starters[L.kind]?.(run, L); return; } // 블록 — leaveShop/chooseEncounterOption이 advanceCore (DI 스타터)
     runInstantLayers(run, [L]); // 데코레이터 즉시 실행(L은 여기서 DecoratorLayer로 좁혀짐)
     run.coreCursor!++;
   }

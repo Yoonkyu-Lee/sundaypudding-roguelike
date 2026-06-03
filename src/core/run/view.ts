@@ -3,7 +3,6 @@ import type { NodeStatus, RunState, RunView } from "./types.ts";
 import { curFloor } from "./helpers.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { SKILLS } from "../../data/skills.ts";
-import { ENCOUNTER_EVENTS } from "../../data/events.ts";
 
 export function getRunView(run: RunState): RunView {
   const floor = curFloor(run);
@@ -47,8 +46,7 @@ export function getRunView(run: RunState): RunView {
 }
 
 function encounterView(run: RunState): RunView["encounter"] {
-  if (run.phase !== "encounter" || !run.encounterId) return null;
-  const ev = ENCOUNTER_EVENTS.find((e) => e.id === run.encounterId);
-  if (!ev) return null;
+  const ev = run.encounter;
+  if (run.phase !== "encounter" || !ev) return null;
   return { id: ev.id, title: ev.title, text: ev.text, choices: ev.choices.map((c) => ({ id: c.id, label: c.label })) };
 }

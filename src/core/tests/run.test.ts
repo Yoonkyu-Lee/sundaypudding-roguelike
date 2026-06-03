@@ -34,7 +34,7 @@ function autoRun(seed: number): string {
     } else if (run.phase === "shop") {
       leaveShop(run);
     } else if (run.phase === "encounter") {
-      chooseEncounterOption(run, ENCOUNTER_EVENTS.find((e) => e.id === run.encounterId)!.choices[0].id);
+      chooseEncounterOption(run, run.encounter!.choices[0].id);
     }
   }
   return run.phase;

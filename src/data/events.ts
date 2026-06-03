@@ -1,25 +1,7 @@
 // 인카운터 이벤트 (7.2) — 생존 보장 + 성장/저해 도박. 데이터 주도(디자이너 편집). 구매(골드)는 상점 전담.
-export type EncounterOutcome =
-  | { kind: "heal"; pct: number } // 파티 회복(maxHp 비율)
-  | { kind: "hurt"; pct: number } // 파티 피해(비치명 — 최소 HP 1 유지)
-  | { kind: "gold"; amount: number } // 골드 ±
-  | { kind: "upgradeRandom" } // 보유 스킬 1개 랜덤 강화(+티어)
-  | { kind: "learnUniversal" } // 랜덤 범용기 학습
-  | { kind: "nothing" };
-
-export interface EncounterChoice {
-  id: string;
-  label: string;
-  result?: EncounterOutcome; // 확정 결과
-  gamble?: { chance: number; win: EncounterOutcome; lose: EncounterOutcome }; // 도박(확률 win/lose)
-}
-
-export interface EncounterEvent {
-  id: string;
-  title: string;
-  text: string;
-  choices: EncounterChoice[];
-}
+// 스키마(EncounterEvent/Choice/Outcome)는 core/types로 이전(event 레이어가 인라인 소유하려면 types 필요). 여기선 풀 상수만.
+import type { EncounterEvent } from "../core/types.ts";
+export type { EncounterOutcome, EncounterChoice, EncounterEvent } from "../core/types.ts";
 
 export const ENCOUNTER_EVENTS: EncounterEvent[] = [
   {

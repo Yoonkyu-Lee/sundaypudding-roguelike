@@ -2,6 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRun, chooseReward, buyShopOffer, chooseEncounterOption, genRewards, ownsUpgradeLine, getRunView } from "../run.ts";
+import { ENCOUNTER_EVENTS } from "../../data/events.ts";
 
 const ROSTER = [
   { charId: "kim", pos: { row: 1, col: 0 } },
@@ -86,7 +87,7 @@ test("RunView: 상점/인카운터/골드 화면 데이터 노출 (웹 렌더 �
   assert.equal(v.shop?.length, 1);
   run.phase = "encounter";
   run.shop = null;
-  run.encounterId = "shrine";
+  run.encounter = ENCOUNTER_EVENTS.find((e) => e.id === "shrine")!;
   v = getRunView(run);
   assert.ok(v.encounter && v.encounter.choices.length >= 2, "인카운터 뷰(제목/선택지)");
   assert.equal(v.encounter!.title, "수상한 제단");
@@ -97,7 +98,7 @@ test("인카운터: 선택지 결과 적용 후 map 복귀 (7.2)", () => {
   const run = createRun(1, [{ charId: "kim", pos: { row: 1, col: 0 } }]);
   run.phase = "encounter";
   run.activeNodeId = run.currentNodeId;
-  run.encounterId = "cache"; // 안전 선택(loot=골드 +25)
+  run.encounter = ENCOUNTER_EVENTS.find((e) => e.id === "cache")!; // 안전 선택(loot=골드 +25)
   const before = run.gold;
   chooseEncounterOption(run, "loot");
   assert.equal(run.gold, before + 25, "골드 보상");

@@ -1,5 +1,5 @@
 // 런 도메인 타입 (전투 위 레이어). 사이클 방지를 위해 leaf 타입 모듈로 분리.
-import type { GameState, MapEdge, MapNode, NodeType, PartyMemberState, RunDef } from "../types.ts";
+import type { EncounterEvent, GameState, MapEdge, MapNode, NodeType, PartyMemberState, RunDef } from "../types.ts";
 import type { Rng } from "../rng.ts";
 
 export type RunPhase = "map" | "battle" | "reward" | "shop" | "encounter" | "won" | "lost";
@@ -35,7 +35,7 @@ export interface RunState {
   gold: number; // 런 내부 통화(7.2): 전투 승리·인카운터로 획득, 상점서 소비. 메타 재화와 별개(380행)
   inventory: string[]; // 미장착 보유 장착 아이템 id (4.3, 파티 공유 — 시트에서 장착)
   shop: ShopOffer[] | null; // 상점 진열(방문 시 생성, 구매하면 제거)
-  encounterId: string | null; // 진행 중 인카운터 이벤트 id (data/events)
+  encounter: EncounterEvent | null; // 진행 중 인카운터 이벤트(인라인 또는 풀에서 선택) — Phase D
   /** 모험 패시브 grantRunStatus 계승분 — charId별, 다음 전투 시작 시 1회 주입 후 비움 */
   pendingStatuses: Record<string, { statusId: string; stacks: number; duration: number }[]>;
   log: string[];

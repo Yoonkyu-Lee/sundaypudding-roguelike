@@ -193,11 +193,22 @@ test("shop 레이어(DI): core:[shop] 진입 → 상점 블록 → leaveShop이 
 test("event 레이어(DI): core:[event] 진입 → 인카운터 블록 → 선택 후 advanceCore로 복귀", () => {
   const run = createRun(6, coreDef([{ kind: "event" }]).roster, coreDef([{ kind: "event" }]));
   enterNode(run, "b");
-  assert.equal(run.phase, "encounter"); assert.equal(run.coreCursor, 0); assert.notEqual(run.encounterId, null);
-  const ev = ENCOUNTER_EVENTS.find((e) => e.id === run.encounterId)!;
-  chooseEncounterOption(run, ev.choices[0].id);
+  assert.equal(run.phase, "encounter"); assert.equal(run.coreCursor, 0); assert.notEqual(run.encounter, null);
+  chooseEncounterOption(run, run.encounter!.choices[0].id);
   assert.equal(run.phase, "map"); assert.equal(run.coreCursor, null);
   assert.ok(run.visited.includes("b"));
+});
+
+test("event 노드 저작(Phase D): 인라인 event가 랜덤 풀 대신 사용됨 + 선택 결과 적용", () => {
+  const ev = { id: "node_ev", title: "갈림길의 노인", text: "...", choices: [{ id: "take", label: "받는다", result: { kind: "gold" as const, amount: 7 } }] };
+  const d = coreDef([{ kind: "event", event: ev }]);
+  const run = createRun(9, [{ charId: "kim", pos: { row: 1, col: 0 } }], d); // 골드 트레잇 없는 단독 파티
+  const g0 = run.gold;
+  enterNode(run, "b");
+  assert.equal(run.encounter?.id, "node_ev", "인라인 이벤트 사용(랜덤 풀 아님)");
+  chooseEncounterOption(run, "take");
+  assert.equal(run.gold, g0 + 7, "선택 결과(골드) 적용");
+  assert.equal(run.phase, "map");
 });
 
 test("코어 커서는 세이브 왕복 보존(웨이브 도중 재개 가능)", () => {

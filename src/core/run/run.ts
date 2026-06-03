@@ -17,7 +17,7 @@ import { generateShop } from "./shop.ts";
 
 // 상호작용 레이어 스타터 등록(DI) — shop/event 시작 로직을 시퀀서에 주입(layers↔shop/encounter 사이클 차단).
 registerLayerStarter("shop", (run) => { run.shop = generateShop(run); run.phase = "shop"; run.log.push("상점 진입"); });
-registerLayerStarter("event", (run) => { const ev = ENCOUNTER_EVENTS[run.rng.int(0, ENCOUNTER_EVENTS.length - 1)]; run.encounterId = ev.id; run.phase = "encounter"; run.log.push(`인카운터 — ${ev.title}`); });
+registerLayerStarter("event", (run, layer) => { const ev = (layer as { event?: typeof ENCOUNTER_EVENTS[number] }).event ?? ENCOUNTER_EVENTS[run.rng.int(0, ENCOUNTER_EVENTS.length - 1)]; run.encounter = ev; run.phase = "encounter"; run.log.push(`인카운터 — ${ev.title}`); });
 
 export function createRun(seed: number, roster: { charId: string; pos: Pos }[] = DEFAULT_RUN.roster, runDef: RunDef = DEFAULT_RUN, opts: { mastery?: Record<string, number>; useMastery?: boolean } = {}): RunState {
   const rng = new Rng(seed ^ 0x9e3779b9);
@@ -46,7 +46,7 @@ export function createRun(seed: number, roster: { charId: string; pos: Pos }[] =
     gold: 0,
     inventory: ["wood_bat", "leather_vest"], // 시작 인벤토리(맛보기) — 시트에서 장착
     shop: null,
-    encounterId: null,
+    encounter: null,
     pendingStatuses: {},
     log: [`런 시작 (seed ${seed})`],
   };
@@ -122,10 +122,9 @@ export function enterNode(run: RunState, nodeId: string): void {
   }
   // 인카운터: 이벤트 추첨 후 선택지 화면 (chooseEncounterOption)
   if (n.type === "encounter") {
-    const ev = ENCOUNTER_EVENTS[run.rng.int(0, ENCOUNTER_EVENTS.length - 1)];
-    run.encounterId = ev.id;
+    run.encounter = ENCOUNTER_EVENTS[run.rng.int(0, ENCOUNTER_EVENTS.length - 1)];
     run.phase = "encounter";
-    run.log.push(`인카운터 — ${ev.title}`);
+    run.log.push(`인카운터 — ${run.encounter.title}`);
     return;
   }
   completeNode(run, nodeId);

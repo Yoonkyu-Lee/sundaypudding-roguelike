@@ -2,7 +2,7 @@
 import type { RunState } from "./types.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { SKILLS } from "../../data/skills.ts";
-import { ENCOUNTER_EVENTS, type EncounterOutcome } from "../../data/events.ts";
+import type { EncounterOutcome } from "../../data/events.ts";
 import { ownsUpgradeLine } from "./rewards.ts";
 import { healParty, upgradeOwned, learnOwned, completeNode } from "./helpers.ts";
 import { advanceCore } from "./layers.ts";
@@ -22,14 +22,14 @@ function applyOutcome(run: RunState, o: EncounterOutcome): void {
 }
 
 export function chooseEncounterOption(run: RunState, choiceId: string): void {
-  if (run.phase !== "encounter" || !run.encounterId) return;
-  const ev = ENCOUNTER_EVENTS.find((e) => e.id === run.encounterId);
-  const ch = ev?.choices.find((c) => c.id === choiceId);
-  if (!ev || !ch) return;
+  if (run.phase !== "encounter" || !run.encounter) return;
+  const ev = run.encounter; // 활성 이벤트(노드 인라인 또는 풀에서 선택) — 전역 조회 안 함
+  const ch = ev.choices.find((c) => c.id === choiceId);
+  if (!ch) return;
   let outcome: EncounterOutcome = ch.result ?? { kind: "nothing" };
   if (ch.gamble) { const win = run.rng.chance(ch.gamble.chance); run.log.push(`${ev.title}: ${win ? "성공!" : "실패…"}`); outcome = win ? ch.gamble.win : ch.gamble.lose; }
   applyOutcome(run, outcome);
-  run.encounterId = null;
+  run.encounter = null;
   if (run.coreCursor !== null) { advanceCore(run); return; } // 코어 시퀀스 event 레이어 → 다음 스텝
   completeNode(run, run.activeNodeId!);
 }
