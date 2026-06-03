@@ -628,6 +628,10 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .bf-catalog .hint { width: 100%; }
 .bf-cat { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 3px 7px; font-size: 11px; cursor: grab; }
 .bf-cat:hover { border-color: var(--enemy); color: var(--enemy); }
+/* 인카운터 이벤트 에디터 */
+.ev-edit { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 10px; }
+.ev-edit .re-row input[type=text], .ev-edit .re-row select, .ev-edit .re-row input[type=number] { background: var(--panel); color: var(--txt); border: 1px solid var(--line); border-radius: 5px; padding: 2px 5px; }
+.ev-edit .ev-clbl { min-width: 110px; }
 .fg-box.current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .fg-box.entry { background: #23314a; }
 .fg-box.invalid { border-color: var(--enemy); }

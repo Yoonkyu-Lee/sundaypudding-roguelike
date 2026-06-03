@@ -5,6 +5,7 @@ import type { NodeEditData, EditorHandlers, RosterEntry, LayerSlot } from "./edi
 import { LAYER_SPECS, LAYER_KINDS, DECO_KINDS, layerSummary, type FieldSpec } from "./layerSchema.ts";
 import { battlefieldHtml, wireBattlefield } from "./battlefieldEditor.ts";
 import { ruleEditorHtml, wireRuleEditor } from "./ruleEditor.ts";
+import { eventEditorHtml, wireEventEditor } from "./eventEditor.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { STATUS_DEFS } from "../../data/statuses.ts";
 import { NODE_ROSTERS } from "../../data/encounters.ts";
@@ -56,7 +57,8 @@ export function renderNodeEditView(app: HTMLElement, d: NodeEditData, h: EditorH
   const sel = d.sel ? arr(d.sel.slot)[d.sel.idx] : null;
   const eff = sel?.kind === "combat" ? effectiveRoster(sel as { roster?: RosterEntry[] }) : null;
   const combatExtra = sel?.kind === "combat" && eff ? `${battlefieldHtml(eff, d.allies)}${ruleEditorHtml(d)}` : "";
-  const form = sel ? `<h3>${esc(LAYER_SPECS[sel.kind].label)} 편집</h3>${fieldInput(sel, d.sel!.idx)}${combatExtra}` : `<div class="hint">왼쪽에서 레이어를 선택하세요.</div>`;
+  const eventExtra = sel?.kind === "event" ? eventEditorHtml(d.eventLayer) : "";
+  const form = sel ? `<h3>${esc(LAYER_SPECS[sel.kind].label)} 편집</h3>${fieldInput(sel, d.sel!.idx)}${combatExtra}${eventExtra}` : `<div class="hint">왼쪽에서 레이어를 선택하세요.</div>`;
   const sections = SLOTS.map((s) => slotSection(s.slot, s.title, s.hint, s.kinds, arr(s.slot), d.sel)).join("");
 
   app.innerHTML = `<div class="editor node-editor">
@@ -87,4 +89,5 @@ export function renderNodeEditView(app: HTMLElement, d: NodeEditData, h: EditorH
   // 전장 그리드: combat 적 배치 — 유효 구성(프리셋 포함) 표시, 편집 시 인라인 roster로 구체화
   if (sel?.kind === "combat" && d.sel && eff) wireBattlefield(app, eff, (next) => h.onSetLayerField(d.sel!.slot, d.sel!.idx, "roster", next));
   wireRuleEditor(app, h); // 트리거 룰 섹션(Phase E4)
+  if (sel?.kind === "event") wireEventEditor(app, h); // 인카운터 이벤트 저작(Phase D)
 }

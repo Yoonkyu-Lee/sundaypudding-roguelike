@@ -1,6 +1,6 @@
 // 맵 에디터 컨트롤러 — 목록↔편집 모드 상태 + 핸들러. main은 run 수명주기 콜백만 주입.
 import { validateRun } from "../../core/run.ts";
-import type { Condition, Effect, FloorDef, Layer, MapNode, RunDef, Trigger } from "../../core/types.ts";
+import type { Condition, Effect, EncounterEvent, EncounterOutcome, FloorDef, Layer, MapNode, RunDef, Trigger } from "../../core/types.ts";
 import { listRuns, getRun, saveDraft, deleteDraft, blankRun, exportRun, isDraft, cloneAsDraft, saveToRepo } from "./store.ts";
 import { addNode, moveNode, moveNodes, deleteNode, toggleEdge, adjacentPairs, addFloor, deleteFloor, moveFloor, setNodeLabel, setNodeRoster } from "./ops.ts";
 import { CHARACTERS } from "../../data/characters.ts";
@@ -106,8 +106,13 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       selRule,
       allies: draft!.roster.map((m) => ({ charId: m.charId, pos: { ...m.pos } })), // 전장 아군(읽기전용)
       combatRoster: (() => { const lay = layerAt(); if (lay?.kind !== "combat") return []; return lay.roster && lay.roster.length ? lay.roster : (NODE_ROSTERS.battle as { charId: string; pos: { row: number; col: number } }[]); })(), // 룰 소유자 후보(적)
+      eventLayer: (() => { const lay = layerAt(); return lay?.kind === "event" ? lay.event ?? null : null; })(), // 선택 event 레이어의 인라인 이벤트
     };
   }
+
+  /** 선택 event 레이어의 인라인 이벤트(있을 때). */
+  const editEvent = (): EncounterEvent | null => { const lay = layerAt(); return lay?.kind === "event" ? lay.event ?? null : null; };
+  const OUTCOME_DEFAULT: Record<string, EncounterOutcome> = { nothing: { kind: "nothing" }, heal: { kind: "heal", pct: 0.3 }, hurt: { kind: "hurt", pct: 0.15 }, gold: { kind: "gold", amount: 20 }, upgradeRandom: { kind: "upgradeRandom" }, learnUniversal: { kind: "learnUniversal" } };
 
   return {
     data: () => (mode === "list" ? listData() : mode === "nodeEdit" ? nodeEditData() : editData()),
@@ -183,6 +188,14 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       onRemoveEffect(ei) { const r = editRule(); if (!r) return; r.then.splice(ei, 1); save(); deps.rerender(); },
       onSetEffectField(ei, key, value) { const r = editRule(); if (!r?.then?.[ei]) return; (r.then[ei] as Record<string, unknown>)[key] = value; save(); deps.rerender(); },
       onSetRuleOwner(owner) { const r = editRule() as { owner?: { side: "ally" | "enemy"; charId: string } } | null; if (!r) return; if (owner) r.owner = owner; else delete r.owner; save(); deps.rerender(); },
+      // event 레이어 인라인 이벤트 저작 (Phase D 슬라이스2)
+      onCreateEvent() { const lay = layerAt(); if (lay?.kind !== "event") return; lay.event = { id: "node_event", title: "새 인카운터", text: "", choices: [] }; save(); deps.rerender(); },
+      onSetEventField(key, value) { const ev = editEvent(); if (!ev) return; (ev as unknown as Record<string, unknown>)[key] = value; save(); deps.rerender(); },
+      onAddChoice() { const ev = editEvent(); if (!ev) return; ev.choices.push({ id: `c${ev.choices.length}`, label: "선택지", result: { kind: "nothing" } }); save(); deps.rerender(); },
+      onRemoveChoice(ci) { const ev = editEvent(); if (!ev) return; ev.choices.splice(ci, 1); save(); deps.rerender(); },
+      onSetChoiceLabel(ci, value) { const ev = editEvent(); if (!ev?.choices[ci]) return; ev.choices[ci].label = value; save(); deps.rerender(); },
+      onSetChoiceOutcome(ci, kind) { const ev = editEvent(); if (!ev?.choices[ci]) return; ev.choices[ci].result = { ...(OUTCOME_DEFAULT[kind] ?? { kind: "nothing" }) }; delete ev.choices[ci].gamble; save(); deps.rerender(); },
+      onSetOutcomeField(ci, key, value) { const ev = editEvent(); const r = ev?.choices[ci]?.result; if (!r) return; (r as Record<string, unknown>)[key] = value; save(); deps.rerender(); },
     },
   };
 }

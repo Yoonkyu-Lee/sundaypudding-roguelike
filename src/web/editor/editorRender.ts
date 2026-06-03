@@ -46,6 +46,7 @@ export interface NodeEditData {
   selRule: number | null; // 편집 중 룰 인덱스
   allies: RosterEntry[]; // RunDef.roster — 전장 아군(읽기전용 표시·룰 소유자 후보)
   combatRoster: RosterEntry[]; // 선택 combat 레이어의 적(룰 소유자 후보)
+  eventLayer: import("../../core/types.ts").EncounterEvent | null; // 선택 event 레이어의 인라인 이벤트(없으면 null)
 }
 export type EditorData = ListData | EditData | NodeEditData;
 
@@ -101,6 +102,14 @@ export interface EditorHandlers {
   onRemoveEffect: (ei: number) => void;
   onSetEffectField: (ei: number, key: string, value: string | number | boolean) => void;
   onSetRuleOwner: (owner: { side: "ally" | "enemy"; charId: string } | null) => void; // 룰 소유자(화자/기준) 지정
+  // event 레이어 인라인 이벤트 저작 (Phase D 슬라이스2)
+  onCreateEvent: () => void;
+  onSetEventField: (key: string, value: string) => void; // title/text
+  onAddChoice: () => void;
+  onRemoveChoice: (ci: number) => void;
+  onSetChoiceLabel: (ci: number, value: string) => void;
+  onSetChoiceOutcome: (ci: number, kind: string) => void;
+  onSetOutcomeField: (ci: number, key: string, value: number) => void;
 }
 
 function card(r: EditorRunCard): string {
