@@ -611,6 +611,23 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .re-f { display: inline-flex; align-items: center; gap: 4px; color: var(--dim); }
 .re-f input[type=text], .re-f input[type=number], .re-f select { background: var(--panel); color: var(--txt); border: 1px solid var(--line); border-radius: 5px; padding: 2px 5px; max-width: 130px; }
 .re-edit select, .ne-rules > select { background: var(--panel2); color: var(--txt); border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; }
+/* 전장 그리드 에디터 (combat 레이어 적 배치 + 아군 표시) */
+.bf { display: flex; flex-wrap: wrap; gap: 14px; margin: 10px 0; align-items: flex-start; }
+.bf-side h4 { font-size: 12px; margin: 0 0 6px; }
+.bf-side.enemy h4 { color: var(--enemy); }
+.bf-side.ally h4 { color: var(--ally); }
+.bf-board { display: grid; grid-template-columns: repeat(4, 46px); grid-auto-rows: 46px; gap: 4px; background: var(--panel2); padding: 8px; border-radius: 10px; }
+.bf-cell { border: 1px dashed var(--line); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+.bf-cell .empty { color: #3a4150; font-size: 11px; }
+.bf-unit { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: grab; padding: 2px; box-sizing: border-box; }
+.bf-unit.enemy { background: rgba(230,104,90,.18); border: 1px solid var(--enemy); }
+.bf-unit.ally { background: rgba(90,169,230,.18); border: 1px solid var(--ally); cursor: default; }
+.bf-nm { font-size: 10px; line-height: 1.1; text-align: center; }
+.bf-x { position: absolute; top: -6px; right: -6px; background: var(--panel); border: 1px solid var(--line); color: var(--bad, #d66); border-radius: 50%; width: 16px; height: 16px; font-size: 9px; line-height: 1; cursor: pointer; padding: 0; }
+.bf-catalog { display: flex; flex-wrap: wrap; gap: 5px; max-width: 170px; }
+.bf-catalog .hint { width: 100%; }
+.bf-cat { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 3px 7px; font-size: 11px; cursor: grab; }
+.bf-cat:hover { border-color: var(--enemy); color: var(--enemy); }
 .fg-box.current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .fg-box.entry { background: #23314a; }
 .fg-box.invalid { border-color: var(--enemy); }

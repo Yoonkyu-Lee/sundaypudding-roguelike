@@ -6,7 +6,7 @@ export interface FieldSpec { key: string; label: string; type: "number" | "text"
 export interface LayerSpec { label: string; fields: FieldSpec[]; make: () => Layer; }
 
 export const LAYER_SPECS: Record<string, LayerSpec> = {
-  combat: { label: "⚔ 전투", fields: [{ key: "rosterPreset", label: "적 프리셋", type: "select", options: ["battle", "elite", "boss"] }, { key: "boss", label: "진형 보너스", type: "bool" }, { key: "roster", label: "적 배치(있으면 프리셋 무시)", type: "roster" }], make: () => ({ kind: "combat", rosterPreset: "battle" }) },
+  combat: { label: "⚔ 전투", fields: [{ key: "rosterPreset", label: "적 프리셋(배치 비우면 사용)", type: "select", options: ["battle", "elite", "boss"] }, { key: "boss", label: "진형 보너스", type: "bool" }], make: () => ({ kind: "combat", rosterPreset: "battle" }) },
   reward: { label: "🎁 보상(3택1)", fields: [], make: () => ({ kind: "reward" }) },
   shop: { label: "🏪 상점", fields: [], make: () => ({ kind: "shop" }) },
   event: { label: "❓ 인카운터", fields: [], make: () => ({ kind: "event" }) },

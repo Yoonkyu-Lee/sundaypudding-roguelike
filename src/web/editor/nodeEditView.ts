@@ -3,7 +3,7 @@ import { esc } from "../battle/shared.ts";
 import type { Layer } from "../../core/types.ts";
 import type { NodeEditData, EditorHandlers, RosterEntry, LayerSlot } from "./editorRender.ts";
 import { LAYER_SPECS, LAYER_KINDS, DECO_KINDS, layerSummary, type FieldSpec } from "./layerSchema.ts";
-import { rosterWidget, wireRoster } from "./rosterWidget.ts";
+import { battlefieldHtml, wireBattlefield } from "./battlefieldEditor.ts";
 import { ruleEditorHtml, wireRuleEditor } from "./ruleEditor.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { STATUS_DEFS } from "../../data/statuses.ts";
@@ -20,7 +20,6 @@ function fieldInput(L: Layer, idx: number): string {
   return spec.fields.map((f) => {
     const id = `ne-f-${idx}-${f.key}`;
     const cur = v[f.key];
-    if (f.type === "roster") return `<div class="ne-field-roster"><div class="ed-meta-row">${esc(f.label)}</div>${rosterWidget((cur as RosterEntry[]) ?? [], CHARS)}</div>`;
     let control: string;
     if (f.type === "bool") control = `<input type="checkbox" id="${id}" data-fkey="${f.key}"${cur ? " checked" : ""}>`;
     else if (f.type === "select") { const empty = f.allowEmpty ? `<option value=""${cur ? "" : " selected"}>(전원)</option>` : ""; control = `<select id="${id}" data-fkey="${f.key}">${empty}${optionList(f).map((o) => `<option value="${o.value}"${cur === o.value ? " selected" : ""}>${esc(o.label)}</option>`).join("")}</select>`; }
@@ -50,7 +49,8 @@ function slotSection(slot: LayerSlot, title: string, hint: string, kinds: string
 export function renderNodeEditView(app: HTMLElement, d: NodeEditData, h: EditorHandlers): void {
   const arr = (s: LayerSlot) => (s === "onEnter" ? d.onEnter : s === "core" ? d.core : d.onResolve);
   const sel = d.sel ? arr(d.sel.slot)[d.sel.idx] : null;
-  const form = sel ? `<h3>${esc(LAYER_SPECS[sel.kind].label)} 편집</h3>${fieldInput(sel, d.sel!.idx)}${sel.kind === "combat" ? ruleEditorHtml(d) : ""}` : `<div class="hint">왼쪽에서 레이어를 선택하세요.</div>`;
+  const combatExtra = sel?.kind === "combat" ? battlefieldHtml(((sel as Record<string, unknown>).roster as RosterEntry[]) ?? [], d.allies) + ruleEditorHtml(d) : "";
+  const form = sel ? `<h3>${esc(LAYER_SPECS[sel.kind].label)} 편집</h3>${fieldInput(sel, d.sel!.idx)}${combatExtra}` : `<div class="hint">왼쪽에서 레이어를 선택하세요.</div>`;
   const sections = SLOTS.map((s) => slotSection(s.slot, s.title, s.hint, s.kinds, arr(s.slot), d.sel)).join("");
 
   app.innerHTML = `<div class="editor node-editor">
@@ -78,7 +78,7 @@ export function renderNodeEditView(app: HTMLElement, d: NodeEditData, h: EditorH
     const val = el instanceof HTMLInputElement && el.type === "checkbox" ? el.checked : el instanceof HTMLInputElement && el.type === "number" ? Number(el.value) : el.value;
     h.onSetLayerField(d.sel!.slot, d.sel!.idx, key, val);
   }));
-  // 리치 위젯: combat roster(있으면 프리셋 무시)
-  if (sel?.kind === "combat" && d.sel) wireRoster(app, ((sel as Record<string, unknown>).roster as RosterEntry[]) ?? [], (next) => h.onSetLayerField(d.sel!.slot, d.sel!.idx, "roster", next));
+  // 전장 그리드: combat 적 배치(있으면 프리셋 무시) — 드래그 배치/이동/제거
+  if (sel?.kind === "combat" && d.sel) wireBattlefield(app, ((sel as Record<string, unknown>).roster as RosterEntry[]) ?? [], (next) => h.onSetLayerField(d.sel!.slot, d.sel!.idx, "roster", next));
   wireRuleEditor(app, h); // 트리거 룰 섹션(Phase E4)
 }

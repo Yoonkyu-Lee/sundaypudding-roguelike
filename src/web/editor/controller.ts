@@ -103,6 +103,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       sel: selLayerRef,
       rules: (() => { const lay = layerAt(); return lay && lay.kind === "combat" ? lay.rules ?? [] : []; })(), // 선택 combat 레이어의 룰
       selRule,
+      allies: draft!.roster.map((m) => ({ charId: m.charId, pos: { ...m.pos } })), // 전장 아군(읽기전용)
     };
   }
 

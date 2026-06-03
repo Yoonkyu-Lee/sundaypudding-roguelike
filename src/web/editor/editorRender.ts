@@ -44,6 +44,7 @@ export interface NodeEditData {
   sel: { slot: LayerSlot; idx: number } | null; // 선택 레이어
   rules: import("../../core/types.ts").PassiveRule[]; // 노드 트리거 룰(Phase C/E4)
   selRule: number | null; // 편집 중 룰 인덱스
+  allies: RosterEntry[]; // RunDef.roster — 전장 아군(읽기전용 표시·룰 소유자 후보)
 }
 export type EditorData = ListData | EditData | NodeEditData;
 

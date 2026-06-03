@@ -140,7 +140,8 @@ registerLayer("combat", { schema:[{roster:'rosterGrid'},{formationBonus:'bool'},
 ### Phase E — 전용 노드 에디터 GUI `[웹 기능]` (각 Phase와 평행)
 > 평행 개발 원칙: 레이어 종류가 엔진에 생길 때마다 GUI도 같이.
 - **✅ E1+E2(단순 폼) (완료)**: 노드 **더블클릭 → 전용 화면**(`nodeEditView.ts`). 좌=core 레이어 리스트(추가/삭제/순서 ↑↓·선택), 우=선택 레이어 **스키마 구동 폼**(숫자/텍스트/토글/select). 스키마 진실원=`layerSchema.ts`(kind별 FieldSpec + 카탈로그 + 요약 + 기본값 make). 컨트롤러 mode `"nodeEdit"`. 레이어 추가=기본값으로 즉시 작곡 가능.
-- **✅ E3-(부분) (완료)**: 공용 `rosterWidget.ts` 추출(nodePanel·nodeEditView 공유). combat `roster` **인라인 적 배치 위젯**(charId+행/열, 있으면 프리셋 무시) + grantStatus charId/statusId **데이터 기반 select**(CHARACTERS/STATUS_DEFS, 오타 방지). FieldSpec에 `roster`/`optionsFrom`/`allowEmpty` 타입.
+- **✅ E3-(부분) (완료)**: grantStatus charId/statusId **데이터 select**(오타 방지). 적 배치는 아래 전장 그리드로 발전.
+- **✅ 전장 그리드 에디터 (완료)**: combat 레이어 적 편집을 **시각 4×4 그리드**(`battlefieldEditor.ts`)로 — 적 보드(카탈로그 드래그 배치/이동/✕ 제거) + **아군 보드(읽기전용, RunDef.roster)**. 인게임 arena와 동형. `drag.ts`·진형 보드 패턴 재사용, 데이터(`{charId,pos}[]`) 불변. (레거시 type 노드는 `rosterWidget` 리스트 유지.)
 - **E3-나머지(다음)**: event 선택지 트리 에디터(D와 묶임).
 - **✅ E4-(부분) (완료)**: 노드 에디터를 **3슬롯**(진입 onEnter · 코어 core · 완료 onResolve)으로. onEnter/onResolve = 데코 전용 카탈로그(`DECO_KINDS`), core = 전체. 레이어 핸들러를 `slot` 인지로 일반화(`selLayerRef={slot,idx}`, `slotArray` 헬퍼). 진입 연출·도착 보상 작곡 완성.
 - **✅ E4-나머지 (완료)**: **트리거 룰 에디터** — 노드 에디터에 `rules[]` 섹션(추가/삭제/선택) + when(트리거 select+파라미터)·if(조건 리스트)·then(효과 리스트, showDialog 간판) 폼. 큐레이트 카탈로그(`ruleSchema.ts` WHEN/COND/EFFECT 스펙) + 스키마 구동 폼(`ruleEditor.ts`), 룰 요약=`describeRule` 재사용. **이제 JSON 없이 전투 중 대사·개입 저작.** 컨트롤러 룰 CRUD 11핸들러.
