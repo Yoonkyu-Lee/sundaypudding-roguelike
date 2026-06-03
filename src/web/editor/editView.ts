@@ -8,6 +8,8 @@ import { attachCamera } from "../camera.ts";
 import { SIZE, W, FW, FH, ccx, ccy, hexPoints, hexEdge, EDGE_DIRS, gridPathStr, pixelToAxial } from "./hexgeo.ts";
 
 const WALL_SW = 3.5; // 벽 선 두께(.ed-wallvis와 일치)
+// 더블클릭 감지(모듈 전역 — 첫 클릭이 재렌더해도 유지). 포인터 캡처로 네이티브 dblclick 타깃이 바뀌어 직접 감지.
+let lastNodeClick: { id: string; t: number } | null = null;
 
 // 층 그래프 뷰포트(블럭 다이어그램) — 층=박스, 클리어 toFloor=방향 화살표, 입장 층 ★. 입장에서 BFS 레벨로 좌→우 배치.
 const FGW = 132, FGH = 52, FGX = 50, FGY = 16;
@@ -182,8 +184,12 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
     if (cur.kind === "place") { if (cur.moved && overField(e.clientX, e.clientY)) { const { q, r } = cellAt(e.clientX, e.clientY); h.onPlaceNode(cur.type as NodeType, q, r); } }
     else if (cur.kind === "move") {
       if (cur.moved) { if (overField(e.clientX, e.clientY)) { const { q, r } = cellAt(e.clientX, e.clientY); h.onMoveNode(cur.id!, q, r); } }
-      else h.onNodeClick(cur.id!, !!cur.ctrl); // 안 움직이면 클릭=선택
-    } else if (cur.kind === "empty" && !cur.moved) h.onClearSel(); // 빈칸 클릭=해제
+      else { // 안 움직이면 클릭=선택, 같은 노드 빠른 두 번째 클릭=노드 에디터 진입(더블클릭)
+        const id = cur.id!;
+        if (lastNodeClick && lastNodeClick.id === id && e.timeStamp - lastNodeClick.t < 400) { lastNodeClick = null; h.onOpenNodeEditor(id); }
+        else { lastNodeClick = { id, t: e.timeStamp }; h.onNodeClick(id, !!cur.ctrl); }
+      }
+    } else if (cur.kind === "empty" && !cur.moved) { lastNodeClick = null; h.onClearSel(); } // 빈칸 클릭=해제
   };
   // 카탈로그 칩에서 끌어 배치
   app.querySelectorAll<HTMLElement>(".ed-chip").forEach((c) => {
@@ -203,7 +209,6 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   });
   field.addEventListener("pointermove", onMove);
   field.addEventListener("pointerup", onUp);
-  field.addEventListener("dblclick", (e) => { const el = (e.target as HTMLElement).closest<HTMLElement>(".ednode"); if (el) h.onOpenNodeEditor(el.dataset.node!); }); // 더블클릭 = 노드 내용 편집
 
   // ── 노드 맵 카메라(줌·팬) — 첫 진입은 입장 노드 중앙 정렬. (공용 attachCamera) ──
   const nodeCam = attachCamera({
