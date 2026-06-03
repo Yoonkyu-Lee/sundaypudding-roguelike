@@ -1,9 +1,38 @@
 // 런 공유 변이 헬퍼 (leaf — run.ts·shop.ts·encounter.ts 공용, 사이클 방지).
 // 노드 조회 + 파티 회복(+모험 트리거) + 노드 완료(+nodeClear) + 스킬 보유/강화 변이.
-import type { FloorDef, MapNode, PartyMemberState } from "../types.ts";
+import type { FloorDef, Layer, MapNode, PartyMemberState } from "../types.ts";
 import type { RunState } from "./types.ts";
 import { liveReachable } from "./graph.ts";
 import { fireRunTrigger } from "./passives.ts";
+
+/** 즉시 레이어 실행 (Phase A 슬라이스1) — 데코레이터 효과를 순서대로 적용 + 로그.
+ *  러너가 leaf인 helpers에 사는 이유: completeNode(여기)가 onResolve를 발동 → 별 모듈로 빼면 사이클.
+ *  상호작용 레이어(combat 등)는 A2의 호스트(run.ts 조율)에서 다룸. */
+export function runInstantLayers(run: RunState, layers: Layer[] | undefined): void {
+  if (!layers) return;
+  for (const L of layers) {
+    switch (L.kind) {
+      case "gold":
+        run.gold = Math.max(0, run.gold + L.amount);
+        run.log.push(`${L.amount >= 0 ? "+" : ""}${L.amount}G`);
+        if (L.amount > 0) fireRunTrigger(run, { on: "goldGain" });
+        break;
+      case "heal":
+        healParty(run, L.pct, !!L.revive);
+        run.log.push(`파티 ${Math.round(L.pct * 100)}% 회복`);
+        break;
+      case "grantStatus": {
+        const ids = L.charId ? [L.charId] : run.party.map((m) => m.charId);
+        for (const id of ids) (run.pendingStatuses[id] ??= []).push({ statusId: L.statusId, stacks: L.stacks, duration: L.duration });
+        run.log.push(`상태 부여(다음 전투): ${L.statusId}`);
+        break;
+      }
+      case "text":
+        run.log.push(L.text);
+        break;
+    }
+  }
+}
 
 /** 현재 층 그래프 (RunState의 단일 진실원 = runDef.floors[floor]). */
 export function curFloor(run: RunState): FloorDef {
@@ -31,6 +60,7 @@ export function healParty(run: RunState, pct: number, revive = false): void {
 export function completeNode(run: RunState, nodeId: string): void {
   if (!run.visited.includes(nodeId)) run.visited.push(nodeId);
   const n = node(run, nodeId);
+  runInstantLayers(run, n.layers?.onResolve); // 노드 완료 시 부착 레이어(보상·연출 등)
   const floor = curFloor(run);
   run.currentNodeId = nodeId; // 지금 서 있는 위치 갱신
   // 다음 선택지 = 미방문 이웃 중 방문지를 피해 클리어 도달 가능한 노드 (재방문 불가·막힌 노드 비활성)

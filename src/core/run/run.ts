@@ -11,7 +11,7 @@ import { liveReachable } from "./graph.ts";
 import type { RunState } from "./types.ts";
 import { genRewards } from "./rewards.ts";
 import { fireRunTrigger } from "./passives.ts";
-import { node, curFloor, healParty, completeNode, upgradeOwned, learnOwned } from "./helpers.ts";
+import { node, curFloor, healParty, completeNode, upgradeOwned, learnOwned, runInstantLayers } from "./helpers.ts";
 import { generateShop } from "./shop.ts";
 
 export function createRun(seed: number, roster: { charId: string; pos: Pos }[] = DEFAULT_RUN.roster, runDef: RunDef = DEFAULT_RUN, opts: { mastery?: Record<string, number>; useMastery?: boolean } = {}): RunState {
@@ -74,6 +74,7 @@ export function enterNode(run: RunState, nodeId: string): void {
   const n = node(run, nodeId);
   run.activeNodeId = nodeId;
   fireRunTrigger(run, { on: "nodeEnter", nodeType: n.type });
+  runInstantLayers(run, n.layers?.onEnter); // 진입 직후 부착 레이어(컷신·상태부여 등)
 
   // 클리어(목표) 노드: 전투 없이 진입 = 층 종료(toFloor로 분기)
   if (n.type === "clear") {

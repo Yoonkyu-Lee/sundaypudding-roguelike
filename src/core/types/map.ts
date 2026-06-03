@@ -5,6 +5,22 @@
 // ─────────────────────────────────────────────────────────────────────────
 import type { NodeType, Pos } from "./content.ts";
 
+// ── 노드 레이어 (NODE-DESIGN Phase A) ─────────────────────────────────────
+// 노드 = 타입 코어 + 부착 레이어. 레이어 = 진입/완료 슬롯에 순서 실행하는 효과.
+// Phase A 슬라이스1 = 즉시(데코레이터) 레이어만. 상호작용 모듈(combat 등)은 A2~.
+/** 즉시 실행 데코레이터 레이어 — 어느 노드든 부착 가능(전역). 해석=core/run/helpers runInstantLayers. */
+export type Layer =
+  | { kind: "gold"; amount: number } // 골드 ±(0 미만 클램프)
+  | { kind: "heal"; pct: number; revive?: boolean } // 파티 회복(maxHp 비율, revive=전투불능 부활)
+  | { kind: "grantStatus"; charId?: string; statusId: string; stacks: number; duration: number } // 다음 전투 계승(charId 없으면 전원)
+  | { kind: "text"; text: string }; // 로그/대사(컷신 뷰 강화는 Phase C)
+export type LayerKind = Layer["kind"];
+/** 노드의 부착 레이어 — 슬롯별 순서 리스트. onEnter=진입 직후, onResolve=노드 완료 시. */
+export interface NodeLayers {
+  onEnter?: Layer[];
+  onResolve?: Layer[];
+}
+
 /** 맵 노드 — q,r은 에디터 캔버스/렌더 좌표(위상 아님; 위상은 edges가 정의). */
 export interface MapNode {
   id: string;
@@ -17,6 +33,8 @@ export interface MapNode {
   roster?: { charId: string; pos: Pos }[];
   /** 표시 라벨(선택). 노드 위에 표기 — 같은 타입 노드를 구분(예: "두목 호위대"). */
   label?: string;
+  /** 부착 레이어(선택, Phase A). 없으면 순수 타입 코어 동작(기존과 동일). */
+  layers?: NodeLayers;
 }
 
 /** 방향 있는 간선 — from에서 to로만 전진(복귀 불가). */

@@ -112,9 +112,9 @@ registerLayer("combat", { schema:[{roster:'rosterGrid'},{formationBonus:'bool'},
 
 ### Phase A — 레이어 프레임워크 골격 (엔진) `[엔진 프리미티브 추가]`
 가장 위험하고 기반이 되는 부분. 거동 보존(기존 노드를 레이어로 감싸 동일하게).
-- **A1. 스키마**: `types/map.ts` — `MapNode`에 `layers: Layer[]`(+선택적 `rules: NodeRule[]`) 도입. `Layer = { kind, ...스키마 }`. 기존 `type`은 호환 위해 한시 유지하거나 마이그레이션. `LayerKind` 카탈로그 타입.
-- **A2. 레이어 호스트**: `core/run/` — 노드 진입 시 레이어 시퀀스를 순서 실행하는 **호스트**(레이어 띄우기→완료 신호→다음). `RunState`에 "현재 레이어 커서". 상호작용 레이어는 phase 전환(battle/shop/encounter)으로 블록, 데코는 즉시. `enterNode`를 호스트 호출로 재작성.
-- **A3. 기존 거동 레이어화**: 현재 battle/shop/rest/encounter/clear를 레이어 kind로 매핑(거동 동일). `yain.json` 마이그레이션(타입→레이어). 기존 런 테스트 green 유지.
+- **✅ A슬라이스1 (즉시 레이어, 완료)**: `types/map.ts`에 `Layer`(gold/heal/grantStatus/text)·`LayerKind`·`NodeLayers(onEnter/onResolve)` + `MapNode.layers?`. `helpers.runInstantLayers`(데코 즉시 실행, leaf 사이클 회피 위해 helpers 거주). `enterNode`=onEnter, `completeNode`=onResolve 발동. 기존 노드(layers 없음)=거동 100% 동일. 결정론 테스트 4종(`core/tests/layers.test.ts`: onEnter/onResolve 순서·grantStatus 전원/지정·세이브 왕복·회귀 가드). 103 test green.
+- **A2 (다음). 상호작용 레이어 호스트**: 노드 진입 시 레이어 시퀀스를 순서 실행하는 호스트(레이어 띄우기→완료 신호→다음). `RunState`에 레이어 커서. 상호작용 레이어(combat/shop/event)는 phase 전환으로 블록 후 호스트 복귀. `enterNode`/`resolveBattleEnd`를 호스트 경유로 재작성. **위험의 핵심(전투-복귀 플러밍).**
+- **A3. 기존 거동 레이어화**: battle/shop/rest/encounter/clear를 레이어 kind로 매핑(거동 동일) + `yain.json` 마이그레이션. 기존 `type` 한시 호환 후 폐지.
 - 결정론 테스트: 레이어 시퀀스 실행 순서·완료 신호·세이브 왕복.
 
 ### Phase B — combat 통일 + 데코레이터 레이어 `[엔진 프리미티브 추가]`+`[데이터-온리]`
