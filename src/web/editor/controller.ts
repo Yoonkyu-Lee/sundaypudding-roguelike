@@ -57,7 +57,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       deadNodes: fv?.deadNodes ?? [],
       entryId: f.entryNodeId,
       sel: [...sel],
-      floors: draft!.floors.map((fl, i) => ({ id: fl.id, name: fl.name ?? `층 ${i + 1}`, valid: v.floors[i].ok })),
+      floors: draft!.floors.map((fl, i) => ({ id: fl.id, name: fl.name ?? `층 ${i + 1}`, valid: v.floors[i].ok, toFloors: [...new Set(fl.nodes.filter((n) => n.type === "clear" && n.toFloor).map((n) => n.toFloor!))] })),
       floorIdx,
       entryFloorId: draft!.entryFloorId,
       nodes: f.nodes.map((n) => ({ id: n.id, type: n.type, q: n.q, r: n.r, icon: TYPE_ICON[n.type], name: TYPE_NAME[n.type], toFloor: n.toFloor })),

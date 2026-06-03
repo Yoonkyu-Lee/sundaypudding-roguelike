@@ -22,6 +22,7 @@
 | **분기** | 한 층의 클리어 노드들이 서로 다른 `toFloor` → 층 갈래 | (toFloor 복수) |
 | **격자** | 에디터의 광활한 육각 배경 | `editor/hexgeo.ts` |
 | **노드 카탈로그** | 에디터 우측 노드 종류 팔레트(드래그 배치) | `editView.ts` `.ed-catalog` |
+| **층 그래프 뷰포트** | 에디터 하단 — 층=박스, 클리어 `toFloor`=방향 화살표(블럭 다이어그램). 입장 층 ★, 박스 클릭=편집·입장 지정·추가/삭제 | `editView.ts` `floorGraph` · `.ed-floors`/`.fg-box` |
 
 ## 화면 (screen) — 최상위 레이아웃 1개
 

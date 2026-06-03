@@ -552,16 +552,26 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .ed-walls .ed-ehit:hover + .ed-wallvis.built { stroke-dasharray: none; opacity: 1; }    /* 이미 벽이면 실선 강조 */
 .ed-selinfo { font-size: 13px; display: flex; flex-direction: column; gap: 8px; }
 .ed-left { flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.ed-floors { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px; background: var(--panel); border-radius: 10px; }
-.ed-floor { display: flex; align-items: center; gap: 4px; border: 1px solid var(--line); border-radius: 8px; padding: 3px 4px 3px 8px; }
-.ed-floor.active { border-color: var(--accent); background: var(--panel2); }
-.ed-floor.entry { box-shadow: inset 0 0 0 1px #5b8fe0; }
+/* 층 그래프 뷰포트(블럭 다이어그램) */
+.ed-floors { padding: 10px; background: var(--panel); border-radius: 10px; }
+.ed-floors-h { font-size: 13px; color: var(--dim); margin-bottom: 8px; }
+.fg-canvas { position: relative; overflow: auto; max-height: 220px; }
+.fg-edges { position: absolute; left: 0; top: 0; pointer-events: none; }
+.fg-edges line { stroke: var(--dim); stroke-width: 2; opacity: .7; }
+.fg-edges .fgah { fill: var(--dim); }
+.fg-box { position: absolute; box-sizing: border-box; border: 1px solid var(--line); border-radius: 9px; background: var(--panel2); padding: 5px 9px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; gap: 3px; }
+.fg-box:hover { border-color: var(--accent); }
+.fg-box.current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.fg-box.entry { background: #23314a; }
+.fg-box.invalid { border-color: var(--enemy); }
+.fg-name { font-size: 13px; font-weight: 600; }
+.fg-acts { display: flex; gap: 6px; align-items: center; }
+.fg-entry { font-size: 11px; color: #7da7ec; }
+.fg-mini { background: transparent; border: 1px solid var(--line); color: var(--dim); border-radius: 6px; padding: 1px 6px; font-size: 11px; cursor: pointer; }
+.fg-mini:hover { border-color: var(--accent); color: var(--accent); }
 .ed-tofloor { font-size: 12px; color: var(--dim); display: flex; align-items: center; gap: 6px; }
 .ed-tofloor select { background: var(--panel2); color: var(--txt); border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; }
-.ed-fname { background: transparent; border: 0; color: var(--txt); cursor: pointer; font-size: 13px; }
-.ed-fctl button { background: transparent; border: 0; color: var(--dim); cursor: pointer; font-size: 12px; padding: 2px 3px; }
-.ed-fctl button:hover { color: var(--accent); }
-.ed-addfloor { background: transparent; border: 1px dashed var(--line); color: var(--dim); border-radius: 8px; padding: 5px 12px; cursor: pointer; }
+.ed-addfloor { margin-top: 8px; background: transparent; border: 1px dashed var(--line); color: var(--dim); border-radius: 8px; padding: 5px 12px; cursor: pointer; }
 
 .hub header { margin-bottom: 16px; }
 .hub h1 { color: var(--accent); }

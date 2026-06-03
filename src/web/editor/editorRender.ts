@@ -17,7 +17,7 @@ export interface EditData {
   deadNodes: string[];
   entryId: string;
   sel: string[]; // 다중 선택
-  floors: { id: string; name: string; valid: boolean }[]; // 층 패널
+  floors: { id: string; name: string; valid: boolean; toFloors: string[] }[]; // 층 그래프(toFloors=clear→다음 층)
   floorIdx: number;
   entryFloorId: string; // 입장 층(★)
   nodes: EditNode[];

@@ -7,15 +7,37 @@ import { SIZE, W, FW, FH, ccx, ccy, hexPoints, hexEdge, EDGE_DIRS, gridPathStr, 
 
 const WALL_SW = 3.5; // 벽 선 두께(.ed-wallvis와 일치)
 
-function floorBar(d: EditData): string {
-  const cards = d.floors.map((f, i) => {
-    const isEntry = f.id === d.entryFloorId;
-    return `<div class="ed-floor${i === d.floorIdx ? " active" : ""}${isEntry ? " entry" : ""}">
-      <button class="ed-fname" data-fsel="${i}">${isEntry ? "★ " : ""}${esc(f.name)}${f.valid ? "" : ' <span class="ed-bad">✗</span>'}</button>
-      <span class="ed-fctl">${isEntry ? "" : `<button data-fentry="${f.id}" aria-label="입장 층으로">⌂</button>`}<button data-fmove="${i}:-1" aria-label="앞으로">◀</button><button data-fmove="${i}:1" aria-label="뒤로">▶</button>${d.floors.length > 1 ? `<button data-fdel="${i}" aria-label="삭제">🗑</button>` : ""}</span>
+// 층 그래프 뷰포트(블럭 다이어그램) — 층=박스, 클리어 toFloor=방향 화살표, 입장 층 ★. 입장에서 BFS 레벨로 좌→우 배치.
+const FGW = 132, FGH = 52, FGX = 50, FGY = 16;
+function floorGraph(d: EditData): string {
+  const byId = new Map(d.floors.map((f) => [f.id, f]));
+  const level = new Map<string, number>();
+  if (byId.has(d.entryFloorId)) {
+    const q = [d.entryFloorId]; level.set(d.entryFloorId, 0);
+    while (q.length) { const id = q.shift()!; for (const t of byId.get(id)!.toFloors) if (byId.has(t) && !level.has(t)) { level.set(t, level.get(id)! + 1); q.push(t); } }
+  }
+  const reachedMax = level.size ? Math.max(...level.values()) : 0;
+  d.floors.forEach((f) => { if (!level.has(f.id)) level.set(f.id, reachedMax + 1); }); // 고립 층 = 끝 열
+  const rowOf = new Map<string, number>(); const colCount = new Map<number, number>();
+  d.floors.forEach((f) => { const l = level.get(f.id)!; const r = colCount.get(l) ?? 0; rowOf.set(f.id, r); colCount.set(l, r + 1); });
+  const bx = (id: string) => level.get(id)! * (FGW + FGX);
+  const by = (id: string) => rowOf.get(id)! * (FGH + FGY);
+  const maxLv = Math.max(0, ...[...level.values()]); const maxRow = Math.max(1, ...[...colCount.values()]);
+  const cw = (maxLv + 1) * (FGW + FGX), ch = maxRow * (FGH + FGY);
+
+  const arrows = d.floors.flatMap((f) => f.toFloors.filter((t) => byId.has(t)).map((t) => {
+    const x1 = bx(f.id) + FGW, y1 = by(f.id) + FGH / 2, x2 = bx(t) - 2, y2 = by(t) + FGH / 2;
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#fgah)"/>`;
+  })).join("");
+  const edgesSvg = `<svg class="fg-edges" width="${cw}" height="${ch}"><defs><marker id="fgah" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path class="fgah" d="M0,0 L7,3 L0,6 Z"/></marker></defs>${arrows}</svg>`;
+  const boxes = d.floors.map((f, i) => {
+    const entry = f.id === d.entryFloorId, cur = i === d.floorIdx;
+    return `<div class="fg-box${cur ? " current" : ""}${entry ? " entry" : ""}${f.valid ? "" : " invalid"}" data-floor-idx="${i}" style="left:${bx(f.id)}px;top:${by(f.id)}px;width:${FGW}px;height:${FGH}px">
+      <div class="fg-name">${entry ? "★ " : ""}${esc(f.name)}${f.valid ? "" : " ✗"}</div>
+      <div class="fg-acts">${entry ? `<span class="fg-entry">입장</span>` : `<button class="fg-mini" data-fentry="${f.id}">입장 지정</button>`}${d.floors.length > 1 ? `<button class="fg-mini" data-fdel="${i}">🗑</button>` : ""}</div>
     </div>`;
   }).join("");
-  return `${cards}<button class="ed-addfloor" id="ed-addfloor">＋ 층</button>`;
+  return `<div class="fg-canvas" style="width:${cw}px;height:${ch}px">${edgesSvg}${boxes}</div><button class="ed-addfloor" id="ed-addfloor">＋ 층</button>`;
 }
 
 export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers): void {
@@ -91,7 +113,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
           <div class="ed-zoom"><button id="ed-zin" aria-label="확대">＋</button><button id="ed-zout" aria-label="축소">－</button><button id="ed-zreset" aria-label="리셋">⤢</button></div>
           <div class="ed-vphint">휠=줌 · 휠(가운데) 드래그=이동</div>
         </div>
-        <div class="ed-floors">${floorBar(d)}</div>
+        <div class="ed-floors"><div class="ed-floors-h">층 그래프 <span class="hint">박스=층, 화살표=클리어의 다음 층. 박스 클릭=편집</span></div>${floorGraph(d)}</div>
       </div>
       <aside class="ed-side">
         <section><h3>노드 카탈로그</h3><div class="ed-catalog">${catalog}</div></section>
@@ -105,10 +127,9 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   app.querySelector("#ed-test")!.addEventListener("click", () => h.onTestCurrent());
   app.querySelector("#ed-delnode")?.addEventListener("click", () => h.onDeleteSel());
   app.querySelector("#ed-addfloor")?.addEventListener("click", () => h.onAddFloor());
-  app.querySelectorAll<HTMLElement>("[data-fsel]").forEach((b) => b.addEventListener("click", () => h.onSelectFloor(Number(b.dataset.fsel))));
-  app.querySelectorAll<HTMLElement>("[data-fdel]").forEach((b) => b.addEventListener("click", () => h.onDeleteFloor(Number(b.dataset.fdel))));
-  app.querySelectorAll<HTMLElement>("[data-fmove]").forEach((b) => b.addEventListener("click", () => { const [i, dir] = b.dataset.fmove!.split(":").map(Number); h.onMoveFloor(i, dir); }));
-  app.querySelectorAll<HTMLElement>("[data-fentry]").forEach((b) => b.addEventListener("click", () => h.onSetEntryFloor(b.dataset.fentry!)));
+  app.querySelectorAll<HTMLElement>(".fg-box[data-floor-idx]").forEach((b) => b.addEventListener("click", () => h.onSelectFloor(Number(b.dataset.floorIdx))));
+  app.querySelectorAll<HTMLElement>("[data-fdel]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); h.onDeleteFloor(Number(b.dataset.fdel)); }));
+  app.querySelectorAll<HTMLElement>("[data-fentry]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); h.onSetEntryFloor(b.dataset.fentry!); }));
   app.querySelector<HTMLSelectElement>("#ed-tofloor")?.addEventListener("change", (e) => h.onSetNodeToFloor(d.sel[0], (e.target as HTMLSelectElement).value || null));
   app.querySelectorAll<SVGElement>(".ed-ehit[data-edge]").forEach((b) =>
     b.addEventListener("click", () => { const [a, c] = b.dataset.edge!.split("|"); h.onToggleEdge(a, c); }));
