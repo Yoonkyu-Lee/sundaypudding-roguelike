@@ -1,7 +1,7 @@
 // 노드 레이어 (NODE-DESIGN Phase A 슬라이스1) — 즉시 레이어 onEnter/onResolve 실행·순서·세이브 왕복.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRun, enterNode, resolveBattleEnd, chooseReward, leaveShop, chooseEncounterOption, serializeRun, deserializeRun, curFloor } from "../run.ts";
+import { createRun, enterNode, resolveBattleEnd, chooseReward, leaveShop, chooseEncounterOption, genRewards, serializeRun, deserializeRun, curFloor } from "../run.ts";
 import type { RunDef } from "../run.ts";
 import { ENCOUNTER_EVENTS } from "../../data/events.ts";
 
@@ -209,6 +209,14 @@ test("event 노드 저작(Phase D): 인라인 event가 랜덤 풀 대신 사용�
   chooseEncounterOption(run, "take");
   assert.equal(run.gold, g0 + 7, "선택 결과(골드) 적용");
   assert.equal(run.phase, "map");
+});
+
+test("보상 등급(B3): tier↑ → 선택지 수 가산 (1→3, 2→4, 3→5)", () => {
+  const run = createRun(11); // 야인시대 — 보상 풀 충분
+  assert.equal(genRewards(run, 1).length, 3, "기본 3택1");
+  assert.equal(genRewards(run, 2).length, 4, "엘리트 4");
+  assert.equal(genRewards(run, 3).length, 5, "보스 5");
+  assert.equal(genRewards(run).length, 3, "tier 생략=1");
 });
 
 test("코어 커서는 세이브 왕복 보존(웨이브 도중 재개 가능)", () => {

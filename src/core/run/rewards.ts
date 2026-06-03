@@ -35,8 +35,11 @@ export function ownsUpgradeLine(ownedSkillIds: string[], baseSkillId: string): b
   return false;
 }
 
-/** 보상 후보 풀: 살아있는 파티원의 (강화 가능 스킬 + 학습 가능 스킬). 데미지=스킬로만(4.2). */
-export function genRewards(run: RunState): RewardOption[] {
+/** 보상 후보 풀: 살아있는 파티원의 (강화 가능 스킬 + 학습 가능 스킬). 데미지=스킬로만(4.2).
+ *  tier(노드 보상 등급, 기본 1): 선택지 수 = 3 + clamp(tier-1,0,2)(1→3·2→4·3→5), 아이템 후보 = clamp(tier,1,3). */
+export function genRewards(run: RunState, tier = 1): RewardOption[] {
+  const choiceCount = 3 + Math.max(0, Math.min(2, tier - 1));
+  const itemCount = Math.max(1, Math.min(3, tier));
   const living = run.party.filter((m) => m.hp > 0);
   let k = 0;
   const mk = () => `rw${run.visited.length}_${k++}`;
@@ -55,13 +58,13 @@ export function genRewards(run: RunState): RewardOption[] {
       if (!ownsUpgradeLine(m.ownedSkillIds, sid) && tierOk(run, m, sid)) pool.push({ id: mk(), kind: "learnSkill", charId: m.charId, skillId: sid, label: `${c.name}: 새 스킬 「${SKILLS[sid].name}」 습득` });
     }
   }
-  // (c) 장신구(4.5): 가끔 후보 진입 — 아이템 1개를 풀에 섞음
-  pool.push(...itemRewardOptions(run, mk, 1));
+  // (c) 장신구(4.5): 아이템 후보를 풀에 섞음(등급↑일수록 더 많이)
+  pool.push(...itemRewardOptions(run, mk, itemCount));
 
-  // 3택1 결정론 추첨
+  // 결정론 추첨 — choiceCount택1(등급별)
   const chosen: RewardOption[] = [];
-  while (chosen.length < 3 && pool.length > 0) chosen.push(pool.splice(run.rng.int(0, pool.length - 1), 1)[0]);
+  while (chosen.length < choiceCount && pool.length > 0) chosen.push(pool.splice(run.rng.int(0, pool.length - 1), 1)[0]);
   // 모자라면(전부 최종티어·풀 만보유) 회복으로 채움
-  while (chosen.length < 3) chosen.push({ id: mk(), kind: "heal", pct: 0.3, label: "파티 30% 회복" });
+  while (chosen.length < choiceCount) chosen.push({ id: mk(), kind: "heal", pct: 0.3, label: "파티 30% 회복" });
   return chosen;
 }

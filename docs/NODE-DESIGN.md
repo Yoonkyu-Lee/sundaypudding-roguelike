@@ -125,7 +125,7 @@ registerLayer("combat", { schema:[{roster:'rosterGrid'},{formationBonus:'bool'},
 ### Phase B — combat 통일 + 보상/데코 레이어 `[엔진 프리미티브 추가]`+`[데이터-온리]`
 - **B슬라이스1 (보상 레이어, 진행)**: `reward` 상호작용 레이어(genRewards 3택1 + phase 블록 → chooseReward가 advanceCore로 복귀, run.ts라 사이클 없음). combat-core 노드 = `core:[combat, gold, reward]`로 전투→골드→보상 완전 패리티. treasure = `core:[reward]`. **yain 미변경(레거시 유지) → 회귀 0.**
 - **✅ B슬라이스2 (yain 마이그레이션, 완료)**: yain 전투 노드 8개를 `core:[combat(rosterPreset,boss?), gold(N), reward]`로 이전. combat 레이어에 **`rosterPreset`**(NODE_ROSTERS 키 참조, DRY) 추가 — 적: `roster`>`rosterPreset`>battle. elite/boss=프리셋(preset+boss+gold). **type은 표시용 유지, 레거시 분기·NODE_ROSTERS 존치(에디터 공존).** RNG/roster/gold/formation 패리티 확인(110 test green, autoRun 완주·f1_boss formation·save 라운드트립 불변). 데모 골든 불변.
-- **B슬라이스3 (후속, 선택)**: rewardTier 데이터화(`genRewards`가 등급 해석 → elite/boss 보상 차등). 현재 보상 풀은 타입 무관(미차등).
+- **✅ B슬라이스3 (보상 등급, 완료)**: reward 레이어 `tier?`(데이터) + `genRewards(run, tier)` 해석 — 선택지 수 3+clamp(tier-1,0,2)(1→3·2→4·3→5) + 아이템 후보 clamp(tier,1,3). yain 보스 tier3·엘리트 tier2. 에디터 reward 폼에 등급 필드. (4.5 갱신)
 
 ### Phase B — combat 통일 + 데코레이터 레이어 `[엔진 프리미티브 추가]`+`[데이터-온리]`
 - **B1. combat 레이어 통일**: battle/elite/boss → `combat` 레이어 1종 + 필드(roster·formationBonus·gold·rewardTier·waves?). NODE_ROSTERS 타입키 → 레이어 데이터. 골드/보상등급 데이터화(`genRewards`가 rewardTier 해석). 엘리트/보스 = 프리셋.

@@ -8,7 +8,7 @@ export interface LayerSpec { label: string; fields: FieldSpec[]; make: () => Lay
 
 export const LAYER_SPECS: Record<string, LayerSpec> = {
   combat: { label: "⚔ 전투", fields: [{ key: "boss", label: "진형 보너스", type: "bool" }], make: () => ({ kind: "combat", roster: NODE_ROSTERS.battle.map((e) => ({ charId: e.charId, pos: { ...e.pos } })) }) }, // 기본 적(깡패) 시드 — 전장 그리드서 편집
-  reward: { label: "🎁 보상(3택1)", fields: [], make: () => ({ kind: "reward" }) },
+  reward: { label: "🎁 보상", fields: [{ key: "tier", label: "등급(1~3, 높을수록 선택지·아이템↑)", type: "number" }], make: () => ({ kind: "reward", tier: 1 }) },
   shop: { label: "🏪 상점", fields: [], make: () => ({ kind: "shop" }) },
   event: { label: "❓ 인카운터", fields: [], make: () => ({ kind: "event" }) },
   gold: { label: "💰 골드 ±", fields: [{ key: "amount", label: "양", type: "number" }], make: () => ({ kind: "gold", amount: 10 }) },
