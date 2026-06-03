@@ -12,8 +12,12 @@ import type { RunState } from "./types.ts";
 import { genRewards } from "./rewards.ts";
 import { fireRunTrigger } from "./passives.ts";
 import { node, curFloor, healParty, completeNode, upgradeOwned, learnOwned, runInstantLayers } from "./helpers.ts";
-import { startCore, advanceCore } from "./layers.ts";
+import { startCore, advanceCore, registerLayerStarter } from "./layers.ts";
 import { generateShop } from "./shop.ts";
+
+// 상호작용 레이어 스타터 등록(DI) — shop/event 시작 로직을 시퀀서에 주입(layers↔shop/encounter 사이클 차단).
+registerLayerStarter("shop", (run) => { run.shop = generateShop(run); run.phase = "shop"; run.log.push("상점 진입"); });
+registerLayerStarter("event", (run) => { const ev = ENCOUNTER_EVENTS[run.rng.int(0, ENCOUNTER_EVENTS.length - 1)]; run.encounterId = ev.id; run.phase = "encounter"; run.log.push(`인카운터 — ${ev.title}`); });
 
 export function createRun(seed: number, roster: { charId: string; pos: Pos }[] = DEFAULT_RUN.roster, runDef: RunDef = DEFAULT_RUN, opts: { mastery?: Record<string, number>; useMastery?: boolean } = {}): RunState {
   const rng = new Rng(seed ^ 0x9e3779b9);

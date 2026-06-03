@@ -6,6 +6,7 @@ import { SKILLS } from "../../data/skills.ts";
 import { unlockedTier, ownsUpgradeLine } from "./rewards.ts";
 import { genItemOffers } from "./items.ts";
 import { healParty, upgradeOwned, learnOwned, completeNode } from "./helpers.ts";
+import { advanceCore } from "./layers.ts";
 
 export function generateShop(run: RunState): ShopOffer[] {
   let k = 0;
@@ -46,5 +47,6 @@ export function buyShopOffer(run: RunState, offerId: string): void {
 export function leaveShop(run: RunState): void {
   if (run.phase !== "shop") return;
   run.shop = null;
+  if (run.coreCursor !== null) { advanceCore(run); return; } // 코어 시퀀스 shop 레이어 → 다음 스텝
   completeNode(run, run.activeNodeId!);
 }

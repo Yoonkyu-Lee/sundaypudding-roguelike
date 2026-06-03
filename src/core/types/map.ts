@@ -18,7 +18,9 @@ export type DecoratorLayer =
 /** 상호작용 레이어 — 완료까지 블록(phase 전환). combat·reward(B). shop/event는 후속. */
 export type InteractiveLayer =
   | { kind: "combat"; roster?: { charId: string; pos: Pos }[]; rosterPreset?: string; boss?: boolean } // 적: roster(인라인) > rosterPreset(NODE_ROSTERS 키) > battle. 보스=진형보너스
-  | { kind: "reward" }; // 보상 3택1(genRewards) — 플레이어 선택까지 블록. treasure 노드 = core:[reward]
+  | { kind: "reward" } // 보상 3택1(genRewards) — 플레이어 선택까지 블록. treasure 노드 = core:[reward]
+  | { kind: "shop" } // 상점 진열(generateShop) — leaveShop까지 블록. 스타터는 DI 등록(run.ts)
+  | { kind: "event" }; // 인카운터 추첨(랜덤) — chooseEncounterOption까지 블록. 노드별 저작은 Phase D
 /** 노드 레이어 — onEnter/onResolve는 데코만(즉시), core는 데코+상호작용 혼합(순서 실행). */
 export type Layer = DecoratorLayer | InteractiveLayer;
 export type LayerKind = Layer["kind"];

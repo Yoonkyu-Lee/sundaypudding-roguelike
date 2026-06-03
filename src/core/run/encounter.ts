@@ -5,6 +5,7 @@ import { SKILLS } from "../../data/skills.ts";
 import { ENCOUNTER_EVENTS, type EncounterOutcome } from "../../data/events.ts";
 import { ownsUpgradeLine } from "./rewards.ts";
 import { healParty, upgradeOwned, learnOwned, completeNode } from "./helpers.ts";
+import { advanceCore } from "./layers.ts";
 import { fireRunTrigger } from "./passives.ts";
 
 function applyOutcome(run: RunState, o: EncounterOutcome): void {
@@ -29,5 +30,6 @@ export function chooseEncounterOption(run: RunState, choiceId: string): void {
   if (ch.gamble) { const win = run.rng.chance(ch.gamble.chance); run.log.push(`${ev.title}: ${win ? "성공!" : "실패…"}`); outcome = win ? ch.gamble.win : ch.gamble.lose; }
   applyOutcome(run, outcome);
   run.encounterId = null;
+  if (run.coreCursor !== null) { advanceCore(run); return; } // 코어 시퀀스 event 레이어 → 다음 스텝
   completeNode(run, run.activeNodeId!);
 }

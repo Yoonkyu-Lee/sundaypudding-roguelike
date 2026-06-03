@@ -1,8 +1,9 @@
 // 노드 레이어 (NODE-DESIGN Phase A 슬라이스1) — 즉시 레이어 onEnter/onResolve 실행·순서·세이브 왕복.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRun, enterNode, resolveBattleEnd, chooseReward, serializeRun, deserializeRun, curFloor } from "../run.ts";
+import { createRun, enterNode, resolveBattleEnd, chooseReward, leaveShop, chooseEncounterOption, serializeRun, deserializeRun, curFloor } from "../run.ts";
 import type { RunDef } from "../run.ts";
+import { ENCOUNTER_EVENTS } from "../../data/events.ts";
 
 // start(0,0) → rest(0,1) → clear(0,2). rest에 레이어 부착.
 function def(): RunDef {
@@ -149,6 +150,25 @@ test("yain 마이그레이션: f1_boss가 core 경로 + boss 프리셋 roster + 
   const enemyIds = run.battle!.units.filter((u) => u.side === "enemy").map((u) => u.charId);
   assert.ok(enemyIds.includes("shim") && enemyIds.includes("chunho"), "rosterPreset 'boss' 적용");
   assert.notEqual(run.battle!.enemyFormation, null, "보스=진형 보너스");
+});
+
+test("shop 레이어(DI): core:[shop] 진입 → 상점 블록 → leaveShop이 advanceCore로 복귀", () => {
+  const run = createRun(4, coreDef([{ kind: "shop" }]).roster, coreDef([{ kind: "shop" }]));
+  enterNode(run, "b");
+  assert.equal(run.phase, "shop"); assert.equal(run.coreCursor, 0); assert.notEqual(run.shop, null);
+  leaveShop(run);
+  assert.equal(run.phase, "map"); assert.equal(run.coreCursor, null);
+  assert.ok(run.visited.includes("b"));
+});
+
+test("event 레이어(DI): core:[event] 진입 → 인카운터 블록 → 선택 후 advanceCore로 복귀", () => {
+  const run = createRun(6, coreDef([{ kind: "event" }]).roster, coreDef([{ kind: "event" }]));
+  enterNode(run, "b");
+  assert.equal(run.phase, "encounter"); assert.equal(run.coreCursor, 0); assert.notEqual(run.encounterId, null);
+  const ev = ENCOUNTER_EVENTS.find((e) => e.id === run.encounterId)!;
+  chooseEncounterOption(run, ev.choices[0].id);
+  assert.equal(run.phase, "map"); assert.equal(run.coreCursor, null);
+  assert.ok(run.visited.includes("b"));
 });
 
 test("코어 커서는 세이브 왕복 보존(웨이브 도중 재개 가능)", () => {
