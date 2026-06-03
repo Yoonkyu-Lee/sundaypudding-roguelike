@@ -126,6 +126,20 @@ test("보상 레이어: treasure 노드 = core:[reward] (전투 없이 보상)",
   assert.equal(run.phase, "map"); assert.equal(run.coreCursor, null);
 });
 
+test("yain 마이그레이션: f1_rest = core:[heal] — 전투불능 부활 + 50% 회복 후 맵 복귀", () => {
+  const run = createRun(3); // DEFAULT_RUN(야인시대)
+  // 전투불능 1명 + 부상 1명 세팅
+  run.party[0].hp = 0;
+  run.party[1].hp = 1;
+  run.reachable = ["f1_rest"];
+  enterNode(run, "f1_rest");
+  assert.equal(run.party[0].hp, Math.max(1, Math.round(run.party[0].maxHp * 0.5)), "전투불능 부활(maxHp*0.5)");
+  assert.equal(run.party[1].hp, Math.min(run.party[1].maxHp, 1 + Math.round(run.party[1].maxHp * 0.5)), "생존자 50% 회복");
+  assert.equal(run.phase, "map", "휴식 즉시 해소 → 맵");
+  assert.equal(run.coreCursor, null, "코어 소진(완료)");
+  assert.ok(run.visited.includes("f1_rest"));
+});
+
 test("yain 마이그레이션: f1_boss가 core 경로 + boss 프리셋 roster + 진형 보너스", () => {
   const run = createRun(2); // DEFAULT_RUN(야인시대)
   run.reachable = ["f1_boss"];

@@ -20,7 +20,7 @@
         { "id": "f1_b1", "type": "battle", "q": 1, "r": 0, "core": [{ "kind": "combat", "rosterPreset": "battle" }, { "kind": "gold", "amount": 8 }, { "kind": "reward" }] },
         { "id": "f1_b2", "type": "battle", "q": 0, "r": 1, "core": [{ "kind": "combat", "rosterPreset": "battle" }, { "kind": "gold", "amount": 8 }, { "kind": "reward" }] },
         { "id": "f1_shop", "type": "shop", "q": 2, "r": 0 },
-        { "id": "f1_rest", "type": "rest", "q": 0, "r": 2 },
+        { "id": "f1_rest", "type": "rest", "q": 0, "r": 2, "core": [{ "kind": "heal", "pct": 0.5, "revive": true }] },
         { "id": "f1_boss", "type": "boss", "q": 1, "r": 1, "core": [{ "kind": "combat", "rosterPreset": "boss", "boss": true }, { "kind": "gold", "amount": 24 }, { "kind": "reward" }] },
         { "id": "f1_clear", "type": "clear", "q": 2, "r": 1, "toFloor": "f2" }
       ],
