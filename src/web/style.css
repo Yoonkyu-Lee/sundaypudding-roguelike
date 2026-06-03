@@ -559,6 +559,8 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .fg-edges { position: absolute; left: 0; top: 0; pointer-events: none; }
 .fg-edges line { stroke: var(--dim); stroke-width: 2; opacity: .7; }
 .fg-edges .fgah { fill: var(--dim); }
+.fg-edges line.hot { stroke: var(--accent); stroke-width: 3; opacity: 1; }
+.fg-edges .fgah-hot { fill: var(--accent); }
 .fg-box { position: absolute; box-sizing: border-box; border: 1px solid var(--line); border-radius: 9px; background: var(--panel2); padding: 5px 9px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; gap: 3px; }
 .fg-box:hover { border-color: var(--accent); }
 .fg-box.current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }

@@ -25,11 +25,19 @@ function floorGraph(d: EditData): string {
   const maxLv = Math.max(0, ...[...level.values()]); const maxRow = Math.max(1, ...[...colCount.values()]);
   const cw = (maxLv + 1) * (FGW + FGX), ch = maxRow * (FGH + FGY);
 
+  // 선택한 클리어 노드(현재 층)가 가리키는 링크 = 하이라이트 대상(선택 노랑과 통일)
+  const curId = d.floors[d.floorIdx]?.id;
+  const selNode = d.sel.length === 1 ? d.nodes.find((n) => n.id === d.sel[0]) : null;
+  const hl = selNode && selNode.type === "clear" && selNode.toFloor ? { from: curId, to: selNode.toFloor } : null;
   const arrows = d.floors.flatMap((f) => f.toFloors.filter((t) => byId.has(t)).map((t) => {
     const x1 = bx(f.id) + FGW, y1 = by(f.id) + FGH / 2, x2 = bx(t) - 2, y2 = by(t) + FGH / 2;
-    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#fgah)"/>`;
+    const hot = !!hl && f.id === hl.from && t === hl.to;
+    return `<line class="${hot ? "hot" : ""}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#${hot ? "fgah-hot" : "fgah"})"/>`;
   })).join("");
-  const edgesSvg = `<svg class="fg-edges" width="${cw}" height="${ch}"><defs><marker id="fgah" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path class="fgah" d="M0,0 L7,3 L0,6 Z"/></marker></defs>${arrows}</svg>`;
+  const edgesSvg = `<svg class="fg-edges" width="${cw}" height="${ch}"><defs>
+    <marker id="fgah" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path class="fgah" d="M0,0 L7,3 L0,6 Z"/></marker>
+    <marker id="fgah-hot" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path class="fgah-hot" d="M0,0 L7,3 L0,6 Z"/></marker>
+    </defs>${arrows}</svg>`;
   const boxes = d.floors.map((f, i) => {
     const entry = f.id === d.entryFloorId, cur = i === d.floorIdx;
     return `<div class="fg-box${cur ? " current" : ""}${entry ? " entry" : ""}${f.valid ? "" : " invalid"}" data-floor-idx="${i}" style="left:${bx(f.id)}px;top:${by(f.id)}px;width:${FGW}px;height:${FGH}px">
