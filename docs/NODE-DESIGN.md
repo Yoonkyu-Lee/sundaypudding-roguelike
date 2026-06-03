@@ -139,7 +139,8 @@ registerLayer("combat", { schema:[{roster:'rosterGrid'},{formationBonus:'bool'},
 ### Phase E — 전용 노드 에디터 GUI `[웹 기능]` (각 Phase와 평행)
 > 평행 개발 원칙: 레이어 종류가 엔진에 생길 때마다 GUI도 같이.
 - **✅ E1+E2(단순 폼) (완료)**: 노드 **더블클릭 → 전용 화면**(`nodeEditView.ts`). 좌=core 레이어 리스트(추가/삭제/순서 ↑↓·선택), 우=선택 레이어 **스키마 구동 폼**(숫자/텍스트/토글/select). 스키마 진실원=`layerSchema.ts`(kind별 FieldSpec + 카탈로그 + 요약 + 기본값 make). 컨트롤러 mode `"nodeEdit"`. 레이어 추가=기본값으로 즉시 작곡 가능.
-- **E3. 리치 에디터 등록(다음)**: combat `roster` 4×4(기존 `nodePanel` 재사용)·event 선택지 트리·charId/statusId select(데이터 기반). 현재 combat은 `rosterPreset`(select)만, roster 인라인은 미지원.
+- **✅ E3-(부분) (완료)**: 공용 `rosterWidget.ts` 추출(nodePanel·nodeEditView 공유). combat `roster` **인라인 적 배치 위젯**(charId+행/열, 있으면 프리셋 무시) + grantStatus charId/statusId **데이터 기반 select**(CHARACTERS/STATUS_DEFS, 오타 방지). FieldSpec에 `roster`/`optionsFrom`/`allowEmpty` 타입.
+- **E3-나머지(다음)**: event 선택지 트리 에디터(D와 묶임).
 - **E4. 트리거 룰 에디터**: when/if/then 조립 UI(특성/패시브 작성과 일관) + onEnter/onResolve 데코 슬롯 편집.
 
 ### 권장 순서

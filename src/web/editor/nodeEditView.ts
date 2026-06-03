@@ -1,8 +1,16 @@
 // 전용 노드 에디터 화면 (Phase E1) — 노드 core[] 레이어를 리스트(추가/삭제/순서) + 스키마 구동 폼으로 편집.
 import { esc } from "../battle/shared.ts";
 import type { Layer } from "../../core/types.ts";
-import type { NodeEditData, EditorHandlers } from "./editorRender.ts";
-import { LAYER_SPECS, LAYER_KINDS, layerSummary } from "./layerSchema.ts";
+import type { NodeEditData, EditorHandlers, RosterEntry } from "./editorRender.ts";
+import { LAYER_SPECS, LAYER_KINDS, layerSummary, type FieldSpec } from "./layerSchema.ts";
+import { rosterWidget, wireRoster } from "./rosterWidget.ts";
+import { CHARACTERS } from "../../data/characters.ts";
+import { STATUS_DEFS } from "../../data/statuses.ts";
+
+const CHARS = Object.values(CHARACTERS).map((c) => ({ id: c.id, name: c.name }));
+const CHAR_OPTS = CHARS.map((c) => ({ value: c.id, label: c.name }));
+const STATUS_OPTS = Object.entries(STATUS_DEFS).map(([id, def]) => ({ value: id, label: def.name ?? id }));
+const optionList = (f: FieldSpec) => f.optionsFrom === "chars" ? CHAR_OPTS : f.optionsFrom === "statuses" ? STATUS_OPTS : (f.options ?? []).map((o) => ({ value: o, label: o }));
 
 function fieldInput(L: Layer, idx: number): string {
   const spec = LAYER_SPECS[L.kind];
@@ -11,9 +19,10 @@ function fieldInput(L: Layer, idx: number): string {
   return spec.fields.map((f) => {
     const id = `ne-f-${idx}-${f.key}`;
     const cur = v[f.key];
+    if (f.type === "roster") return `<div class="ne-field-roster"><div class="ed-meta-row">${esc(f.label)}</div>${rosterWidget((cur as RosterEntry[]) ?? [], CHARS)}</div>`;
     let control: string;
     if (f.type === "bool") control = `<input type="checkbox" id="${id}" data-fkey="${f.key}"${cur ? " checked" : ""}>`;
-    else if (f.type === "select") control = `<select id="${id}" data-fkey="${f.key}">${(f.options ?? []).map((o) => `<option value="${o}"${cur === o ? " selected" : ""}>${o}</option>`).join("")}</select>`;
+    else if (f.type === "select") { const empty = f.allowEmpty ? `<option value=""${cur ? "" : " selected"}>(전원)</option>` : ""; control = `<select id="${id}" data-fkey="${f.key}">${empty}${optionList(f).map((o) => `<option value="${o.value}"${cur === o.value ? " selected" : ""}>${esc(o.label)}</option>`).join("")}</select>`; }
     else if (f.type === "number") control = `<input type="number" id="${id}" data-fkey="${f.key}" value="${cur ?? 0}"${f.step ? ` step="${f.step}"` : ""}>`;
     else control = `<input type="text" id="${id}" data-fkey="${f.key}" value="${esc(String(cur ?? ""))}">`;
     return `<label class="ne-field">${esc(f.label)} ${control}</label>`;
@@ -56,4 +65,6 @@ export function renderNodeEditView(app: HTMLElement, d: NodeEditData, h: EditorH
     const val = el instanceof HTMLInputElement && el.type === "checkbox" ? el.checked : el instanceof HTMLInputElement && el.type === "number" ? Number(el.value) : el.value;
     h.onSetLayerField(d.selLayer!, key, val);
   }));
+  // 리치 위젯: combat roster(있으면 프리셋 무시) — 추가/제거 → onSetLayerField("roster", …)
+  if (sel?.kind === "combat") wireRoster(app, ((sel as Record<string, unknown>).roster as RosterEntry[]) ?? [], (next) => h.onSetLayerField(d.selLayer!, "roster", next));
 }

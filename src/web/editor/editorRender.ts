@@ -80,7 +80,7 @@ export interface EditorHandlers {
   onRemoveLayer: (idx: number) => void;
   onMoveLayer: (idx: number, dir: number) => void; // 순서 ↑(-1)/↓(+1)
   onSelectLayer: (idx: number) => void;
-  onSetLayerField: (idx: number, key: string, value: string | number | boolean) => void;
+  onSetLayerField: (idx: number, key: string, value: string | number | boolean | RosterEntry[]) => void;
 }
 
 function card(r: EditorRunCard): string {
