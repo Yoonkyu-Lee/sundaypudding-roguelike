@@ -577,6 +577,23 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .fg-edges .fgah-hot { fill: var(--accent); }
 .fg-box { position: absolute; box-sizing: border-box; border: 1px solid var(--line); border-radius: 9px; background: var(--panel2); padding: 5px 9px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; gap: 3px; }
 .fg-box:hover { border-color: var(--accent); }
+
+/* 전용 노드 에디터 (Phase E) — 좌 레이어 리스트 + 우 폼 */
+.node-editor .ne-body { display: flex; gap: 16px; align-items: flex-start; }
+.ne-list { width: 340px; flex: none; }
+.ne-list h3, .ne-form h3 { font-size: 13px; color: var(--dim); margin: 0 0 8px; }
+.ne-layers { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.ne-layer { display: flex; align-items: center; justify-content: space-between; gap: 6px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+.ne-layer:hover { border-color: var(--accent); }
+.ne-layer.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.ne-li-acts button { background: transparent; border: 0; color: var(--dim); cursor: pointer; font-size: 13px; padding: 0 3px; }
+.ne-li-acts button:hover { color: var(--accent); }
+.ne-li-acts .ne-x:hover { color: var(--bad, #d66); }
+.ne-add { display: flex; gap: 6px; }
+.ne-add select { flex: 1; background: var(--panel2); color: var(--txt); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; }
+.ne-form { flex: 1; background: var(--panel); border-radius: 10px; padding: 14px; min-height: 200px; }
+.ne-field { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; color: var(--dim); }
+.ne-field input[type=text], .ne-field input[type=number], .ne-field select { flex: 1; background: var(--panel2); color: var(--txt); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; }
 .fg-box.current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .fg-box.entry { background: #23314a; }
 .fg-box.invalid { border-color: var(--enemy); }

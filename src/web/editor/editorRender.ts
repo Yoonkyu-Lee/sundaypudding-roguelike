@@ -3,6 +3,7 @@ import { esc } from "../battle/shared.ts";
 import type { NodeType } from "../../core/types.ts";
 import type { RunSource } from "./store.ts";
 import { renderEditView } from "./editView.ts";
+import { renderNodeEditView } from "./nodeEditView.ts";
 
 export interface EditorRunCard { id: string; name: string; source: RunSource; floors: number; valid: boolean; }
 export interface ListData { mode: "list"; runs: EditorRunCard[]; }
@@ -31,7 +32,15 @@ export interface EditData {
   floorCamera: { zoom: number; x: number; y: number }; // 층 그래프 뷰포트 카메라 — 편집 중 보존
   splitH: number | null; // 노드 맵 뷰포트 높이(px) — 스플리터 조절, null=CSS 기본
 }
-export type EditorData = ListData | EditData;
+// 전용 노드 에디터(Phase E) — 더블클릭한 노드의 core 레이어 편집
+export interface NodeEditData {
+  mode: "nodeEdit";
+  nodeId: string;
+  nodeName: string;
+  core: import("../../core/types.ts").Layer[];
+  selLayer: number | null;
+}
+export type EditorData = ListData | EditData | NodeEditData;
 
 export interface EditorHandlers {
   onNew: () => void;
@@ -65,6 +74,13 @@ export interface EditorHandlers {
   // 노드 메타데이터 (F2)
   onSetNodeLabel: (id: string, label: string) => void; // 표시 라벨
   onSetNodeRoster: (id: string, roster: RosterEntry[]) => void; // 적 구성 override(빈 배열=타입 기본)
+  // 노드 에디터 (Phase E)
+  onOpenNodeEditor: (id: string) => void; // 노드 더블클릭 → 전용 화면
+  onAddLayer: (kind: string) => void; // core에 레이어 추가(기본값)
+  onRemoveLayer: (idx: number) => void;
+  onMoveLayer: (idx: number, dir: number) => void; // 순서 ↑(-1)/↓(+1)
+  onSelectLayer: (idx: number) => void;
+  onSetLayerField: (idx: number, key: string, value: string | number | boolean) => void;
 }
 
 function card(r: EditorRunCard): string {
@@ -105,5 +121,6 @@ function renderList(app: HTMLElement, data: ListData, h: EditorHandlers): void {
 
 export function renderEditor(app: HTMLElement, data: EditorData, h: EditorHandlers): void {
   if (data.mode === "list") renderList(app, data, h);
+  else if (data.mode === "nodeEdit") renderNodeEditView(app, data, h);
   else renderEditView(app, data, h);
 }

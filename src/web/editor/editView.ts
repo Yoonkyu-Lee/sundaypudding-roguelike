@@ -203,6 +203,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   });
   field.addEventListener("pointermove", onMove);
   field.addEventListener("pointerup", onUp);
+  field.addEventListener("dblclick", (e) => { const el = (e.target as HTMLElement).closest<HTMLElement>(".ednode"); if (el) h.onOpenNodeEditor(el.dataset.node!); }); // 더블클릭 = 노드 내용 편집
 
   // ── 노드 맵 카메라(줌·팬) — 첫 진입은 입장 노드 중앙 정렬. (공용 attachCamera) ──
   const nodeCam = attachCamera({

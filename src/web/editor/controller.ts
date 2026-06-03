@@ -7,6 +7,7 @@ import { CHARACTERS } from "../../data/characters.ts";
 
 const edgeKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 import { CATALOG_TYPES, TYPE_ICON, TYPE_NAME } from "../nodeMeta.ts";
+import { LAYER_SPECS } from "./layerSchema.ts";
 import type { EditorData, EditorHandlers } from "./editorRender.ts";
 
 export interface EditorDeps {
@@ -16,15 +17,18 @@ export interface EditorDeps {
 }
 
 export function createEditor(deps: EditorDeps): { data: () => EditorData; handlers: EditorHandlers } {
-  let mode: "list" | "edit" = "list";
+  let mode: "list" | "edit" | "nodeEdit" = "list";
   let draft: RunDef | null = null;
   let floorIdx = 0;
+  let nodeEditId: string | null = null; // 노드 에디터 대상(Phase E)
+  let selLayer: number | null = null; // 선택 레이어 인덱스
   let sel: string[] = [];
   let camera = { zoom: 1, x: 0, y: 0 };
   let floorCamera = { zoom: 1, x: 0, y: 0 }; // 층 그래프 뷰포트 카메라(편집 중 보존)
   let splitH: number | null = null; // 노드 맵 뷰포트 높이(px) — 스플리터로 조절, 편집 중 보존(null=CSS 기본)
 
   const floor = (): FloorDef => draft!.floors[floorIdx];
+  const editNode = () => floor().nodes.find((n) => n.id === nodeEditId) ?? null; // 노드 에디터 대상
   const save = () => { if (draft) saveDraft(draft); };
 
   function openEdit(id: string): void {
@@ -75,8 +79,19 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
     };
   }
 
+  function nodeEditData(): EditorData {
+    const nd = editNode();
+    return {
+      mode: "nodeEdit",
+      nodeId: nodeEditId!,
+      nodeName: nd?.label ?? (nd ? TYPE_NAME[nd.type] : nodeEditId!),
+      core: nd?.core ?? [],
+      selLayer,
+    };
+  }
+
   return {
-    data: () => (mode === "list" ? listData() : editData()),
+    data: () => (mode === "list" ? listData() : mode === "nodeEdit" ? nodeEditData() : editData()),
     handlers: {
       onNew() { saveDraft(blankRun()); deps.rerender(); },
       onTest(id) { const d = getRun(id); if (d && validateRun(d).ok) deps.testRun(d); },
@@ -93,8 +108,9 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       onDelete(id) { deleteDraft(id); deps.rerender(); },
       onEdit(id) { openEdit(id); },
       onBack() {
-        if (mode === "edit") { mode = "list"; draft = null; sel = []; deps.rerender(); }
-        else deps.toTitle();
+        if (mode === "nodeEdit") { mode = "edit"; nodeEditId = null; selLayer = null; deps.rerender(); return; }
+        if (mode === "edit") { mode = "list"; draft = null; sel = []; deps.rerender(); return; }
+        deps.toTitle();
       },
       onPlaceNode(type, q, r) { if (!draft) return; addNode(floor(), type, q, r); save(); deps.rerender(); },
       onMoveNode(id, q, r) {
@@ -128,6 +144,13 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       onSetNodeToFloor(id, toFloor) { if (!draft) return; const nd = floor().nodes.find((n) => n.id === id); if (nd && nd.type === "clear") { if (toFloor) nd.toFloor = toFloor; else delete nd.toFloor; save(); deps.rerender(); } },
       onSetNodeLabel(id, label) { if (!draft) return; setNodeLabel(floor(), id, label); save(); deps.rerender(); },
       onSetNodeRoster(id, roster) { if (!draft) return; setNodeRoster(floor(), id, roster); save(); deps.rerender(); },
+      // 노드 에디터 (Phase E) — core 레이어 편집
+      onOpenNodeEditor(id) { if (!draft) return; const nd = floor().nodes.find((n) => n.id === id); if (!nd) return; nodeEditId = id; selLayer = nd.core && nd.core.length ? 0 : null; mode = "nodeEdit"; deps.rerender(); },
+      onAddLayer(kind) { const nd = editNode(); const spec = LAYER_SPECS[kind]; if (!nd || !spec) return; (nd.core ??= []).push(spec.make()); selLayer = nd.core.length - 1; save(); deps.rerender(); },
+      onRemoveLayer(idx) { const nd = editNode(); if (!nd?.core) return; nd.core.splice(idx, 1); selLayer = nd.core.length ? Math.min(idx, nd.core.length - 1) : null; save(); deps.rerender(); },
+      onMoveLayer(idx, dir) { const nd = editNode(); const c = nd?.core; if (!c) return; const j = idx + dir; if (j < 0 || j >= c.length) return; [c[idx], c[j]] = [c[j], c[idx]]; if (selLayer === idx) selLayer = j; save(); deps.rerender(); },
+      onSelectLayer(idx) { selLayer = idx; deps.rerender(); },
+      onSetLayerField(idx, key, value) { const nd = editNode(); if (!nd?.core?.[idx]) return; (nd.core[idx] as Record<string, unknown>)[key] = value; save(); deps.rerender(); },
     },
   };
 }
