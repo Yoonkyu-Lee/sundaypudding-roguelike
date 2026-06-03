@@ -63,7 +63,7 @@ export function renderNodeEditView(app: HTMLElement, d: NodeEditData, h: EditorH
 
   app.innerHTML = `<div class="editor node-editor">
     <header><h1>🧩 노드 내용 — <span class="dim">${esc(d.nodeName)}</span></h1>
-      <button class="hub-link" id="ne-back">← 맵으로</button></header>
+      <div><button class="ed-btn ghost" id="ne-savetpl" title="이 노드를 템플릿으로 저장해 카탈로그에서 재사용">📋 템플릿으로 저장</button><button class="hub-link" id="ne-back">← 맵으로</button></div></header>
     <div class="ne-body">
       <section class="ne-list">${sections}</section>
       <section class="ne-form">${form}</section>
@@ -71,6 +71,7 @@ export function renderNodeEditView(app: HTMLElement, d: NodeEditData, h: EditorH
   </div>`;
 
   app.querySelector("#ne-back")!.addEventListener("click", () => h.onBack());
+  app.querySelector("#ne-savetpl")?.addEventListener("click", () => h.onSaveTemplate());
   app.querySelectorAll<HTMLElement>("[data-addbtn]").forEach((b) => b.addEventListener("click", () => {
     const slot = b.dataset.addbtn as LayerSlot;
     h.onAddLayer(slot, app.querySelector<HTMLSelectElement>(`[data-addslot="${slot}"]`)!.value);

@@ -2,7 +2,8 @@
 import { validateRun } from "../../core/run.ts";
 import type { Condition, Effect, EncounterEvent, EncounterOutcome, FloorDef, Layer, MapNode, RunDef, Trigger } from "../../core/types.ts";
 import { listRuns, getRun, saveDraft, deleteDraft, blankRun, exportRun, isDraft, cloneAsDraft, saveToRepo } from "./store.ts";
-import { addNode, moveNode, moveNodes, deleteNode, toggleEdge, adjacentPairs, addFloor, deleteFloor, moveFloor, setNodeLabel } from "./ops.ts";
+import { addNode, addNodeFromTemplate, moveNode, moveNodes, deleteNode, toggleEdge, adjacentPairs, addFloor, deleteFloor, moveFloor, setNodeLabel } from "./ops.ts";
+import { listTemplates, saveTemplate, deleteTemplate, getTemplate } from "./templates.ts";
 import { NODE_ROSTERS } from "../../data/encounters.ts";
 
 const edgeKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
@@ -84,6 +85,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       edges: f.edges.map((e) => ({ a: e.from, b: e.to })), // 연결(실선)
       walls: adjacentPairs(f).filter((p) => !connected.has(edgeKey(p.a, p.b))), // 인접·미연결 = 세워진 벽
       catalog: CATALOG_TYPES.map((t) => ({ type: t, icon: TYPE_ICON[t], name: TYPE_NAME[t] })),
+      templates: listTemplates().map((t) => ({ id: t.id, name: t.name, type: t.type, icon: TYPE_ICON[t.type] })),
       camera: { ...camera },
       floorCamera: { ...floorCamera },
       splitH,
@@ -135,6 +137,9 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
         deps.toTitle();
       },
       onPlaceNode(type, q, r) { if (!draft) return; addNode(floor(), type, q, r); save(); deps.rerender(); },
+      onPlaceTemplate(templateId, q, r) { if (!draft) return; const t = getTemplate(templateId); if (!t) return; addNodeFromTemplate(floor(), t.type, t.content, q, r); save(); deps.rerender(); },
+      onSaveTemplate() { const nd = editNode(); if (!nd) return; const def = nd.label ?? TYPE_NAME[nd.type]; const name = prompt("템플릿 이름:", def); if (name === null) return; saveTemplate(name, nd.type, { label: nd.label, core: nd.core, layers: nd.layers }); alert(`템플릿 저장됨 — 맵 카탈로그 "내 템플릿"에서 드래그해 복제 배치하세요.`); },
+      onDeleteTemplate(templateId) { deleteTemplate(templateId); deps.rerender(); },
       onMoveNode(id, q, r) {
         if (!draft) return;
         const n = floor().nodes.find((x) => x.id === id);

@@ -526,6 +526,11 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .ed-chip { display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; cursor: grab; font-size: 13px; }
 .ed-chip:active { cursor: grabbing; }
 .ed-chip .mico { font-size: 16px; }
+.ed-chip.tpl { position: relative; }
+.ed-chip.tpl span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.ed-tpl-del { margin-left: auto; border: none; background: none; color: var(--dim); cursor: pointer; font-size: 12px; padding: 0 2px; line-height: 1; }
+.ed-tpl-del:hover { color: var(--bad, #e66); }
+.ed-catalog.tpl .hint { grid-column: 1 / -1; }
 /* 노드 = SVG 폴리곤(시각, 격자 셀과 동일 기하) z1 + 투명 오버레이 div(상호작용/아이콘) z2 */
 .ed-nodes { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 1; }
 .ednode-poly { stroke: var(--line); stroke-width: 1.5; fill: var(--panel2); }

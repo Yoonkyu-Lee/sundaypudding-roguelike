@@ -108,6 +108,9 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
 
   const catalog = d.catalog.map((c) =>
     `<div class="ed-chip" data-nt="${c.type}"><span class="mico">${c.icon}</span><span>${c.name}</span></div>`).join("");
+  const templates = d.templates.length
+    ? d.templates.map((t) => `<div class="ed-chip tpl" data-tpl="${t.id}"><span class="mico">${t.icon}</span><span>${esc(t.name)}</span><button class="ed-tpl-del" data-tpldel="${t.id}" aria-label="템플릿 삭제" title="삭제">✕</button></div>`).join("")
+    : `<div class="hint">노드를 더블클릭→편집 후 "📋 템플릿으로 저장"으로 재사용할 노드를 만들 수 있습니다.</div>`;
   const selN = d.sel.length;
   const one = selN === 1 ? d.nodes.find((n) => n.id === d.sel[0]) : null;
   const hasDeletable = d.sel.some((id) => id !== d.entryId);
@@ -138,6 +141,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
       </div>
       <aside class="ed-side">
         <section><h3>노드 카탈로그</h3><div class="ed-catalog">${catalog}</div></section>
+        <section><h3>📋 내 템플릿</h3><div class="ed-catalog tpl">${templates}</div></section>
         <section><h3>검증</h3>${errs}</section>
         <section><h3>선택</h3>${selInfo}</section>
       </aside>
@@ -164,7 +168,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   if (!vp || !field) return;
 
   // ── 포인터 기반 드래그(네이티브 DnD·브라우저 고스트 이미지 제거 → 게임 오브젝트 이동 느낌) ──
-  type Drag = { kind: "place" | "move" | "empty"; id?: string; type?: string; icon?: string; ctrl?: boolean; sx: number; sy: number; moved: boolean };
+  type Drag = { kind: "place" | "placeTpl" | "move" | "empty"; id?: string; tpl?: string; type?: string; icon?: string; ctrl?: boolean; sx: number; sy: number; moved: boolean };
   let drag: Drag | null = null;
   let avatar: HTMLElement | null = null;
   const endDrag = () => { avatar?.remove(); avatar = null; document.body.classList.remove("dragging"); drag = null; };
@@ -182,6 +186,7 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
     if (!drag) return;
     const cur = drag; endDrag();
     if (cur.kind === "place") { if (cur.moved && overField(e.clientX, e.clientY)) { const { q, r } = cellAt(e.clientX, e.clientY); h.onPlaceNode(cur.type as NodeType, q, r); } }
+    else if (cur.kind === "placeTpl") { if (cur.moved && overField(e.clientX, e.clientY)) { const { q, r } = cellAt(e.clientX, e.clientY); h.onPlaceTemplate(cur.tpl!, q, r); } }
     else if (cur.kind === "move") {
       if (cur.moved) { if (overField(e.clientX, e.clientY)) { const { q, r } = cellAt(e.clientX, e.clientY); h.onMoveNode(cur.id!, q, r); } }
       else { // 안 움직이면 클릭=선택, 같은 노드 빠른 두 번째 클릭=노드 에디터 진입(더블클릭)
@@ -191,12 +196,19 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
       }
     } else if (cur.kind === "empty" && !cur.moved) { lastNodeClick = null; h.onClearSel(); } // 빈칸 클릭=해제
   };
-  // 카탈로그 칩에서 끌어 배치
-  app.querySelectorAll<HTMLElement>(".ed-chip").forEach((c) => {
+  // 카탈로그 칩(타입)에서 끌어 배치
+  app.querySelectorAll<HTMLElement>(".ed-chip[data-nt]").forEach((c) => {
     c.addEventListener("pointerdown", (e) => { if (e.button !== 0) return; e.preventDefault(); c.setPointerCapture(e.pointerId); drag = { kind: "place", type: c.dataset.nt, icon: c.querySelector(".mico")?.textContent ?? "", sx: e.clientX, sy: e.clientY, moved: false }; });
     c.addEventListener("pointermove", onMove);
     c.addEventListener("pointerup", onUp);
   });
+  // 템플릿 칩에서 끌어 복제 배치 (✕ 삭제 버튼은 별도 click)
+  app.querySelectorAll<HTMLElement>(".ed-chip[data-tpl]").forEach((c) => {
+    c.addEventListener("pointerdown", (e) => { if (e.button !== 0 || (e.target as HTMLElement).closest(".ed-tpl-del")) return; e.preventDefault(); c.setPointerCapture(e.pointerId); drag = { kind: "placeTpl", tpl: c.dataset.tpl, icon: c.querySelector(".mico")?.textContent ?? "", sx: e.clientX, sy: e.clientY, moved: false }; });
+    c.addEventListener("pointermove", onMove);
+    c.addEventListener("pointerup", onUp);
+  });
+  app.querySelectorAll<HTMLElement>("[data-tpldel]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); h.onDeleteTemplate(b.dataset.tpldel!); }));
   // 격자: 노드=이동/선택, 빈칸=해제 (벽은 click이 처리). 좌클릭만; 가운데(팬)는 vp가 처리.
   field.addEventListener("pointerdown", (e) => {
     if (e.button !== 0) return;

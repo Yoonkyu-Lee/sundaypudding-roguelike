@@ -1,7 +1,7 @@
 // 맵 에디터 순수 변이(ops.ts) 단위 테스트 — DOM 무관(노드/변/층 그래프 조작).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { addNode, moveNode, deleteNode, toggleEdge, nodeAt, adjacentPairs, addFloor, deleteFloor, moveFloor, setNodeLabel } from "./ops.ts";
+import { addNode, addNodeFromTemplate, moveNode, deleteNode, toggleEdge, nodeAt, adjacentPairs, addFloor, deleteFloor, moveFloor, setNodeLabel } from "./ops.ts";
 import type { FloorDef, RunDef } from "../../core/types.ts";
 
 function floor(): FloorDef {
@@ -90,6 +90,22 @@ test("addNode: 전투 노드는 defaultCore(레이어) 시드, 구조 노드(cle
   assert.ok((nodeAt(f, 1, 0)!.core?.length ?? 0) > 0, "battle은 core 시드(combat+gold+reward)");
   addNode(f, "clear", 3, 0);
   assert.equal(nodeAt(f, 3, 0)!.core, undefined, "clear는 구조 노드 — core 없음");
+});
+
+test("addNodeFromTemplate: content deep-clone 배치(원본 불변·인접 자동연결)", () => {
+  const f = floor();
+  const tpl = { label: "깡패 무리", core: [{ kind: "combat", roster: [{ charId: "shim", pos: { row: 1, col: 0 } }] }] as never };
+  addNodeFromTemplate(f, "battle", tpl, 1, 0); // s·c와 인접
+  const n = nodeAt(f, 1, 0)!;
+  assert.equal(n.type, "battle");
+  assert.equal(n.label, "깡패 무리");
+  assert.equal(n.core!.length, 1);
+  assert.equal(f.edges.length, 3, "s-c + 자동 s-n + 자동 c-n");
+  // deep-clone: 배치 노드 변형이 템플릿 원본을 건드리지 않음
+  (n.core![0] as { roster: { charId: string }[] }).roster.push({ charId: "kim" } as never);
+  assert.equal((tpl.core[0] as { roster: unknown[] }).roster.length, 1, "원본 템플릿 roster 불변");
+  addNodeFromTemplate(f, "battle", tpl, 1, 0); // 점유 → 무시
+  assert.equal(f.nodes.length, 3);
 });
 
 test("addFloor/deleteFloor/moveFloor: 선형 층 편집", () => {

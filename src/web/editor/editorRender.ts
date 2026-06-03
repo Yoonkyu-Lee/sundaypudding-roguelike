@@ -27,6 +27,7 @@ export interface EditData {
   edges: { a: string; b: string }[]; // 연결된 인접쌍
   walls: { a: string; b: string }[]; // 인접·미연결 = 세워진 벽
   catalog: { type: NodeType; icon: string; name: string }[];
+  templates: { id: string; name: string; type: NodeType; icon: string }[]; // 저장된 노드 템플릿(복제 배치용)
   camera: { zoom: number; x: number; y: number }; // 노드 맵 뷰포트 카메라(줌·팬) — 편집 중 보존
   floorCamera: { zoom: number; x: number; y: number }; // 층 그래프 뷰포트 카메라 — 편집 중 보존
   splitH: number | null; // 노드 맵 뷰포트 높이(px) — 스플리터 조절, null=CSS 기본
@@ -59,6 +60,9 @@ export interface EditorHandlers {
   onBack: () => void;
   // 편집 화면 (E2/E4)
   onPlaceNode: (type: NodeType, q: number, r: number) => void;
+  onPlaceTemplate: (templateId: string, q: number, r: number) => void; // 템플릿 복제 배치
+  onSaveTemplate: () => void; // 현재 편집 노드를 템플릿으로 저장(노드 에디터)
+  onDeleteTemplate: (templateId: string) => void; // 템플릿 라이브러리에서 제거
   onMoveNode: (id: string, q: number, r: number) => void; // 선택군이면 일괄 이동
   onNodeClick: (id: string, additive: boolean) => void; // additive=Ctrl(토글)
   onSelectAll: () => void;

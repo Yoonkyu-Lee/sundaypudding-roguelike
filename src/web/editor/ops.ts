@@ -31,6 +31,19 @@ export function addNode(floor: FloorDef, type: NodeType, q: number, r: number): 
   autoConnectAdjacent(floor, id);
 }
 
+/** 템플릿(노드 스냅샷)을 빈 칸에 복제 배치 — content deep-clone + 새 id + 인접 자동 연결. (결과 = 인라인 core 노드와 동일) */
+export function addNodeFromTemplate(floor: FloorDef, type: NodeType, content: { label?: string; core?: MapNode["core"]; layers?: MapNode["layers"] }, q: number, r: number): void {
+  if (nodeAt(floor, q, r)) return;
+  const id = newNodeId();
+  const c = JSON.parse(JSON.stringify(content)) as { label?: string; core?: MapNode["core"]; layers?: MapNode["layers"] };
+  const node: MapNode = { id, type, q, r };
+  if (c.label) node.label = c.label;
+  if (c.core && c.core.length) node.core = c.core;
+  if (c.layers) node.layers = c.layers;
+  floor.nodes.push(node);
+  autoConnectAdjacent(floor, id);
+}
+
 /** 노드 이동(점유 칸이면 무시): 좌표 갱신 → 비인접 변 제거 + 새로 인접해진 노드만 자동 연결(기존 인접쌍의 벽 보존). */
 export function moveNode(floor: FloorDef, id: string, q: number, r: number): void {
   if (nodeAt(floor, q, r)) return;
