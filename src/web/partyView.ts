@@ -5,6 +5,7 @@ import { ITEMS } from "../data/items.ts";
 import { STANDARD_FORMATION } from "../data/formations.ts";
 import { sheetBody, wireSheet, itemDesc, type SheetData, type SheetHandlers } from "./charSheet.ts";
 import { avatarHtml, esc } from "./battle/shared.ts";
+import { beginPointerDrag } from "./drag.ts";
 
 export interface PartyBoardMember {
   charId: string;
@@ -45,7 +46,7 @@ function miniSlot(m: PartyBoardMember, slot: EquipSlot): string {
   const id = m.equipped[slot];
   const it = id ? ITEMS[id] : undefined;
   const inner = locked ? "🔒" : it ? (it.icon ?? "📦") : "·";
-  const drag = it && !locked ? ` draggable="true" data-item="${id}"` : "";
+  const drag = it && !locked ? ` data-item="${id}"` : "";
   return `<div class="pv-slot${it ? " filled" : ""}${locked ? " locked" : ""}" data-char="${m.charId}" data-slot="${slot}"${drag} aria-label="${SLOT_LABEL[slot]}${it ? `: ${esc(it.name)}` : ""}">${inner}</div>`;
 }
 
@@ -60,7 +61,7 @@ function boardHtml(members: PartyBoardMember[], selChar: string): string {
         const pct = Math.max(0, (m.hp / m.hpMax) * 100);
         const b = colBonus(members, col);
         const bonus = b ? `<span class="pv-bonus">${b.icon}+${b.per}</span>` : "";
-        inner = `<div class="pv-mem${m.charId === selChar ? " sel" : ""}${m.alive ? "" : " dead"}" draggable="true" data-char="${m.charId}">
+        inner = `<div class="pv-mem${m.charId === selChar ? " sel" : ""}${m.alive ? "" : " dead"}" data-char="${m.charId}">
           ${avatarHtml(m.avatar, "avt sm")}<span class="pv-nm">${esc(m.name)}</span>${bonus}
           <div class="pv-hp"><div class="pv-hpf" style="width:${pct}%"></div></div>
           <div class="pv-slots">${SLOT_KEYS.map((s) => miniSlot(m, s)).join("")}</div>
@@ -75,7 +76,7 @@ function boardHtml(members: PartyBoardMember[], selChar: string): string {
 
 function invPanel(inventory: string[]): string {
   const items = inventory
-    .map((id) => { const it = ITEMS[id]; return it ? `<div class="pv-inv-item" draggable="true" data-item="${id}">${it.icon ?? "📦"} <span>${esc(it.name)}</span></div>` : ""; })
+    .map((id) => { const it = ITEMS[id]; return it ? `<div class="pv-inv-item" data-item="${id}">${it.icon ?? "📦"} <span>${esc(it.name)}</span></div>` : ""; })
     .join("");
   return `<div class="pv-inv">
     <div class="pv-inv-head">🎒 인벤토리<span class="cshint">드래그=장착/해제 · 클릭=선택 캐릭 장착</span></div>
@@ -115,77 +116,53 @@ export function renderPartyView(app: HTMLElement, d: PartyViewData, h: PartyView
   ov.addEventListener("click", (e) => { if (e.target === ov) h.onClose(); });
   ov.querySelector(".cs-close")!.addEventListener("click", () => h.onClose());
 
-  const setDrag = (el: HTMLElement, payload: string) =>
-    el.addEventListener("dragstart", (e) => { (e as DragEvent).dataTransfer?.setData("text/plain", payload); });
   const detail = ov.querySelector<HTMLElement>("#invDetail")!;
   const showDetail = (itemId: string) => { detail.innerHTML = detailHtml(itemId); };
+  const itemAvatar = (id: string) => ITEMS[id]?.icon ?? "📦";
+
+  // 공용 드롭 라우팅: 커서 아래 요소(elementFromPoint)로 영역 판별 → 칸/시트슬롯/인벤토리
+  const dropAt = (payload: string, target: Element | null) => {
+    const p = parse(payload);
+    if (!p) return;
+    const cell = target?.closest<HTMLElement>(".pv-cell");
+    const csslot = target?.closest<HTMLElement>(".csslot");
+    const inv = target?.closest(".pv-inv");
+    if (cell) {
+      const to = { row: Number(cell.dataset.row), col: Number(cell.dataset.col) };
+      if (p.kind === "char") h.onMove(p.charId, to);
+      else { const mem = d.members.find((m) => m.pos.row === to.row && m.pos.col === to.col); if (mem) h.onEquipItem(mem.charId, p.itemId, p.from); }
+    } else if (csslot) {
+      if (p.kind === "item") h.onEquipItem(d.selected.charId, p.itemId, p.from);
+    } else if (inv) {
+      if (p.kind === "item" && p.from) h.onUnequip(p.from.charId, p.from.slot); // 인벤토리로 = 해제
+    }
+  };
 
   // 캐릭터 카드: 드래그=이동, 클릭=선택
   ov.querySelectorAll<HTMLElement>(".pv-mem[data-char]").forEach((el) => {
-    setDrag(el, `char:${el.dataset.char}`);
-    el.addEventListener("click", () => h.onSelect(el.dataset.char!));
+    const av = el.querySelector(".avt")?.outerHTML ?? "👤";
+    el.addEventListener("pointerdown", (e) => beginPointerDrag(el, e, { payload: `char:${el.dataset.char}`, avatar: av, onDrop: dropAt, onClick: () => h.onSelect(el.dataset.char!) }));
   });
-  // 보드 칸: char→이동 / item→그 칸 멤버 장착
-  ov.querySelectorAll<HTMLElement>(".pv-cell").forEach((cell) => {
-    cell.addEventListener("dragover", (e) => { e.preventDefault(); cell.classList.add("over"); });
-    cell.addEventListener("dragleave", () => cell.classList.remove("over"));
-    cell.addEventListener("drop", (e) => {
-      e.preventDefault(); cell.classList.remove("over");
-      const p = parse((e as DragEvent).dataTransfer?.getData("text/plain") ?? "");
-      if (!p) return;
-      const to = { row: Number(cell.dataset.row), col: Number(cell.dataset.col) };
-      if (p.kind === "char") { h.onMove(p.charId, to); return; }
-      const mem = d.members.find((m) => m.pos.row === to.row && m.pos.col === to.col);
-      if (mem) h.onEquipItem(mem.charId, p.itemId, p.from);
-    });
+  // 미니 슬롯(채워진 것): 드래그=아이템 / 호버=상세
+  ov.querySelectorAll<HTMLElement>(".pv-slot[data-item]").forEach((slot) => {
+    slot.addEventListener("mouseenter", () => showDetail(slot.dataset.item!));
+    slot.addEventListener("pointerdown", (e) => { e.stopPropagation(); beginPointerDrag(slot, e, { payload: `item:${slot.dataset.item}:slot:${slot.dataset.char}:${slot.dataset.slot}`, avatar: itemAvatar(slot.dataset.item!), onDrop: dropAt }); });
   });
-  // 미니 슬롯: 채워졌으면 드래그(아이템) + drop 타깃(장착). 카드/칸 이벤트와 분리(stopPropagation)
-  ov.querySelectorAll<HTMLElement>(".pv-slot").forEach((slot) => {
-    if (slot.dataset.item) {
-      slot.addEventListener("dragstart", (e) => { e.stopPropagation(); (e as DragEvent).dataTransfer?.setData("text/plain", `item:${slot.dataset.item}:slot:${slot.dataset.char}:${slot.dataset.slot}`); });
-      slot.addEventListener("mouseenter", () => showDetail(slot.dataset.item!));
-    }
-    slot.addEventListener("dragover", (e) => { e.preventDefault(); e.stopPropagation(); slot.classList.add("over"); });
-    slot.addEventListener("dragleave", () => slot.classList.remove("over"));
-    slot.addEventListener("drop", (e) => {
-      e.preventDefault(); e.stopPropagation(); slot.classList.remove("over");
-      const p = parse((e as DragEvent).dataTransfer?.getData("text/plain") ?? "");
-      if (p?.kind === "item") h.onEquipItem(slot.dataset.char!, p.itemId, p.from);
-    });
-  });
-  // 인벤토리 아이템: 드래그(장착) / 호버(상세) / 클릭(선택 캐릭 장착 폴백)
+  // 인벤토리 아이템: 드래그=장착 / 호버=상세 / 클릭=선택 캐릭 장착
   ov.querySelectorAll<HTMLElement>(".pv-inv-item[data-item]").forEach((el) => {
-    setDrag(el, `item:${el.dataset.item}:inv`);
     el.addEventListener("mouseenter", () => showDetail(el.dataset.item!));
-    el.addEventListener("click", () => h.onEquipItem(d.selected.charId, el.dataset.item!));
-  });
-  // 인벤토리 패널 = drop 타깃 → 장착 해제(슬롯 출처 아이템)
-  const inv = ov.querySelector<HTMLElement>(".pv-inv")!;
-  inv.addEventListener("dragover", (e) => { e.preventDefault(); inv.classList.add("over"); });
-  inv.addEventListener("dragleave", () => inv.classList.remove("over"));
-  inv.addEventListener("drop", (e) => {
-    e.preventDefault(); inv.classList.remove("over");
-    const p = parse((e as DragEvent).dataTransfer?.getData("text/plain") ?? "");
-    if (p?.kind === "item" && p.from) h.onUnequip(p.from.charId, p.from.slot);
+    el.addEventListener("pointerdown", (e) => beginPointerDrag(el, e, { payload: `item:${el.dataset.item}:inv`, avatar: itemAvatar(el.dataset.item!), onDrop: dropAt, onClick: () => h.onEquipItem(d.selected.charId, el.dataset.item!) }));
   });
 
-  // 우측 상세: charSheet 기본 와이어(스킬 토글·해제 버튼·자세히) + 시트 장착칸 DnD
+  // 우측 상세: charSheet 기본 와이어(스킬 토글·해제 버튼·자세히) + 시트 장착칸 드래그(=해제 출처)
   wireSheet(ov.querySelector(".pv-detail")!, d.selected, h);
   ov.querySelectorAll<HTMLElement>(".pv-detail .csslot").forEach((slot) => {
     const key = slot.dataset.slot as EquipSlot | undefined;
     if (!key) return;
     const eq = slot.querySelector<HTMLElement>(".csslot-item[data-item]");
     if (eq?.dataset.item) {
-      eq.setAttribute("draggable", "true");
-      eq.addEventListener("dragstart", (e) => { (e as DragEvent).dataTransfer?.setData("text/plain", `item:${eq.dataset.item}:slot:${d.selected.charId}:${key}`); });
       eq.addEventListener("mouseenter", () => showDetail(eq.dataset.item!));
+      eq.addEventListener("pointerdown", (e) => { e.stopPropagation(); beginPointerDrag(eq, e, { payload: `item:${eq.dataset.item}:slot:${d.selected.charId}:${key}`, avatar: itemAvatar(eq.dataset.item!), onDrop: dropAt }); });
     }
-    slot.addEventListener("dragover", (e) => { e.preventDefault(); slot.classList.add("over"); });
-    slot.addEventListener("dragleave", () => slot.classList.remove("over"));
-    slot.addEventListener("drop", (e) => {
-      e.preventDefault(); slot.classList.remove("over");
-      const p = parse((e as DragEvent).dataTransfer?.getData("text/plain") ?? "");
-      if (p?.kind === "item") h.onEquipItem(d.selected.charId, p.itemId, p.from);
-    });
   });
 }

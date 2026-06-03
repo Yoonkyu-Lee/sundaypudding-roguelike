@@ -112,14 +112,14 @@ export function renderEditView(app: HTMLElement, d: EditData, h: EditorHandlers)
   type Drag = { kind: "place" | "move" | "empty"; id?: string; type?: string; icon?: string; ctrl?: boolean; sx: number; sy: number; moved: boolean };
   let drag: Drag | null = null;
   let avatar: HTMLElement | null = null;
-  const endDrag = () => { avatar?.remove(); avatar = null; document.body.classList.remove("ed-dragging"); drag = null; };
+  const endDrag = () => { avatar?.remove(); avatar = null; document.body.classList.remove("dragging"); drag = null; };
   const cellAt = (cx: number, cy: number) => { const r = field.getBoundingClientRect(); const z = r.width / field.offsetWidth || 1; return pixelToAxial((cx - r.left) / z, (cy - r.top) / z); };
   const overField = (cx: number, cy: number) => { const r = vp.getBoundingClientRect(); return cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom; };
   const onMove = (e: PointerEvent) => {
     if (!drag) return;
     if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 5) {
       drag.moved = true;
-      if (drag.kind !== "empty") { avatar = document.createElement("div"); avatar.className = "ed-dragavatar"; avatar.textContent = drag.icon ?? ""; document.body.appendChild(avatar); document.body.classList.add("ed-dragging"); }
+      if (drag.kind !== "empty") { avatar = document.createElement("div"); avatar.className = "drag-avatar"; avatar.textContent = drag.icon ?? ""; document.body.appendChild(avatar); document.body.classList.add("dragging"); }
     }
     if (avatar) { avatar.style.left = `${e.clientX}px`; avatar.style.top = `${e.clientY}px`; }
   };
