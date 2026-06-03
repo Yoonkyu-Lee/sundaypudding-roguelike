@@ -15,9 +15,10 @@ export type DecoratorLayer =
   | { kind: "heal"; pct: number; revive?: boolean } // 파티 회복(maxHp 비율, revive=전투불능 부활)
   | { kind: "grantStatus"; charId?: string; statusId: string; stacks: number; duration: number } // 다음 전투 계승(charId 없으면 전원)
   | { kind: "text"; text: string }; // 로그/대사(컷신 뷰 강화는 Phase C)
-/** 상호작용 레이어 — 완료까지 블록(phase 전환). A2 = combat만(웨이브). shop/event는 A3~. */
+/** 상호작용 레이어 — 완료까지 블록(phase 전환). combat·reward(B). shop/event는 후속. */
 export type InteractiveLayer =
-  | { kind: "combat"; roster?: { charId: string; pos: Pos }[]; boss?: boolean }; // 적 구성(없으면 NODE_ROSTERS.battle), 보스=진형보너스
+  | { kind: "combat"; roster?: { charId: string; pos: Pos }[]; boss?: boolean } // 적 구성(없으면 NODE_ROSTERS.battle), 보스=진형보너스
+  | { kind: "reward" }; // 보상 3택1(genRewards) — 플레이어 선택까지 블록. treasure 노드 = core:[reward]
 /** 노드 레이어 — onEnter/onResolve는 데코만(즉시), core는 데코+상호작용 혼합(순서 실행). */
 export type Layer = DecoratorLayer | InteractiveLayer;
 export type LayerKind = Layer["kind"];

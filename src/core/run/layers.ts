@@ -6,6 +6,7 @@ import { NODE_ROSTERS } from "../../data/encounters.ts";
 import type { InteractiveLayer, MapNode } from "../types.ts";
 import type { RunState } from "./types.ts";
 import { node, runInstantLayers, completeNode } from "./helpers.ts";
+import { genRewards } from "./rewards.ts";
 
 /** core 시퀀스 시작(enterNode에서, onEnter 데코 실행 후 호출). */
 export function startCore(run: RunState, n: MapNode): void {
@@ -19,6 +20,7 @@ function stepCore(run: RunState, n: MapNode): void {
   while (run.coreCursor! < core.length) {
     const L = core[run.coreCursor!];
     if (L.kind === "combat") { startCombat(run, L); return; } // 블록(전투 phase) — resolveBattleEnd가 advanceCore
+    if (L.kind === "reward") { run.rewards = genRewards(run); run.phase = "reward"; run.log.push("보상 선택"); return; } // 블록 — chooseReward가 advanceCore
     runInstantLayers(run, [L]); // 데코레이터 즉시 실행
     run.coreCursor!++;
   }
@@ -26,7 +28,7 @@ function stepCore(run: RunState, n: MapNode): void {
 }
 
 /** 상호작용 전투 레이어 시작 — 적 구성(레이어 override 우선) + 모험 계승 상태 주입. */
-function startCombat(run: RunState, L: InteractiveLayer): void {
+function startCombat(run: RunState, L: Extract<InteractiveLayer, { kind: "combat" }>): void {
   const seed = run.rng.int(0, 2_000_000_000);
   const enemies = L.roster && L.roster.length ? L.roster : NODE_ROSTERS.battle;
   const enc = { id: "combat", name: "전투", allies: [], enemies, boss: !!L.boss };

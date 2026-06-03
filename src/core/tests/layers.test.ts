@@ -1,7 +1,7 @@
 // 노드 레이어 (NODE-DESIGN Phase A 슬라이스1) — 즉시 레이어 onEnter/onResolve 실행·순서·세이브 왕복.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRun, enterNode, resolveBattleEnd, serializeRun, deserializeRun, curFloor } from "../run.ts";
+import { createRun, enterNode, resolveBattleEnd, chooseReward, serializeRun, deserializeRun, curFloor } from "../run.ts";
 import type { RunDef } from "../run.ts";
 
 // start(0,0) → rest(0,1) → clear(0,2). rest에 레이어 부착.
@@ -102,6 +102,28 @@ test("코어 시퀀서: 전멸(enemyWin) = 런 실패(시퀀스 중단)", () => 
   enterNode(run, "b");
   run.battle!.phase = "enemyWin"; resolveBattleEnd(run);
   assert.equal(run.phase, "lost");
+});
+
+test("보상 레이어: combat→gold→reward 코어 = 전투 후 골드+보상 3택1 (패리티)", () => {
+  const mk = () => coreDef([{ kind: "combat" }, { kind: "gold", amount: 8 }, { kind: "reward" }]);
+  const run = createRun(7, mk().roster, mk());
+  const g0 = run.gold;
+  enterNode(run, "b");
+  assert.equal(run.phase, "battle");
+  winBattle(run); resolveBattleEnd(run); // 전투 승 → gold 데코 → reward 레이어(블록)
+  assert.equal(run.gold, g0 + 8, "전투 사이 gold 데코 적용");
+  assert.equal(run.phase, "reward"); assert.notEqual(run.rewards, null);
+  chooseReward(run, run.rewards![0].id); // 보상 선택 → 코어 소진 → 노드 완료
+  assert.equal(run.phase, "map"); assert.equal(run.coreCursor, null);
+  assert.ok(run.visited.includes("b"));
+});
+
+test("보상 레이어: treasure 노드 = core:[reward] (전투 없이 보상)", () => {
+  const run = createRun(8, coreDef([{ kind: "reward" }]).roster, coreDef([{ kind: "reward" }]));
+  enterNode(run, "b");
+  assert.equal(run.phase, "reward"); assert.notEqual(run.rewards, null); // 전투 없이 바로 보상
+  chooseReward(run, run.rewards![0].id);
+  assert.equal(run.phase, "map"); assert.equal(run.coreCursor, null);
 });
 
 test("코어 커서는 세이브 왕복 보존(웨이브 도중 재개 가능)", () => {

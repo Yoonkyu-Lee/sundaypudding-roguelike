@@ -193,7 +193,8 @@ export function chooseReward(run: RunState, optionId: string): void {
   }
   run.log.push(`보상: ${opt.label}`);
   run.rewards = null;
-  // 보상 후 맵으로 복귀(다음 선택지 = 방향 전진). 층 종료는 클리어 노드 진입으로만.
   run.battle = null;
-  completeNode(run, run.activeNodeId!);
+  // 코어 시퀀스 보상 레이어면 다음 스텝으로(웨이브 후 보상 등), 아니면 노드 완료(레거시).
+  if (run.coreCursor !== null) { advanceCore(run); return; }
+  completeNode(run, run.activeNodeId!); // 맵 복귀(다음 선택지=방향 전진). 층 종료는 클리어 진입으로만
 }
