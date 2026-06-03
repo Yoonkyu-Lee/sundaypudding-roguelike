@@ -601,6 +601,16 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .ne-form { flex: 1; background: var(--panel); border-radius: 10px; padding: 14px; min-height: 200px; }
 .ne-field { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; color: var(--dim); }
 .ne-field input[type=text], .ne-field input[type=number], .ne-field select { flex: 1; background: var(--panel2); color: var(--txt); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; }
+/* 트리거 룰 에디터 (E4) */
+.re-edit { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+.re-sec { font-size: 12px; color: var(--dim); }
+.re-sec b { color: var(--accent); margin-right: 4px; }
+.re-list { list-style: none; margin: 6px 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.re-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; background: var(--panel2); border-radius: 6px; padding: 5px 8px; }
+.re-kind { color: var(--txt); font-weight: 600; }
+.re-f { display: inline-flex; align-items: center; gap: 4px; color: var(--dim); }
+.re-f input[type=text], .re-f input[type=number], .re-f select { background: var(--panel); color: var(--txt); border: 1px solid var(--line); border-radius: 5px; padding: 2px 5px; max-width: 130px; }
+.re-edit select, .ne-rules > select { background: var(--panel2); color: var(--txt); border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; }
 .fg-box.current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .fg-box.entry { background: #23314a; }
 .fg-box.invalid { border-color: var(--enemy); }

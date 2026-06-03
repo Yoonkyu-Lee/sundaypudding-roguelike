@@ -4,6 +4,7 @@ import type { Layer } from "../../core/types.ts";
 import type { NodeEditData, EditorHandlers, RosterEntry, LayerSlot } from "./editorRender.ts";
 import { LAYER_SPECS, LAYER_KINDS, DECO_KINDS, layerSummary, type FieldSpec } from "./layerSchema.ts";
 import { rosterWidget, wireRoster } from "./rosterWidget.ts";
+import { ruleEditorHtml, wireRuleEditor } from "./ruleEditor.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { STATUS_DEFS } from "../../data/statuses.ts";
 
@@ -56,7 +57,7 @@ export function renderNodeEditView(app: HTMLElement, d: NodeEditData, h: EditorH
     <header><h1>🧩 노드 내용 — <span class="dim">${esc(d.nodeName)}</span></h1>
       <button class="hub-link" id="ne-back">← 맵으로</button></header>
     <div class="ne-body">
-      <section class="ne-list">${sections}</section>
+      <section class="ne-list">${sections}${ruleEditorHtml(d)}</section>
       <section class="ne-form">${form}</section>
     </div>
   </div>`;
@@ -79,4 +80,5 @@ export function renderNodeEditView(app: HTMLElement, d: NodeEditData, h: EditorH
   }));
   // 리치 위젯: combat roster(있으면 프리셋 무시)
   if (sel?.kind === "combat" && d.sel) wireRoster(app, ((sel as Record<string, unknown>).roster as RosterEntry[]) ?? [], (next) => h.onSetLayerField(d.sel!.slot, d.sel!.idx, "roster", next));
+  wireRuleEditor(app, h); // 트리거 룰 섹션(Phase E4)
 }

@@ -42,6 +42,8 @@ export interface NodeEditData {
   core: import("../../core/types.ts").Layer[];
   onResolve: import("../../core/types.ts").Layer[];
   sel: { slot: LayerSlot; idx: number } | null; // 선택 레이어
+  rules: import("../../core/types.ts").PassiveRule[]; // 노드 트리거 룰(Phase C/E4)
+  selRule: number | null; // 편집 중 룰 인덱스
 }
 export type EditorData = ListData | EditData | NodeEditData;
 
@@ -84,6 +86,18 @@ export interface EditorHandlers {
   onMoveLayer: (slot: LayerSlot, idx: number, dir: number) => void; // 순서 ↑(-1)/↓(+1)
   onSelectLayer: (slot: LayerSlot, idx: number) => void;
   onSetLayerField: (slot: LayerSlot, idx: number, key: string, value: string | number | boolean | RosterEntry[]) => void;
+  // 트리거 룰 (Phase E4) — 선택 룰(selRule) 대상으로 동작
+  onAddRule: () => void;
+  onRemoveRule: (idx: number) => void;
+  onSelectRule: (idx: number) => void;
+  onSetWhen: (kind: string) => void; // when 트리거 종류 교체(기본값으로)
+  onSetWhenField: (key: string, value: string | number | boolean) => void;
+  onAddCond: (kind: string) => void;
+  onRemoveCond: (ci: number) => void;
+  onSetCondField: (ci: number, key: string, value: string | number | boolean) => void;
+  onAddEffect: (kind: string) => void;
+  onRemoveEffect: (ei: number) => void;
+  onSetEffectField: (ei: number, key: string, value: string | number | boolean) => void;
 }
 
 function card(r: EditorRunCard): string {

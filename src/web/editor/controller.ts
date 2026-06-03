@@ -1,6 +1,6 @@
 // 맵 에디터 컨트롤러 — 목록↔편집 모드 상태 + 핸들러. main은 run 수명주기 콜백만 주입.
 import { validateRun } from "../../core/run.ts";
-import type { FloorDef, Layer, MapNode, RunDef } from "../../core/types.ts";
+import type { Condition, Effect, FloorDef, Layer, MapNode, RunDef, Trigger } from "../../core/types.ts";
 import { listRuns, getRun, saveDraft, deleteDraft, blankRun, exportRun, isDraft, cloneAsDraft, saveToRepo } from "./store.ts";
 import { addNode, moveNode, moveNodes, deleteNode, toggleEdge, adjacentPairs, addFloor, deleteFloor, moveFloor, setNodeLabel, setNodeRoster } from "./ops.ts";
 import { CHARACTERS } from "../../data/characters.ts";
@@ -8,6 +8,7 @@ import { CHARACTERS } from "../../data/characters.ts";
 const edgeKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 import { CATALOG_TYPES, TYPE_ICON, TYPE_NAME } from "../nodeMeta.ts";
 import { LAYER_SPECS } from "./layerSchema.ts";
+import { WHEN_SPECS, COND_SPECS, EFFECT_SPECS } from "./ruleSchema.ts";
 import type { EditorData, EditorHandlers, LayerSlot } from "./editorRender.ts";
 
 /** 노드의 레이어 슬롯 배열을 보장·반환(없으면 생성). onEnter/onResolve는 데코 전용이나 편의상 Layer[]로 다룸(UI가 kind 제한). */
@@ -30,6 +31,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
   let floorIdx = 0;
   let nodeEditId: string | null = null; // 노드 에디터 대상(Phase E)
   let selLayerRef: { slot: LayerSlot; idx: number } | null = null; // 선택 레이어(슬롯+인덱스)
+  let selRule: number | null = null; // 편집 중 트리거 룰 인덱스(Phase E4)
   let sel: string[] = [];
   let camera = { zoom: 1, x: 0, y: 0 };
   let floorCamera = { zoom: 1, x: 0, y: 0 }; // 층 그래프 뷰포트 카메라(편집 중 보존)
@@ -37,6 +39,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
 
   const floor = (): FloorDef => draft!.floors[floorIdx];
   const editNode = () => floor().nodes.find((n) => n.id === nodeEditId) ?? null; // 노드 에디터 대상
+  const editRule = () => (selRule !== null ? editNode()?.rules?.[selRule] ?? null : null); // 편집 중 룰
   const save = () => { if (draft) saveDraft(draft); };
 
   function openEdit(id: string): void {
@@ -97,6 +100,8 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       core: nd?.core ?? [],
       onResolve: nd?.layers?.onResolve ?? [],
       sel: selLayerRef,
+      rules: nd?.rules ?? [],
+      selRule,
     };
   }
 
@@ -118,7 +123,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       onDelete(id) { deleteDraft(id); deps.rerender(); },
       onEdit(id) { openEdit(id); },
       onBack() {
-        if (mode === "nodeEdit") { mode = "edit"; nodeEditId = null; selLayerRef = null; deps.rerender(); return; }
+        if (mode === "nodeEdit") { mode = "edit"; nodeEditId = null; selLayerRef = null; selRule = null; deps.rerender(); return; }
         if (mode === "edit") { mode = "list"; draft = null; sel = []; deps.rerender(); return; }
         deps.toTitle();
       },
@@ -155,12 +160,24 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       onSetNodeLabel(id, label) { if (!draft) return; setNodeLabel(floor(), id, label); save(); deps.rerender(); },
       onSetNodeRoster(id, roster) { if (!draft) return; setNodeRoster(floor(), id, roster); save(); deps.rerender(); },
       // 노드 에디터 (Phase E) — 슬롯(onEnter/core/onResolve)별 레이어 편집
-      onOpenNodeEditor(id) { if (!draft) return; const nd = floor().nodes.find((n) => n.id === id); if (!nd) return; nodeEditId = id; selLayerRef = nd.core && nd.core.length ? { slot: "core", idx: 0 } : null; mode = "nodeEdit"; deps.rerender(); },
+      onOpenNodeEditor(id) { if (!draft) return; const nd = floor().nodes.find((n) => n.id === id); if (!nd) return; nodeEditId = id; selLayerRef = nd.core && nd.core.length ? { slot: "core", idx: 0 } : null; selRule = nd.rules && nd.rules.length ? 0 : null; mode = "nodeEdit"; deps.rerender(); },
       onAddLayer(slot, kind) { const nd = editNode(); const spec = LAYER_SPECS[kind]; if (!nd || !spec) return; const arr = slotArray(nd, slot); arr.push(spec.make()); selLayerRef = { slot, idx: arr.length - 1 }; save(); deps.rerender(); },
       onRemoveLayer(slot, idx) { const nd = editNode(); if (!nd) return; const arr = slotArray(nd, slot); arr.splice(idx, 1); selLayerRef = arr.length ? { slot, idx: Math.min(idx, arr.length - 1) } : null; save(); deps.rerender(); },
       onMoveLayer(slot, idx, dir) { const nd = editNode(); if (!nd) return; const arr = slotArray(nd, slot); const j = idx + dir; if (j < 0 || j >= arr.length) return; [arr[idx], arr[j]] = [arr[j], arr[idx]]; if (selLayerRef && selLayerRef.slot === slot && selLayerRef.idx === idx) selLayerRef = { slot, idx: j }; save(); deps.rerender(); },
       onSelectLayer(slot, idx) { selLayerRef = { slot, idx }; deps.rerender(); },
       onSetLayerField(slot, idx, key, value) { const nd = editNode(); if (!nd) return; const arr = slotArray(nd, slot); if (!arr[idx]) return; (arr[idx] as Record<string, unknown>)[key] = value; save(); deps.rerender(); },
+      // 트리거 룰 (Phase E4) — 선택 룰(selRule) 대상
+      onAddRule() { const nd = editNode(); if (!nd) return; (nd.rules ??= []).push({ when: { on: "battleStart" }, then: [] }); selRule = nd.rules.length - 1; save(); deps.rerender(); },
+      onRemoveRule(idx) { const nd = editNode(); if (!nd?.rules) return; nd.rules.splice(idx, 1); selRule = nd.rules.length ? Math.min(idx, nd.rules.length - 1) : null; save(); deps.rerender(); },
+      onSelectRule(idx) { selRule = idx; deps.rerender(); },
+      onSetWhen(kind) { const r = editRule(); const s = WHEN_SPECS[kind]; if (!r || !s) return; r.when = s.make() as Trigger; save(); deps.rerender(); },
+      onSetWhenField(key, value) { const r = editRule(); if (!r) return; (r.when as Record<string, unknown>)[key] = value; save(); deps.rerender(); },
+      onAddCond(kind) { const r = editRule(); const s = COND_SPECS[kind]; if (!r || !s) return; (r.if ??= []).push(s.make() as Condition); save(); deps.rerender(); },
+      onRemoveCond(ci) { const r = editRule(); if (!r?.if) return; r.if.splice(ci, 1); save(); deps.rerender(); },
+      onSetCondField(ci, key, value) { const r = editRule(); if (!r?.if?.[ci]) return; (r.if[ci] as Record<string, unknown>)[key] = value; save(); deps.rerender(); },
+      onAddEffect(kind) { const r = editRule(); const s = EFFECT_SPECS[kind]; if (!r || !s) return; r.then.push(s.make() as Effect); save(); deps.rerender(); },
+      onRemoveEffect(ei) { const r = editRule(); if (!r) return; r.then.splice(ei, 1); save(); deps.rerender(); },
+      onSetEffectField(ei, key, value) { const r = editRule(); if (!r?.then?.[ei]) return; (r.then[ei] as Record<string, unknown>)[key] = value; save(); deps.rerender(); },
     },
   };
 }
