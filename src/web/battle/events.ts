@@ -20,6 +20,7 @@ export function formatEvent(state: GameState, e: GameEvent): string | null {
     case "skip": return `${nm(e.uid)} 스킵 (${e.reason})`;
     case "death": return `&nbsp;&nbsp;☠ ${nm(e.uid)} 전투불능`;
     case "battleEnd": return `<b>${e.phase === "allyWin" ? "🏆 아군 승리!" : "💀 패배..."}</b>`;
+    case "dialog": return `💬 ${e.speaker ? `<b>${e.speaker}</b>: ` : ""}${e.text}`;
     default: return null;
   }
 }

@@ -4,7 +4,7 @@ import type { GameState, Observation } from "../core/types.ts";
 import { buildObservation } from "../core/observation.ts";
 import { previewHpLoss, predictInterruptSubjects, computeAreaCells, reachableColumns } from "../core/engine.ts";
 import { SKILLS } from "../data/skills.ts";
-import { ck, type Handlers, type TgtCtx, type Ui } from "./battle/shared.ts";
+import { ck, esc, type Handlers, type TgtCtx, type Ui } from "./battle/shared.ts";
 import { unitCard } from "./battle/unitCard.ts";
 import { actionPanel } from "./battle/actions.ts";
 import { drawArrow } from "./battle/arrow.ts";
@@ -119,7 +119,8 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
 
   // 배틀 존: 전장 + 행동
   const mainEl = app.querySelector<HTMLElement>(".battlemain")!;
-  mainEl.innerHTML = `<div class="arena">${grid("아군", obs.allies, "ally", curUid, ui.damaged, ui.moved, tgt)}${grid("적", obs.enemies, "enemy", curUid, ui.damaged, ui.moved, tgt)}</div>${actionPanel(obs, state, ui)}`;
+  const dlg = ui.dialog ? `<div class="battle-dialog">${ui.dialog.speaker ? `<span class="bd-speaker">${esc(ui.dialog.speaker)}</span>` : ""}<span class="bd-text">${esc(ui.dialog.text)}</span></div>` : "";
+  mainEl.innerHTML = `${dlg}<div class="arena">${grid("아군", obs.allies, "ally", curUid, ui.damaged, ui.moved, tgt)}${grid("적", obs.enemies, "enemy", curUid, ui.damaged, ui.moved, tgt)}</div>${actionPanel(obs, state, ui)}`;
 
   // 로그 존
   const logHtml = state.log.slice(-40).map((e) => formatEvent(state, e)).filter(Boolean).join("<br>");

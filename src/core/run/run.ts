@@ -99,7 +99,7 @@ export function enterNode(run: RunState, nodeId: string): void {
     const enc = { id: n.type, name: n.label ?? n.type, allies: [], enemies, boss: n.type === "boss" };
     // 모험 패시브 계승(pendingStatuses) 주입 후 1회 소비
     const allyStates = run.party.filter((m) => m.hp > 0).map((m) => ({ ...m, startStatuses: run.pendingStatuses[m.charId] }));
-    run.battle = createBattle(battleSeed, enc, allyStates);
+    run.battle = createBattle(battleSeed, enc, allyStates, n.rules);
     run.pendingStatuses = {};
     run.phase = "battle";
     run.log.push(`${n.type} 진입`);

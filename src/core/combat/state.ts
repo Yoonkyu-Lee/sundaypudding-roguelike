@@ -1,12 +1,12 @@
 // 전투 상태 생성 — 인코딩(Encounter) → GameState. 유닛 빌드, 포메이션 배정.
 import { Rng } from "../rng.ts";
-import type { Equipped, GameState, Pos, Unit } from "../types.ts";
+import type { Equipped, GameState, PassiveRule, Pos, Unit } from "../types.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { ITEMS } from "../../data/items.ts";
 import { STANDARD_FORMATION } from "../../data/formations.ts";
 import type { Encounter, Placement } from "../../data/encounters.ts";
 import { startRound } from "./turnOrder.ts";
-import { compileRules, fireTrigger } from "./passives/index.ts";
+import { compileRules, compileInline, fireTrigger } from "./passives/index.ts";
 
 /** 장착 3칸의 비-HP 스탯 보정 + 무기 dmgFlat·방어구 쉴드획득 합산 (4.3). HP는 maxHp에 이미 반영(equipItem). */
 function equipBonus(eq?: Equipped) {
@@ -72,6 +72,7 @@ export function createBattle(
   seed: number,
   enc: Encounter,
   allyStates?: { charId: string; pos: Pos; hp: number; maxHp: number; skillDmgBonus: Record<string, number>; activeSkillIds?: string[]; equipped?: Equipped; startStatuses?: { statusId: string; stacks: number; duration: number }[] }[],
+  nodeRules?: PassiveRule[], // Phase C: 노드 트리거 룰 — 한 유닛(첫 적)에 주입해 전투 중 발동(대사 등)
 ): GameState {
   const allyUnits = allyStates
     ? allyStates.map((m, i) =>
@@ -92,6 +93,8 @@ export function createBattle(
     allyFormation: enc.allyFormation ?? STANDARD_FORMATION,
     enemyFormation: enc.boss ? (enc.enemyFormation ?? STANDARD_FORMATION) : null,
   };
+  // 노드 트리거 룰 주입 — 첫 적 유닛에 부착(없으면 첫 유닛). showDialog는 owner 무관, battleStart 전 주입 필수.
+  if (nodeRules?.length) { const owner = units.find((u) => u.side === "enemy") ?? units[0]; if (owner) owner.rules.push(...compileInline(nodeRules)); }
   fireTrigger(state, { on: "battleStart" });
   startRound(state);
   return state;

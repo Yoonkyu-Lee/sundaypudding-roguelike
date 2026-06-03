@@ -32,7 +32,7 @@ let pauseOpen = false; // 런 중 일시정지 오버레이
 
 // 런 이어하기 영속화는 web/save.ts. 런 진행 중인 상태만 저장.
 function persist(): void { if (appState === "run" && runActive) saveRun(run); }
-const ui: Ui = { selectedSkillId: null, hoverCell: null, pickedCells: [], damaged: new Set(), moved: new Set(), seed, sheetCharId: null, sheetUid: null, partyOpen: false, sheetDetail: false };
+const ui: Ui = { selectedSkillId: null, hoverCell: null, pickedCells: [], damaged: new Set(), moved: new Set(), seed, sheetCharId: null, sheetUid: null, partyOpen: false, sheetDetail: false, dialog: null };
 
 function resetUi(): void {
   ui.selectedSkillId = null;
@@ -44,6 +44,7 @@ function resetUi(): void {
   ui.sheetUid = null;
   ui.partyOpen = false;
   ui.sheetDetail = false;
+  ui.dialog = null;
 }
 function endTargeting(): void {
   ui.selectedSkillId = null;
@@ -137,6 +138,8 @@ function battleStep(action: Action): void {
   const newEvents = b.log.slice(before);
   ui.damaged = new Set(newEvents.flatMap((e) => (e.t === "damage" ? [e.targetUid] : [])));
   ui.moved = new Set(newEvents.flatMap((e) => (e.t === "move" ? [e.uid] : [])));
+  const dlg = [...newEvents].reverse().find((e) => e.t === "dialog"); // 직전 step의 대사 → 오버레이(없으면 해제)
+  ui.dialog = dlg && dlg.t === "dialog" ? { speaker: dlg.speaker, text: dlg.text } : null;
   endTargeting();
   render();
 }

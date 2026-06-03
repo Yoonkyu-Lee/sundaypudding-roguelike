@@ -23,6 +23,7 @@ export interface Ui {
   sheetUid: string | null; // 전투 단독 캐릭터 시트의 유닛 uid(아군/적, 중복 적 구분), null=닫힘
   partyOpen: boolean; // 파티 편성 오버레이(맵) 열림 여부
   sheetDetail: boolean; // 시트 '자세히 보기'(능력치 원본+변화 병기) 토글
+  dialog: { speaker?: string; text: string } | null; // 전투 중 대사 오버레이(직전 step의 dialog 이벤트, Phase C)
 }
 export interface Handlers {
   onSkill: (skillId: string) => void;

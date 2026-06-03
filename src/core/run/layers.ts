@@ -25,7 +25,7 @@ function stepCore(run: RunState, n: MapNode): void {
   const core = n.core!;
   while (run.coreCursor! < core.length) {
     const L = core[run.coreCursor!];
-    if (L.kind === "combat") { startCombat(run, L); return; } // 블록(전투 phase) — resolveBattleEnd가 advanceCore
+    if (L.kind === "combat") { startCombat(run, L, n.rules); return; } // 블록(전투 phase) — resolveBattleEnd가 advanceCore
     if (L.kind === "reward") { run.rewards = genRewards(run); run.phase = "reward"; run.log.push("보상 선택"); return; } // 블록 — chooseReward가 advanceCore
     if (L.kind === "shop" || L.kind === "event") { starters[L.kind]?.(run); return; } // 블록 — leaveShop/chooseEncounterOption이 advanceCore (DI 스타터)
     runInstantLayers(run, [L]); // 데코레이터 즉시 실행(L은 여기서 DecoratorLayer로 좁혀짐)
@@ -34,13 +34,13 @@ function stepCore(run: RunState, n: MapNode): void {
   finishCore(run, n);
 }
 
-/** 상호작용 전투 레이어 시작 — 적 구성(레이어 override 우선) + 모험 계승 상태 주입. */
-function startCombat(run: RunState, L: Extract<InteractiveLayer, { kind: "combat" }>): void {
+/** 상호작용 전투 레이어 시작 — 적 구성(레이어 override 우선) + 모험 계승 상태 + 노드 트리거 룰(연출) 주입. */
+function startCombat(run: RunState, L: Extract<InteractiveLayer, { kind: "combat" }>, nodeRules?: import("../types.ts").PassiveRule[]): void {
   const seed = run.rng.int(0, 2_000_000_000);
   const enemies = L.roster && L.roster.length ? L.roster : (NODE_ROSTERS[L.rosterPreset ?? "battle"] ?? NODE_ROSTERS.battle);
   const enc = { id: "combat", name: "전투", allies: [], enemies, boss: !!L.boss };
   const allyStates = run.party.filter((m) => m.hp > 0).map((m) => ({ ...m, startStatuses: run.pendingStatuses[m.charId] }));
-  run.battle = createBattle(seed, enc, allyStates);
+  run.battle = createBattle(seed, enc, allyStates, nodeRules);
   run.pendingStatuses = {};
   run.phase = "battle";
   run.log.push("전투 진입");

@@ -57,6 +57,7 @@ export function applyEffect(state: GameState, rctx: RuleCtx, eff: Effect): void 
       break;
     }
     case "modCooldown": for (const tgt of resolveTargets(state, rctx, eff.target)) { const ids = eff.skillId ? [eff.skillId] : Object.keys(tgt.cooldowns); for (const id of ids) tgt.cooldowns[id] = Math.max(0, (tgt.cooldowns[id] ?? 0) + eff.delta); } break;
+    case "showDialog": state.log.push({ t: "dialog", speaker: eff.speaker, text: eff.text }); break; // 연출 — phase/상태 불변, 뷰 이벤트만(Phase C)
     case "modSpeedRoll": case "rerollSpeed": break; // speedRoll 트리거에서 turnOrder가 처리
     case "goldDelta": case "healParty": case "grantRunStatus": break; // 모험 스코프 효과 — run/passives.ts가 처리
   }

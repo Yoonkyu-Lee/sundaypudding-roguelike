@@ -4,6 +4,7 @@
 // 이동=간선 방향, 복귀 불가. clear 노드 진입=층 종료. 런=층 그래프(clear.toFloor 링크, 분기 가능).
 // ─────────────────────────────────────────────────────────────────────────
 import type { NodeType, Pos } from "./content.ts";
+import type { PassiveRule } from "./passives.ts";
 
 // ── 노드 레이어 (NODE-DESIGN Phase A) ─────────────────────────────────────
 // 노드 = 타입 코어 + 부착 레이어. 레이어 = 진입/완료 슬롯에 순서 실행하는 효과.
@@ -46,6 +47,8 @@ export interface MapNode {
   layers?: NodeLayers;
   /** 코어 시퀀스(선택, Phase A2). 있으면 타입 분기 대신 이 레이어들을 순서 실행(combat 웨이브 등). */
   core?: Layer[];
+  /** 노드 트리거 룰(선택, Phase C). 전투 생성 시 주입 → 전투 중 when/if/then 발동(대사·개입 등). 특성과 같은 PassiveRule. */
+  rules?: PassiveRule[];
 }
 
 /** 방향 있는 간선 — from에서 to로만 전진(복귀 불가). */

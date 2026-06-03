@@ -41,6 +41,11 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .battlelayout { display: grid; grid-template-columns: 172px 1fr 320px; gap: 16px; align-items: start; margin-top: 12px; }
 .battleleft { } /* sticky 금지: stacking context를 만들어 rolling 패널(fixed z:100)을 가둬버림 */
 .battlemain { min-width: 0; }
+/* 전투 중 대사 오버레이 (Phase C) — 전장 위 말풍선/배너, phase 전환 아님 */
+.battle-dialog { background: linear-gradient(90deg, #2a2f3e, var(--panel2)); border: 1px solid var(--accent); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; display: flex; gap: 10px; align-items: baseline; animation: bobIn .25s ease; }
+.battle-dialog .bd-speaker { color: var(--accent); font-weight: 700; white-space: nowrap; }
+.battle-dialog .bd-text { color: var(--txt); }
+@keyframes bobIn { from { opacity: 0; transform: translateY(-6px); } }
 @media (max-width: 1100px) { .battlelayout { grid-template-columns: 1fr; } .battleleft { position: static; } }
 
 /* ── 타임라인 (좌측 세로, 위→아래) ── */

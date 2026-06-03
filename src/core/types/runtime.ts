@@ -10,7 +10,7 @@ import type { PassiveRule, StatKey } from "./passives.ts";
 /** 컴파일된 패시브 룰(전투 한정) — 룰 + 출처 + 발동 카운터. makeUnit이 매 전투 생성. */
 export interface CompiledRule {
   rule: PassiveRule;
-  via: { kind: "skill" | "trait"; id: string }; // 어디서 왔나(스킬 보유 / 캐릭 특성)
+  via: { kind: "skill" | "trait" | "node"; id: string }; // 어디서 왔나(스킬 보유 / 캐릭 특성 / 노드 룰)
   idx: number; // 안정 정렬용 인덱스
   firedThisTurn: number;
   firedThisBattle: number;
@@ -126,6 +126,7 @@ export type GameEvent =
   | { t: "interrupt"; uid: string } // 끼어들기 삽입
   | { t: "skip"; uid: string; reason: "noUsableSkill" | "frozen" | "chosen" }
   | { t: "death"; uid: string }
+  | { t: "dialog"; speaker?: string; text: string } // 대사/컷신(연출, phase 불변) — Phase C
   | { t: "battleEnd"; phase: Phase };
 
 // ── 게임 상태 ───────────────────────────────────────────────────────────────

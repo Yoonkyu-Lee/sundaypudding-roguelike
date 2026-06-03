@@ -4,7 +4,7 @@ import { SKILLS } from "../../../data/skills.ts";
 import { CHARACTERS } from "../../../data/characters.ts";
 import { TRAITS } from "../../../data/traits.ts";
 
-function mk(rule: PassiveRule, via: { kind: "skill" | "trait"; id: string }, idx: number): CompiledRule {
+function mk(rule: PassiveRule, via: { kind: "skill" | "trait" | "node"; id: string }, idx: number): CompiledRule {
   return { rule, via, idx, firedThisTurn: 0, firedThisBattle: 0 };
 }
 
@@ -23,4 +23,9 @@ export function compileRules(charId: string, skillIds: string[]): CompiledRule[]
     for (const rule of t.rules) out.push(mk(rule, { kind: "trait", id: tid }, idx++));
   }
   return out;
+}
+
+/** 노드 트리거 룰(인라인 PassiveRule[]) → CompiledRule[] (Phase C — createBattle가 한 유닛에 주입). */
+export function compileInline(rules: PassiveRule[]): CompiledRule[] {
+  return rules.map((rule, i) => mk(rule, { kind: "node", id: "node" }, i));
 }

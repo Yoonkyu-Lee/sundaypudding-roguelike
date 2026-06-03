@@ -90,6 +90,7 @@ function thenText(e: Effect): string {
     case "reflectByDamage": return `${TGT[e.target]}에 받은 피해 ${e.pct}% 반사`;
     case "removeStatus": return `${TGT[e.target]} ${sName(e.statusId)} 제거`;
     case "castSkill": return `「${SKILLS[e.skillId]?.name ?? e.skillId}」 자동 시전`;
+    case "showDialog": return `대사: ${e.speaker ? `${e.speaker} — ` : ""}"${e.text}"`;
   }
 }
 

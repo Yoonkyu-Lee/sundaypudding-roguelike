@@ -128,9 +128,10 @@ registerLayer("combat", { schema:[{roster:'rosterGrid'},{formationBonus:'bool'},
 - **B2. 데코레이터 레이어**: `grantReward`(보상풀)·`gold±`·`applyStatus`·`background/bgm`. 기존 healParty/보상 로직 재사용. treasure = `grantReward` 단독 노드.
 - **B3. 프리셋**: forge=`shop`(강화 전담) 프리셋, shrine=`event` 프리셋(B/Phase D 의존).
 
-### Phase C — 스토리텔링: dialog 레이어 + 노드 트리거 룰 `[엔진 프리미티브 추가]`
-- **C1. dialog/cutscene 레이어 + 뷰**: `showDialog` 데코레이터 + 웹 표시(대사/컷신 오버레이). 최소 스토리텔링 표시 엔진(텍스트·화자·선택 없는 연출).
-- **C2. 노드 트리거 룰**: 노드 `rules`(when/if/then)를 전투 시작 시 "내레이션 룰 소스"로 주입 → 기존 `combat/passives` 디스패치 발동. 새 Effect `intervene`(비전투자 효과)·`showDialog`(전투 중 대사). 결정론 테스트.
+### Phase C — 스토리텔링: dialog + 노드 트리거 룰 `[엔진 프리미티브 추가]`
+- **✅ C슬라이스1 (완료)**: `showDialog` Effect + `dialog` GameEvent + `MapNode.rules`(PassiveRule[]). 전투 생성 시 **노드 룰을 첫 적 유닛에 컴파일·주입**(`compileInline`, `createBattle(...,nodeRules)`) → 기존 패시브 엔진이 `when/if/then` 발동 → `showDialog`가 dialog 이벤트 push(phase 불변). 웹: 전투 위 **대사 오버레이**(`.battle-dialog`, `ui.dialog`=직전 step의 dialog 이벤트) + 로그 줄. 결정론 테스트(battleStart 룰→dialog 이벤트). 114 test green.
+  - 범위 밖: `intervene`(비전투자 상태부여, EffTarget 활용 가능하나 미검증)·노드(비전투) 컷신·여러 dialog 큐잉 정밀 타이밍.
+- **C2(다음). 트리거 룰 저작 UI(E4 나머지)**: 노드 에디터에서 when/if/then 조립(특성/패시브 작성과 일관). 지금은 JSON으로만 저작 가능.
 
 ### Phase D — event 레이어 일반화 `[엔진 프리미티브 추가]`+`[데이터-온리]`
 - **D1. event 레이어**: 인카운터를 "선택지→결과" 레이어로 일반화 + **노드별 저작**(랜덤 대신 특정 이벤트/선택지 인라인). 기존 `ENCOUNTER_EVENTS`는 풀 프리셋으로.
