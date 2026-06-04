@@ -198,6 +198,15 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       onSetChoiceLabel(ci, value) { const ev = editEvent(); if (!ev?.choices[ci]) return; ev.choices[ci].label = value; save(); deps.rerender(); },
       onSetChoiceOutcome(ci, kind) { const ev = editEvent(); if (!ev?.choices[ci]) return; ev.choices[ci].result = { ...(OUTCOME_DEFAULT[kind] ?? { kind: "nothing" }) }; delete ev.choices[ci].gamble; save(); deps.rerender(); },
       onSetOutcomeField(ci, key, value) { const ev = editEvent(); const r = ev?.choices[ci]?.result; if (!r) return; (r as Record<string, unknown>)[key] = value; save(); deps.rerender(); },
+      onSetChoiceMode(ci, mode) {
+        const ev = editEvent(); const c = ev?.choices[ci]; if (!c) return;
+        if (mode === "gamble") { c.gamble = { chance: 0.5, win: { kind: "gold", amount: 20 }, lose: { kind: "hurt", pct: 0.15 } }; delete c.result; }
+        else { c.result = { kind: "nothing" }; delete c.gamble; }
+        save(); deps.rerender();
+      },
+      onSetGambleChance(ci, chance) { const ev = editEvent(); const g = ev?.choices[ci]?.gamble; if (!g) return; g.chance = Math.max(0, Math.min(1, chance)); save(); deps.rerender(); },
+      onSetGambleOutcome(ci, branch, kind) { const ev = editEvent(); const g = ev?.choices[ci]?.gamble; if (!g) return; g[branch] = { ...(OUTCOME_DEFAULT[kind] ?? { kind: "nothing" }) }; save(); deps.rerender(); },
+      onSetGambleOutcomeField(ci, branch, key, value) { const ev = editEvent(); const g = ev?.choices[ci]?.gamble; if (!g) return; (g[branch] as Record<string, unknown>)[key] = value; save(); deps.rerender(); },
     },
   };
 }

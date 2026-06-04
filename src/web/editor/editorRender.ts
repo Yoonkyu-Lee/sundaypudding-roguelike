@@ -112,6 +112,11 @@ export interface EditorHandlers {
   onSetChoiceLabel: (ci: number, value: string) => void;
   onSetChoiceOutcome: (ci: number, kind: string) => void;
   onSetOutcomeField: (ci: number, key: string, value: number) => void;
+  // 도박(gamble) 선택지 — 확정↔도박 전환 + 확률·성공/실패 결과
+  onSetChoiceMode: (ci: number, mode: "fixed" | "gamble") => void;
+  onSetGambleChance: (ci: number, chance: number) => void;
+  onSetGambleOutcome: (ci: number, branch: "win" | "lose", kind: string) => void;
+  onSetGambleOutcomeField: (ci: number, branch: "win" | "lose", key: string, value: number) => void;
 }
 
 function card(r: EditorRunCard): string {
