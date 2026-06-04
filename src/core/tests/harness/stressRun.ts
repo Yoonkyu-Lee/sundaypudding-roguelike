@@ -1,10 +1,11 @@
-// 무작위 행동 캠페인 러너 (MIGRATION-VERIFICATION-PLAN §3.1 = coremark 자극).
+// 무작위 행동 스트레스 런 (MIGRATION-VERIFICATION-PLAN §3.1 = coremark 자극).
+// (검증 용어 "stress run" — 게임의 '캠페인 모드'와 무관. 무작위 자극을 대량으로 쏟아붓는 한 판.)
 // 시드 결정 무작위 합법 행동으로 런 전체(맵 이동·전투·보상·상점·인카운터·층 전환)를 주파.
 // 매 step 후 불변식 검사(§3.3 = SVA assertion)를 두들김. 크래시/교착/위반 0을 측정.
 //
-// 결정론: createRun이 run.rng를 seed로, 각 전투 rng를 run.rng로 시드 → 캠페인은 (seed) 하나로 재현.
+// 결정론: createRun이 run.rng를 seed로, 각 전투 rng를 run.rng로 시드 → 스트레스 런은 (seed) 하나로 재현.
 // 선택(choice) rng는 별도 시드(seed^상수)라 run 내부 난수와 독립이지만 똑같이 결정적.
-// 따라서 같은 seed → 동일 캠페인(self-consistency harness가 이를 검증).
+// 따라서 같은 seed → 동일 스트레스 런(self-consistency harness가 이를 검증).
 import { Rng } from "../../rng.ts";
 import { step, getLegalActions, unitById } from "../../engine.ts";
 import { chooseAction } from "../../ai.ts";
@@ -18,7 +19,7 @@ export type ActionPolicy = "random" | "ai-allies" | "ai";
 
 export type Outcome = "won" | "lost" | "deadlock" | "crash";
 
-export interface CampaignResult {
+export interface StressRunResult {
   seed: number;
   runId: string;
   outcome: Outcome;
@@ -31,7 +32,7 @@ export interface CampaignResult {
   logTail?: string[]; // 실패 시 run.log 꼬리(디버깅)
 }
 
-export interface CampaignOpts {
+export interface StressRunOpts {
   stepCap?: number; // 런 phase 전이 상한(교착 검출)
   battleCap?: number; // 단일 전투 행동 상한(교착 검출)
   useMastery?: boolean;
@@ -42,8 +43,8 @@ export interface CampaignOpts {
 
 const pick = <T>(rng: Rng, arr: T[]): T => arr[rng.int(0, arr.length - 1)];
 
-/** 한 시드로 런 1판을 무작위 합법 행동으로 끝까지 구동. throw하지 않고 결과를 반환. */
-export function runCampaign(seed: number, runDef: RunDef, opts: CampaignOpts = {}): CampaignResult {
+/** 한 시드로 런 1판을 무작위 합법 행동으로 끝까지 구동(=스트레스 런 1회). throw하지 않고 결과를 반환. */
+export function stressRun(seed: number, runDef: RunDef, opts: StressRunOpts = {}): StressRunResult {
   const stepCap = opts.stepCap ?? 3000;
   // battleCap = 비종료 검출용 헤드룸. 무작위 양측 플레이는 병적으로 길어질 수 있음(힐/미스가 데미지를 거의
   // 상쇄 → 수렴 느림. 실측: 큰 cap에서 항상 종료, 즉 유한). AI 플레이는 수십 행동에 끝남. 진짜 무한루프는
@@ -66,7 +67,7 @@ export function runCampaign(seed: number, runDef: RunDef, opts: CampaignOpts = {
   }
   if (check) violations.push(...checkRunInvariants(run));
 
-  const fail = (outcome: Outcome, error?: string): CampaignResult => ({
+  const fail = (outcome: Outcome, error?: string): StressRunResult => ({
     seed, runId, outcome, steps, battleSteps, nodesVisited: run.visited.length, phaseHits, violations, error, logTail: run.log.slice(-15),
   });
 

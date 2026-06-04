@@ -11,7 +11,7 @@
     "play": "node src/cli/play.ts",
     "demo": "node src/cli/play.ts --demo --seed 42",
     "test": "node --test",
-    "campaign": "node scripts/campaign-sweep.ts",
+    "stress": "node scripts/stress-sweep.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.web.json",
     "check": "node scripts/check.ts",
     "dev": "vite",

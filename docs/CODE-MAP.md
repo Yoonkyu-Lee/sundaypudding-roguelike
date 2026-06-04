@@ -82,11 +82,11 @@ src/core/
     invariants/       ▸불변식 assertion 모듈(INVARIANTS-FROM-CLAUDE-CODE.md). 순수·무throw, 위반 목록 반환.
                       types.ts(Violation·Violations·summarize) · combat.ts(checkCombatInvariants A~K/J 관측충실) ·
                       run.ts(checkRunInvariants L~P) · index.ts 배럴
-    harness/          ▸검증 harness. campaign.ts(runCampaign — 시드결정 무작위 합법행동으로 런 전체 구동·매 step 불변식 검사·
-                      크래시/교착 가드·정책 random|ai-allies|ai·phase 커버리지) · selfConsistency.ts(campaignTrace·tracesMatch·
-                      battleTrace — 같은 시드 2회=동일 로그) · index.ts 배럴
-    campaign.test.ts  무작위 캠페인 스트레스(전 런×정책×시드 크래시·교착·위반 0 + phase 커버리지)
-    self-consistency.test.ts 결정론 자기일치(캠페인/전투 트레이스 동일 + 시드 의존성)
+    harness/          ▸검증 harness. stressRun.ts(stressRun — 시드결정 무작위 합법행동으로 런 전체 구동·매 step 불변식 검사·
+                      크래시/교착 가드·정책 random|ai-allies|ai·phase 커버리지. "stress run"=검증용 무작위 한 판, 게임 캠페인 모드와 무관) ·
+                      selfConsistency.ts(stressTrace·tracesMatch·battleTrace — 같은 시드 2회=동일 로그) · index.ts 배럴
+    stress.test.ts    무작위 스트레스 런(전 런×정책×시드 크래시·교착·위반 0 + phase 커버리지)
+    self-consistency.test.ts 결정론 자기일치(스트레스 런/전투 트레이스 동일 + 시드 의존성)
     save-roundtrip.test.ts 세이브 왕복 항등(O1/O2 — serialize∘deserialize·Rng 보존·복원 후 동일 전개)
     invariants.test.ts 불변식 검사기 직접 검증 + L8 회귀(종료 시 reachable=[])
     engine.test.ts    전투 흐름(결정론·종료·명중·합법·SPD·대기)

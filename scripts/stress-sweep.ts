@@ -1,9 +1,10 @@
-// 대량 무작위 캠페인 스윕 (MIGRATION-VERIFICATION-PLAN §3.1 "수만 시드") — 수동/야간용.
-// 커밋 게이트(campaign.test.ts)는 속도 위해 200시드. 여기선 인자로 받은 만큼 깊게 두들긴다.
-//   node scripts/campaign-sweep.ts [seeds=20000] [policy=all]
+// 대량 무작위 스트레스 런 스윕 (MIGRATION-VERIFICATION-PLAN §3.1 "수만 시드") — 수동/야간용.
+// (검증 용어 "stress run" — 게임의 '캠페인 모드'와 무관.)
+// 커밋 게이트(stress.test.ts)는 속도 위해 200시드. 여기선 인자로 받은 만큼 깊게 두들긴다.
+//   node scripts/stress-sweep.ts [seeds=20000] [policy=all]
 // 크래시/교착/불변식 위반이 하나라도 나오면 비-0 종료코드 + 상세 출력.
 import { RUNS } from "../src/data/runs/index.ts";
-import { runCampaign, type ActionPolicy } from "../src/core/tests/harness/index.ts";
+import { stressRun, type ActionPolicy } from "../src/core/tests/harness/index.ts";
 import { summarize } from "../src/core/tests/invariants/index.ts";
 
 const SEEDS = Number(process.argv[2] ?? 20000);
@@ -22,7 +23,7 @@ for (const runDef of Object.values(RUNS)) {
     const vmap = new Map<string, number>();
     for (let seed = 1; seed <= SEEDS; seed++) {
       total++;
-      const r = runCampaign(seed, runDef, { policy });
+      const r = stressRun(seed, runDef, { policy });
       tally[r.outcome]++;
       for (const v of r.violations) vmap.set(v.id, (vmap.get(v.id) ?? 0) + 1);
       if (r.outcome === "crash") {
@@ -42,5 +43,5 @@ for (const runDef of Object.values(RUNS)) {
 }
 
 const secs = ((Date.now() - t0) / 1000).toFixed(1);
-console.log(`\n총 ${total} 캠페인, ${secs}s. 하드 실패 ${hardFailures}건` + (randomSlow ? ` (+ random 느린전투 ${randomSlow}건: cap 초과, 유한·무해)` : "") + ".");
+console.log(`\n총 ${total} 스트레스 런, ${secs}s. 하드 실패 ${hardFailures}건` + (randomSlow ? ` (+ random 느린전투 ${randomSlow}건: cap 초과, 유한·무해)` : "") + ".");
 process.exit(hardFailures === 0 ? 0 : 1);

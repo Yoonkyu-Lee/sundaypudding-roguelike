@@ -5,7 +5,7 @@
 > `INVARIANTS-FROM-REPO.md`를 참고하지 않고 **코드에서 독립적으로** 만들었다(오염 방지).
 > 핵심 전투 흐름·서열·런 진행·끼어들기·포메이션은 작성자가 코드를 **직접 재확인**했다.
 >
-> **용도**: ① 불변식 assertion 모듈(`src/core/tests/invariants/`)의 명세. ② 무작위 캠페인 러너가
+> **용도**: ① 불변식 assertion 모듈(`src/core/tests/invariants/`)의 명세. ② 무작위 스트레스 런 하네스가
 > 두들길 규칙. ③ 향후 Rust 포팅 시 differential harness의 비교 기준. ④ `INVARIANTS-FROM-REPO.md`와
 > 교차 검증할 산출물(§ 마지막).
 >
@@ -16,7 +16,7 @@
 > - ❌ **검사 안 함**: 함수 호출 순서·변수명·메모리 레이아웃, 로그/관측에 안 남는 중간 계산.
 >
 > **검사 시점 표기**: `step`=매 행동 후 / `round`=라운드 경계 / `event`=이벤트 생성 시 /
-> `campaign`=캠페인 종료(또는 전투/런 생성) 시 / `action`=step 입력 검증 시 / `validate`=생성·저장 게이트 /
+> `run`=런/전투 생성·종료 시 / `action`=step 입력 검증 시 / `validate`=생성·저장 게이트 /
 > `op`=에디터 연산 단위 / `왕복`=직렬화·기하 round-trip.
 >
 > **심각도**: `CRIT`=위반 시 결정론/세이브/진행 손상(리플레이 발산) / `NORM`=규칙 위반이나 복구 가능.
@@ -48,9 +48,9 @@
 | A3 | NORM | `shield ≥ 0` (산술 불변: `toShield ≤ shield`) | `damage.ts:dealRawDamage` absorbable=`floor(shield/mult)`, toShield≤shield | event |
 | A4 | CRIT | `alive=false ⟺ (hp≤0 ∧ ¬saved)`; 불사 구제 시 `hp=1, alive=true` | `damage.ts:dealRawDamage` `died=hp<=0 && !saved` | event |
 | A5 | NORM | 전투 중 `alive`는 단조 비증가(이 경로에 부활 없음) | `dealRawDamage`에만 alive→false 전이, →true 경로 없음 | event |
-| A6 | CRIT | uid는 전투 내 유일·결정론(`${side[0]}${idx}_${charId}`) | `state.ts:makeUnit` | campaign |
-| A7 | NORM | 생성 직후 `shield=0 ∧ 0<hp≤hpMax ∧ alive=true` | `state.ts:makeUnit` `hp:growth?.hp ?? maxHp, shield:0` | campaign |
-| A8 | NORM | `activeSkillIds.length ≤ 4` | `state.ts:makeUnit` `c.skillIds.slice(0,4)` (2.3) | campaign |
+| A6 | CRIT | uid는 전투 내 유일·결정론(`${side[0]}${idx}_${charId}`) | `state.ts:makeUnit` | run |
+| A7 | NORM | 생성 직후 `shield=0 ∧ 0<hp≤hpMax ∧ alive=true` | `state.ts:makeUnit` `hp:growth?.hp ?? maxHp, shield:0` | run |
+| A8 | NORM | `activeSkillIds.length ≤ 4` | `state.ts:makeUnit` `c.skillIds.slice(0,4)` (2.3) | run |
 
 > A1·A2·A4는 데미지/힐을 실제로 적용하는 `damage.ts`/`status.ts`/`skills.ts`에서 강제된다(전투 흐름 모듈엔 hp 감산 없음). A8은 `growth.activeSkillIds`가 4 초과로 주입되면 위반 가능 — 런 계층(`createRun`) 책임(→ L/N 참조).
 
@@ -177,10 +177,10 @@
 | I11 | CRIT | speedRoll 패시브: rolls 순서 → idx 정렬 적용, `speed=max(1, roll+speedMod)` | `dispatch.ts:applySpeedRollPassives` | round |
 | I12 | NORM | heal/shield/applyStatus/move/healByDamage/castSkill 효과는 죽은 대상 보호 | `effects.ts` 각 `if(!tgt.alive)` 가드 | event |
 | I13 | NORM | fireTrigger 대상=살아있는 유닛(예외: battleEnd 전체, death 당사자) | `fireTrigger` deadOk | event |
-| I14 | CRIT | compileRules idx 안정·결정론: 활성스킬 passives → traitIds 순, idx 0부터 유일 | `compile.ts:compileRules` | campaign |
+| I14 | CRIT | compileRules idx 안정·결정론: 활성스킬 passives → traitIds 순, idx 0부터 유일 | `compile.ts:compileRules` | run |
 | I15 | NORM | 관측 가능 상태 변경 효과는 대응 이벤트 로그 동반(heal/shieldGain/cleanse/move/dialog) | `effects.ts` 각 push; damage/applyStatus는 하위 파이프 위임 | event |
 
-> I3 비고: `depth`·`activeKeys`는 **모듈 전역 싱글톤**. 코어는 단일 스레드 동기 실행 전제라 현재 안전하나, harness가 한 프로세스에서 두 전투의 fireTrigger를 인터리브하면 오염 가능 — 캠페인 러너는 직렬 실행(→ Part 6).
+> I3 비고: `depth`·`activeKeys`는 **모듈 전역 싱글톤**. 코어는 단일 스레드 동기 실행 전제라 현재 안전하나, harness가 한 프로세스에서 두 전투의 fireTrigger를 인터리브하면 오염 가능 — 스트레스 런 하네스는 직렬 실행(→ Part 6).
 
 ## J. 관측 (observation)
 
@@ -198,7 +198,7 @@
 | K1 | CRIT | **분수 단계 총량보존**: 한 열의 살아있는 동편 유닛에 `total/count` 균등분배, 합=total | `formation.ts:getFormationBonus` | action |
 | K2 | NORM | `!layout ∨ total=0 ∨ count=0` ⇒ 보너스 0 | `getFormationBonus` 가드 | action |
 | K3 | NORM | 원천 레이아웃은 side로 선택(ally=allyFormation, enemy=enemyFormation) | `getFormationBonus` | action |
-| K4 | NORM | enemyFormation은 보스전에서만 비-null | `state.ts:createBattle` `enc.boss ? … : null` | campaign |
+| K4 | NORM | enemyFormation은 보스전에서만 비-null | `state.ts:createBattle` `enc.boss ? … : null` | run |
 
 > **K1 주의**(→ Part 6): 총량보존은 **반올림 전 분수 단계에서만** 성립한다. 소비처(`computeDamage`/shield/heal의 `Math.round`)에서 유닛별로 반올림되므로 **반올림 후 유닛별 합 ≠ total**일 수 있다(누적 오차). 결정론은 유지되나 "엔진이 정수 총량보존을 보장한다"고 단언 불가.
 
@@ -226,8 +226,8 @@
 |---|---|---|---|---|
 | M1 | CRIT | enterNode는 `phase==="map" ∧ nodeId∈reachable`일 때만 동작 | `run.ts:enterNode` 가드 | event |
 | M2 | CRIT | clear 노드 진입 = 즉시 completeFloor(시퀀서 밖) ∧ visited 추가 | `enterNode` `if(n.type==="clear"){…completeFloor;return}` | event |
-| M3 | CRIT | completeFloor: 실재 toFloor면 그 층(부활+50%회복), 아니면 phase="won" | `completeFloor` `nextIdx<0 → won` | campaign |
-| M4 | CRIT | 층 전환 시 visited=[entry], current=entry, active=null, battle=null, reachable 재계산 | `completeFloor` | campaign |
+| M3 | CRIT | completeFloor: 실재 toFloor면 그 층(부활+50%회복), 아니면 phase="won" | `completeFloor` `nextIdx<0 → won` | run |
+| M4 | CRIT | 층 전환 시 visited=[entry], current=entry, active=null, battle=null, reachable 재계산 | `completeFloor` | run |
 | M5 | CRIT | resolveBattleEnd 게이트: `phase=battle ∧ battle ∧ battle.phase≠inProgress`; 파티 hp=max(0, allyUnit.hp) | `resolveBattleEnd` | event |
 | M6 | CRIT | enemyWin ⇒ phase="lost"(흡수 상태) | `resolveBattleEnd` | event |
 | M7 | CRIT | 비전멸 전투 종료: coreCursor≠null이면 advanceCore, null이면 +gold·reward(레거시) | `resolveBattleEnd` | event |
@@ -276,7 +276,7 @@
 | O2 | CRIT | 모든 Rng는 `{__rng:state}`로 치환·복원: 복원 후 `instanceof Rng ∧ state 동일` | `reviveRng` 깊은 순회 | validate |
 | O3 | NORM | 파싱 불가/손상 JSON은 throw 없이 null 반환 | `deserializeRun` try/catch | validate |
 
-> O1 전제: RunState가 **순수 JSON-safe(+Rng)** 여야 한다(undefined/Map/Set/NaN/Infinity/함수 없음). 새 필드 추가 시 이 전제가 깨지면 조용히 손상 — harness가 캠페인 단계마다 왕복 등가성을 검사할 최우선 대상.
+> O1 전제: RunState가 **순수 JSON-safe(+Rng)** 여야 한다(undefined/Map/Set/NaN/Infinity/함수 없음). 새 필드 추가 시 이 전제가 깨지면 조용히 손상 — harness가 스트레스 런 단계마다 왕복 등가성을 검사할 최우선 대상.
 
 ## P. 모험 패시브 (`run/passives.ts`)
 
@@ -295,12 +295,12 @@
 
 | ID | 심각도 | 규칙 | 근거 | 시점 |
 |---|---|---|---|---|
-| Q1 | CRIT | 같은 시드 → 같은 호출 수열에 같은 난수열(외부 의존 0, mulberry32) | `rng.ts` constructor+next() | campaign |
-| Q2 | CRIT | state 복원/clone 후 동일 수열(단일 number 상태=직렬화 가능) | `rng.ts:clone` | campaign |
+| Q1 | CRIT | 같은 시드 → 같은 호출 수열에 같은 난수열(외부 의존 0, mulberry32) | `rng.ts` constructor+next() | run |
+| Q2 | CRIT | state 복원/clone 후 동일 수열(단일 number 상태=직렬화 가능) | `rng.ts:clone` | run |
 | Q3 | NORM | `int(min,max) ∈ [min,max]` 닫힌구간 정수(상한 초과 불가) | `rng.ts:int` `min+floor(next()*(max-min+1))` | action |
 | Q4 | NORM | `max<min`이면 int=min(빈 구간 폴백) | `rng.ts:int` 가드 | action |
 | Q5 | NORM | `chance(≤0)=false`, `chance(≥100)=true`(next()*100 < pct, next()<1) | `rng.ts:chance` | action |
-| Q6 | NORM | 생성자 시드 정규화 `state=(seed>>>0)` | `rng.ts` | campaign |
+| Q6 | NORM | 생성자 시드 정규화 `state=(seed>>>0)` | `rng.ts` | run |
 
 ## R. AI 정책 (`ai/policy.ts` · `ai/profile.ts`)
 
@@ -330,10 +330,10 @@
 | ID | 심각도 | 규칙 | 근거 | 시점 |
 |---|---|---|---|---|
 | T1 | CRIT | step 1회는 유한 시간에 반환(끼어들기 normal-only=H4로 무한연쇄 차단) | `flow.ts`+`turnOrder.ts:advance` | action |
-| T2 | CRIT | 같은 시드+행동 시퀀스 → 동일 이벤트 로그(자기 일치) | Rng 단일출처(S1)+결정론 정렬(I1/I14/C2) | campaign |
-| T3 | CRIT | 무작위 선택도 시드 결정적: 같은 캠페인 시드 → 같은 선택열 | 캠페인 러너가 별도 결정 시드 rng 사용 | campaign |
-| T4 | CRIT | 모든 캠페인은 유한 스텝 내 종료(won/lost), 교착 0 | 스텝 가드 + 진행 단조성(M13/L8) | campaign |
-| T5 | CRIT | 캠페인 전체에서 크래시/throw 0건 | (측정 지표) | campaign |
+| T2 | CRIT | 같은 시드+행동 시퀀스 → 동일 이벤트 로그(자기 일치) | Rng 단일출처(S1)+결정론 정렬(I1/I14/C2) | run |
+| T3 | CRIT | 무작위 선택도 시드 결정적: 같은 스트레스 런 시드 → 같은 선택열 | 스트레스 런 하네스가 별도 결정 시드 rng 사용 | run |
+| T4 | CRIT | 모든 스트레스 런은 유한 스텝 내 종료(won/lost), 교착 0 | 스텝 가드 + 진행 단조성(M13/L8) | run |
+| T5 | CRIT | 스트레스 런 전체에서 크래시/throw 0건 | (측정 지표) | run |
 
 > T1 형식 코너(→ Part 6): "모든 생존자가 매 advance의 턴시작 효과로 즉시 사망"하면 이론상 루프 가능하나, checkWin이 phase 전이 후 advance를 early-return시켜 실전 무해. 형식 종료성 증명 시 검토.
 
@@ -415,15 +415,15 @@
 
 # Part 6 — 코드 리뷰로 발견한 잠재 결함 / 모호 지점
 
-> assertion 모듈·캠페인 러너가 **우선 두들겨 확인**할 후보. 일부는 의도된 동작일 수 있으므로 "결함 확정"이 아니라 **검증 대상**으로 기록.
+> assertion 모듈·스트레스 런 하네스가 **우선 두들겨 확인**할 후보. 일부는 의도된 동작일 수 있으므로 "결함 확정"이 아니라 **검증 대상**으로 기록.
 
-> **검증 인프라 적용 결과(2026-06-04)**: 무작위 캠페인(전 런×3정책×수백 시드)이 아래 #1을 **실제로 검출**했고
+> **검증 인프라 적용 결과(2026-06-04)**: 무작위 스트레스 런(전 런×3정책×수백 시드)이 아래 #1을 **실제로 검출**했고
 > 수정 완료. #12는 에디터 정합성 테스트가 검출·수정. 나머지는 문서화된 검증 대상으로 남김(유효 데이터에선 미발현).
 
 ### 잠재 결함 (수정 후보)
 
 0. **✅ [수정됨] L8 — 종료 시 stale reachable** (`run.ts` completeFloor 승리분기·resolveBattleEnd 패배분기)
-   캠페인 러너가 검출: 승리(won) 시 `reachable`에 방금 방문한 clear 노드가 남아 `reachable ∩ visited ≠ ∅`.
+   스트레스 런 하네스가 검출: 승리(won) 시 `reachable`에 방금 방문한 clear 노드가 남아 `reachable ∩ visited ≠ ∅`.
    종료 시 `reachable=[]`로 비우도록 수정(종료 상태엔 선택지 없음). 회귀 테스트 `invariants.test.ts` 고정.
 
 1. **`completeFloor` 미존재 toFloor = 오인 승리** (`run.ts:99-104`, CRIT 후보)
@@ -452,11 +452,11 @@
 
 10. **getTemplate 비복제 반환** (W2) — 결과를 직접 변이하면 템플릿 라이브러리 오염. 현재 소비 경로(addNodeFromTemplate 재clone)는 안전. 방어적 clone 반환 검토.
 
-11. **모듈 전역 싱글톤** (I3) — passives의 `depth`/`activeKeys`, run passives의 `firing`이 모듈 전역. 단일 스레드 동기 전제에선 안전하나, harness가 **두 전투를 인터리브하면 오염**. → 캠페인 러너는 반드시 **직렬 실행**(현재 그렇게 구현됨).
+11. **모듈 전역 싱글톤** (I3) — passives의 `depth`/`activeKeys`, run passives의 `firing`이 모듈 전역. 단일 스레드 동기 전제에선 안전하나, harness가 **두 전투를 인터리브하면 오염**. → 스트레스 런 하네스는 반드시 **직렬 실행**(현재 그렇게 구현됨).
 
 12. **✅ [수정됨] store 드래프트 id 충돌** (`store.ts` blankRun/cloneAsDraft) — `draft_${Date.now()}`만 써서 같은 ms에 만든 두 드래프트가 id 충돌(drafts 맵에서 덮어쓰기). 에디터 정합성 테스트가 검출 → `ops.ts`/`templates.ts`와 동일하게 `Date.now()+counter` 접미사로 수정.
 
-13. **[특성/설계] 무작위 양측 플레이의 느린 전투** (T1/T4 관련 — 결함 아님) — 대량 스윕(20k 시드)이 검출: **양측이 완전 무작위**로 두면 힐/쉴드/미스가 데미지를 거의 상쇄해 전투가 **유한하지만 수천 행동까지** 길어질 수 있다(큰 cap에서 항상 종료 확인 = 무한 아님). AI(ai-allies/ai) 플레이는 수십 행동에 종료(4만 캠페인 교착 0). **결론**: 종료성 하드 보장은 **현실적(AI) 플레이**에 적용. `random`은 크래시/불변식 스트레스 도구이며 cap 도달은 "느림(유한)"으로 분류(테스트는 random 교착을 하드 실패로 보지 않음, `npm run campaign`이 informational 보고). 진짜 무한루프는 어떤 유한 cap도 넘으므로 검출은 유지.
+13. **[특성/설계] 무작위 양측 플레이의 느린 전투** (T1/T4 관련 — 결함 아님) — 대량 스윕(20k 시드)이 검출: **양측이 완전 무작위**로 두면 힐/쉴드/미스가 데미지를 거의 상쇄해 전투가 **유한하지만 수천 행동까지** 길어질 수 있다(큰 cap에서 항상 종료 확인 = 무한 아님). AI(ai-allies/ai) 플레이는 수십 행동에 종료(4만 스트레스 런 교착 0). **결론**: 종료성 하드 보장은 **현실적(AI) 플레이**에 적용. `random`은 크래시/불변식 스트레스 도구이며 cap 도달은 "느림(유한)"으로 분류(테스트는 random 교착을 하드 실패로 보지 않음, `npm run stress`이 informational 보고). 진짜 무한루프는 어떤 유한 cap도 넘으므로 검출은 유지.
 
 ---
 

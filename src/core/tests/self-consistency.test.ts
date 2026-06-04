@@ -3,14 +3,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { RUNS } from "../../data/runs/index.ts";
-import { campaignTrace, tracesMatch, battleTrace } from "./harness/index.ts";
+import { stressTrace, tracesMatch, battleTrace } from "./harness/index.ts";
 import { DEMO_ENCOUNTER, NODE_ROSTERS } from "../../data/encounters.ts";
 
-test("self-consistency: 같은 시드 캠페인 2회 → 동일 트레이스(전 런)", () => {
+test("self-consistency: 같은 시드 스트레스 런 2회 → 동일 트레이스(전 런)", () => {
   for (const runDef of Object.values(RUNS)) {
     for (const seed of [1, 2, 7, 42, 100, 271, 999, 31337]) {
-      const a = campaignTrace(seed, runDef);
-      const b = campaignTrace(seed, runDef);
+      const a = stressTrace(seed, runDef);
+      const b = stressTrace(seed, runDef);
       const m = tracesMatch(a, b);
       assert.ok(m.ok, `${runDef.id} seed ${seed} 트레이스 불일치 @${m.at}: \nA=${a[m.at ?? 0]}\nB=${b[m.at ?? 0]}`);
       assert.ok(a.length > 0, `${runDef.id} seed ${seed} 트레이스 비어있음`);
@@ -34,10 +34,10 @@ test("self-consistency: 전투 2회(무작위 합법행동) → 동일 이벤트
 
 test("self-consistency: 다른 시드는 (대개) 다른 트레이스 — 트레이스가 시드에 실제 의존", () => {
   const runDef = Object.values(RUNS)[0];
-  const t1 = campaignTrace(1, runDef);
+  const t1 = stressTrace(1, runDef);
   let anyDiff = false;
   for (const s of [2, 3, 4, 5, 6, 7, 8, 9, 10]) {
-    if (!tracesMatch(t1, campaignTrace(s, runDef)).ok) { anyDiff = true; break; }
+    if (!tracesMatch(t1, stressTrace(s, runDef)).ok) { anyDiff = true; break; }
   }
-  assert.ok(anyDiff, "시드를 바꿔도 트레이스가 전부 동일 — 시드가 캠페인에 영향 없음(결정 무작위 결함)");
+  assert.ok(anyDiff, "시드를 바꿔도 트레이스가 전부 동일 — 시드가 스트레스 런에 영향 없음(결정 무작위 결함)");
 });

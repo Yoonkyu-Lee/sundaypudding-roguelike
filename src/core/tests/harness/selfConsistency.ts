@@ -1,16 +1,16 @@
 // self-consistency harness (MIGRATION-VERIFICATION-PLAN §3.2) — 같은 시드 2회 실행이 동일 로그.
 // 결정론(T2/T3)을 검증. 포팅 시 TS↔Rust differential harness로 확장(같은 비교 함수 재사용).
-import { runCampaign } from "./campaign.ts";
+import { stressRun } from "./stressRun.ts";
 import type { RunDef } from "../../run.ts";
 import { createBattle, step, getLegalActions } from "../../engine.ts";
 import { chooseAction } from "../../ai.ts";
 import type { Encounter } from "../../../data/encounters.ts";
 import { Rng } from "../../rng.ts";
 
-/** 캠페인 1판의 관측 트레이스(전투 이벤트 로그 시퀀스 + 최종 다이제스트). */
-export function campaignTrace(seed: number, runDef: RunDef): string[] {
+/** 스트레스 런 1판의 관측 트레이스(전투 이벤트 로그 시퀀스 + 최종 다이제스트). */
+export function stressTrace(seed: number, runDef: RunDef): string[] {
   const trace: string[] = [];
-  runCampaign(seed, runDef, { trace, checkInvariants: false });
+  stressRun(seed, runDef, { trace, checkInvariants: false });
   return trace;
 }
 
