@@ -6,6 +6,7 @@ import { LAYER_SPECS, LAYER_KINDS, DECO_KINDS, layerSummary, type FieldSpec } fr
 import { battlefieldHtml, wireBattlefield } from "./battlefieldEditor.ts";
 import { ruleEditorHtml, wireRuleEditor } from "./ruleEditor.ts";
 import { eventEditorHtml, wireEventEditor } from "./eventEditor.ts";
+import { shopEditorHtml, wireShopEditor } from "./shopEditor.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { STATUS_DEFS } from "../../data/statuses.ts";
 import { NODE_ROSTERS } from "../../data/encounters.ts";
@@ -58,7 +59,8 @@ export function renderNodeEditView(app: HTMLElement, d: NodeEditData, h: EditorH
   const eff = sel?.kind === "combat" ? effectiveRoster(sel as { roster?: RosterEntry[] }) : null;
   const combatExtra = sel?.kind === "combat" && eff ? `${battlefieldHtml(eff, d.allies)}${ruleEditorHtml(d)}` : "";
   const eventExtra = sel?.kind === "event" ? eventEditorHtml(d.eventLayer) : "";
-  const form = sel ? `<h3>${esc(LAYER_SPECS[sel.kind].label)} 편집</h3>${fieldInput(sel, d.sel!.idx)}${combatExtra}${eventExtra}` : `<div class="hint">왼쪽에서 레이어를 선택하세요.</div>`;
+  const shopExtra = sel?.kind === "shop" ? shopEditorHtml(sel as { offers?: import("../../core/types.ts").ShopOfferDef[]; keepGenerated?: boolean }) : "";
+  const form = sel ? `<h3>${esc(LAYER_SPECS[sel.kind].label)} 편집</h3>${fieldInput(sel, d.sel!.idx)}${combatExtra}${eventExtra}${shopExtra}` : `<div class="hint">왼쪽에서 레이어를 선택하세요.</div>`;
   const sections = SLOTS.map((s) => slotSection(s.slot, s.title, s.hint, s.kinds, arr(s.slot), d.sel)).join("");
 
   app.innerHTML = `<div class="editor node-editor">
@@ -91,4 +93,5 @@ export function renderNodeEditView(app: HTMLElement, d: NodeEditData, h: EditorH
   if (sel?.kind === "combat" && d.sel && eff) wireBattlefield(app, eff, (next) => h.onSetLayerField(d.sel!.slot, d.sel!.idx, "roster", next));
   wireRuleEditor(app, h); // 트리거 룰 섹션(Phase E4)
   if (sel?.kind === "event") wireEventEditor(app, h); // 인카운터 이벤트 저작(Phase D)
+  if (sel?.kind === "shop") wireShopEditor(app, h); // 상점 진열 저작
 }

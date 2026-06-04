@@ -127,6 +127,31 @@ test("보상 레이어: treasure 노드 = core:[reward] (전투 없이 보상)",
   assert.equal(run.phase, "map"); assert.equal(run.coreCursor, null);
 });
 
+test("상점 진열 저작: shop 레이어 offers = 저작 진열만(절차생성 대체), keepGenerated면 병행", () => {
+  const offers = [
+    { kind: "buyItem" as const, itemId: "wood_bat", cost: 12 },
+    { kind: "heal" as const, pct: 0.3, cost: 8 },
+  ];
+  const run = createRun(5, coreDef([{ kind: "shop", offers }]).roster, coreDef([{ kind: "shop", offers }]));
+  enterNode(run, "b");
+  assert.equal(run.phase, "shop");
+  assert.equal(run.shop!.length, 2, "저작 진열만(절차생성 대체)");
+  const item = run.shop!.find((o) => o.kind === "buyItem");
+  assert.ok(item && item.kind === "buyItem" && item.itemId === "wood_bat" && item.cost === 12, "저작 아이템 구체화(비용 보존)");
+  assert.ok(run.shop!.some((o) => o.kind === "heal" && o.cost === 8), "저작 회복 진열");
+  // keepGenerated → 저작 + 절차생성 병행(절차생성이 0이 아니면 2 초과)
+  const run2 = createRun(5, coreDef([{ kind: "shop", offers, keepGenerated: true }]).roster, coreDef([{ kind: "shop", offers, keepGenerated: true }]));
+  enterNode(run2, "b");
+  assert.ok(run2.shop!.length > 2, "keepGenerated=절차생성 진열 병행");
+});
+
+test("상점 진열 저작: learn은 미편성 캐릭이면 생략(골드 낭비 방지)", () => {
+  const offers = [{ kind: "learn" as const, charId: "nobody_xyz", skillId: "jab", cost: 20 }];
+  const run = createRun(6, coreDef([{ kind: "shop", offers }]).roster, coreDef([{ kind: "shop", offers }]));
+  enterNode(run, "b");
+  assert.equal(run.shop!.length, 0, "파티에 없는 charId learn 진열 생략");
+});
+
 test("yain 마이그레이션: f1_rest = core:[heal] — 전투불능 부활 + 50% 회복 후 맵 복귀", () => {
   const run = createRun(3); // DEFAULT_RUN(야인시대)
   // 전투불능 1명 + 부상 1명 세팅

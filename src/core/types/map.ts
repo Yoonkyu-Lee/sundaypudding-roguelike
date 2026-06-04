@@ -37,6 +37,13 @@ export interface EncounterEvent {
   choices: EncounterChoice[];
 }
 
+/** 상점 진열 — 디자이너 저작 품목(노드별). 런타임 ShopOffer로 구체화(id/label 엔진 생성).
+ *  upgrade는 런타임 파티 소유 스킬 의존이라 저작 제외(절차생성만). learn은 편성된 파티원 대상일 때만 진열. */
+export type ShopOfferDef =
+  | { kind: "buyItem"; itemId: string; cost: number } // 장착 아이템 → 인벤토리
+  | { kind: "heal"; pct: number; cost: number } // 파티 회복(maxHp 비율)
+  | { kind: "learn"; charId: string; skillId: string; cost: number }; // 특정 캐릭 범용기 학습
+
 /** 노드 트리거 룰 = PassiveRule + 소유자(화자/기준). owner의 side+charId 유닛에 주입 → self=그 개체.
  *  owner 없으면 첫 적(앰비언트/내레이터). 소유자 부재(미편성 등)면 그 룰 스킵. (Phase C/E4 — 개체 기준) */
 export type NodeRule = PassiveRule & { owner?: { side: "ally" | "enemy"; charId: string } };
@@ -45,7 +52,7 @@ export type NodeRule = PassiveRule & { owner?: { side: "ally" | "enemy"; charId:
 export type InteractiveLayer =
   | { kind: "combat"; roster?: { charId: string; pos: Pos }[]; boss?: boolean; rules?: NodeRule[] } // 적=인라인 roster(노드 소유, 단일 소스). 비면 엔진 fallback=NODE_ROSTERS.battle. 보스=진형보너스. rules=이 전투의 트리거 룰(Phase C/E4)
   | { kind: "reward"; tier?: number } // 보상(genRewards) — 등급↑(2~3)=선택지·아이템 가산. 기본 1=3택1. treasure 노드 = core:[reward]
-  | { kind: "shop" } // 상점 진열(generateShop) — leaveShop까지 블록. 스타터는 DI 등록(run.ts)
+  | { kind: "shop"; offers?: ShopOfferDef[]; keepGenerated?: boolean } // 상점 진열 — offers 있으면 그 저작 진열, 없으면 절차생성(generateShop). keepGenerated=저작+절차 병행. leaveShop까지 블록. 스타터 DI(run.ts)
   | { kind: "event"; event?: EncounterEvent }; // 인카운터 — event 인라인(노드 저작) 우선, 없으면 전역 풀 랜덤. chooseEncounterOption까지 블록
 /** 노드 레이어 — onEnter/onResolve는 데코만(즉시), core는 데코+상호작용 혼합(순서 실행). */
 export type Layer = DecoratorLayer | InteractiveLayer;

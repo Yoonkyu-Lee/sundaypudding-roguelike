@@ -640,6 +640,8 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .ev-gamble { display: flex; flex-direction: column; gap: 4px; flex: 1 1 100%; margin-top: 4px; padding-left: 8px; border-left: 2px solid var(--accent); }
 .ev-branch { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--dim); }
 .ev-fixed { display: inline-flex; align-items: center; gap: 6px; }
+.shop-edit { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 10px; }
+.shop-edit .re-row select, .shop-edit .re-row input[type=number] { background: var(--panel); color: var(--txt); border: 1px solid var(--line); border-radius: 5px; padding: 2px 5px; }
 .fg-box.current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .fg-box.entry { background: #23314a; }
 .fg-box.invalid { border-color: var(--enemy); }

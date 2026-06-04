@@ -1,6 +1,7 @@
 // 맵 에디터 컨트롤러 — 목록↔편집 모드 상태 + 핸들러. main은 run 수명주기 콜백만 주입.
 import { validateRun } from "../../core/run.ts";
-import type { Condition, Effect, EncounterEvent, EncounterOutcome, FloorDef, Layer, MapNode, RunDef, Trigger } from "../../core/types.ts";
+import type { Condition, Effect, EncounterEvent, EncounterOutcome, FloorDef, Layer, MapNode, RunDef, ShopOfferDef, Trigger } from "../../core/types.ts";
+import { defaultShopOffer } from "./shopEditor.ts";
 import { listRuns, getRun, saveDraft, deleteDraft, blankRun, exportRun, isDraft, cloneAsDraft, saveToRepo } from "./store.ts";
 import { addNode, addNodeFromTemplate, moveNode, moveNodes, deleteNode, toggleEdge, adjacentPairs, addFloor, deleteFloor, moveFloor, setNodeLabel } from "./ops.ts";
 import { listTemplates, saveTemplate, deleteTemplate, getTemplate } from "./templates.ts";
@@ -112,6 +113,8 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
 
   /** 선택 event 레이어의 인라인 이벤트(있을 때). */
   const editEvent = (): EncounterEvent | null => { const lay = layerAt(); return lay?.kind === "event" ? lay.event ?? null : null; };
+  /** 선택 shop 레이어(있을 때) — offers 저작 대상. */
+  const editShop = (): { offers?: ShopOfferDef[]; keepGenerated?: boolean } | null => { const lay = layerAt(); return lay?.kind === "shop" ? lay : null; };
   const OUTCOME_DEFAULT: Record<string, EncounterOutcome> = { nothing: { kind: "nothing" }, heal: { kind: "heal", pct: 0.3 }, hurt: { kind: "hurt", pct: 0.15 }, gold: { kind: "gold", amount: 20 }, upgradeRandom: { kind: "upgradeRandom" }, learnUniversal: { kind: "learnUniversal" } };
 
   return {
@@ -207,6 +210,12 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       onSetGambleChance(ci, chance) { const ev = editEvent(); const g = ev?.choices[ci]?.gamble; if (!g) return; g.chance = Math.max(0, Math.min(1, chance)); save(); deps.rerender(); },
       onSetGambleOutcome(ci, branch, kind) { const ev = editEvent(); const g = ev?.choices[ci]?.gamble; if (!g) return; g[branch] = { ...(OUTCOME_DEFAULT[kind] ?? { kind: "nothing" }) }; save(); deps.rerender(); },
       onSetGambleOutcomeField(ci, branch, key, value) { const ev = editEvent(); const g = ev?.choices[ci]?.gamble; if (!g) return; (g[branch] as Record<string, unknown>)[key] = value; save(); deps.rerender(); },
+      // 상점 진열(shop 레이어 offers) 저작
+      onAddShopOffer(kind) { const sh = editShop(); if (!sh) return; (sh.offers ??= []).push(defaultShopOffer(kind)); save(); deps.rerender(); },
+      onRemoveShopOffer(idx) { const sh = editShop(); if (!sh?.offers) return; sh.offers.splice(idx, 1); if (!sh.offers.length) delete sh.offers; save(); deps.rerender(); },
+      onSetShopOfferKind(idx, kind) { const sh = editShop(); if (!sh?.offers?.[idx]) return; sh.offers[idx] = defaultShopOffer(kind); save(); deps.rerender(); },
+      onSetShopOfferField(idx, key, value) { const sh = editShop(); const o = sh?.offers?.[idx]; if (!o) return; (o as Record<string, unknown>)[key] = value; save(); deps.rerender(); },
+      onSetKeepGenerated(value) { const sh = editShop(); if (!sh) return; if (value) sh.keepGenerated = true; else delete sh.keepGenerated; save(); deps.rerender(); },
     },
   };
 }

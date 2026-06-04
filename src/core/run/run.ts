@@ -1,7 +1,7 @@
 // 런 흐름 — 생성/노드 진입/완료/전투종료/보상 (7장). 전투=combat, 맵=map.ts 재사용.
 // 비전투 노드 해소는 shop.ts·encounter.ts, 공유 변이(node/heal/complete/skill)는 helpers.ts로 분리.
 import { Rng } from "../rng.ts";
-import type { PartyMemberState, Phase, Pos, RunDef } from "../types.ts";
+import type { PartyMemberState, Phase, Pos, RunDef, ShopOfferDef } from "../types.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { DEFAULT_RUN } from "../../data/runs/index.ts";
 import { ENCOUNTER_EVENTS } from "../../data/events.ts";
@@ -14,7 +14,7 @@ import { startCore, advanceCore, registerLayerStarter, nodeCore } from "./layers
 import { generateShop } from "./shop.ts";
 
 // 상호작용 레이어 스타터 등록(DI) — shop/event 시작 로직을 시퀀서에 주입(layers↔shop/encounter 사이클 차단).
-registerLayerStarter("shop", (run) => { run.shop = generateShop(run); run.phase = "shop"; run.log.push("상점 진입"); });
+registerLayerStarter("shop", (run, layer) => { run.shop = generateShop(run, layer as { offers?: ShopOfferDef[]; keepGenerated?: boolean }); run.phase = "shop"; run.log.push("상점 진입"); });
 registerLayerStarter("event", (run, layer) => { const ev = (layer as { event?: typeof ENCOUNTER_EVENTS[number] }).event ?? ENCOUNTER_EVENTS[run.rng.int(0, ENCOUNTER_EVENTS.length - 1)]; run.encounter = ev; run.phase = "encounter"; run.log.push(`인카운터 — ${ev.title}`); });
 
 export function createRun(seed: number, roster: { charId: string; pos: Pos }[] = DEFAULT_RUN.roster, runDef: RunDef = DEFAULT_RUN, opts: { mastery?: Record<string, number>; useMastery?: boolean } = {}): RunState {

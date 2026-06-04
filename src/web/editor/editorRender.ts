@@ -117,6 +117,12 @@ export interface EditorHandlers {
   onSetGambleChance: (ci: number, chance: number) => void;
   onSetGambleOutcome: (ci: number, branch: "win" | "lose", kind: string) => void;
   onSetGambleOutcomeField: (ci: number, branch: "win" | "lose", key: string, value: number) => void;
+  // 상점 진열(shop 레이어 offers) 저작
+  onAddShopOffer: (kind: string) => void;
+  onRemoveShopOffer: (idx: number) => void;
+  onSetShopOfferKind: (idx: number, kind: string) => void;
+  onSetShopOfferField: (idx: number, key: string, value: string | number) => void;
+  onSetKeepGenerated: (value: boolean) => void;
 }
 
 function card(r: EditorRunCard): string {

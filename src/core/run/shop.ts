@@ -1,16 +1,38 @@
 // 상점 (7.2) — 골드 구매. 강화권은 상점에서만(4.6). 진열 생성 + 구매 + 나가기.
 import type { PartyMemberState } from "../types.ts";
+import type { ShopOfferDef } from "../types.ts";
 import type { RunState, ShopOffer } from "./types.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { SKILLS } from "../../data/skills.ts";
+import { ITEMS } from "../../data/items.ts";
 import { unlockedTier, ownsUpgradeLine } from "./rewards.ts";
 import { genItemOffers } from "./items.ts";
 import { healParty, upgradeOwned, learnOwned, completeNode } from "./helpers.ts";
 import { advanceCore } from "./layers.ts";
 
-export function generateShop(run: RunState): ShopOffer[] {
+/** 디자이너 저작 진열(ShopOfferDef[]) → 런타임 ShopOffer(id/label 생성). learn은 편성된 파티원 대상일 때만(없으면 골드 낭비 방지로 생략). */
+function materializeOffers(run: RunState, defs: ShopOfferDef[], mk: () => string): ShopOffer[] {
+  const out: ShopOffer[] = [];
+  for (const d of defs) {
+    if (d.kind === "buyItem") { const it = ITEMS[d.itemId]; if (it) out.push({ id: mk(), kind: "buyItem", cost: d.cost, itemId: it.id, label: `「${it.name}」` }); }
+    else if (d.kind === "heal") out.push({ id: mk(), kind: "heal", cost: d.cost, pct: d.pct, label: `치료: 파티 ${Math.round(d.pct * 100)}% 회복` });
+    else if (d.kind === "learn") { const c = CHARACTERS[d.charId], sk = SKILLS[d.skillId]; if (c && sk && run.party.some((p) => p.charId === d.charId && p.hp > 0)) out.push({ id: mk(), kind: "learn", cost: d.cost, charId: d.charId, skillId: d.skillId, label: `스킬: ${c.name} 「${sk.name}」` }); }
+  }
+  return out;
+}
+
+/** 노드 상점 진열 — 레이어에 offers 있으면 그 저작 진열(keepGenerated면 절차생성 병행), 없으면 절차생성. */
+export function generateShop(run: RunState, layer?: { offers?: ShopOfferDef[]; keepGenerated?: boolean }): ShopOffer[] {
   let k = 0;
   const mk = () => `shop${run.visited.length}_${k++}`;
+  if (layer?.offers?.length) {
+    const authored = materializeOffers(run, layer.offers, mk);
+    return layer.keepGenerated ? [...authored, ...generateProcedural(run, mk)] : authored;
+  }
+  return generateProcedural(run, mk);
+}
+
+function generateProcedural(run: RunState, mk: () => string): ShopOffer[] {
   const pool: ShopOffer[] = [];
   const tierOk = (m: PartyMemberState, sid: string) => !run.useMastery || (SKILLS[sid]?.tier ?? 1) <= unlockedTier(m.masteryLevel); // 숙련도 tier 게이팅(4.4)
   for (const m of run.party.filter((p) => p.hp > 0)) {
