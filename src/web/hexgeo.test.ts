@@ -1,7 +1,11 @@
 // 헥스 기하 검증 — "완벽한 벌집"의 수학적 증명: 인접 셀은 변(꼭짓점 2개)을 정확히 공유, 비인접은 0.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { hexCorners, pixelToAxial, ccx, ccy, cornerOffsets, edgeDirIndex } from "./hexgeo.ts";
+import { hexCorners, pixelToAxial, ccx, ccy, cornerOffsets, edgeDirIndex, EDGE_DIRS } from "./hexgeo.ts";
+import { hexAdjacent } from "../core/run.ts";
+import type { MapNode } from "../core/types.ts";
+
+const hx = (q: number, r: number): MapNode => ({ id: `${q},${r}`, type: "battle", q, r });
 
 const EPS = 0.01;
 function sharedCorners(a: { q: number; r: number }, b: { q: number; r: number }): number {
@@ -44,6 +48,26 @@ test("edgeDirIndex + cornerOffsets = 그 방향 이웃과의 공유 변 (플레�
     const cb = co.map((o) => ({ x: bx + o.x, y: by + o.y }));
     const e1 = co[ei], e2 = co[(ei + 1) % 6];
     for (const e of [e1, e2]) assert.ok(cb.some((p) => Math.abs(p.x - e.x) < EPS && Math.abs(p.y - e.y) < EPS), `변 끝점이 이웃과 공유됨 dir(${dq},${dr})`);
+  }
+});
+
+test("V2 edgeDirIndex는 EDGE_DIRS의 역함수 — edgeDirIndex(EDGE_DIRS[i])=i, 비방향=-1", () => {
+  for (let i = 0; i < EDGE_DIRS.length; i++) {
+    const [dq, dr] = EDGE_DIRS[i];
+    assert.equal(edgeDirIndex(dq, dr), i, `EDGE_DIRS[${i}] 역함수`);
+  }
+  for (const [dq, dr] of [[2, 0], [0, 0], [1, 1], [-2, 3]]) assert.equal(edgeDirIndex(dq, dr), -1, `(${dq},${dr}) 비방향`);
+});
+
+test("V3 EDGE_DIRS(에디터 벽) ↔ 엔진 hexAdjacent 동치 — 같은 헥스 모델(교차 모듈 회귀가드)", () => {
+  // 에디터가 벽/인접을 그리는 6방향이 곧 엔진(graph.ts hexAdjacent)이 인정하는 인접이어야 한다.
+  assert.equal(EDGE_DIRS.length, 6, "정확히 6방향");
+  for (const [dq, dr] of EDGE_DIRS) {
+    assert.ok(hexAdjacent(hx(0, 0), hx(dq, dr)), `EDGE_DIRS (${dq},${dr})는 엔진 인접`);
+  }
+  // 비-EDGE_DIRS 방향은 엔진도 비인접 (벽 방향이 인접 정의와 정확히 일치)
+  for (const [dq, dr] of [[2, 0], [0, 2], [1, 1], [2, -2], [-1, -1]]) {
+    assert.equal(hexAdjacent(hx(0, 0), hx(dq, dr)), false, `(${dq},${dr})은 비인접인데 엔진이 인접 판정`);
   }
 });
 

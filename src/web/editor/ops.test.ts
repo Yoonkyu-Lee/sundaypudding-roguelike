@@ -1,8 +1,12 @@
 // 런 에디터 순수 변이(ops.ts) 단위 테스트 — DOM 무관(노드/변/층 그래프 조작).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { addNode, addNodeFromTemplate, moveNode, deleteNode, toggleEdge, nodeAt, adjacentPairs, addFloor, deleteFloor, moveFloor, setNodeLabel } from "./ops.ts";
+import { addNode, addNodeFromTemplate, moveNode, moveNodes, deleteNode, toggleEdge, nodeAt, adjacentPairs, autoConnectAdjacent, addFloor, deleteFloor, moveFloor, setNodeLabel } from "./ops.ts";
+import { hexAdjacent } from "../../core/run.ts";
 import type { FloorDef, RunDef } from "../../core/types.ts";
+
+const pairKey = (a: string, b: string) => [a, b].sort().join("|");
+const edgeSet = (f: FloorDef) => new Set(f.edges.map((e) => pairKey(e.from, e.to)));
 
 function floor(): FloorDef {
   return {
@@ -106,6 +110,73 @@ test("addNodeFromTemplate: content deep-clone 배치(원본 불변·인접 자�
   assert.equal((tpl.core[0] as { roster: unknown[] }).roster.length, 1, "원본 템플릿 roster 불변");
   addNodeFromTemplate(f, "battle", tpl, 1, 0); // 점유 → 무시
   assert.equal(f.nodes.length, 3);
+});
+
+test("U1 id 유일성: 같은 틱 연속 addNode/template도 노드 id 전부 유일", () => {
+  const f = floor();
+  // 빈 칸을 줄지어 채움(동일 ms 내 다수 추가 → counter로 분리돼야)
+  const coords: [number, number][] = [[1, 0], [2, 0], [3, 0], [4, 0], [1, -1], [2, -1], [3, -1]];
+  for (const [q, r] of coords) addNode(f, "battle", q, r);
+  addNodeFromTemplate(f, "battle", { label: "x" }, 5, 0);
+  const ids = f.nodes.map((n) => n.id);
+  assert.equal(new Set(ids).size, ids.length, `id 중복: ${ids.join(",")}`);
+});
+
+test("U3 moveNode: 좌표 외 필드(type/core/label/id) 불변", () => {
+  const f = floor();
+  addNode(f, "battle", 3, 0);
+  const n = nodeAt(f, 3, 0)!;
+  n.label = "관문";
+  const { id, type, core } = n;
+  const coreRef = core;
+  moveNode(f, id, 1, 0);
+  const after = nodeAt(f, 1, 0)!;
+  assert.equal(after.id, id);
+  assert.equal(after.type, type);
+  assert.equal(after.label, "관문");
+  assert.equal(after.core, coreRef, "core 참조 동일(좌표만 변경)");
+});
+
+test("U4/U7 변=인접쌍: 전체 autoConnect 결과 == adjacentPairs 집합(독립 구현 교차검증)", () => {
+  const f = floor();
+  for (const [q, r] of [[1, 0], [2, 0], [1, -1], [0, 2], [-1, 1]] as [number, number][]) addNode(f, "battle", q, r);
+  // 변을 모두 지우고 전 노드에 autoConnect → adjacentPairs와 동일해야
+  f.edges = [];
+  for (const n of f.nodes) autoConnectAdjacent(f, n.id);
+  const fromAuto = edgeSet(f);
+  const fromPairs = new Set(adjacentPairs(f).map((p) => pairKey(p.a, p.b)));
+  assert.deepEqual([...fromAuto].sort(), [...fromPairs].sort(), "autoConnect 전수 ≠ adjacentPairs");
+  // 모든 변은 실제 헥스 인접쌍(U4)
+  for (const e of f.edges) {
+    const a = f.nodes.find((n) => n.id === e.from)!, b = f.nodes.find((n) => n.id === e.to)!;
+    assert.ok(hexAdjacent(a, b), `비인접 변 ${e.from}-${e.to}`);
+  }
+});
+
+test("U8 moveNodes: 비선택과 충돌하면 원자적 취소(false, 좌표 불변)", () => {
+  const f = floor(); // s(0,0), c(0,1)
+  addNode(f, "battle", 2, 0);
+  addNode(f, "battle", 3, 0);
+  const a = nodeAt(f, 2, 0)!, b = nodeAt(f, 3, 0)!;
+  // a,b를 (-2,0) 이동하면 a→(0,0)=s 점유와 충돌 → 취소
+  const ok = moveNodes(f, [a.id, b.id], -2, 0);
+  assert.equal(ok, false);
+  assert.equal(nodeAt(f, 2, 0)!.id, a.id, "a 원위치");
+  assert.equal(nodeAt(f, 3, 0)!.id, b.id, "b 원위치");
+});
+
+test("U9 moveNodes: 군집 평행이동 — 내부 변 보존 + 군집째 이동", () => {
+  const f = floor();
+  addNode(f, "battle", 2, 0);
+  addNode(f, "battle", 3, 0); // (2,0)-(3,0) 인접 → 자동 변
+  const a = nodeAt(f, 2, 0)!, b = nodeAt(f, 3, 0)!;
+  const internalEdge = pairKey(a.id, b.id);
+  assert.ok(edgeSet(f).has(internalEdge), "사전: 내부 변 존재");
+  const ok = moveNodes(f, [a.id, b.id], 0, 2); // 빈 영역으로 평행이동
+  assert.equal(ok, true);
+  assert.equal(nodeAt(f, 2, 2)!.id, a.id);
+  assert.equal(nodeAt(f, 3, 2)!.id, b.id);
+  assert.ok(edgeSet(f).has(internalEdge), "내부 변(벽 포함) 보존");
 });
 
 test("addFloor/deleteFloor/moveFloor: 선형 층 편집", () => {

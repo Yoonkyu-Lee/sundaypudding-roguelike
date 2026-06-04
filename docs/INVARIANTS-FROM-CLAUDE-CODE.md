@@ -417,7 +417,14 @@
 
 > assertion 모듈·캠페인 러너가 **우선 두들겨 확인**할 후보. 일부는 의도된 동작일 수 있으므로 "결함 확정"이 아니라 **검증 대상**으로 기록.
 
+> **검증 인프라 적용 결과(2026-06-04)**: 무작위 캠페인(전 런×3정책×수백 시드)이 아래 #1을 **실제로 검출**했고
+> 수정 완료. #12는 에디터 정합성 테스트가 검출·수정. 나머지는 문서화된 검증 대상으로 남김(유효 데이터에선 미발현).
+
 ### 잠재 결함 (수정 후보)
+
+0. **✅ [수정됨] L8 — 종료 시 stale reachable** (`run.ts` completeFloor 승리분기·resolveBattleEnd 패배분기)
+   캠페인 러너가 검출: 승리(won) 시 `reachable`에 방금 방문한 clear 노드가 남아 `reachable ∩ visited ≠ ∅`.
+   종료 시 `reachable=[]`로 비우도록 수정(종료 상태엔 선택지 없음). 회귀 테스트 `invariants.test.ts` 고정.
 
 1. **`completeFloor` 미존재 toFloor = 오인 승리** (`run.ts:99-104`, CRIT 후보)
    `nextIdx = clear.toFloor ? findIndex(...) : -1; if(nextIdx<0) phase="won"`. 존재하지 않는 floor id를 가리키는 `toFloor`는 `findIndex=-1` → "게임 클리어"로 처리된다. 런타임 미검증(L9 validateRun은 **에디터 저장 시점에만** 강제). → **assertion: createRun 진입 시 validateRun 게이트**가 강력한 방어.
@@ -445,7 +452,9 @@
 
 10. **getTemplate 비복제 반환** (W2) — 결과를 직접 변이하면 템플릿 라이브러리 오염. 현재 소비 경로(addNodeFromTemplate 재clone)는 안전. 방어적 clone 반환 검토.
 
-11. **모듈 전역 싱글톤** (I3) — passives의 `depth`/`activeKeys`, run passives의 `firing`이 모듈 전역. 단일 스레드 동기 전제에선 안전하나, harness가 **두 전투를 인터리브하면 오염**. → 캠페인 러너는 반드시 **직렬 실행**.
+11. **모듈 전역 싱글톤** (I3) — passives의 `depth`/`activeKeys`, run passives의 `firing`이 모듈 전역. 단일 스레드 동기 전제에선 안전하나, harness가 **두 전투를 인터리브하면 오염**. → 캠페인 러너는 반드시 **직렬 실행**(현재 그렇게 구현됨).
+
+12. **✅ [수정됨] store 드래프트 id 충돌** (`store.ts` blankRun/cloneAsDraft) — `draft_${Date.now()}`만 써서 같은 ms에 만든 두 드래프트가 id 충돌(drafts 맵에서 덮어쓰기). 에디터 정합성 테스트가 검출 → `ops.ts`/`templates.ts`와 동일하게 `Date.now()+counter` 접미사로 수정.
 
 ---
 

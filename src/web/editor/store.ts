@@ -31,6 +31,10 @@ function persist(): void { try { localStorage.setItem(KEY, JSON.stringify(drafts
 export type RunSource = "repo" | "draft";
 export interface RunListItem { id: string; name: string; source: RunSource; }
 
+// 드래프트 id 생성 — Date.now + counter(같은 ms 내 다중 생성 충돌 방지, ops.ts/templates.ts 패턴 일관).
+let draftCounter = 0;
+function newDraftId(): string { return `draft_${Date.now().toString(36)}${(draftCounter++).toString(36)}`; }
+
 /** 런 목록 = 드래프트(편집가능) + repo RUNS(읽기전용). 같은 id면 드래프트 우선. */
 export function listRuns(): RunListItem[] {
   const out: RunListItem[] = Object.values(drafts).map((r) => ({ id: r.id, name: r.name, source: "draft" as const }));
@@ -44,7 +48,7 @@ export function deleteDraft(id: string): void { delete drafts[id]; persist(); }
 
 /** 새 빈 런: 층 1개(입장 start + 목표 clear, 인접·연결). 바로 유효·테스트플레이 가능. */
 export function blankRun(): RunDef {
-  const id = `draft_${Date.now()}`;
+  const id = newDraftId();
   return {
     id,
     name: "새 런",
@@ -72,7 +76,7 @@ export function blankRun(): RunDef {
 /** 드래프트를 새 id로 복제(편집용 — repo 런 편집 시). */
 export function cloneAsDraft(def: RunDef): RunDef {
   const copy: RunDef = JSON.parse(JSON.stringify(def));
-  copy.id = `draft_${Date.now()}`;
+  copy.id = newDraftId();
   copy.name = `${def.name} (복사본)`;
   return copy;
 }

@@ -102,7 +102,7 @@ src/core/
     run-meta.test.ts  영속/메타/다층(세이브 왕복·숙련도 게이팅·액트 진행)
     equip.test.ts     장착(스탯/데미지/쉴드 보정·equip 왕복)
 ```
-> 테스트 배치: **코어=`core/tests/`에 모음**(파사드 경유 통합), **단일 모듈 단위테스트는 코로케이트**(`web/hexgeo.test.ts`·`web/editor/ops.test.ts`). `node --test` 자동 디스커버리(`*.test.ts`) — 새 파일은 목록 갱신 불필요.
+> 테스트 배치: **코어=`core/tests/`에 모음**(파사드 경유 통합), **단일 모듈 단위테스트는 코로케이트**(`web/hexgeo.test.ts`·`web/editor/ops.test.ts`·`web/editor/editor-data.test.ts`[템플릿/store/스키마 정합성 W]). `node --test` 자동 디스커버리(`*.test.ts`) — 새 파일은 목록 갱신 불필요. 에디터 정합성 불변식(U/V/W)은 ops·hexgeo·editor-data 테스트가 커버.
 
 ## data / view 파일
 
