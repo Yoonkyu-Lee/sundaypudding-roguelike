@@ -45,7 +45,10 @@ const pick = <T>(rng: Rng, arr: T[]): T => arr[rng.int(0, arr.length - 1)];
 /** 한 시드로 런 1판을 무작위 합법 행동으로 끝까지 구동. throw하지 않고 결과를 반환. */
 export function runCampaign(seed: number, runDef: RunDef, opts: CampaignOpts = {}): CampaignResult {
   const stepCap = opts.stepCap ?? 3000;
-  const battleCap = opts.battleCap ?? 1500;
+  // battleCap = 비종료 검출용 헤드룸. 무작위 양측 플레이는 병적으로 길어질 수 있음(힐/미스가 데미지를 거의
+  // 상쇄 → 수렴 느림. 실측: 큰 cap에서 항상 종료, 즉 유한). AI 플레이는 수십 행동에 끝남. 진짜 무한루프는
+  // 어떤 유한 cap도 넘으므로 검출은 유지. random의 cap 도달 = "느림(유한)"이지 "고착(무한)"이 아님.
+  const battleCap = opts.battleCap ?? 8000;
   const check = opts.checkInvariants ?? true;
   const policy = opts.policy ?? "random";
   const choice = new Rng((seed ^ 0xc0ffee) >>> 0); // 선택 전용 결정 rng

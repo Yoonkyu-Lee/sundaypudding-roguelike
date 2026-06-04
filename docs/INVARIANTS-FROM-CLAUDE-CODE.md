@@ -456,6 +456,8 @@
 
 12. **✅ [수정됨] store 드래프트 id 충돌** (`store.ts` blankRun/cloneAsDraft) — `draft_${Date.now()}`만 써서 같은 ms에 만든 두 드래프트가 id 충돌(drafts 맵에서 덮어쓰기). 에디터 정합성 테스트가 검출 → `ops.ts`/`templates.ts`와 동일하게 `Date.now()+counter` 접미사로 수정.
 
+13. **[특성/설계] 무작위 양측 플레이의 느린 전투** (T1/T4 관련 — 결함 아님) — 대량 스윕(20k 시드)이 검출: **양측이 완전 무작위**로 두면 힐/쉴드/미스가 데미지를 거의 상쇄해 전투가 **유한하지만 수천 행동까지** 길어질 수 있다(큰 cap에서 항상 종료 확인 = 무한 아님). AI(ai-allies/ai) 플레이는 수십 행동에 종료(4만 캠페인 교착 0). **결론**: 종료성 하드 보장은 **현실적(AI) 플레이**에 적용. `random`은 크래시/불변식 스트레스 도구이며 cap 도달은 "느림(유한)"으로 분류(테스트는 random 교착을 하드 실패로 보지 않음, `npm run campaign`이 informational 보고). 진짜 무한루프는 어떤 유한 cap도 넘으므로 검출은 유지.
+
 ---
 
 # Part 7 — `INVARIANTS-FROM-REPO.md` 교차 검증 메모
