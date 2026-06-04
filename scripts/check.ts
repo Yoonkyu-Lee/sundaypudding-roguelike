@@ -61,6 +61,24 @@ for (const f of coreFiles) {
     fail(`코어 IO 위반(readline): ${rel(f)}`);
 }
 
+// ── 2.5) 웹 게임-티 가드 (CLAUDE 평행개발: 플레이어 표면은 브라우저 네이티브 UI 노출 금지) ──
+// player 표면 = src/web/ − editor/(디자이너 도구 면제). 네이티브 다이얼로그·툴팁·드롭다운·링크 금지.
+const WEB_TELLS: { pat: RegExp; why: string }[] = [
+  { pat: /\balert\(/, why: "네이티브 alert → 인게임 토스트/모달" },
+  { pat: /\bconfirm\(/, why: "네이티브 confirm → 인게임 확인 모달" },
+  { pat: /\bprompt\(/, why: "네이티브 prompt → 인게임 입력 모달" },
+  { pat: /\bwindow\.open\(/, why: "새 창/탭 → 인게임 화면 전환" },
+  { pat: /\bnew Notification\b|\bNotification\.requestPermission/, why: "OS 알림 → 인게임 알림" },
+  { pat: /\stitle="/, why: "네이티브 title= 툴팁 → 커스텀 툴팁(.chip 패턴)" },
+  { pat: /<select(\s|>)/, why: "네이티브 <select> 드롭다운 → div 기반 커스텀" },
+  { pat: /<a\s+href|target="_blank"/, why: "하이퍼링크/새탭 → 인게임 라우팅" },
+];
+const playerWeb = srcFiles.filter((f) => rel(f).startsWith("src/web/") && !rel(f).startsWith("src/web/editor/") && !f.endsWith(".test.ts"));
+for (const f of playerWeb) {
+  const txt = readFileSync(f, "utf8");
+  for (const { pat, why } of WEB_TELLS) if (pat.test(txt)) fail(`웹 게임-티(${pat.source}): ${rel(f)} — ${why}`);
+}
+
 // ── 3) 배럴 규율 (서브시스템 내부 파일은 배럴/파사드로만 접근) ──────────────────
 const SUBSYS = ["combat", "run", "types", "ai"]; // src/core/<S>/
 const isCoreFacade = (f: string) => /^src\/core\/[^/]+\.ts$/.test(rel(f)); // src/core 바로 밑 파일 = 파사드 허용

@@ -201,7 +201,7 @@ const shellHandlers: ShellHandlers = {
 };
 
 // 입력 필드(라벨 input·드롭다운 등) 포커스 중엔 단축키를 가로채지 않음 — 백스페이스=글자 삭제
-const inEditableField = (e: KeyboardEvent): boolean => {
+const inEditableField = (e: Event): boolean => {
   const t = e.target as HTMLElement | null;
   const tag = t?.tagName;
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || !!t?.isContentEditable;
@@ -221,6 +221,9 @@ window.addEventListener("keydown", (e) => {
   else if (ui.selectedSkillId) battleHandlers.onCancel();
   else { pauseOpen = !pauseOpen; render(); }
 });
+
+// 우클릭 네이티브 메뉴 차단(게임 톤) — 에디터(개발자 도구)·입력 필드(붙여넣기)는 예외
+window.addEventListener("contextmenu", (e) => { if (appState === "editor" || inEditableField(e)) return; e.preventDefault(); });
 
 // 부팅: 저장된 런이 있으면 복원(이어하기 가능), 없으면 새 런 준비. 화면은 타이틀부터.
 const loaded = loadRun();

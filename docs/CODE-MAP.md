@@ -135,7 +135,7 @@ src/core/
 | `src/web/charSheet.ts` | web | **캐릭터 시트** — 능력치표(원본→현재 델타)·3 장착칸(장착·교체·해제+인벤토리 픽커)·보유 스킬(맵=활성4 토글, 전투=읽기전용). `sheetBody`+`wireSheet`로 분리 → 전투 단독 모달(`renderCharSheet`)·파티뷰 상세 pane 공용 | `renderCharSheet` · `sheetBody` · `wireSheet` · `SheetData` |
 | `src/web/drag.ts` | web | **공용 포인터 드래그**(`beginPointerDrag`) — 네이티브 HTML5 DnD 대체. 커서 따라오는 `.drag-avatar`·`elementFromPoint` 드롭 라우팅·클릭 폴백. 에디터·파티편성 공용 | `beginPointerDrag` |
 | `src/web/partyView.ts` | web | **파티 편성(통합 파티뷰, 모달)** — 3칼럼: 좌 4×4 진형 보드(포인터 드래그 배치/교대) / 중 선택 캐릭 상세(charSheet 인라인) / 우 장착 인벤토리. 드래그=`drag.ts` 포인터(고스트 없음). 맵 전용 | `renderPartyView` · `PartyViewData` |
-| `src/web/style.css` | web | 다크 테마 스타일 | — |
+| `src/web/style.css` | web | 다크 테마 스타일 + **게임셸 리셋**(상단: 브라우저 제스처/크롬 제거 — overscroll·touch-action·tap-highlight·`:focus-visible`·커스텀 스크롤바·number 스피너. CLAUDE "웹 렌더링 티 금지" B) | — |
 | `index.html` · `vite.config.ts` | web | Vite 진입/설정 (`npm run dev`). **F3 dev-write 미들웨어**(`apply:"serve"` 전용 — `POST /api/save-run` → `src/data/runs/{fileId}.json` 기록 + `runs.generated.ts` 재생성, 빌드 무영향) | `devWriteRuns` |
 
 ## 기능 → 위치 색인
