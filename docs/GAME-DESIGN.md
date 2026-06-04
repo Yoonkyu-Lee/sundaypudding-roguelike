@@ -570,7 +570,7 @@
 
 - **장착 아이템(4.3)**: 무기(공격상수 dmgFlat·치명 보정)·방어구(HP·쉴드획득 보정), 지닌물건은 후속(슬롯 잠금). `ItemDef`(데이터)+`data/items.ts` / 엔진=makeUnit 비-HP 스탯 합산+`equipDmgFlat`/`equipShieldGainAdd` read훅, HP는 equipItem이 maxHp 재계산. **파티 공유 인벤토리**(`RunState.inventory`) — 상점 `buyItem`·보상 장신구로 획득, **맵에서만** 캐릭터 시트로 장착/교체/해제. 스탯=오직 장착(4.2) 준수. `[엔진 프리미티브 추가]`.
 
-**☐ 미구현 (다음 슬라이스)**
+**☐ 미구현 (다음 슬라이스)** — 우선순위 SoT = [`ROADMAP.md`](ROADMAP.md)(현재 순서: 본산 메타 육성 → 연출/스토리텔링 엔진 → 지닌물건 → 아이템/스킬/패시브 에디터; 실제 콘텐츠=디자이너 후순위). 아래는 과거 미구현 기록(상당수 완료).
 - **적 전용 AI/패턴(엔진 프리미티브 추가)**: 우선순위 룰 프로파일(`AiProfile`)을 데이터(`data/ai.ts`)로, 캐릭터가 `aiProfileId`로 참조. 엔진 `ai/profile.ts`가 해석(매 턴 합법행동을 prefer/target/weight로 스코어→최고점, 미적용 시 공유 그리디 fallback). 좌익 4명에 healer/assassin/guardian/skirmisher 배정. 결정론(rng 미사용)·데모 골든 불변(데모=잡몹, 프로파일 없음). 카탈로그·작성법=`src/data/README.md`.
 - **맵 에디터 GUI(웹 기능 — 엔진/스키마 불변)**: 타이틀 진입 → 런 목록(repo+드래프트 병합) → 단일 층 헥스 에디터(카탈로그 드래그 배치·노드 선택/삭제·인접 무방향 변 토글·실시간 `validateRun`)·층 그래프 패널(선형 추가/선택/삭제/순서). 드래프트=localStorage(`spr_editor_drafts_v1`), **JSON 내보내기**로 `src/data/runs/` 커밋(배포 진실). 테스트플레이=`createRun(draft)`. `src/web/editor/`(store·ops·controller·editorRender·editView). **후속**: 분기 층 그래프·노드 메타데이터·dev-write 미들웨어.
 - **맵 엔진 대개편(엔진 프리미티브 추가)**: 좌표암시 헥스 → **헥스 인접 무방향그래프**(맞닿은 헥스끼리 변, 디자이너 토글) + **재방문 불가 이동**(미방문 이웃, 막힌노드 비활성) + **클리어 노드**(도달=층 종료, 보스=길목, 다중 보스/클리어 갈림길) + **런=층 선형체인**. 절차생성 폐기, **저작 런 JSON**(`data/runs/*.json`)만. 엔진 `run/graph.ts`(인접·도달성·검증), 스키마 `types/map.ts`, 야인시대 런 재저작. 웹=무방향 변 선·클리어 노드 시각. **남은 절반(다음 스펙)**: 맵 에디터 GUI(런 CRUD·3패인 드래그드롭·저장 검증) + 분기 층 그래프 + 노드 메타데이터.
