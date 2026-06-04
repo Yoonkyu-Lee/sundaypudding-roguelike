@@ -100,6 +100,7 @@ function completeFloor(run: RunState, clear: { toFloor?: string }): void {
   if (nextIdx < 0) { // toFloor 없음(승리) 또는 미존재 id → 종료
     run.phase = "won";
     run.activeNodeId = null;
+    run.reachable = []; // 종료 시 선택지 없음(stale reachable 제거 — 불변식 L8: reachable ∩ visited = ∅)
     run.log.push("클리어 노드(종료) 도달 — 게임 클리어!");
     return;
   }
@@ -127,6 +128,7 @@ export function resolveBattleEnd(run: RunState): void {
   }
   if (result === "enemyWin") {
     run.phase = "lost";
+    run.reachable = []; // 종료 시 선택지 없음(불변식 L8 일관)
     run.log.push("전멸 — 런 실패");
     return;
   }
