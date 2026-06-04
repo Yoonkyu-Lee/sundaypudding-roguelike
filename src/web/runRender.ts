@@ -1,8 +1,10 @@
 // 런 화면 렌더 (맵/보상/결과). 전투 화면은 render.ts(renderApp)가 담당.
 import type { RunView } from "../core/run.ts";
+import { hexAdjacent } from "../core/run.ts";
 import { avatarHtml } from "./render.ts";
 import { TYPE_ICON, TYPE_NAME } from "./nodeMeta.ts";
 import { attachCamera } from "./camera.ts";
+import { cornerOffsets, edgeDirIndex } from "./hexgeo.ts";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 
@@ -88,8 +90,25 @@ function mapScreen(view: RunView, h: RunHandlers): string {
   const px = (x: number) => x - minX + PAD;
   const py = (y: number) => y - minY + PAD;
 
-  // 노드 id → 중심좌표(카메라 초기 중앙 정렬용). 연결선은 표시하지 않음(인접·reachable 발광으로 충분).
+  // 노드 id → 중심좌표(카메라 초기 중앙 정렬 + 벽 기하). 연결선(열린 길)은 표시 안 함 — reachable 발광으로.
   const ctr = new Map(pos.map((p) => [p.n.id, { x: px(p.x) + W / 2, y: py(p.y) + H / 2 }]));
+
+  // 벽 = 인접(맞닿은)하지만 변(edge)이 없는 노드쌍 = 막힌 길. 에디터와 동일 개념, hexgeo 기하 공유(SIZE만 다름).
+  const connected = new Set(view.edges.map((e) => (e.from < e.to ? `${e.from}|${e.to}` : `${e.to}|${e.from}`)));
+  const corners = cornerOffsets(SIZE);
+  const ns = view.nodes;
+  const wallSegs: string[] = [];
+  for (let i = 0; i < ns.length; i++) for (let j = i + 1; j < ns.length; j++) {
+    const a = ns[i], b = ns[j];
+    if (!hexAdjacent(a, b)) continue;
+    const key = a.id < b.id ? `${a.id}|${b.id}` : `${b.id}|${a.id}`;
+    if (connected.has(key)) continue; // 열린 길 — 벽 아님
+    const ei = edgeDirIndex(b.q - a.q, b.r - a.r); // a 기준 b를 향한 변
+    if (ei < 0) continue;
+    const ca = ctr.get(a.id)!, o1 = corners[ei], o2 = corners[(ei + 1) % 6];
+    wallSegs.push(`<line x1="${(ca.x + o1.x).toFixed(1)}" y1="${(ca.y + o1.y).toFixed(1)}" x2="${(ca.x + o2.x).toFixed(1)}" y2="${(ca.y + o2.y).toFixed(1)}"/>`);
+  }
+  const wallsSvg = wallSegs.length ? `<svg class="mwalls" width="${cw}" height="${ch}" viewBox="0 0 ${cw} ${ch}">${wallSegs.join("")}</svg>` : "";
 
   const hexes = pos
     .map(({ n, x, y }) => {
@@ -112,7 +131,7 @@ function mapScreen(view: RunView, h: RunHandlers): string {
   const cc = curId ? ctr.get(curId) : null;
   const dataCtr = cc ? ` data-cx="${cc.x.toFixed(1)}" data-cy="${cc.y.toFixed(1)}"` : "";
   return `<div class="mapview">
-    <div class="hexfield" id="run-field" style="width:${cw}px;height:${ch}px"${dataCtr}>${hexes}</div>
+    <div class="hexfield" id="run-field" style="width:${cw}px;height:${ch}px"${dataCtr}>${hexes}${wallsSvg}</div>
     <div class="ed-zoom"><button id="map-zin" aria-label="확대">＋</button><button id="map-zout" aria-label="축소">－</button><button id="map-zreset" aria-label="리셋">⤢</button></div>
     <div class="ed-vphint">휠=줌 · 드래그=이동</div>
   </div>

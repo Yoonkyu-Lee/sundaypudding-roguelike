@@ -1,6 +1,6 @@
-// 헥스 기하 단일 진실원(SoT) — 격자·노드·벽이 모두 이걸 공유해 완벽한 벌집을 보장.
+// 헥스 기하 단일 진실원(SoT) — 에디터(고정 격자)·플레이어 맵(콘텐츠-핏) 공용. 격자·노드·벽이 공유해 완벽한 벌집.
 // 순수(테스트 가능). pointy-top axial. 좌표는 필드 로컬 픽셀.
-export const SIZE = 34;                  // 중심→꼭짓점(외접원)
+export const SIZE = 34;                  // 중심→꼭짓점(외접원) — 에디터 기본 격자 크기
 export const W = Math.sqrt(3) * SIZE;    // 헥스 폭(평행변 간격)
 export const R = 14;                     // 격자 반경(±R 셀)
 export const OX = W * 1.5 * R + W;       // 원점 오프셋(모든 셀 양수)
@@ -10,23 +10,24 @@ export const FW = OX * 2, FH = OY * 2;   // 고정 격자(필드) 크기
 export const ccx = (q: number, r: number) => OX + W * (q + r / 2); // 셀 중심 x
 export const ccy = (r: number) => OY + 1.5 * SIZE * r;             // 셀 중심 y
 
-/** 셀(q,r)의 6 꼭짓점(절대 좌표). 격자·노드 폴리곤·벽이 공유 → 인접 셀은 변(꼭짓점 2개)을 정확히 공유. */
+/** 셀 중심 기준 6 꼭짓점 상대 오프셋(size 파라미터화 — 플레이어 맵 등 다른 스케일에서 재사용). 순서: top→ur→lr→bottom→ll→ul. */
+export function cornerOffsets(size: number): { x: number; y: number }[] {
+  const w = Math.sqrt(3) * size, s2 = size / 2;
+  return [{ x: 0, y: -size }, { x: w / 2, y: -s2 }, { x: w / 2, y: s2 }, { x: 0, y: size }, { x: -w / 2, y: s2 }, { x: -w / 2, y: -s2 }];
+}
+
+/** 셀(q,r)의 6 꼭짓점(절대 좌표, 에디터 SIZE). 격자·노드 폴리곤·벽이 공유 → 인접 셀은 변(꼭짓점 2개)을 정확히 공유. */
 export function hexCorners(q: number, r: number): { x: number; y: number }[] {
-  const x = ccx(q, r), y = ccy(r), s2 = SIZE / 2;
-  return [
-    { x, y: y - SIZE },       // top
-    { x: x + W / 2, y: y - s2 }, // upper-right
-    { x: x + W / 2, y: y + s2 }, // lower-right
-    { x, y: y + SIZE },       // bottom
-    { x: x - W / 2, y: y + s2 }, // lower-left
-    { x: x - W / 2, y: y - s2 }, // upper-left
-  ];
+  const x = ccx(q, r), y = ccy(r);
+  return cornerOffsets(SIZE).map((o) => ({ x: x + o.x, y: y + o.y }));
 }
 export const hexPoints = (q: number, r: number): string =>
   hexCorners(q, r).map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
 
 /** 변 i(꼭짓점 i→i+1)가 접한 이웃의 axial 방향. hexCorners 순서와 일치. */
 export const EDGE_DIRS = [[1, -1], [1, 0], [0, 1], [-1, 1], [-1, 0], [0, -1]] as const;
+/** 이웃 axial 방향 [dq,dr] → 맞닿은 변 인덱스(없으면 -1). EDGE_DIRS의 역. */
+export const edgeDirIndex = (dq: number, dr: number): number => EDGE_DIRS.findIndex(([q, r]) => q === dq && r === dr);
 /** 셀(q,r)의 변 i 선분 [x1,y1,x2,y2]. */
 export function hexEdge(q: number, r: number, i: number): [number, number, number, number] {
   const c = hexCorners(q, r), a = c[i], b = c[(i + 1) % 6];

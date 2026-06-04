@@ -5,7 +5,7 @@ import type { NodeType } from "../../core/types.ts";
 import type { EditData, EditorHandlers } from "./editorRender.ts";
 import { nodeMetaPanel, wireNodeMeta } from "./nodePanel.ts";
 import { attachCamera } from "../camera.ts";
-import { SIZE, W, FW, FH, ccx, ccy, hexPoints, hexEdge, EDGE_DIRS, gridPathStr, pixelToAxial } from "./hexgeo.ts";
+import { SIZE, W, FW, FH, ccx, ccy, hexPoints, hexEdge, EDGE_DIRS, gridPathStr, pixelToAxial } from "../hexgeo.ts";
 
 const WALL_SW = 3.5; // 벽 선 두께(.ed-wallvis와 일치)
 // 더블클릭 감지(모듈 전역 — 첫 클릭이 재렌더해도 유지). 포인터 캡처로 네이티브 dblclick 타깃이 바뀌어 직접 감지.

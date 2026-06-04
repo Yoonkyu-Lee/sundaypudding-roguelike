@@ -267,6 +267,9 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .mlabel { font-size: 11px; color: var(--dim); }
 .mdone { position: absolute; top: 14px; color: var(--green); font-size: 12px; }
 .mhere { position: absolute; top: 12px; color: #fff; font-size: 13px; }
+/* 벽(막힌 길) — 인접하지만 변 없는 노드쌍. 에디터와 동일 색(#b0413b), 노드 위에 표시. */
+.mwalls { position: absolute; left: 0; top: 0; z-index: 3; pointer-events: none; }
+.mwalls line { stroke: #b0413b; stroke-width: 4; stroke-linecap: round; }
 .mnode.locked { opacity: .4; }
 .mnode.visited { background: var(--green); }
 .mnode.visited .mhex { background: #1e2b22; }
