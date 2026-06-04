@@ -168,7 +168,7 @@ function newRun(s: number): void {
   render();
 }
 
-// ── 맵 에디터 (E1: 런 목록·드래프트·테스트플레이) ──
+// ── 런 에디터 (E1: 런 목록·드래프트·테스트플레이) ──
 /** 드래프트/런을 즉시 플레이(허브 우회) — 런 자체 로스터로 createRun. */
 function testRun(def: RunDef): void {
   seed += 1;

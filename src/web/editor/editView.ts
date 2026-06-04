@@ -1,4 +1,4 @@
-// 맵 에디터 — 단일 층 편집 화면. 격자·노드·벽이 hexgeo(SoT) 공유 → 완벽한 벌집.
+// 런 에디터 — 단일 층 편집 화면. 격자·노드·벽이 hexgeo(SoT) 공유 → 완벽한 벌집.
 // 노드 = SVG 폴리곤(시각, 격자 셀과 구성상 동일) + 투명 오버레이 div(드래그/클릭/아이콘).
 import { esc } from "../battle/shared.ts";
 import type { NodeType } from "../../core/types.ts";

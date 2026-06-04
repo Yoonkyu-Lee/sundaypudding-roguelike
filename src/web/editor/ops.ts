@@ -1,4 +1,4 @@
-// 맵 에디터 — 층 그래프 순수 변이 + 그리드 계산 (DOM/상태 없음). 컨트롤러가 호출.
+// 런 에디터 — 층 그래프 순수 변이 + 그리드 계산 (DOM/상태 없음). 컨트롤러가 호출.
 import type { FloorDef, MapNode, NodeType, RunDef } from "../../core/types.ts";
 import { hexAdjacent } from "../../core/run.ts";
 import { defaultCore } from "../../data/nodeCores.ts";

@@ -1,4 +1,4 @@
-// 맵 에디터 렌더 — 런 목록(E1) ↔ 단일 층 편집(E2) 디스패치. 층 그래프 패널 = E3.
+// 런 에디터 렌더 — 런 목록(E1) ↔ 단일 층 편집(E2) 디스패치. 층 그래프 패널 = E3.
 import { esc } from "../battle/shared.ts";
 import type { NodeType } from "../../core/types.ts";
 import type { RunSource } from "./store.ts";
@@ -145,7 +145,7 @@ function card(r: EditorRunCard): string {
 function renderList(app: HTMLElement, data: ListData, h: EditorHandlers): void {
   const cards = data.runs.map(card).join("") || `<div class="ed-empty">아직 런이 없습니다. "새 런 만들기"로 시작하세요.</div>`;
   app.innerHTML = `<div class="editor">
-    <header><h1>🗺 맵 에디터</h1><button class="hub-link" id="ed-back">타이틀로</button></header>
+    <header><h1>🗺 런 에디터</h1><button class="hub-link" id="ed-back">타이틀로</button></header>
     <div class="ed-body">
       <div class="ed-toolbar"><button class="act" id="ed-new">＋ 새 런 만들기</button>
         <span class="hint">드래프트는 즉시 편집·테스트. 내보내기로 JSON을 받아 <code>src/data/runs/</code>에 커밋하면 배포본이 됩니다.</span></div>

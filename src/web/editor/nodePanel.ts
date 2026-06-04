@@ -1,4 +1,4 @@
-// 맵 에디터 — 노드 메타 사이드바 패널. 라벨 편집(표시명). 적 배치·내용물은 노드 에디터(더블클릭)에서.
+// 런 에디터 — 노드 메타 사이드바 패널. 라벨 편집(표시명). 적 배치·내용물은 노드 에디터(더블클릭)에서.
 import { esc } from "../battle/shared.ts";
 import type { EditData, EditNode, EditorHandlers } from "./editorRender.ts";
 

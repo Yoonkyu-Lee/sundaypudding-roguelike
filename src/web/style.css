@@ -500,7 +500,7 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .title-editor { display: block; margin: 12px auto 0; font-size: 14px; padding: 9px 22px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--txt); cursor: pointer; }
 .title-editor:hover { border-color: var(--accent); color: var(--accent); }
 
-/* ── 맵 에디터 ── */
+/* ── 런 에디터 ── */
 .editor header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .editor h1 { color: var(--accent); }
 .ed-body { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
