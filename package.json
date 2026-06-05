@@ -13,6 +13,7 @@
     "test": "node --test",
     "stress": "node scripts/stress-sweep.ts",
     "golden:update": "node scripts/golden-update.ts",
+    "data:export": "node scripts/export-data.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.web.json",
     "check": "node scripts/check.ts",
     "dev": "vite",

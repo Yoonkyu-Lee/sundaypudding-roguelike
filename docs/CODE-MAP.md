@@ -121,6 +121,7 @@ src/core/
 | `src/data/runs/*.json` | data | **저작 런(7장)** — 헥스 무방향그래프 맵·층 그래프. 진실=레포 JSON(에디터가 편집·내보내기·**repo 자동 기록 F3**). `RunDef` | (JSON) |
 | `src/data/runs/runs.generated.ts` | data | **자동 생성 레지스트리(F3)** — dev-write 미들웨어가 `*.json` 스캔해 통째로 재생성(키=각 json id). 직접 편집 금지 | `RUNS` |
 | `src/data/runs/index.ts` | data | 런 레지스트리 **파사드** — `runs.generated.ts`의 `RUNS` 재노출 + `DEFAULT_RUN` + 본거지 편성 배치 `rosterFromIds` | `RUNS` · `DEFAULT_RUN` · `rosterFromIds` |
+| `src/data/data.generated.json` | data | **데이터 JSON 번들(파생, P0-4)** — `scripts/export-data.ts`가 TS data(items/skills/characters/traits/ai/statuses/…)를 canonical JSON으로 방출. TS=타입 authoring 소스, 이건 파생(Rust serde 로드). `npm run data:export` 재생성 + `data-export.test` 드리프트 게이트. 직접 편집 금지 | (JSON) |
 | `src/data/formations.ts` | data | 포메이션 열보너스 배치(총량보존, 6장) | `STANDARD_FORMATION` |
 | `src/web/meta.ts` | web | **영구 메타**(레벨/XP + 편성 로스터, 별도 세이브 `spr_meta_v1`) — `grantWin`(전투 승리 XP)·`masteryMap`/`masteryInfo`(허브)·`getRoster`/`setRoster`(편성 선택 영구) | `grantWin` · `masteryMap` · `masteryInfo` · `getRoster` · `setRoster` |
 | `src/data/items.ts` | data | 장착 아이템(4.3) — 무기(dmgFlat·crit) / 방어구(hp·쉴드획득). `ItemDef`는 content.ts | `ITEMS` · `ITEM_POOL` |
