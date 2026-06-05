@@ -3,4 +3,5 @@
 pub mod battle;
 pub mod damage;
 pub mod graph;
+pub mod status;
 pub mod util;

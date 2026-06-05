@@ -4,7 +4,8 @@
 use serde::Serialize;
 
 /// 값을 canonical JSON 문자열로(정렬키·컴팩트). 이벤트 로그 differential 비교 기준.
-pub fn canonical_json<T: Serialize>(v: &T) -> String {
+/// `?Sized` — `&[GameEvent]` 같은 슬라이스도 허용.
+pub fn canonical_json<T: Serialize + ?Sized>(v: &T) -> String {
     // to_value가 struct를 BTreeMap 기반 Value로 — 필드 선언순서와 무관하게 정렬됨.
     let value = serde_json::to_value(v).expect("canonical: to_value");
     serde_json::to_string(&value).expect("canonical: to_string")
