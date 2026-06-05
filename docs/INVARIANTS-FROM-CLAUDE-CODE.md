@@ -454,7 +454,7 @@
 
 10. **📄 [문서화] getTemplate 비복제 반환** (W2, 에디터) — 소비 경로(addNodeFromTemplate 재clone)에서 안전. 포팅 무관(에디터=TS/웹 전용). 방어적 clone은 선택.
 
-11. **📌 [결정필요 — 포팅] 모듈 전역 싱글톤** (I3) — passives `depth`/`activeKeys`, run passives `firing`이 모듈 전역. TS 단일스레드 직렬 실행서 안전(스트레스 런도 직렬). **포팅 결정**: Rust는 모듈 전역 가변상태 대신 **전투 컨텍스트(state)에 귀속**시켜야(병렬/재진입 안전). 거동 동일성은 유지하되 상태 소유 위치만 이동.
+11. **✅ [수정됨 — P0-3] 모듈 전역 싱글톤** (I3) — passives `depth`/`activeKeys`→`GameState.fireDepth`/`fireActiveKeys`(string[]), run `firing`→`RunState.firing`로 컨텍스트 귀속. 모듈 전역 가변상태 0(병렬/재진입 안전, Rust 1:1). 동작 보존(골든 불변·세이브 왕복 OK).
 
 12. **✅ [수정됨] store 드래프트 id 충돌** (`store.ts` blankRun/cloneAsDraft) — `draft_${Date.now()}`만 써서 같은 ms에 만든 두 드래프트가 id 충돌(drafts 맵에서 덮어쓰기). 에디터 정합성 테스트가 검출 → `ops.ts`/`templates.ts`와 동일하게 `Date.now()+counter` 접미사로 수정.
 
