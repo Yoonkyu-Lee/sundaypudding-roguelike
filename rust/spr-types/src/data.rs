@@ -1,5 +1,13 @@
 //! 디자이너 데이터 타입 (TS `types/content.ts`). serde Deserialize — 미사용 필드는 무시(점진 도입).
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+
+/// 포메이션 = 열별 보너스 총량(인덱스=열). ColumnBonus = {attackPower?,defensePower?} → HashMap. TS FormationLayout.
+#[derive(Debug, Clone, Deserialize)]
+pub struct FormationLayout {
+    pub id: String,
+    pub columns: Vec<HashMap<String, i64>>,
+}
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Pos {

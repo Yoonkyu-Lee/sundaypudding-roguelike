@@ -36,6 +36,7 @@ pub struct Unit {
     pub alive: bool,
     pub stat_mods: HashMap<String, i64>,
     pub turn_count: i64,
+    pub skill_dmg_bonus: HashMap<String, i64>, // 스킬별 데미지 보너스(런 성장, 4.6)
     pub equip_dmg_flat: i64,        // 장착 무기 dmgFlat 합(4.3) — computeDamage 합산
     pub equip_shield_gain_add: i64, // 장착 방어구 쉴드획득 보정 합(4.3)
 }
@@ -130,6 +131,42 @@ pub enum GameEvent {
         status_id: String,
         dmg: i64,
     },
+    #[serde(rename = "skillUsed")]
+    SkillUsed {
+        uid: String,
+        #[serde(rename = "skillId")]
+        skill_id: String,
+        #[serde(rename = "targetUid", skip_serializing_if = "Option::is_none")]
+        target_uid: Option<String>,
+    },
+    #[serde(rename = "move")]
+    Move { uid: String, from: Pos, to: Pos },
+    #[serde(rename = "cleanse")]
+    Cleanse {
+        #[serde(rename = "targetUid")]
+        target_uid: String,
+    },
+    #[serde(rename = "shieldGain")]
+    ShieldGain {
+        #[serde(rename = "targetUid")]
+        target_uid: String,
+        amount: i64,
+    },
+    #[serde(rename = "miss")]
+    Miss {
+        uid: String,
+        #[serde(rename = "targetUid")]
+        target_uid: String,
+        chance: i64,
+    },
+    #[serde(rename = "hit")]
+    Hit {
+        uid: String,
+        #[serde(rename = "targetUid")]
+        target_uid: String,
+        chance: i64,
+        crit: bool,
+    },
 }
 
 pub struct GameState {
@@ -141,6 +178,8 @@ pub struct GameState {
     pub current: Option<QueueEntry>,
     pub phase: String, // "inProgress" | "allyWin" | "enemyWin"
     pub log: Vec<GameEvent>,
+    pub ally_formation: Option<crate::data::FormationLayout>,
+    pub enemy_formation: Option<crate::data::FormationLayout>,
     // 패시브 재진입 가드(P0-3) — 후속 슬라이스서 사용
     pub fire_depth: i64,
     pub fire_active_keys: Vec<String>,

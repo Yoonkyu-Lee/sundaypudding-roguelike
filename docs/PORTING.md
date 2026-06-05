@@ -102,7 +102,8 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
   - [x] 9b damage — `util.rs`(round_div·has_status·total_stacks·status_num_sum·status_flag·is_frozen) + `damage.rs`(compute_damage·deal_raw_damage) + StatusDef. TS parity(클린/frost/edge·쉴드/공포/관통/무적/불사/사망)
   - [x] 9c status — `status.rs`(apply_status_instance·tick_periodic). 삽입순서 합산(Vec)·회복먼저·heal/damage/statusTick TS 바이트동일. canonical_json ?Sized(슬라이스 허용)
   - [x] 9d targeting — `targeting.rs`(reachable_columns·valid_targets·side_dims·compute_area_cells·area_targets·compute_hit_chance·get_legal_actions) + spr-types `skills.rs`(Skill·SkillEffect·AreaShape)·`Action` + spr-data `skills()`. TS parity(validTargets uids·reach열·hitChance 84·면적모양)
-  - [ ] 9e skills · 9f passives · 9g interrupt · 9h flow(step)→풀 differential
+  - [x] 9e skills — `skills.rs`(resolve_skill·apply_self/target_effects·move_unit) + `formation.rs`(get_formation_bonus 정수분배) + GameState 포메이션필드·Unit.skill_dmg_bonus + 6 신규이벤트(skillUsed/move/cleanse/shieldGain/miss/hit). 패시브-프리(thug vs thug) hit/miss TS 바이트동일·RNG순서·포메이션 atk4. 효과다양성+패시브발화는 9h서
+  - [ ] 9f passives · 9g interrupt · 9h flow(step)→풀 differential
 - [ ] P1-10~11 골든/스트레스 벡터 재생
 - [ ] P1-12 Tauri 세션 API
 - [ ] P1-13 프론트 피처플래그 → 최종 Tauri2 검증

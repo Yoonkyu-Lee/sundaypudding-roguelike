@@ -29,6 +29,7 @@ pub fn make_unit(c: &Character, side: &str, idx: usize, pos: Pos) -> Unit {
         alive: true,
         stat_mods: HashMap::new(),
         turn_count: 0,
+        skill_dmg_bonus: HashMap::new(),
         equip_dmg_flat: 0,
         equip_shield_gain_add: 0,
     }
@@ -52,6 +53,8 @@ pub fn create_battle(seed: u32, enc: &Encounter, chars: &HashMap<String, Charact
     for (i, p) in enc.enemies.iter().enumerate() {
         units.push(make_unit(&chars[&p.char_id], "enemy", i, p.pos));
     }
+    // 아군=표준 포메이션, 적=보스전만(6.3). encounter override는 후속(데모/스트레스는 표준).
+    let std = spr_data::standard_formation();
     let mut state = GameState {
         rng: Rng::new(seed),
         round: 0,
@@ -61,9 +64,12 @@ pub fn create_battle(seed: u32, enc: &Encounter, chars: &HashMap<String, Charact
         current: None,
         phase: "inProgress".to_string(),
         log: Vec::new(),
+        ally_formation: Some(std.clone()),
+        enemy_formation: if enc.boss { Some(std) } else { None },
         fire_depth: 0,
         fire_active_keys: Vec::new(),
     };
+    // fireTrigger(battleStart) — 패시브 슬라이스(9f)서.
     start_round(&mut state);
     state
 }
