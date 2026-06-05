@@ -79,6 +79,7 @@ dependencies = [
 name = "spr-core"
 version = "0.0.1"
 dependencies = [
+ "serde",
  "serde_json",
  "spr-data",
  "spr-types",

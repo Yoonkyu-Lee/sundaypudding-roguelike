@@ -106,6 +106,6 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
   - [x] 9g interrupt — `interrupt.rs`(predict_interrupt_subjects·insert_interrupts) + interrupt/dialog 이벤트. 역순 splice로 roundOrder 순서보존+이벤트 역순 TS 바이트동일(미묘한 순서 검증). 9f 앞으로 당겨 grantInterrupt 의존 해소
   - [x] 9f passives DSL — spr-types `passives.rs`(Trigger/Condition/Effect/PassiveRule/TraitDef) + CompiledRule·Unit.rules + spr-core `passives/`(ctx·compile·conditions·effects·dispatch). fire_trigger 전 호출부(damage·status·skills·battle) 와이어. **매칭정렬(ord→uid→idx)·RNG소비순서·재진입가드 = Codex 최대리스크**. 김두한 흡혈+출혈 엔드투엔드 TS 바이트동일. hpPct는 TS와 동일 f64. battle.rs 전체 턴흐름(battleStart/roundStart/speedRoll/turnStart/everyNTurns/interruptStart/checkWin·on_normal_turn_end) 포팅
   - [x] 9h flow(step)→**풀 differential** — `flow.rs`(step: onAction틱·beforeAction·스킬해소·끼어들기·턴종료·checkWin·advance) + resolve_anchor_uid + skip/battleEnd 이벤트. **seed42 데모 2라운드 전투(사망·약화/출혈·흡혈·재굴림·battleEnd) TS 기록 행동벡터 재생 → 39이벤트 전체 로그 바이트 동일.** 이로써 전투코어 전체 differential 입증
-- [ ] P1-10~11 골든/스트레스 벡터 재생
+- [x] P1-10~11 골든/스트레스 벡터 재생 — `scripts/export-diff-corpus.ts`(시드 40 × rich 무작위정책 → 행동벡터+로그 기록, `rust/spr-core/tests/diff-corpus.generated.json`) + `rust/spr-core/tests/differential.rs`(재생→시드별 전체 로그 바이트동일). 40벡터/679스텝 통과. `npm run diff:corpus`로 재생성(TS 변경 시). `cargo test`가 자동 실행
 - [ ] P1-12 Tauri 세션 API
 - [ ] P1-13 프론트 피처플래그 → 최종 Tauri2 검증
