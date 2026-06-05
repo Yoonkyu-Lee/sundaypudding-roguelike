@@ -38,6 +38,8 @@ export interface RunState {
   encounter: EncounterEvent | null; // 진행 중 인카운터 이벤트(인라인 또는 풀에서 선택) — Phase D
   /** 모험 패시브 grantRunStatus 계승분 — charId별, 다음 전투 시작 시 1회 주입 후 비움 */
   pendingStatuses: Record<string, { statusId: string; stacks: number; duration: number }[]>;
+  /** 모험 패시브 재진입 가드 — 전역 mut 대신 컨텍스트 귀속(P0-3). rest에선 항상 false(JSON-safe). */
+  firing: boolean;
   log: string[];
 }
 

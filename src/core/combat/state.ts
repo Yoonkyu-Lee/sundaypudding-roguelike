@@ -92,6 +92,8 @@ export function createBattle(
     // 아군=표준(또는 override), 적=보스전만 적용 (6.3)
     allyFormation: enc.allyFormation ?? STANDARD_FORMATION,
     enemyFormation: enc.boss ? (enc.enemyFormation ?? STANDARD_FORMATION) : null,
+    fireDepth: 0,
+    fireActiveKeys: [],
   };
   // 노드 트리거 룰 주입 — 룰마다 owner(side+charId) 유닛에, 없으면 첫 적. self=그 개체. battleStart 전 주입 필수.
   if (nodeRules?.length) {

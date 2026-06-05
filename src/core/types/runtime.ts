@@ -144,6 +144,9 @@ export interface GameState {
   log: GameEvent[];
   allyFormation: FormationLayout | null; // 아군 열보너스 (6.3: 일반전투=표준)
   enemyFormation: FormationLayout | null; // 적 열보너스 (6.3: 보스전만, 아니면 null)
+  /** 패시브 디스패치 재진입/깊이 가드 — 전역 mut 대신 컨텍스트 귀속(P0-3, Rust 1:1). 행동 사이엔 항상 0/[](JSON-safe). */
+  fireDepth: number;
+  fireActiveKeys: string[]; // `${ownerUid}#${ruleIdx}` 콜스택 차단(Set 대신 string[]=직렬화 가능)
 }
 
 // ── 관측(Observation) — AI·모니터링 1급 인터페이스 (8.2) ────────────────────

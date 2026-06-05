@@ -7,7 +7,7 @@ import { compileRules } from "../combat/passives/index.ts";
 
 export interface RunTriggerCtx { on: "nodeEnter" | "nodeClear" | "actStart" | "goldGain" | "partyHpChange"; nodeType?: NodeType; dir?: "heal" | "hurt"; }
 
-let firing = false; // 재진입 가드(healParty 효과 → partyHpChange → … 무한루프 차단)
+// 재진입 가드는 RunState.firing에 귀속(P0-3): healParty 효과 → partyHpChange → … 무한루프 차단. 모듈 전역 mut 제거.
 
 function cmp(a: number, op: "lt" | "lte" | "eq" | "gte" | "gt", b: number): boolean {
   return op === "lt" ? a < b : op === "lte" ? a <= b : op === "eq" ? a === b : op === "gte" ? a >= b : a > b;
@@ -43,8 +43,8 @@ function applyRunEffect(run: RunState, owner: PartyMemberState, e: Effect): void
 
 /** 모험 트리거 발동 — 살아있는 파티원의 (보유 스킬 passives + 특성) 룰 중 매칭 실행. 결정론: 파티 순→룰 idx. */
 export function fireRunTrigger(run: RunState, ctx: RunTriggerCtx): void {
-  if (firing) return; // 재진입 차단
-  firing = true;
+  if (run.firing) return; // 재진입 차단
+  run.firing = true;
   try {
     for (const m of run.party) {
       if (m.hp <= 0) continue;
@@ -60,6 +60,6 @@ export function fireRunTrigger(run: RunState, ctx: RunTriggerCtx): void {
       }
     }
   } finally {
-    firing = false;
+    run.firing = false;
   }
 }

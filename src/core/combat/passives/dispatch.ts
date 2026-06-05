@@ -6,8 +6,7 @@ import { applyEffect } from "./effects.ts";
 import type { RuleCtx, TriggerCtx } from "./ctx.ts";
 
 const MAX_DEPTH = 4;
-let depth = 0;
-const activeKeys = new Set<string>(); // `${ownerUid}#${ruleIdx}` 재진입 차단
+// 재진입/깊이 가드는 GameState에 귀속(P0-3): state.fireDepth · state.fireActiveKeys. 모듈 전역 mut 제거(Rust 1:1).
 
 function getUnit(state: GameState, uid?: string): Unit | undefined {
   return uid ? state.units.find((u) => u.uid === uid) : undefined;
@@ -89,7 +88,7 @@ function match(state: GameState, tctx: TriggerCtx, owner: Unit, w: Trigger): Rul
 }
 
 export function fireTrigger(state: GameState, tctx: TriggerCtx): void {
-  if (depth >= MAX_DEPTH) return;
+  if (state.fireDepth >= MAX_DEPTH) return;
   const matched: { owner: Unit; cr: CompiledRule; rctx: RuleCtx; ord: number }[] = [];
   for (const u of state.units) {
     const deadOk = tctx.on === "battleEnd" || (tctx.on === "death" && u.uid === tctx.subjectUid);
@@ -102,23 +101,23 @@ export function fireTrigger(state: GameState, tctx: TriggerCtx): void {
   }
   if (matched.length === 0) return;
   matched.sort((a, b) => a.ord - b.ord || (a.owner.uid < b.owner.uid ? -1 : a.owner.uid > b.owner.uid ? 1 : 0) || a.cr.idx - b.cr.idx);
-  depth++;
+  state.fireDepth++;
   try {
     for (const m of matched) {
       const cr = m.cr;
       if (cr.rule.maxPerTurn != null && cr.firedThisTurn >= cr.rule.maxPerTurn) continue;
       if (cr.rule.maxPerBattle != null && cr.firedThisBattle >= cr.rule.maxPerBattle) continue;
       const key = `${m.owner.uid}#${cr.idx}`;
-      if (activeKeys.has(key)) continue;
+      if (state.fireActiveKeys.includes(key)) continue;
       if (!evalConditions(state, tctx, m.rctx, cr.rule.if)) continue;
-      activeKeys.add(key);
+      state.fireActiveKeys.push(key);
       try { for (const eff of cr.rule.then) applyEffect(state, m.rctx, eff); }
-      finally { activeKeys.delete(key); }
+      finally { state.fireActiveKeys.splice(state.fireActiveKeys.indexOf(key), 1); }
       cr.firedThisTurn++;
       cr.firedThisBattle++;
     }
   } finally {
-    depth--;
+    state.fireDepth--;
   }
 }
 

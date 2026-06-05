@@ -50,6 +50,7 @@ export function createRun(seed: number, roster: { charId: string; pos: Pos }[] =
     shop: null,
     encounter: null,
     pendingStatuses: {},
+    firing: false,
     log: [`런 시작 (seed ${seed})`],
   };
 }
