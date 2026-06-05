@@ -27,6 +27,7 @@ pub fn make_unit(
         uid: format!("{}{}_{}", &side[..1], idx, c.id),
         side: side.to_string(),
         char_id: c.id.clone(),
+        name: c.name.clone(),
         pos,
         hp_max: c.hp,
         hp: c.hp,

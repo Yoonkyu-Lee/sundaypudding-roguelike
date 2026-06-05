@@ -6,7 +6,5 @@ edition.workspace = true
 [dependencies]
 spr-types = { path = "../spr-types" }
 spr-data = { path = "../spr-data" }
-serde_json = "1"
-
-[dev-dependencies]
 serde = { version = "1", features = ["derive"] }
+serde_json = "1"

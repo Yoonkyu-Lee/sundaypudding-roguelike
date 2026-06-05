@@ -107,5 +107,7 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
   - [x] 9f passives DSL — spr-types `passives.rs`(Trigger/Condition/Effect/PassiveRule/TraitDef) + CompiledRule·Unit.rules + spr-core `passives/`(ctx·compile·conditions·effects·dispatch). fire_trigger 전 호출부(damage·status·skills·battle) 와이어. **매칭정렬(ord→uid→idx)·RNG소비순서·재진입가드 = Codex 최대리스크**. 김두한 흡혈+출혈 엔드투엔드 TS 바이트동일. hpPct는 TS와 동일 f64. battle.rs 전체 턴흐름(battleStart/roundStart/speedRoll/turnStart/everyNTurns/interruptStart/checkWin·on_normal_turn_end) 포팅
   - [x] 9h flow(step)→**풀 differential** — `flow.rs`(step: onAction틱·beforeAction·스킬해소·끼어들기·턴종료·checkWin·advance) + resolve_anchor_uid + skip/battleEnd 이벤트. **seed42 데모 2라운드 전투(사망·약화/출혈·흡혈·재굴림·battleEnd) TS 기록 행동벡터 재생 → 39이벤트 전체 로그 바이트 동일.** 이로써 전투코어 전체 differential 입증
 - [x] P1-10~11 골든/스트레스 벡터 재생 — `scripts/export-diff-corpus.ts`(시드 40 × rich 무작위정책 → 행동벡터+로그 기록, `rust/spr-core/tests/diff-corpus.generated.json`) + `rust/spr-core/tests/differential.rs`(재생→시드별 전체 로그 바이트동일). 40벡터/679스텝 통과. `npm run diff:corpus`로 재생성(TS 변경 시). `cargo test`가 자동 실행
-- [ ] P1-12 Tauri 세션 API
+- [~] P1-12 세션 API (순수 Rust 로직 완료 — Tauri 셸은 P1-13):
+  - [x] `observation.rs`(build_observation·build_legal_actions) — 뷰(UnitView/StatusView/LegalActionView/Observation, Serialize). seed42 관측 TS 바이트동일(한글명·이모지아바타·스킬라벨·명중%·포메이션)
+  - [x] `session.rs`(Session: new_demo·step_action→**StepResult{eventDelta, observation}**) — 매 step 전체상태 미전송. 누적델타==전체로그·종료관측 테스트. Tauri 커맨드가 이 API를 얇게 감쌈
 - [ ] P1-13 프론트 피처플래그 → 최종 Tauri2 검증

@@ -31,6 +31,7 @@ pub struct Unit {
     pub uid: String,
     pub side: String, // "ally" | "enemy"
     pub char_id: String,
+    pub name: String,
     pub pos: Pos,
     pub hp_max: i64,
     pub hp: i64,

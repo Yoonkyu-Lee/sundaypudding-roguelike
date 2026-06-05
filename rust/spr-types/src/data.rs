@@ -36,6 +36,9 @@ pub struct Encounter {
 #[derive(Debug, Clone, Deserialize)]
 pub struct Character {
     pub id: String,
+    pub name: String,
+    #[serde(default)]
+    pub avatar: Option<String>,
     pub hp: i64,
     #[serde(rename = "speedMin")]
     pub speed_min: i64,
