@@ -5,7 +5,7 @@ import type { PartyMemberState, Phase, Pos, RunDef, ShopOfferDef } from "../type
 import { CHARACTERS } from "../../data/characters.ts";
 import { DEFAULT_RUN } from "../../data/runs/index.ts";
 import { ENCOUNTER_EVENTS } from "../../data/events.ts";
-import { liveReachable } from "./graph.ts";
+import { liveReachable, validateRun } from "./graph.ts";
 import type { RunState } from "./types.ts";
 import { genRewards } from "./rewards.ts";
 import { fireRunTrigger } from "./passives.ts";
@@ -18,6 +18,10 @@ registerLayerStarter("shop", (run, layer) => { run.shop = generateShop(run, laye
 registerLayerStarter("event", (run, layer) => { const ev = (layer as { event?: typeof ENCOUNTER_EVENTS[number] }).event ?? ENCOUNTER_EVENTS[run.rng.int(0, ENCOUNTER_EVENTS.length - 1)]; run.encounter = ev; run.phase = "encounter"; run.log.push(`인카운터 — ${ev.title}`); });
 
 export function createRun(seed: number, roster: { charId: string; pos: Pos }[] = DEFAULT_RUN.roster, runDef: RunDef = DEFAULT_RUN, opts: { mastery?: Record<string, number>; useMastery?: boolean } = {}): RunState {
+  // 진입 게이트(Part6 #1·#2): 잘못된 RunDef(고립노드·dangling 변/toFloor·entry/clear 부재)는 즉시 명확히 거부.
+  // 없으면 진행 중 node() throw로 늦게 터지거나 dangling toFloor가 "오인 승리"로 처리됨(#1). 에디터 테스트플레이는 이미 선검증.
+  const v = validateRun(runDef);
+  if (!v.ok) throw new Error(`createRun: invalid runDef '${runDef.id}' — ${v.errors.join("; ")}`);
   const rng = new Rng(seed ^ 0x9e3779b9);
   const entryIdx = Math.max(0, runDef.floors.findIndex((f) => f.id === runDef.entryFloorId));
   const f0 = runDef.floors[entryIdx];

@@ -8,7 +8,7 @@ import { createRun, enterNode, resolveBattleEnd, chooseReward, leaveShop, choose
 import { DEMO_ENCOUNTER } from "../../data/encounters.ts";
 import { DEFAULT_RUN } from "../../data/runs/index.ts";
 import { checkCombatInvariants, checkRunInvariants, summarize } from "./invariants/index.ts";
-import type { RunState } from "../run.ts";
+import type { RunState, RunDef } from "../run.ts";
 
 test("invariant: 전투 진행 내내(매 step) 전투 불변식 위반 0", () => {
   for (const seed of [1, 2, 3, 42, 777]) {
@@ -36,6 +36,16 @@ test("invariant: 무작위 합법행동 전투에서도 전투 불변식 위반 
       assert.equal(vs.length, 0, `seed ${seed} step ${n}: ${summarize(vs)}`);
     }
   }
+});
+
+// Part6 #1/#2 회귀: createRun은 무효 RunDef를 fail-fast로 거부(진행 중 늦은 throw·dangling toFloor 오인승리 방지).
+test("invariant 게이트(Part6 #1/#2): createRun은 무효 RunDef를 즉시 거부, 유효는 통과", () => {
+  const noClear: RunDef = { id: "bad", name: "bad", useMastery: false, entryFloorId: "f", roster: [{ charId: "kim", pos: { row: 0, col: 0 } }], floors: [{ id: "f", entryNodeId: "s", nodes: [{ id: "s", type: "start", q: 0, r: 0 }], edges: [] }] };
+  assert.throws(() => createRun(1, noClear.roster, noClear), /invalid runDef/, "clear 없는 런은 거부");
+  const danglingToFloor: RunDef = JSON.parse(JSON.stringify(DEFAULT_RUN));
+  for (const f of danglingToFloor.floors) for (const n of f.nodes) if (n.type === "clear") n.toFloor = "nope"; // 미존재 층(#1 오인승리 유발 데이터)
+  assert.throws(() => createRun(1, danglingToFloor.roster, danglingToFloor), /invalid runDef/, "dangling toFloor는 거부");
+  assert.ok(createRun(1, DEFAULT_RUN.roster, DEFAULT_RUN), "유효 런은 통과");
 });
 
 test("invariant: 새 런(createRun)은 런 불변식 위반 0", () => {

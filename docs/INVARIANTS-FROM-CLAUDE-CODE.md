@@ -417,42 +417,44 @@
 
 > assertion 모듈·스트레스 런 하네스가 **우선 두들겨 확인**할 후보. 일부는 의도된 동작일 수 있으므로 "결함 확정"이 아니라 **검증 대상**으로 기록.
 
-> **검증 인프라 적용 결과(2026-06-04)**: 무작위 스트레스 런(전 런×3정책×수백 시드)이 아래 #1을 **실제로 검출**했고
-> 수정 완료. #12는 에디터 정합성 테스트가 검출·수정. 나머지는 문서화된 검증 대상으로 남김(유효 데이터에선 미발현).
+> **검증 인프라 적용 결과(2026-06-04)**: 무작위 스트레스 런이 #1(=L8)을 검출·수정. #12는 에디터 테스트가 검출·수정.
+> **포팅 사전 슬라이스 결과(2026-06-05)**: CRIT #1·#2·#3 방어수정 완료, #5는 정수화로 해소, 모호 #4·#6~#11은 아래 분류(📌결정필요/📄문서화).
+> 범례: **✅수정** / **📌결정필요**(포팅 시 Rust 거동 결정) / **📄문서화**(유효 데이터 미발현 — 계약으로 남김).
 
-### 잠재 결함 (수정 후보)
+### CRIT 후보 (포팅 전 청소 — 처리 완료)
 
 0. **✅ [수정됨] L8 — 종료 시 stale reachable** (`run.ts` completeFloor 승리분기·resolveBattleEnd 패배분기)
    스트레스 런 하네스가 검출: 승리(won) 시 `reachable`에 방금 방문한 clear 노드가 남아 `reachable ∩ visited ≠ ∅`.
-   종료 시 `reachable=[]`로 비우도록 수정(종료 상태엔 선택지 없음). 회귀 테스트 `invariants.test.ts` 고정.
+   종료 시 `reachable=[]`로 비우도록 수정. 회귀 테스트 `invariants.test.ts` 고정.
 
-1. **`completeFloor` 미존재 toFloor = 오인 승리** (`run.ts:99-104`, CRIT 후보)
-   `nextIdx = clear.toFloor ? findIndex(...) : -1; if(nextIdx<0) phase="won"`. 존재하지 않는 floor id를 가리키는 `toFloor`는 `findIndex=-1` → "게임 클리어"로 처리된다. 런타임 미검증(L9 validateRun은 **에디터 저장 시점에만** 강제). → **assertion: createRun 진입 시 validateRun 게이트**가 강력한 방어.
+1. **✅ [수정됨 — #2에 흡수] `completeFloor` 미존재 toFloor = 오인 승리** (`run.ts`)
+   dangling toFloor는 `validateRun`이 "모든 toFloor 실재"로 검사 → #2의 createRun 게이트가 진입 시 거부하므로 오인 승리 경로에 **도달 불가**. 회귀 테스트(`invariants.test.ts`: dangling toFloor → createRun throw) 고정.
 
-2. **`createRun`이 validateRun 미호출** (`run.ts:20`, CRIT 후보)
-   잘못된 RunDef(고립 노드·dangling 변·entry 부재)가 런타임에 그대로 진입 → `node()` throw 또는 데드런. entryFloorId 부재 시 `Math.max(0, findIndex)`로 **조용히 floor 0** 폴백.
+2. **✅ [수정됨] `createRun` validateRun 게이트** (`run.ts:createRun`)
+   진입 시 `validateRun(runDef)` 실패면 즉시 명확한 throw(`invalid runDef …`). 기존엔 진행 중 `node()` throw로 늦게 터지거나 floor 0 조용 폴백. 에디터 테스트플레이는 이미 선검증(controller.ts:124/168)이라 무회귀(154 테스트 통과). **잔여 web 폴리시**: hub가 무효 드래프트를 목록서 필터(현재는 게이트가 fail-fast로 백스톱).
 
-3. **`stepCore` 미등록 starter = 조용한 시퀀서 정지** (`layers.ts:34`, CRIT 후보)
-   `starters[L.kind]?.(run, L)` — shop/event starter 미등록 시 옵셔널체이닝이 no-op → phase 미전환·cursor 미전진 → 블록 상태로 무한 정지(복귀 트리거 없음). run.ts가 모듈 로드 시 둘 다 등록하므로 run.ts를 import하는 한 안전하나, 정적 보장 없음.
+3. **✅ [수정됨] `stepCore` 미등록 starter = 명시 throw** (`layers.ts:stepCore`)
+   `starters[L.kind]?.(…)` 옵셔널체이닝(침묵 no-op→무한 정지)을 **`if(!starter) throw`** 로 교체. run.ts가 항상 등록하므로 실전 미발화, 정적 보장 확보(시퀀서 정지 방지).
 
-4. **`insertInterrupts` 이벤트 로그 역순** (`interrupt.ts:26-29`, NORM)
-   역순 splice 루프 내부에서 `log.push`하므로 `interrupt` 이벤트가 주체 **역순**으로 로그된다(roundOrder 실행 순서는 정방향). 결정론은 유지되나 로그 재생(애니메이션) 순서가 실행 순서와 어긋남. 로그 순서를 정방향으로 기대하는 소비자가 있으면 버그.
+### 모호/정책 지점 (분류 완료)
 
-### 모호 지점 (정책 확정 필요)
+4. **📌 [결정필요] `insertInterrupts` 이벤트 로그 역순** (`interrupt.ts:26-29`, NORM)
+   역순 splice 루프서 `log.push` → `interrupt` 이벤트가 주체 **역순** 로그(roundOrder 실행순서는 정방향, 결정론 유지). 골든이 현 거동 동결. **포팅 결정**: Rust도 역순 복제(바이트 동일 우선) vs 정방향 정규화(로그 의미 우선) — 정규화 택 시 골든 재생성.
 
-5. **포메이션 반올림 후 총량 비보존** (K1/R6) — 분수 단계만 보존, 유닛별 round 합은 total과 어긋날 수 있음. "엔진 보존 보장" 단언 불가. 정수화 재설계(`NUMERIC-POLICY.md`)로 해소 가능.
+5. **✅ [해소 — 슬라이스1] 포메이션 반올림 후 총량 비보존** (K1/R6)
+   `getFormationBonus`를 정수 몫+나머지(uid 분배)로 재설계 → 분배 합 == total 정확 보존, 부동소수 의존 제거(NUMERIC-POLICY 옵션 B). 단위테스트 `formation.test.ts`로 고정.
 
-6. **상태이상 스택 상한 없음** (E11) — `applyStatusInstance`가 무한 누적. 상한이 데이터/엔진 어디 책임인지 미정.
+6. **📄 [문서화] 상태이상 스택 상한 없음** (E11) — `applyStatusInstance` 무한 누적. 유효 데이터 미발현(상한은 데이터 책임). Rust도 상한 없이 복제. 상한 도입은 데이터/밸런스 결정.
 
-7. **음수 쉴드 획득 가드 부재** (R4/D14 후보) — `shield += round(amount+def)+equipShieldGainAdd`에 음수 가드 없음. 데이터가 음수면 쉴드 감소. 강제 여부 미정(데이터 책임 추정).
+7. **📄 [문서화] 음수 쉴드 획득 가드 부재** (R4) — `shield += eff.amount + def + equipShieldGainAdd`(슬라이스1서 round 제거). 데이터 amount≥0 계약(미발현). Rust 동일.
 
-8. **stacks 부호 비대칭** (E13) — `totalStacks`/`statusNumSum`은 stacks>0 미필터, `hasStatus`/`statusFlag`는 요구. 입력 불변식 "stacks≥0" 추가 가치.
+8. **📄 [문서화] stacks 부호 비대칭** (E13) — `totalStacks`/`statusNumSum`은 stacks>0 미필터, `hasStatus`/`statusFlag`는 요구. stacks<0 경로 없음(미발현). Rust 동일 비대칭 복제.
 
-9. **move col 상한 하드코딩 3** (F7) — `sideDims`는 더 넓은 그리드 허용하나 이동은 0..3 클램프. 광폭 배치 시 불일치.
+9. **📄 [문서화] move col 상한 하드코딩 3** (F7) — 그리드 폭 4 고정 전제. `sideDims`가 광폭 허용해도 이동은 0..3 클램프. 그리드 가변화 시 재검토. Rust 동일.
 
-10. **getTemplate 비복제 반환** (W2) — 결과를 직접 변이하면 템플릿 라이브러리 오염. 현재 소비 경로(addNodeFromTemplate 재clone)는 안전. 방어적 clone 반환 검토.
+10. **📄 [문서화] getTemplate 비복제 반환** (W2, 에디터) — 소비 경로(addNodeFromTemplate 재clone)에서 안전. 포팅 무관(에디터=TS/웹 전용). 방어적 clone은 선택.
 
-11. **모듈 전역 싱글톤** (I3) — passives의 `depth`/`activeKeys`, run passives의 `firing`이 모듈 전역. 단일 스레드 동기 전제에선 안전하나, harness가 **두 전투를 인터리브하면 오염**. → 스트레스 런 하네스는 반드시 **직렬 실행**(현재 그렇게 구현됨).
+11. **📌 [결정필요 — 포팅] 모듈 전역 싱글톤** (I3) — passives `depth`/`activeKeys`, run passives `firing`이 모듈 전역. TS 단일스레드 직렬 실행서 안전(스트레스 런도 직렬). **포팅 결정**: Rust는 모듈 전역 가변상태 대신 **전투 컨텍스트(state)에 귀속**시켜야(병렬/재진입 안전). 거동 동일성은 유지하되 상태 소유 위치만 이동.
 
 12. **✅ [수정됨] store 드래프트 id 충돌** (`store.ts` blankRun/cloneAsDraft) — `draft_${Date.now()}`만 써서 같은 ms에 만든 두 드래프트가 id 충돌(drafts 맵에서 덮어쓰기). 에디터 정합성 테스트가 검출 → `ops.ts`/`templates.ts`와 동일하게 `Date.now()+counter` 접미사로 수정.
 
@@ -462,7 +464,7 @@
 
 15. **✅ [보강됨] 명령공간 커버 (Codex 적대검토 c)** — `getLegalActions`는 `targetUid` 단일타겟만 방출 → `targetCell`·빈칸 AoE 앵커·free-cell(`cells`)이 fuzz에서 0회였다. `richActions.ts:enumerateRichActions`로 이 형태까지 자극(yain 런 실측: shin_ult free-cell 1627회·targetCell 45245회). 크래시·불변식 위반 0 확인(엔진이 안전 처리).
 
-16. **[포팅 시점 TODO] TS↔Rust 바이트 동일 (Codex 적대검토 a·b)** — self-consistency(TS↔TS)는 **공통모드 버그를 구조적으로 못 잡는다**(설계상 — 진짜 differential은 Rust 구현 후). 포팅 시 필요: ① canonical 이벤트 직렬화 계약(JSON 키 순서·수 포맷 고정, serde 자동 기대 금지) ② per-action/이벤트 **RNG 상태 트레이스**(소비 순서·횟수 일치) ③ 32비트 wrapping·반올림 정확 복제([`NUMERIC-POLICY.md`](NUMERIC-POLICY.md)). 골든 코퍼스를 그때 TS↔Rust diff 기준으로 재사용.
+16. **[포팅 시점 TODO] TS↔Rust 바이트 동일 (Codex 적대검토 a·b)** — self-consistency(TS↔TS)는 **공통모드 버그를 구조적으로 못 잡는다**(설계상 — 진짜 differential은 Rust 구현 후). 사전 슬라이스에서 준비 완료: ① ✅ canonical 이벤트 직렬화 계약([`SERIALIZATION-CONTRACT.md`](SERIALIZATION-CONTRACT.md), 슬라이스2) ② ✅ per-action RNG 상태 트레이스(`stressRun rngTrace`, 슬라이스3) ③ ✅ 분수 제거([`NUMERIC-POLICY.md`](NUMERIC-POLICY.md) 옵션B, 슬라이스1). **포팅 시 남은 것**: 32비트 wrapping(`rng.ts`)·잔존 `Math.round`(R1 damage·R8 회복비율) 정확 복제, 그리고 위 **#4(interrupt 로그 순서)·#11(전역상태→컨텍스트 귀속)** 결정. 골든 코퍼스를 TS↔Rust diff 기준으로 재사용.
 
 ---
 

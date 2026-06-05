@@ -31,7 +31,11 @@ function stepCore(run: RunState, n: MapNode): void {
     const L = core[run.coreCursor!];
     if (L.kind === "combat") { startCombat(run, L); return; } // 블록(전투 phase) — resolveBattleEnd가 advanceCore
     if (L.kind === "reward") { run.rewards = genRewards(run, L.tier); run.phase = "reward"; run.log.push("보상 선택"); return; } // 블록 — chooseReward가 advanceCore (등급별 차등)
-    if (L.kind === "shop" || L.kind === "event") { starters[L.kind]?.(run, L); return; } // 블록 — leaveShop/chooseEncounterOption이 advanceCore (DI 스타터)
+    if (L.kind === "shop" || L.kind === "event") {
+      const starter = starters[L.kind];
+      if (!starter) throw new Error(`stepCore: '${L.kind}' 스타터 미등록 — run.ts의 registerLayerStarter 누락(시퀀서 무한 정지 방지, Part6 #3)`);
+      starter(run, L); return; // 블록 — leaveShop/chooseEncounterOption이 advanceCore (DI 스타터)
+    }
     runInstantLayers(run, [L]); // 데코레이터 즉시 실행(L은 여기서 DecoratorLayer로 좁혀짐)
     run.coreCursor!++;
   }
