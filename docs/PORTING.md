@@ -104,7 +104,8 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
   - [x] 9d targeting — `targeting.rs`(reachable_columns·valid_targets·side_dims·compute_area_cells·area_targets·compute_hit_chance·get_legal_actions) + spr-types `skills.rs`(Skill·SkillEffect·AreaShape)·`Action` + spr-data `skills()`. TS parity(validTargets uids·reach열·hitChance 84·면적모양)
   - [x] 9e skills — `skills.rs`(resolve_skill·apply_self/target_effects·move_unit) + `formation.rs`(get_formation_bonus 정수분배) + GameState 포메이션필드·Unit.skill_dmg_bonus + 6 신규이벤트(skillUsed/move/cleanse/shieldGain/miss/hit). 패시브-프리(thug vs thug) hit/miss TS 바이트동일·RNG순서·포메이션 atk4. 효과다양성+패시브발화는 9h서
   - [x] 9g interrupt — `interrupt.rs`(predict_interrupt_subjects·insert_interrupts) + interrupt/dialog 이벤트. 역순 splice로 roundOrder 순서보존+이벤트 역순 TS 바이트동일(미묘한 순서 검증). 9f 앞으로 당겨 grantInterrupt 의존 해소
-  - [ ] 9f passives DSL(when/if/then 디스패처 — Codex 최대리스크) · 9h flow(step)→풀 differential
+  - [x] 9f passives DSL — spr-types `passives.rs`(Trigger/Condition/Effect/PassiveRule/TraitDef) + CompiledRule·Unit.rules + spr-core `passives/`(ctx·compile·conditions·effects·dispatch). fire_trigger 전 호출부(damage·status·skills·battle) 와이어. **매칭정렬(ord→uid→idx)·RNG소비순서·재진입가드 = Codex 최대리스크**. 김두한 흡혈+출혈 엔드투엔드 TS 바이트동일. hpPct는 TS와 동일 f64. battle.rs 전체 턴흐름(battleStart/roundStart/speedRoll/turnStart/everyNTurns/interruptStart/checkWin·on_normal_turn_end) 포팅
+  - [ ] 9h flow(step)→풀 differential
 - [ ] P1-10~11 골든/스트레스 벡터 재생
 - [ ] P1-12 Tauri 세션 API
 - [ ] P1-13 프론트 피처플래그 → 최종 Tauri2 검증

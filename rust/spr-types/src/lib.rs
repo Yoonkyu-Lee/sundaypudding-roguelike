@@ -4,5 +4,6 @@ pub mod canonical;
 pub mod combat;
 pub mod data;
 pub mod map;
+pub mod passives;
 pub mod rng;
 pub mod skills;

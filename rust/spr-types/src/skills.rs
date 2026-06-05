@@ -81,6 +81,9 @@ pub struct Skill {
     /// 능동기 여부(기본 true). false=순수 패시브.
     #[serde(default = "default_true")]
     pub active: bool,
+    /// 출전 시 작동하는 패시브 룰(능동 effects와 공존 가능).
+    #[serde(default)]
+    pub passives: Option<Vec<crate::passives::PassiveRule>>,
 }
 
 fn default_true() -> bool {

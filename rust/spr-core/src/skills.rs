@@ -1,20 +1,22 @@
 //! 스킬 해소 + 효과 디스패치 (TS `combat/skills.ts`, 2.5~3.9). 자기효과 1회 / 대상별 효과 / 동적 재배치.
-//! 패시브 훅(skillUsed/onHit/onMiss/onHeal/onShieldGain/onMove 등)은 9f 슬라이스서 — 현재 효과 무발생(데모/테스트는 패시브-프리).
+//! 패시브 훅(skillUsed/onHit/onMiss/onHeal/onShieldGain/onMove/enterCell) 발화.
 use crate::damage::{compute_damage, deal_raw_damage};
 use crate::formation::get_formation_bonus;
+use crate::passives::{fire_trigger, TriggerCtx};
 use crate::status::apply_status_instance;
 use crate::targeting::{area_targets, compute_hit_chance};
 use crate::util::{crit_pct_of, has_status, StatusDefs};
 use spr_types::combat::{GameEvent, GameState};
 use spr_types::data::Pos;
 use spr_types::skills::{Skill, SkillEffect};
+use std::collections::HashMap;
 
 fn idx_of_uid(state: &GameState, uid: &str) -> usize {
     state.units.iter().position(|u| u.uid == uid).expect("unit not found")
 }
 
-/// 동적 재배치(6.4): deltaCol만큼 이동(0~3 클램프), 같은 편 점유 칸이면 취소.
-fn move_unit(state: &mut GameState, unit_idx: usize, delta_col: i64) {
+/// 동적 재배치(6.4): deltaCol만큼 이동(0~3 클램프), 같은 편 점유 칸이면 취소. onMove/enterCell 발화.
+fn move_unit(state: &mut GameState, unit_idx: usize, delta_col: i64, defs: &StatusDefs, skills: &HashMap<String, Skill>) {
     let (new_col, from, side, uid) = {
         let u = &state.units[unit_idx];
         ((u.pos.col + delta_col).clamp(0, 3), u.pos, u.side.clone(), u.uid.clone())
@@ -28,20 +30,26 @@ fn move_unit(state: &mut GameState, unit_idx: usize, delta_col: i64) {
         return;
     }
     state.units[unit_idx].pos = dest;
-    state.log.push(GameEvent::Move { uid, from, to: dest });
-    // fireTrigger(onMove, enterCell) — 9f서.
+    state.log.push(GameEvent::Move { uid: uid.clone(), from, to: dest });
+    let mut t1 = TriggerCtx::new("onMove");
+    t1.subject_uid = Some(uid.clone());
+    fire_trigger(state, t1, defs, skills);
+    let mut t2 = TriggerCtx::new("enterCell");
+    t2.subject_uid = Some(uid);
+    t2.cell = Some(dest);
+    fire_trigger(state, t2, defs, skills);
 }
 
 /// 시전자 자기효과 1회: applyStatusSelf, move(self).
-fn apply_self_effects(state: &mut GameState, actor_idx: usize, skill: &Skill) {
+fn apply_self_effects(state: &mut GameState, actor_idx: usize, skill: &Skill, defs: &StatusDefs, skills: &HashMap<String, Skill>) {
     for eff in &skill.effects {
         match eff {
             SkillEffect::ApplyStatusSelf { status_id, stacks, duration } if state.units[actor_idx].alive => {
                 let uid = state.units[actor_idx].uid.clone();
-                apply_status_instance(state, actor_idx, &uid, status_id, *stacks, *duration, Some(skill.id.clone()));
+                apply_status_instance(state, actor_idx, &uid, status_id, *stacks, *duration, Some(skill.id.clone()), defs, skills);
             }
             SkillEffect::Move { who, delta_col } if who == "self" && state.units[actor_idx].alive => {
-                move_unit(state, actor_idx, *delta_col);
+                move_unit(state, actor_idx, *delta_col, defs, skills);
             }
             _ => {}
         }
@@ -49,7 +57,7 @@ fn apply_self_effects(state: &mut GameState, actor_idx: usize, skill: &Skill) {
 }
 
 /// 대상별 효과(광역=타겟마다). self 전용 효과는 건너뜀(apply_self_effects 처리).
-fn apply_target_effects(state: &mut GameState, actor_idx: usize, skill: &Skill, target_idx: usize, crit: bool, defs: &StatusDefs) {
+fn apply_target_effects(state: &mut GameState, actor_idx: usize, skill: &Skill, target_idx: usize, crit: bool, defs: &StatusDefs, skills: &HashMap<String, Skill>) {
     for eff in &skill.effects {
         match eff {
             SkillEffect::Damage { amount } => {
@@ -59,12 +67,13 @@ fn apply_target_effects(state: &mut GameState, actor_idx: usize, skill: &Skill, 
                     let up = *actor.skill_dmg_bonus.get(&skill.id).unwrap_or(&0);
                     (compute_damage(actor, amount + atk + up, crit, defs), has_status(actor, "pierce"))
                 };
-                deal_raw_damage(state, target_idx, final_dmg, ignore_shield, defs);
+                let auid = state.units[actor_idx].uid.clone();
+                deal_raw_damage(state, target_idx, final_dmg, ignore_shield, Some(&auid), Some(crit), defs, skills);
             }
             SkillEffect::ApplyStatus { status_id, stacks, duration } => {
                 if state.units[target_idx].alive {
                     let auid = state.units[actor_idx].uid.clone();
-                    apply_status_instance(state, target_idx, &auid, status_id, *stacks, *duration, Some(skill.id.clone()));
+                    apply_status_instance(state, target_idx, &auid, status_id, *stacks, *duration, Some(skill.id.clone()), defs, skills);
                 }
             }
             SkillEffect::Cleanse => {
@@ -82,28 +91,37 @@ fn apply_target_effects(state: &mut GameState, actor_idx: usize, skill: &Skill, 
                     let def = get_formation_bonus(state, actor, "defensePower");
                     amount + def + state.units[target_idx].equip_shield_gain_add
                 };
-                let t = &mut state.units[target_idx];
-                t.shield += amt;
-                let uid = t.uid.clone();
-                state.log.push(GameEvent::ShieldGain { target_uid: uid, amount: amt });
-                // fireTrigger(onShieldGain) — 9f서.
+                let uid = {
+                    let t = &mut state.units[target_idx];
+                    t.shield += amt;
+                    t.uid.clone()
+                };
+                state.log.push(GameEvent::ShieldGain { target_uid: uid.clone(), amount: amt });
+                let mut tg = TriggerCtx::new("onShieldGain");
+                tg.subject_uid = Some(uid);
+                tg.attacker_uid = Some(state.units[actor_idx].uid.clone());
+                fire_trigger(state, tg, defs, skills);
             }
             SkillEffect::Heal { amount } => {
                 let add = {
                     let actor = &state.units[actor_idx];
                     get_formation_bonus(state, actor, "defensePower")
                 };
-                let t = &mut state.units[target_idx];
-                let before = t.hp;
-                t.hp = (t.hp + amount + add).min(t.hp_max);
-                let gained = t.hp - before;
-                let uid = t.uid.clone();
-                state.log.push(GameEvent::Heal { target_uid: uid, amount: gained });
-                // fireTrigger(onHeal) — 9f서.
+                let (uid, gained) = {
+                    let t = &mut state.units[target_idx];
+                    let before = t.hp;
+                    t.hp = (t.hp + amount + add).min(t.hp_max);
+                    (t.uid.clone(), t.hp - before)
+                };
+                state.log.push(GameEvent::Heal { target_uid: uid.clone(), amount: gained });
+                let mut tg = TriggerCtx::new("onHeal");
+                tg.subject_uid = Some(uid);
+                tg.attacker_uid = Some(state.units[actor_idx].uid.clone());
+                fire_trigger(state, tg, defs, skills);
             }
             SkillEffect::Move { who, delta_col } => {
                 if who == "target" && state.units[target_idx].alive {
-                    move_unit(state, target_idx, *delta_col);
+                    move_unit(state, target_idx, *delta_col, defs, skills);
                 }
             }
             SkillEffect::ApplyStatusSelf { .. } => {} // apply_self_effects가 처리
@@ -120,6 +138,7 @@ pub fn resolve_skill(
     target_cell: Option<Pos>,
     cells: Option<&[Pos]>,
     defs: &StatusDefs,
+    skills: &HashMap<String, Skill>,
 ) {
     let actor_uid = state.units[actor_idx].uid.clone();
     state.log.push(GameEvent::SkillUsed {
@@ -127,9 +146,12 @@ pub fn resolve_skill(
         skill_id: skill.id.clone(),
         target_uid: target_uid.map(|s| s.to_string()),
     });
-    // fireTrigger(skillUsed) — 9f서.
+    let mut t = TriggerCtx::new("skillUsed");
+    t.subject_uid = Some(actor_uid.clone());
+    t.skill_id = Some(skill.id.clone());
+    fire_trigger(state, t, defs, skills);
 
-    apply_self_effects(state, actor_idx, skill);
+    apply_self_effects(state, actor_idx, skill, defs, skills);
 
     // 앵커 칸: 명시 칸 > 대상 유닛 위치 > 시전자 위치
     let anchor = if let Some(tc) = target_cell {
@@ -150,16 +172,23 @@ pub fn resolve_skill(
             let chance = compute_hit_chance(&state.units[actor_idx], skill, &state.units[target_idx]);
             let tuid = state.units[target_idx].uid.clone();
             if !skill.always_hit && !state.rng.chance(chance) {
-                state.log.push(GameEvent::Miss { uid: actor_uid.clone(), target_uid: tuid, chance });
-                // fireTrigger(onMiss) — 9f서.
+                state.log.push(GameEvent::Miss { uid: actor_uid.clone(), target_uid: tuid.clone(), chance });
+                let mut tm = TriggerCtx::new("onMiss");
+                tm.attacker_uid = Some(actor_uid.clone());
+                tm.subject_uid = Some(tuid);
+                fire_trigger(state, tm, defs, skills);
                 continue;
             }
             let crit = state.rng.chance(crit_pct_of(&state.units[actor_idx], defs));
-            state.log.push(GameEvent::Hit { uid: actor_uid.clone(), target_uid: tuid, chance, crit });
-            // fireTrigger(onHit) — 9f서.
-            apply_target_effects(state, actor_idx, skill, target_idx, crit, defs);
+            state.log.push(GameEvent::Hit { uid: actor_uid.clone(), target_uid: tuid.clone(), chance, crit });
+            let mut th = TriggerCtx::new("onHit");
+            th.attacker_uid = Some(actor_uid.clone());
+            th.subject_uid = Some(tuid);
+            th.crit = Some(crit);
+            fire_trigger(state, th, defs, skills);
+            apply_target_effects(state, actor_idx, skill, target_idx, crit, defs, skills);
         } else {
-            apply_target_effects(state, actor_idx, skill, target_idx, false, defs);
+            apply_target_effects(state, actor_idx, skill, target_idx, false, defs, skills);
         }
     }
 }
@@ -190,7 +219,7 @@ mod tests {
         let mut s = create_battle(seed, &thug_duel(), &chars);
         let a = s.units.iter().position(|u| u.uid == "a0_thug").unwrap();
         let base = s.log.len();
-        resolve_skill(&mut s, a, &skills["thug_punch"], Some("e0_thug"), None, None, &defs);
+        resolve_skill(&mut s, a, &skills["thug_punch"], Some("e0_thug"), None, None, &defs, &skills);
         canonical_json(&s.log[base..])
     }
 
@@ -200,6 +229,24 @@ mod tests {
         assert_eq!(
             run(1),
             r#"[{"skillId":"thug_punch","t":"skillUsed","targetUid":"e0_thug","uid":"a0_thug"},{"chance":79,"crit":false,"t":"hit","targetUid":"e0_thug","uid":"a0_thug"},{"base":10,"final":10,"t":"damage","targetUid":"e0_thug","toHp":10,"toShield":0}]"#
+        );
+    }
+
+    #[test]
+    fn resolve_skill_with_passives_parity() {
+        // 9f 엔드투엔드: 김두한(bloodlust/warspirit 특성 + kim_punch 패시브)이 잡몹 타격 →
+        // 스킬효과(applyStatus bleed) + 패시브(흡혈 heal) 발화. seed7=크리. TS 전체 로그 바이트 동일.
+        let chars = spr_data::characters();
+        let enc = spr_data::demo_encounter();
+        let skills = spr_data::skills();
+        let defs = spr_data::status_defs();
+        let mut s = create_battle(7, &enc, &chars);
+        let kim = s.units.iter().position(|u| u.uid == "a0_kim").unwrap();
+        let base = s.log.len();
+        resolve_skill(&mut s, kim, &skills["kim_punch"], Some("e0_thug"), None, None, &defs, &skills);
+        assert_eq!(
+            canonical_json(&s.log[base..]),
+            r#"[{"skillId":"kim_punch","t":"skillUsed","targetUid":"e0_thug","uid":"a0_kim"},{"chance":84,"crit":true,"t":"hit","targetUid":"e0_thug","uid":"a0_kim"},{"duration":2,"stacks":1,"statusId":"bleed","t":"statusApplied","targetUid":"e0_thug"},{"base":29,"final":29,"t":"damage","targetUid":"e0_thug","toHp":29,"toShield":0},{"t":"death","uid":"e0_thug"},{"amount":0,"t":"heal","targetUid":"a0_kim"}]"#
         );
     }
 

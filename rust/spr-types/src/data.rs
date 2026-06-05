@@ -49,6 +49,8 @@ pub struct Character {
     pub crit_multiplier: i64,
     #[serde(rename = "skillIds")]
     pub skill_ids: Vec<String>,
+    #[serde(rename = "traitIds", default)]
+    pub trait_ids: Vec<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

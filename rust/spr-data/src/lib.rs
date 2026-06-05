@@ -3,6 +3,7 @@
 //! → 로더 + canonical 직렬화 계약을 *전 실데이터*(Korean/emoji 포함)로 검증. 타입 구조체는 엔진 슬라이스(P1-9)에서 도입.
 use serde_json::Value;
 use spr_types::data::{Character, Encounter, FormationLayout, StatusDef};
+use spr_types::passives::TraitDef;
 use spr_types::skills::Skill;
 use std::collections::HashMap;
 
@@ -37,6 +38,11 @@ pub fn skills() -> HashMap<String, Skill> {
 /// 표준 포메이션(6.3). 아군 기본·보스전 적용.
 pub fn standard_formation() -> FormationLayout {
     serde_json::from_value(data_value()["standardFormation"].clone()).expect("standardFormation 역직렬화")
+}
+
+/// 특성 맵(id→TraitDef). 룰 컴파일이 charId의 traitIds로 조회.
+pub fn traits() -> HashMap<String, TraitDef> {
+    serde_json::from_value(data_value()["traits"].clone()).expect("traits 역직렬화")
 }
 
 #[cfg(test)]

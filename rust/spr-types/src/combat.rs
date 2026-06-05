@@ -4,6 +4,17 @@ use crate::rng::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// 컴파일된 패시브 룰 — 발동 카운터 포함(턴/전투당 캡). TS CompiledRule.
+#[derive(Debug, Clone)]
+pub struct CompiledRule {
+    pub rule: crate::passives::PassiveRule,
+    pub via_kind: String, // "skill" | "trait" | "node"
+    pub via_id: String,
+    pub idx: i64,
+    pub fired_this_turn: i64,
+    pub fired_this_battle: i64,
+}
+
 /// 상태이상 인스턴스 (원장 1건).
 #[derive(Debug, Clone)]
 pub struct StatusInstance {
@@ -37,6 +48,7 @@ pub struct Unit {
     pub stat_mods: HashMap<String, i64>,
     pub turn_count: i64,
     pub skill_dmg_bonus: HashMap<String, i64>, // 스킬별 데미지 보너스(런 성장, 4.6)
+    pub rules: Vec<CompiledRule>,   // 컴파일된 패시브(스킬 passives + 특성 + 노드)
     pub equip_dmg_flat: i64,        // 장착 무기 dmgFlat 합(4.3) — computeDamage 합산
     pub equip_shield_gain_add: i64, // 장착 방어구 쉴드획득 보정 합(4.3)
 }
@@ -175,6 +187,8 @@ pub enum GameEvent {
         speaker: Option<String>,
         text: String,
     },
+    #[serde(rename = "battleEnd")]
+    BattleEnd { phase: String },
 }
 
 pub struct GameState {
