@@ -70,7 +70,7 @@ function applyTargetEffects(state: GameState, actor: Unit, skill: Skill, target:
       }
       case "shield": {
         const def = getFormationBonus(state, actor, "defensePower");
-        const amt = Math.round(eff.amount + def) + target.equipShieldGainAdd; // 방어구 쉴드 획득량 보정(받는 쪽, 4.3)
+        const amt = eff.amount + def + target.equipShieldGainAdd; // 정수(포메이션 정수화 후) — 반올림 불요. 방어구 쉴드 획득량 보정(받는 쪽, 4.3)
         target.shield += amt;
         state.log.push({ t: "shieldGain", targetUid: target.uid, amount: amt });
         fireTrigger(state, { on: "onShieldGain", subjectUid: target.uid, attackerUid: actor.uid });
@@ -79,7 +79,7 @@ function applyTargetEffects(state: GameState, actor: Unit, skill: Skill, target:
       case "heal": {
         const def = getFormationBonus(state, actor, "defensePower");
         const before = target.hp;
-        target.hp = Math.min(target.hpMax, target.hp + Math.round(eff.amount + def));
+        target.hp = Math.min(target.hpMax, target.hp + eff.amount + def); // 정수(포메이션 정수화 후) — 반올림 불요
         state.log.push({ t: "heal", targetUid: target.uid, amount: target.hp - before });
         fireTrigger(state, { on: "onHeal", subjectUid: target.uid, attackerUid: actor.uid });
         break;

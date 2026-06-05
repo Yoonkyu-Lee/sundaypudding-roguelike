@@ -29,6 +29,25 @@ test("포메이션 총량보존: 같은 열 1명=전부, 2명=절반 (6.1)", () 
   assert.equal(getFormationBonus(state, shin, "attackPower"), 4); // 1열도 attack 4 단독
 });
 
+test("포메이션 정수화: 한 열 N명 분배는 정수 ∧ 합 == total ∧ uid 앞 rem명이 +1 (6.1, K1 보존)", () => {
+  const NAMES = ["kim", "shin", "shanghai", "cho"]; // yain 로스터(서로 다른 charId)
+  for (let n = 1; n <= 4; n++) {
+    const enc: Encounter = {
+      id: "t", name: "t",
+      allies: NAMES.slice(0, n).map((charId, i) => ({ charId, pos: { row: i, col: 0 } })), // 전원 0열(attackPower 4)
+      enemies: [{ charId: "thug", pos: { row: 0, col: 0 } }],
+    };
+    const state = createBattle(1, enc);
+    const peers = state.units.filter((u) => u.side === "ally").sort((a, b) => (a.uid < b.uid ? -1 : 1));
+    const bonuses = peers.map((u) => getFormationBonus(state, u, "attackPower"));
+    assert.ok(bonuses.every((b) => Number.isInteger(b)), `n=${n}: 정수만 (분수 금지) — ${bonuses}`);
+    assert.equal(bonuses.reduce((s, b) => s + b, 0), 4, `n=${n}: 분배 합 == total(4) 정확 보존 — ${bonuses}`);
+    // 몫 floor(4/n) + 앞 rem명 +1 (uid 오름차순)
+    const base = Math.floor(4 / n), rem = 4 - base * n;
+    assert.deepEqual(bonuses, peers.map((_, i) => base + (i < rem ? 1 : 0)), `n=${n}: uid 앞 ${rem}명 +1`);
+  }
+});
+
 test("적 진형 보너스: 일반전투=미적용, 보스전=적용 (6.3)", () => {
   const base: Encounter = {
     id: "t",

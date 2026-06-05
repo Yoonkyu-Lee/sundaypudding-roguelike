@@ -98,5 +98,10 @@
     "kind": "battle",
     "n": 3,
     "sha": "7a1468061603d3ba0c996bbc7609fbfbb5cab02ddd2a0b40c2df1090a1e6f354"
+  },
+  "battle/battle/stacked-col/ai/3": {
+    "kind": "battle",
+    "n": 36,
+    "sha": "8f50712aea8256e52f7480531c28d2ec3402c531508dcf8ea6f2dd5e99b06590"
   }
 }

@@ -35,6 +35,8 @@ const BATTLE_MATRIX: BattleCfg[] = [
   { name: "demo/random/1", enc: DEMO_ENCOUNTER, mode: "random", seed: 1 },
   { name: "demo/random/42", enc: DEMO_ENCOUNTER, mode: "random", seed: 42 },
   { name: "battle/ai/7", enc: { id: "b", name: "b", allies: [], enemies: NODE_ROSTERS.battle, boss: false }, mode: "ai", seed: 7 },
+  // 한 열 3명(0열) → attackPower 4 분배 = 2,1,1(정수화). 포메이션 정수 분배가 데미지에 반영되는 경로를 동결.
+  { name: "battle/stacked-col/ai/3", enc: { id: "sc", name: "sc", allies: [{ charId: "kim", pos: { row: 0, col: 0 } }, { charId: "shin", pos: { row: 1, col: 0 } }, { charId: "cho", pos: { row: 2, col: 0 } }], enemies: NODE_ROSTERS.battle, boss: false }, mode: "ai", seed: 3 },
 ];
 
 const runKey = (c: RunCfg) => `run/${c.runId}/${c.policy}${c.rich ? "+rich" : ""}/seed${c.seed}`;
