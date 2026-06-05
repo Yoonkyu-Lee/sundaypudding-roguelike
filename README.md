@@ -17,6 +17,7 @@ npm run demo          # 터미널 자동플레이 1판 (양측 AI), seed 42
 npm run play          # 터미널 대화형: 아군=당신, 적=AI
 npm test              # 결정론 + 기능 단위 테스트 + 불변식/스트레스 런/세이브 harness
 npm run stress        # 대량 무작위 스트레스 런 스윕(기본 6만판) — 크래시·교착·불변식 위반 검출 (docs/MIGRATION-VERIFICATION-PLAN)
+npm run golden:update # 골든 이벤트 로그 코퍼스 재생성(의도된 동작변경 시) — manifest.json 갱신 후 diff 리뷰
 npm run typecheck     # 코어 + 웹 타입체크
 npm run check         # 통합 게이트 (타입·테스트·줄수·코어순수성·데모회귀)
 npm run build:app     # 단일 HTML 빌드 → dist/index.html (오프라인 실행 가능한 한 파일)

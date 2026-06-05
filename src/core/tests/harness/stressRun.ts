@@ -9,6 +9,7 @@
 import { Rng } from "../../rng.ts";
 import { step, getLegalActions, unitById } from "../../engine.ts";
 import { chooseAction } from "../../ai.ts";
+import { enumerateRichActions } from "./richActions.ts";
 import { createRun, enterNode, resolveBattleEnd, chooseReward, buyShopOffer, leaveShop, chooseEncounterOption } from "../../run.ts";
 import type { RunState, RunDef } from "../../run.ts";
 import { checkCombatInvariants, checkRunInvariants } from "../invariants/index.ts";
@@ -38,6 +39,7 @@ export interface StressRunOpts {
   useMastery?: boolean;
   checkInvariants?: boolean; // 매 step 불변식 검사(기본 true)
   policy?: ActionPolicy; // 전투 행동 선택(기본 random)
+  richActions?: boolean; // random 정책에서 targetCell/free-cell AoE 등 풍부한 행동형태까지 자극(기본 false)
   trace?: string[]; // 주어지면 전투 이벤트 로그 + 최종 다이제스트를 누적(self-consistency용)
 }
 
@@ -88,10 +90,16 @@ export function stressRun(seed: number, runDef: RunDef, opts: StressRunOpts = {}
           let guard = 0;
           while (b.phase === "inProgress") {
             if (++guard > battleCap) return fail("deadlock", `battleCap ${battleCap} 초과`);
-            const legal = getLegalActions(b);
-            if (legal.length === 0) return fail("deadlock", "전투: 합법행동 0 (G6 위반)");
             const useAi = policy === "ai" || (policy === "ai-allies" && unitById(b, b.current!.uid).side === "ally");
-            step(b, useAi ? chooseAction(b) : pick(choice, legal).action);
+            let act;
+            if (useAi) {
+              act = chooseAction(b);
+            } else {
+              const acts = opts.richActions ? enumerateRichActions(b) : getLegalActions(b).map((a) => a.action);
+              if (acts.length === 0) return fail("deadlock", "전투: 합법행동 0 (G6 위반)");
+              act = pick(choice, acts);
+            }
+            step(b, act);
             battleSteps++;
             if (check) violations.push(...checkCombatInvariants(b));
           }

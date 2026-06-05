@@ -1,0 +1,102 @@
+{
+  "run/yain/random/seed1": {
+    "kind": "run",
+    "n": 4,
+    "sha": "e3c16c14ee9ef71ccadf352534f4d3f5a487dee4107fa5684880d91578672dcd"
+  },
+  "run/yain/random/seed7": {
+    "kind": "run",
+    "n": 3,
+    "sha": "346ad612a7e574026a6917e84c85ca808ef1bc7cf2e806886cb7d34ee4d117e3"
+  },
+  "run/yain/random/seed42": {
+    "kind": "run",
+    "n": 6,
+    "sha": "ee0e816af6fce28800e55755de74c47302f0e2f6159daf99797314a1d66baeb0"
+  },
+  "run/yain/random/seed100": {
+    "kind": "run",
+    "n": 3,
+    "sha": "50a3d189293c57c61ea12abc7123ceabefc96425b73eadf54ab8875a050d4fb0"
+  },
+  "run/yain/ai-allies/seed1": {
+    "kind": "run",
+    "n": 7,
+    "sha": "baa5c6fbacb655650c237dd6872039c0bd632a037f8115892cab88fc8d2644d3"
+  },
+  "run/yain/ai-allies/seed7": {
+    "kind": "run",
+    "n": 7,
+    "sha": "1de547b97377cf044956e480a71e0686cc0816775281455ebb6e44b7867029eb"
+  },
+  "run/yain/ai-allies/seed42": {
+    "kind": "run",
+    "n": 4,
+    "sha": "da915b259cdd0a90f0babc4d3aaf99062113bb35571e291257db47fd98154ae1"
+  },
+  "run/yain/ai-allies/seed100": {
+    "kind": "run",
+    "n": 7,
+    "sha": "6dd3d5fb1d173757aaf3213a1e5777a28d59f37358a09649b3b12193d5aadbdd"
+  },
+  "run/yain/ai/seed1": {
+    "kind": "run",
+    "n": 6,
+    "sha": "f8b56d88ed0fb4f44e3bdaeac92f3a434c824dfdc93574238be528dbc3aa4018"
+  },
+  "run/yain/ai/seed7": {
+    "kind": "run",
+    "n": 3,
+    "sha": "1d1d1b7c97cdb2e6253815520600efd99b4528b804ba07d35e52ab98825913fa"
+  },
+  "run/yain/ai/seed42": {
+    "kind": "run",
+    "n": 4,
+    "sha": "ef2d645d579a37d8a3cc8e837173705cde83cf525001e90c4ba827948e3b22eb"
+  },
+  "run/yain/ai/seed100": {
+    "kind": "run",
+    "n": 3,
+    "sha": "ca1aca5a44835c590bb93ea5e8a4f1cb372d33f1eca9eb13da5548902267438d"
+  },
+  "run/yain/random+rich/seed1": {
+    "kind": "run",
+    "n": 3,
+    "sha": "533eddff7180ab8894eb2086bb6556c417e82d6a75863305b5f32df2298f8ce1"
+  },
+  "run/yain/random+rich/seed7": {
+    "kind": "run",
+    "n": 7,
+    "sha": "e0fc4cd4266ecfef96eb876f03f825c1261cfbaaeaba563aee8552638421a16e"
+  },
+  "run/yain/random+rich/seed42": {
+    "kind": "run",
+    "n": 4,
+    "sha": "12fba53c81010ac161d2f28ccd96ca3fd755a477c21033b511229cc7d1ab3981"
+  },
+  "battle/demo/ai/1": {
+    "kind": "battle",
+    "n": 38,
+    "sha": "c9cd35b3f74762de166fe0a4178899a72ee8d596eba4ac71bd21c5e3b2465291"
+  },
+  "battle/demo/ai/42": {
+    "kind": "battle",
+    "n": 32,
+    "sha": "7fe3a0689b3ef7f0e222ef5da5c0d9807f15f99d99b8be4b566d55362729c464"
+  },
+  "battle/demo/random/1": {
+    "kind": "battle",
+    "n": 54,
+    "sha": "4e61d5a61aaa6be75386d34d03b18c05d5a48f69f8ad66585334159a6e36b482"
+  },
+  "battle/demo/random/42": {
+    "kind": "battle",
+    "n": 57,
+    "sha": "583811d1d2ce1ea71718b02ed7d06048f7b57899463eabf4790dbf216d4d6700"
+  },
+  "battle/battle/ai/7": {
+    "kind": "battle",
+    "n": 3,
+    "sha": "7a1468061603d3ba0c996bbc7609fbfbb5cab02ddd2a0b40c2df1090a1e6f354"
+  }
+}

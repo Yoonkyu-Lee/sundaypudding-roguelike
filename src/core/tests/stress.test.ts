@@ -45,6 +45,20 @@ test("stress: 종료성 — 현실적(AI) 플레이는 교착 0 (ai-allies·ai)"
   assert.equal(failures.length, 0, `AI 플레이 교착(비종료 의심):\n${failures.join("\n")}`);
 });
 
+// rich 행동 자극: getLegalActions(targetUid만)이 못 내는 targetCell·빈칸 AoE 앵커·free-cell(cells) 형태까지.
+// (Codex 적대검토 (c): 명령공간 확대.) 크래시·불변식 위반 0 — 엔진이 이 입력형태를 안전히 처리하는지 검증.
+// 교착(deadlock)은 rich가 무효 행동을 늘려 전투를 더 느리게 만들어 발생 가능(유한·informational)하므로 제외.
+test("stress: rich 행동(targetCell/free-cell AoE)에서도 크래시·불변식 위반 0", () => {
+  const failures: string[] = [];
+  for (let seed = 1; seed <= 400; seed++) {
+    const r = stressRun(seed, DEFAULT_RUN, { policy: "random", richActions: true });
+    if (r.outcome === "crash") failures.push(`seed${seed}: crash — ${r.error}`);
+    if (r.violations.length > 0) failures.push(`seed${seed}: ${summarize(r.violations.slice(0, 3))}`);
+    if (failures.length > 8) break;
+  }
+  assert.equal(failures.length, 0, `rich 행동 자극 실패:\n${failures.join("\n")}`);
+});
+
 test("stress: 모든 상호작용 phase 진입(불변식 검사가 그 경로에서 실제로 돌았음 보장)", () => {
   const want = ["battle", "reward", "shop", "encounter"];
   const hit = new Set<string>();

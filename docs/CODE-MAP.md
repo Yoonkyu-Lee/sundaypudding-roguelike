@@ -83,9 +83,12 @@ src/core/
                       types.ts(Violation·Violations·summarize) · combat.ts(checkCombatInvariants A~K/J 관측충실) ·
                       run.ts(checkRunInvariants L~P) · index.ts 배럴
     harness/          ▸검증 harness. stressRun.ts(stressRun — 시드결정 무작위 합법행동으로 런 전체 구동·매 step 불변식 검사·
-                      크래시/교착 가드·정책 random|ai-allies|ai·phase 커버리지. "stress run"=검증용 무작위 한 판, 게임 캠페인 모드와 무관) ·
+                      크래시/교착 가드·정책 random|ai-allies|ai·richActions 옵션·phase 커버리지. "stress run"=검증용 무작위 한 판, 게임 캠페인 모드와 무관) ·
+                      richActions.ts(enumerateRichActions — getLegalActions(targetUid)이 못 내는 targetCell·빈칸 AoE 앵커·free-cell(cells) 형태까지 열거, 명령공간 확대) ·
                       selfConsistency.ts(stressTrace·tracesMatch·battleTrace — 같은 시드 2회=동일 로그) · index.ts 배럴
-    stress.test.ts    무작위 스트레스 런(전 런×정책×시드 크래시·교착·위반 0 + phase 커버리지)
+    golden/           ▸골든 이벤트 로그 코퍼스. corpus.ts(computeManifest — run×정책×시드×rich + 전투 픽스처의 canonical 트레이스 SHA 매니페스트) · manifest.json(동결 골든, 커밋됨)
+    stress.test.ts    무작위 스트레스 런(전 런×정책×시드 크래시·교착·위반 0 + rich 행동 자극 + phase 커버리지)
+    golden.test.ts    골든 코퍼스 회귀(동결 manifest와 SHA 비교 — 침묵 로그 드리프트 검출. 갱신=npm run golden:update)
     self-consistency.test.ts 결정론 자기일치(스트레스 런/전투 트레이스 동일 + 시드 의존성)
     save-roundtrip.test.ts 세이브 왕복 항등(O1/O2 — serialize∘deserialize·Rng 보존·복원 후 동일 전개)
     invariants.test.ts 불변식 검사기 직접 검증 + L8 회귀(종료 시 reachable=[])

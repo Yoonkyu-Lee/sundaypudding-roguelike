@@ -458,6 +458,12 @@
 
 13. **[특성/설계] 무작위 양측 플레이의 느린 전투** (T1/T4 관련 — 결함 아님) — 대량 스윕(20k 시드)이 검출: **양측이 완전 무작위**로 두면 힐/쉴드/미스가 데미지를 거의 상쇄해 전투가 **유한하지만 수천 행동까지** 길어질 수 있다(큰 cap에서 항상 종료 확인 = 무한 아님). AI(ai-allies/ai) 플레이는 수십 행동에 종료(4만 스트레스 런 교착 0). **결론**: 종료성 하드 보장은 **현실적(AI) 플레이**에 적용. `random`은 크래시/불변식 스트레스 도구이며 cap 도달은 "느림(유한)"으로 분류(테스트는 random 교착을 하드 실패로 보지 않음, `npm run stress`이 informational 보고). 진짜 무한루프는 어떤 유한 cap도 넘으므로 검출은 유지.
 
+14. **✅ [보강됨] 골든 코퍼스 갭 (Codex 적대검토 d)** — self-consistency는 *같은 코드 2회*만 비교해 "모든 시드 로그를 일관되게 바꾸는 리팩터"를 못 잡았다. `src/core/tests/golden/`에 **이벤트 로그 코퍼스 SHA 매니페스트**(run×정책×시드×rich + 전투 픽스처 20항목) 신설 → live-vs-frozen. `npm test`에 포함, 갱신=`npm run golden:update`. demo-md5(전투1·seed42 CLI)보다 훨씬 넓은 GameEvent[] 표면.
+
+15. **✅ [보강됨] 명령공간 커버 (Codex 적대검토 c)** — `getLegalActions`는 `targetUid` 단일타겟만 방출 → `targetCell`·빈칸 AoE 앵커·free-cell(`cells`)이 fuzz에서 0회였다. `richActions.ts:enumerateRichActions`로 이 형태까지 자극(yain 런 실측: shin_ult free-cell 1627회·targetCell 45245회). 크래시·불변식 위반 0 확인(엔진이 안전 처리).
+
+16. **[포팅 시점 TODO] TS↔Rust 바이트 동일 (Codex 적대검토 a·b)** — self-consistency(TS↔TS)는 **공통모드 버그를 구조적으로 못 잡는다**(설계상 — 진짜 differential은 Rust 구현 후). 포팅 시 필요: ① canonical 이벤트 직렬화 계약(JSON 키 순서·수 포맷 고정, serde 자동 기대 금지) ② per-action/이벤트 **RNG 상태 트레이스**(소비 순서·횟수 일치) ③ 32비트 wrapping·반올림 정확 복제([`NUMERIC-POLICY.md`](NUMERIC-POLICY.md)). 골든 코퍼스를 그때 TS↔Rust diff 기준으로 재사용.
+
 ---
 
 # Part 7 — `INVARIANTS-FROM-REPO.md` 교차 검증 메모

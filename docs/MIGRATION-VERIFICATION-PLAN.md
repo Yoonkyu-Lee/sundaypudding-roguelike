@@ -185,3 +185,15 @@ CPU/RTL 검증과의 의도적 매핑. **신호·비트 단위가 아니라 게�
 - 렌더러(Godot나 Bevy 등) 작업.
 - 전략적 AI 강화(스트레스 런은 "무작위"면 충분; 밸런스는 디자이너 영역).
 - 웹 UI / 에디터 / 연출 검증 (헤드리스 코어 정합성에 집중).
+
+---
+
+## 8. 구축 현황 (2026-06-04) + Codex 적대검토 반영
+
+**구축 완료**: 불변식 카탈로그([`INVARIANTS-FROM-CLAUDE-CODE.md`](INVARIANTS-FROM-CLAUDE-CODE.md)) · assertion 모듈(`tests/invariants/`) · 무작위 스트레스 런(`tests/harness/stressRun.ts`, `npm run stress`) · self-consistency · 세이브 왕복 · 에디터 정합성. **6만 스트레스 런: 크래시·불변식위반·AI교착 0.** 검출·수정한 버그: L8(종료 시 stale reachable), store 드래프트 id 충돌.
+
+**Codex 적대검토(충분성)로 보강**:
+- (c) **명령공간 확대** — `getLegalActions`(targetUid만)이 못 내는 `targetCell`·빈칸 AoE 앵커·free-cell(`cells`)을 `tests/harness/richActions.ts`로 자극. 크래시·위반 0.
+- (d) **골든 코퍼스** — self-consistency(live-vs-live)가 못 잡는 일관 드리프트를, `tests/golden/`의 이벤트 로그 SHA 매니페스트(run×정책×시드×rich + 전투 픽스처, `npm test` 포함, `npm run golden:update`)로 동결.
+
+**포팅 시점 TODO (Codex (a)(b) — Rust 구현 후)**: ① canonical 이벤트 직렬화 계약(키 순서·수 포맷) ② per-action RNG 상태 트레이스 ③ 32비트 wrapping·반올림 정확 복제([`NUMERIC-POLICY.md`](NUMERIC-POLICY.md)). 골든 코퍼스를 TS↔Rust differential 기준으로 재사용.
