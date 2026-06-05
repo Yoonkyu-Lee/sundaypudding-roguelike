@@ -15,6 +15,24 @@ fn idx_of_uid(state: &GameState, uid: &str) -> usize {
     state.units.iter().position(|u| u.uid == uid).expect("unit not found")
 }
 
+/// 앵커 유닛 uid 해소 — targetUid > self > targetCell/cells[0]의 대상 진영 유닛. TS resolveAnchorUid.
+pub fn resolve_anchor_uid(state: &GameState, actor_idx: usize, skill: &Skill, target_uid: Option<&str>, target_cell: Option<Pos>, cells: Option<&[Pos]>) -> Option<String> {
+    if let Some(tu) = target_uid {
+        return Some(tu.to_string());
+    }
+    let actor = &state.units[actor_idx];
+    if skill.target == "self" {
+        return Some(actor.uid.clone());
+    }
+    let pos = target_cell.or_else(|| cells.and_then(|c| c.first().copied()))?;
+    let side = if skill.target == "enemy" {
+        if actor.side == "ally" { "enemy" } else { "ally" }
+    } else {
+        actor.side.as_str()
+    };
+    state.units.iter().find(|u| u.alive && u.side == side && u.pos == pos).map(|u| u.uid.clone())
+}
+
 /// 동적 재배치(6.4): deltaCol만큼 이동(0~3 클램프), 같은 편 점유 칸이면 취소. onMove/enterCell 발화.
 fn move_unit(state: &mut GameState, unit_idx: usize, delta_col: i64, defs: &StatusDefs, skills: &HashMap<String, Skill>) {
     let (new_col, from, side, uid) = {

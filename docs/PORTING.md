@@ -97,7 +97,7 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 - [x] P1-6 Rust workspace + RNG + canonical — `rust/`(spr-types): RNG 바이트동일(`rng.rs`) + canonical 직렬화(`canonical.rs`, serde_json BTreeMap=정렬키, TS `canonicalJson`과 바이트 일치). `npm run check`에 `cargo test` 게이트.
 - [x] P1-7 데이터 로더 — `spr-data`: include_str 로드 + canonical 라운드트립 게이트(전 실데이터 바이트 일치). 타입 구조체는 P1-9
 - [x] P1-8 런 그래프 — `spr-core/graph.rs`: hex_adjacent·neighbor_ids·live_reachable·validate_run 등. TS parity(yain: validateRun ok·neighbor·liveReachable·clear 일치). 미방문회피·edge순서 보존
-- [~] P1-9 전투 수직 슬라이스 (sub-slice 진행):
+- [x] P1-9 전투 수직 슬라이스 (9a~9h 완료 — 풀 differential 바이트동일):
   - [x] 9a createBattle + startRound + advance — `spr-core/battle.rs`. roundStart(SPD주사위 RNG)·turnStart 이벤트 TS 바이트동일(DEMO seed42). RNG 소비순서·서열정렬 검증
   - [x] 9b damage — `util.rs`(round_div·has_status·total_stacks·status_num_sum·status_flag·is_frozen) + `damage.rs`(compute_damage·deal_raw_damage) + StatusDef. TS parity(클린/frost/edge·쉴드/공포/관통/무적/불사/사망)
   - [x] 9c status — `status.rs`(apply_status_instance·tick_periodic). 삽입순서 합산(Vec)·회복먼저·heal/damage/statusTick TS 바이트동일. canonical_json ?Sized(슬라이스 허용)
@@ -105,7 +105,7 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
   - [x] 9e skills — `skills.rs`(resolve_skill·apply_self/target_effects·move_unit) + `formation.rs`(get_formation_bonus 정수분배) + GameState 포메이션필드·Unit.skill_dmg_bonus + 6 신규이벤트(skillUsed/move/cleanse/shieldGain/miss/hit). 패시브-프리(thug vs thug) hit/miss TS 바이트동일·RNG순서·포메이션 atk4. 효과다양성+패시브발화는 9h서
   - [x] 9g interrupt — `interrupt.rs`(predict_interrupt_subjects·insert_interrupts) + interrupt/dialog 이벤트. 역순 splice로 roundOrder 순서보존+이벤트 역순 TS 바이트동일(미묘한 순서 검증). 9f 앞으로 당겨 grantInterrupt 의존 해소
   - [x] 9f passives DSL — spr-types `passives.rs`(Trigger/Condition/Effect/PassiveRule/TraitDef) + CompiledRule·Unit.rules + spr-core `passives/`(ctx·compile·conditions·effects·dispatch). fire_trigger 전 호출부(damage·status·skills·battle) 와이어. **매칭정렬(ord→uid→idx)·RNG소비순서·재진입가드 = Codex 최대리스크**. 김두한 흡혈+출혈 엔드투엔드 TS 바이트동일. hpPct는 TS와 동일 f64. battle.rs 전체 턴흐름(battleStart/roundStart/speedRoll/turnStart/everyNTurns/interruptStart/checkWin·on_normal_turn_end) 포팅
-  - [ ] 9h flow(step)→풀 differential
+  - [x] 9h flow(step)→**풀 differential** — `flow.rs`(step: onAction틱·beforeAction·스킬해소·끼어들기·턴종료·checkWin·advance) + resolve_anchor_uid + skip/battleEnd 이벤트. **seed42 데모 2라운드 전투(사망·약화/출혈·흡혈·재굴림·battleEnd) TS 기록 행동벡터 재생 → 39이벤트 전체 로그 바이트 동일.** 이로써 전투코어 전체 differential 입증
 - [ ] P1-10~11 골든/스트레스 벡터 재생
 - [ ] P1-12 Tauri 세션 API
 - [ ] P1-13 프론트 피처플래그 → 최종 Tauri2 검증

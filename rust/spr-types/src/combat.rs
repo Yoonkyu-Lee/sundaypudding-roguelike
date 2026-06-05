@@ -189,6 +189,8 @@ pub enum GameEvent {
     },
     #[serde(rename = "battleEnd")]
     BattleEnd { phase: String },
+    #[serde(rename = "skip")]
+    Skip { uid: String, reason: String },
 }
 
 pub struct GameState {
