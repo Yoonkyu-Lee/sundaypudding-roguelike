@@ -42,7 +42,7 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 ### Phase 1 — Rust 포팅 (`/port-slice` + `/differential`)
 6. [진행] Cargo workspace `rust/` + 시드 RNG(부호 계약) + canonical 직렬화([`SERIALIZATION-CONTRACT.md`](SERIALIZATION-CONTRACT.md)).
    - ✅ workspace `rust/`(spr-types) + **RNG 바이트 동일 이식**(`spr-types/src/rng.rs`, mulberry32 u32, TS parity 테스트 5시드·int·chance). `npm run check`가 `cargo test` 게이트 실행. ☐ canonical 직렬화 함수(Rust) 후속.
-7. 데이터 로더 포팅 + 전 JSON 검증(DATA 계약).
+7. ✅ 데이터 로더(`spr-data`): `data.generated.json` include_str 로드 + **canonical 라운드트립 게이트**(Rust canonical == 커밋 바이트, 전 실데이터 Korean/emoji). 타입 구조체는 엔진(P1-9)에서 도입.
 8. 런 그래프/도달성 포팅(`run/graph.ts`).
 9. **전투 수직 슬라이스**(한 단위 — 순환: `flow → turnOrder → targeting → status → damage → skills → passives`).
 10. **슬라이스마다 directed 골든 벡터 재생**(differential 게이트).
@@ -95,8 +95,7 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 - [x] P0-4 데이터 JSON화 — `scripts/export-data.ts`→`src/data/data.generated.json`(canonical 번들 10맵), `npm run data:export`, 드리프트 게이트(`data-export.test`). TS=타입 authoring 소스 + 파생 게이트 JSON. Rust serde 로드 대상
 - [x] P0-5 DATA-SERIALIZATION-CONTRACT — `docs/DATA-SERIALIZATION-CONTRACT.md`(판별자·정수스케일·배열순서·ID참조·absent) + `data-refs.test` 참조 무결성 게이트(dangling 0). **Phase 0 완료**
 - [x] P1-6 Rust workspace + RNG + canonical — `rust/`(spr-types): RNG 바이트동일(`rng.rs`) + canonical 직렬화(`canonical.rs`, serde_json BTreeMap=정렬키, TS `canonicalJson`과 바이트 일치). `npm run check`에 `cargo test` 게이트.
-- [ ] P1-6 Rust workspace(types/rng/canonical)
-- [ ] P1-7 데이터 로더
+- [x] P1-7 데이터 로더 — `spr-data`: include_str 로드 + canonical 라운드트립 게이트(전 실데이터 바이트 일치). 타입 구조체는 P1-9
 - [ ] P1-8 런 그래프
 - [ ] P1-9 전투 수직 슬라이스
 - [ ] P1-10~11 골든/스트레스 벡터 재생
