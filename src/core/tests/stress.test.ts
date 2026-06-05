@@ -69,6 +69,23 @@ test("stress: 모든 상호작용 phase 진입(불변식 검사가 그 경로에
   for (const p of want) assert.ok(hit.has(p), `phase '${p}' 미진입 — 스트레스 런이 해당 콘텐츠를 안 거침(커버리지 부족)`);
 });
 
+// per-action RNG 상태 트레이스(포팅 differential 보조) — 읽기뿐이라 결정론 불변, 길이==battleSteps.
+test("stress: rngTrace 옵션 — 결정성 · 길이==battleSteps · off-by-default 중립", () => {
+  for (const seed of [1, 42, 271]) {
+    const t1: number[] = [];
+    const r1 = stressRun(seed, DEFAULT_RUN, { policy: "ai", rngTrace: t1 });
+    const t2: number[] = [];
+    const r2 = stressRun(seed, DEFAULT_RUN, { policy: "ai", rngTrace: t2 });
+    assert.deepEqual(t1, t2, `seed ${seed}: rngTrace 비결정`);
+    assert.equal(t1.length, r1.battleSteps, `seed ${seed}: rngTrace 길이 ≠ battleSteps`);
+    // off-by-default 중립: rngTrace 유무가 결과를 바꾸지 않음(상태 읽기뿐)
+    const r0 = stressRun(seed, DEFAULT_RUN, { policy: "ai" });
+    assert.equal(r1.outcome, r0.outcome, `seed ${seed}: rngTrace가 outcome 변경`);
+    assert.equal(r1.battleSteps, r0.battleSteps, `seed ${seed}: rngTrace가 battleSteps 변경`);
+    assert.ok(t1.length > 0 && new Set(t1).size > 1, `seed ${seed}: rng 상태가 진행돼야(고정 아님)`);
+  }
+});
+
 test("stress: ai-allies는 무작위보다 더 깊이 진행(승리 도달 ≥ 무작위)", () => {
   const winRate = (policy: ActionPolicy) => {
     let won = 0;

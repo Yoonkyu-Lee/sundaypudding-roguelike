@@ -83,7 +83,7 @@ src/core/
                       types.ts(Violation·Violations·summarize) · combat.ts(checkCombatInvariants A~K/J 관측충실) ·
                       run.ts(checkRunInvariants L~P) · index.ts 배럴
     harness/          ▸검증 harness. stressRun.ts(stressRun — 시드결정 무작위 합법행동으로 런 전체 구동·매 step 불변식 검사·
-                      크래시/교착 가드·정책 random|ai-allies|ai·richActions 옵션·phase 커버리지. "stress run"=검증용 무작위 한 판, 게임 캠페인 모드와 무관) ·
+                      크래시/교착 가드·정책 random|ai-allies|ai·richActions·rngTrace(매 step rng상태 기록, 포팅 differential 보조) 옵션·phase 커버리지. "stress run"=검증용 무작위 한 판, 게임 캠페인 모드와 무관) ·
                       richActions.ts(enumerateRichActions — getLegalActions(targetUid)이 못 내는 targetCell·빈칸 AoE 앵커·free-cell(cells) 형태까지 열거, 명령공간 확대) ·
                       selfConsistency.ts(stressTrace·tracesMatch·battleTrace — 같은 시드 2회=동일 로그) · canonical.ts(canonicalJson/canonicalLog — 정렬키·정수·undefined생략 직렬화, TS↔Rust 바이트동일 계약 [`SERIALIZATION-CONTRACT.md`]) · index.ts 배럴
     golden/           ▸골든 이벤트 로그 코퍼스. corpus.ts(computeManifest — run×정책×시드×rich + 전투 픽스처의 canonical 트레이스 SHA 매니페스트) · manifest.json(동결 골든, 커밋됨)

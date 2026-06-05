@@ -42,6 +42,7 @@ export interface StressRunOpts {
   policy?: ActionPolicy; // 전투 행동 선택(기본 random)
   richActions?: boolean; // random 정책에서 targetCell/free-cell AoE 등 풍부한 행동형태까지 자극(기본 false)
   trace?: string[]; // 주어지면 전투 이벤트 로그 + 최종 다이제스트를 누적(self-consistency용)
+  rngTrace?: number[]; // 주어지면 매 전투 step 후 battle rng 상태를 기록(기본 off; 포팅 differential 시 RNG vs 로직 발산 국소화). 읽기뿐 — 결정론 불변
 }
 
 const pick = <T>(rng: Rng, arr: T[]): T => arr[rng.int(0, arr.length - 1)];
@@ -102,6 +103,7 @@ export function stressRun(seed: number, runDef: RunDef, opts: StressRunOpts = {}
             }
             step(b, act);
             battleSteps++;
+            if (opts.rngTrace) opts.rngTrace.push(b.rng.state); // 행동 후 RNG 상태(읽기뿐, 소비 없음)
             if (check) violations.push(...checkCombatInvariants(b));
           }
           if (opts.trace) opts.trace.push(`B ${canonicalLog(b.log)}`);

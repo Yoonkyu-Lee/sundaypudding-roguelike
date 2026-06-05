@@ -52,6 +52,6 @@
 
 ## 4. 비범위(포팅 시점)
 
-- **RNG 상태 트레이스**(소비 순서·횟수 일치)는 슬라이스3에서 별도. 로그 불일치 시 "RNG vs 로직" 구분용.
+- **RNG 상태 트레이스**(소비 순서·횟수 일치): `stressRun`의 `rngTrace` 옵션으로 구현됨(매 step 후 `b.rng.state` 기록, 기본 off). 포팅 differential 시 로그 불일치를 "RNG 발산 vs 로직 발산"으로 국소화.
 - 32비트 wrapping 산술(`rng.ts`)·`Math.round` 잔존 지점(R1 damage·R8 회복비율)의 정확 복제는 포팅 시 검증.
 - 이 계약은 **이벤트 로그**(`GameEvent[]`) 한정. RunState 세이브 직렬화는 별도(`run/save.ts`, `{__rng}` 마커).
