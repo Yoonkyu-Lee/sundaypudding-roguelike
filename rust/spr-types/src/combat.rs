@@ -167,6 +167,14 @@ pub enum GameEvent {
         chance: i64,
         crit: bool,
     },
+    #[serde(rename = "interrupt")]
+    Interrupt { uid: String },
+    #[serde(rename = "dialog")]
+    Dialog {
+        #[serde(skip_serializing_if = "Option::is_none")]
+        speaker: Option<String>,
+        text: String,
+    },
 }
 
 pub struct GameState {

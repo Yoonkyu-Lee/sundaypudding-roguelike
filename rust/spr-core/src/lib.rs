@@ -4,6 +4,7 @@ pub mod battle;
 pub mod damage;
 pub mod formation;
 pub mod graph;
+pub mod interrupt;
 pub mod skills;
 pub mod status;
 pub mod targeting;
