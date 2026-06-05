@@ -4,3 +4,6 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+# serde_json 기본(preserve_order 미사용) → Map=BTreeMap=정렬키. canonical 직렬화의 근간.
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

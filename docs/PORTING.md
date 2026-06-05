@@ -94,7 +94,7 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 - [x] P0-3 전역상태→컨텍스트 — passives `depth`/`activeKeys`→`GameState.fireDepth`/`fireActiveKeys`(string[]), run `firing`→`RunState.firing`. 동작 보존(골든 불변), 세이브 왕복 OK, 모듈 전역 mut 0
 - [x] P0-4 데이터 JSON화 — `scripts/export-data.ts`→`src/data/data.generated.json`(canonical 번들 10맵), `npm run data:export`, 드리프트 게이트(`data-export.test`). TS=타입 authoring 소스 + 파생 게이트 JSON. Rust serde 로드 대상
 - [x] P0-5 DATA-SERIALIZATION-CONTRACT — `docs/DATA-SERIALIZATION-CONTRACT.md`(판별자·정수스케일·배열순서·ID참조·absent) + `data-refs.test` 참조 무결성 게이트(dangling 0). **Phase 0 완료**
-- [~] P1-6 Rust workspace + RNG — `rust/`(spr-types) 스캐폴드 + RNG 바이트동일(`rng.rs`, TS parity 5시드). `npm run check`에 `cargo test` 게이트 통합. canonical 직렬화(Rust) 후속
+- [x] P1-6 Rust workspace + RNG + canonical — `rust/`(spr-types): RNG 바이트동일(`rng.rs`) + canonical 직렬화(`canonical.rs`, serde_json BTreeMap=정렬키, TS `canonicalJson`과 바이트 일치). `npm run check`에 `cargo test` 게이트.
 - [ ] P1-6 Rust workspace(types/rng/canonical)
 - [ ] P1-7 데이터 로더
 - [ ] P1-8 런 그래프
