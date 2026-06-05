@@ -96,8 +96,8 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 - [x] P0-5 DATA-SERIALIZATION-CONTRACT — `docs/DATA-SERIALIZATION-CONTRACT.md`(판별자·정수스케일·배열순서·ID참조·absent) + `data-refs.test` 참조 무결성 게이트(dangling 0). **Phase 0 완료**
 - [x] P1-6 Rust workspace + RNG + canonical — `rust/`(spr-types): RNG 바이트동일(`rng.rs`) + canonical 직렬화(`canonical.rs`, serde_json BTreeMap=정렬키, TS `canonicalJson`과 바이트 일치). `npm run check`에 `cargo test` 게이트.
 - [x] P1-7 데이터 로더 — `spr-data`: include_str 로드 + canonical 라운드트립 게이트(전 실데이터 바이트 일치). 타입 구조체는 P1-9
-- [ ] P1-8 런 그래프
-- [ ] P1-9 전투 수직 슬라이스
+- [x] P1-8 런 그래프 — `spr-core/graph.rs`: hex_adjacent·neighbor_ids·live_reachable·validate_run 등. TS parity(yain: validateRun ok·neighbor·liveReachable·clear 일치). 미방문회피·edge순서 보존
+- [ ] P1-9 전투 수직 슬라이스 (state→turn→targeting→status→damage→skills→passives) — 풀 이벤트로그 differential
 - [ ] P1-10~11 골든/스트레스 벡터 재생
 - [ ] P1-12 Tauri 세션 API
 - [ ] P1-13 프론트 피처플래그 → 최종 Tauri2 검증

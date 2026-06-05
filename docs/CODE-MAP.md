@@ -115,10 +115,11 @@ src/core/
 ```
 rust/                Cargo workspace (크레이트 의존그래프 = 레이어 단방향 컴파일강제)
   Cargo.toml         workspace (members: spr-types …)
-  spr-types/         의존 0 — 타입·프리미티브
-    src/rng.rs       Rng(mulberry32 u32) — TS src/core/rng.ts 바이트동일(parity 테스트). 부호계약=u32
+  spr-types/         의존 serde — 타입·프리미티브: rng.rs(mulberry32 u32 바이트동일) · canonical.rs(정렬키 직렬화=TS canonicalJson) · map.rs(런 맵 타입)
+  spr-data/          (→types) data.generated.json include_str 로드 + canonical 라운드트립 게이트
+  spr-core/          (→types) graph.rs(헥스 그래프 — TS run/graph.ts parity). 후속: 전투(state/turn/damage/skills/passives)
 ```
-> `npm run check`가 rust/ 존재 시 `cargo test` 게이트 실행. 후속 크레이트(spr-data←spr-core←spr-cli)는 슬라이스 진행하며 추가.
+> `npm run check`가 rust/ 존재 시 `cargo test` 게이트 실행. 후속(spr-cli·Tauri)은 슬라이스 진행하며 추가.
 
 ## data / view 파일
 

@@ -76,6 +76,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "spr-core"
+version = "0.0.1"
+dependencies = [
+ "serde_json",
+ "spr-types",
+]
+
+[[package]]
 name = "spr-data"
 version = "0.0.1"
 dependencies = [
