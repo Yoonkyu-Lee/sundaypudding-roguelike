@@ -114,12 +114,13 @@ src/core/
 
 ```
 rust/                Cargo workspace (크레이트 의존그래프 = 레이어 단방향 컴파일강제)
-  Cargo.toml         workspace (members: spr-types …)
-  spr-types/         의존 serde — 타입·프리미티브: rng.rs(mulberry32 u32 바이트동일) · canonical.rs(정렬키 직렬화=TS canonicalJson) · map.rs(런 맵 타입)
-  spr-data/          (→types) data.generated.json include_str 로드 + canonical 라운드트립 게이트
-  spr-core/          (→types) graph.rs(헥스 그래프 — TS run/graph.ts parity). 후속: 전투(state/turn/damage/skills/passives)
+  Cargo.toml         workspace (members: spr-types, spr-data, spr-core)
+  spr-types/         타입·프리미티브: rng.rs(mulberry32 u32 바이트동일) · canonical.rs(정렬키 직렬화=TS canonicalJson, ?Sized) · map.rs · data.rs(Pos/Character/StatusDef/FormationLayout) · skills.rs(Skill/SkillEffect/AreaShape) · passives.rs(Trigger/Condition/Effect/PassiveRule/TraitDef) · combat.rs(Unit/GameState/GameEvent/Action/CompiledRule)
+  spr-data/          (→types) data.generated.json include_str 로드 + canonical 라운드트립 게이트 + 접근자(characters/skills/statuses/traits/standard_formation/demo_encounter)
+  spr-core/          (→types,data) 전투 엔진: util · graph · battle(생성+턴흐름+checkWin) · damage · status · formation · targeting · skills · interrupt · passives/(ctx·compile·conditions·effects·dispatch) · flow(step) · observation(뷰) · session(StepResult). tests/differential.rs(40벡터 재생)
+app/                 Tauri2 데스크톱 셸 (P1-13, 워크스페이스 밖 — 게이트 영향 0). main.rs #[command] create_session/battle_step/observation → spr_core::session::Session 래핑. 빌드: cargo tauri dev (tauri-cli 필요)
 ```
-> `npm run check`가 rust/ 존재 시 `cargo test` 게이트 실행. 후속(spr-cli·Tauri)은 슬라이스 진행하며 추가.
+> `npm run check`가 rust/ 존재 시 `cargo test` 게이트 실행(app/ 제외 — 독립 워크스페이스). 전투코어 전체 TS↔Rust **바이트 동일**(differential 40벡터/679스텝). 상세: PORTING.md §7.
 
 ## data / view 파일
 
@@ -164,6 +165,7 @@ rust/                Cargo workspace (크레이트 의존그래프 = 레이어 �
 | `src/web/charSheet.ts` | web | **캐릭터 시트** — 능력치표(원본→현재 델타)·3 장착칸(장착·교체·해제+인벤토리 픽커)·보유 스킬(맵=활성4 토글, 전투=읽기전용). `sheetBody`+`wireSheet`로 분리 → 전투 단독 모달(`renderCharSheet`)·파티뷰 상세 pane 공용 | `renderCharSheet` · `sheetBody` · `wireSheet` · `SheetData` |
 | `src/web/drag.ts` | web | **공용 포인터 드래그**(`beginPointerDrag`) — 네이티브 HTML5 DnD 대체. 커서 따라오는 `.drag-avatar`·`elementFromPoint` 드롭 라우팅·클릭 폴백. 에디터·파티편성 공용 | `beginPointerDrag` |
 | `src/web/partyView.ts` | web | **파티 편성(통합 파티뷰, 모달)** — 3칼럼: 좌 4×4 진형 보드(포인터 드래그 배치/교대) / 중 선택 캐릭 상세(charSheet 인라인) / 우 장착 인벤토리. 드래그=`drag.ts` 포인터(고스트 없음). 맵 전용 | `renderPartyView` · `PartyViewData` |
+| `src/web/coreAdapter.ts` | web | **코어 백엔드 어댑터(P1-13 피처플래그)** — `selectBattleBackend()`: `?core=rust`+Tauri 런타임=Rust(IPC invoke `create_session`/`battle_step`), 아니면 TS(인메모리). 두 백엔드 `{create(seed),step(action)}→{eventDelta,observation}` 동형(spr-core Session과 동일). 전투(데모) 육안 differential 검증용 | `selectBattleBackend` · `BattleBackend` |
 | `src/web/style.css` | web | 다크 테마 스타일 + **게임셸 리셋**(상단: 브라우저 제스처/크롬 제거 — overscroll·touch-action·tap-highlight·`:focus-visible`·커스텀 스크롤바·number 스피너. CLAUDE "웹 렌더링 티 금지" B) | — |
 | `index.html` · `vite.config.ts` | web | Vite 진입/설정 (`npm run dev`). **F3 dev-write 미들웨어**(`apply:"serve"` 전용 — `POST /api/save-run` → `src/data/runs/{fileId}.json` 기록 + `runs.generated.ts` 재생성, 빌드 무영향) | `devWriteRuns` |
 
