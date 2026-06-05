@@ -2,6 +2,8 @@
 //! P1-7: 번들을 `serde_json::Value`로 로드 + **canonical 라운드트립 게이트**(로드→Rust canonical→커밋 바이트 일치).
 //! → 로더 + canonical 직렬화 계약을 *전 실데이터*(Korean/emoji 포함)로 검증. 타입 구조체는 엔진 슬라이스(P1-9)에서 도입.
 use serde_json::Value;
+use spr_types::data::{Character, Encounter};
+use std::collections::HashMap;
 
 /// 커밋된 데이터 번들 JSON(컴파일 시 임베드 — 런타임 경로 불요). TS `npm run data:export` 산출.
 pub const DATA_JSON: &str = include_str!("../../../src/data/data.generated.json");
@@ -9,6 +11,16 @@ pub const DATA_JSON: &str = include_str!("../../../src/data/data.generated.json"
 /// 데이터 번들을 serde_json::Value로 로드.
 pub fn data_value() -> Value {
     serde_json::from_str(DATA_JSON).expect("data.generated.json 파싱 실패")
+}
+
+/// 캐릭터 맵(id→Character). makeUnit 등 엔진이 소비.
+pub fn characters() -> HashMap<String, Character> {
+    serde_json::from_value(data_value()["characters"].clone()).expect("characters 역직렬화")
+}
+
+/// 데모 전투 인코딩(헤드리스 demo·테스트).
+pub fn demo_encounter() -> Encounter {
+    serde_json::from_value(data_value()["demoEncounter"].clone()).expect("demoEncounter 역직렬화")
 }
 
 #[cfg(test)]
