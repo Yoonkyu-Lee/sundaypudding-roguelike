@@ -92,7 +92,7 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 - [x] P0-2 zero-f64 정수화 — crit/frost/pct 정수퍼센트(`util.roundDiv`). 코어 게임수학 f64 0. **골든 바이트 동일**(코퍼스 관측 변화 0 → D2 승인 게이트 미발동). AI 점수 f64는 이연(differential 무관)
 - [x] P0-3 전역상태→컨텍스트 — passives `depth`/`activeKeys`→`GameState.fireDepth`/`fireActiveKeys`(string[]), run `firing`→`RunState.firing`. 동작 보존(골든 불변), 세이브 왕복 OK, 모듈 전역 mut 0
 - [x] P0-4 데이터 JSON화 — `scripts/export-data.ts`→`src/data/data.generated.json`(canonical 번들 10맵), `npm run data:export`, 드리프트 게이트(`data-export.test`). TS=타입 authoring 소스 + 파생 게이트 JSON. Rust serde 로드 대상
-- [ ] P0-5 DATA-SERIALIZATION-CONTRACT
+- [x] P0-5 DATA-SERIALIZATION-CONTRACT — `docs/DATA-SERIALIZATION-CONTRACT.md`(판별자·정수스케일·배열순서·ID참조·absent) + `data-refs.test` 참조 무결성 게이트(dangling 0). **Phase 0 완료 → Phase 1 진입 준비**
 - [ ] P1-6 Rust workspace(types/rng/canonical)
 - [ ] P1-7 데이터 로더
 - [ ] P1-8 런 그래프
