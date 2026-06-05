@@ -65,6 +65,6 @@ export function genRewards(run: RunState, tier = 1): RewardOption[] {
   const chosen: RewardOption[] = [];
   while (chosen.length < choiceCount && pool.length > 0) chosen.push(pool.splice(run.rng.int(0, pool.length - 1), 1)[0]);
   // 모자라면(전부 최종티어·풀 만보유) 회복으로 채움
-  while (chosen.length < choiceCount) chosen.push({ id: mk(), kind: "heal", pct: 0.3, label: "파티 30% 회복" });
+  while (chosen.length < choiceCount) chosen.push({ id: mk(), kind: "heal", pct: 30, label: "파티 30% 회복" });
   return chosen;
 }

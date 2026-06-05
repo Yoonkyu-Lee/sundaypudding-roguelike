@@ -13,7 +13,7 @@ import type { PassiveRule } from "./passives.ts";
 /** 즉시 실행 데코레이터 레이어 — 어느 노드든 부착 가능(전역). */
 export type DecoratorLayer =
   | { kind: "gold"; amount: number } // 골드 ±(0 미만 클램프)
-  | { kind: "heal"; pct: number; revive?: boolean } // 파티 회복(maxHp 비율, revive=전투불능 부활)
+  | { kind: "heal"; pct: number; revive?: boolean } // 파티 회복(maxHp 정수 퍼센트, revive=전투불능 부활)
   | { kind: "grantStatus"; charId?: string; statusId: string; stacks: number; duration: number } // 다음 전투 계승(charId 없으면 전원)
   | { kind: "text"; text: string }; // 로그/대사(컷신 뷰 강화는 Phase C)
 // ── 인카운터 이벤트 스키마 (7.2) — event 레이어가 인라인 소유 가능. 풀 상수는 data/events.ts. ──
@@ -41,7 +41,7 @@ export interface EncounterEvent {
  *  upgrade는 런타임 파티 소유 스킬 의존이라 저작 제외(절차생성만). learn은 편성된 파티원 대상일 때만 진열. */
 export type ShopOfferDef =
   | { kind: "buyItem"; itemId: string; cost: number } // 장착 아이템 → 인벤토리
-  | { kind: "heal"; pct: number; cost: number } // 파티 회복(maxHp 비율)
+  | { kind: "heal"; pct: number; cost: number } // 파티 회복(maxHp 정수 퍼센트)
   | { kind: "learn"; charId: string; skillId: string; cost: number }; // 특정 캐릭 범용기 학습
 
 /** 노드 트리거 룰 = PassiveRule + 소유자(화자/기준). owner의 side+charId 유닛에 주입 → self=그 개체.

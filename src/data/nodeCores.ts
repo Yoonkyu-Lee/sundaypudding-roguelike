@@ -12,7 +12,7 @@ export function defaultCore(type: NodeType): Layer[] {
     case "elite": return [{ kind: "combat", roster: copyRoster("elite") }, { kind: "gold", amount: 16 }, { kind: "reward", tier: 2 }];
     case "boss": return [{ kind: "combat", boss: true, roster: copyRoster("boss") }, { kind: "gold", amount: 24 }, { kind: "reward", tier: 3 }];
     case "shop": return [{ kind: "shop" }];
-    case "rest": return [{ kind: "heal", pct: 0.5, revive: true }];
+    case "rest": return [{ kind: "heal", pct: 50, revive: true }];
     case "encounter": return [{ kind: "event" }]; // 인라인 없음 → 전역 풀 랜덤
     default: return []; // start·clear = 구조 노드
   }

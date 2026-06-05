@@ -58,7 +58,7 @@ test("상점: 골드로 구매 → 적용 + 차감 + 항목 제거 (7.2)", () =>
   run.gold = 100;
   run.phase = "shop";
   run.activeNodeId = run.currentNodeId;
-  run.shop = [{ id: "h", kind: "heal", cost: 15, pct: 0.5, label: "치료" }];
+  run.shop = [{ id: "h", kind: "heal", cost: 15, pct: 50, label: "치료" }];
   run.party[0].hp = 1;
   buyShopOffer(run, "h");
   assert.equal(run.gold, 85, "골드 차감");
@@ -71,7 +71,7 @@ test("상점: 골드 부족이면 구매 불가", () => {
   run.gold = 10;
   run.phase = "shop";
   run.activeNodeId = run.currentNodeId;
-  run.shop = [{ id: "h", kind: "heal", cost: 15, pct: 0.5, label: "치료" }];
+  run.shop = [{ id: "h", kind: "heal", cost: 15, pct: 50, label: "치료" }];
   buyShopOffer(run, "h");
   assert.equal(run.gold, 10, "차감 안 됨");
   assert.equal(run.shop!.length, 1, "항목 유지");
@@ -81,7 +81,7 @@ test("RunView: 상점/인카운터/골드 화면 데이터 노출 (웹 렌더 �
   const run = createRun(1, ROSTER);
   run.gold = 50;
   run.phase = "shop";
-  run.shop = [{ id: "x", kind: "heal", cost: 15, pct: 0.5, label: "치료" }];
+  run.shop = [{ id: "x", kind: "heal", cost: 15, pct: 50, label: "치료" }];
   let v = getRunView(run);
   assert.equal(v.gold, 50);
   assert.equal(v.shop?.length, 1);

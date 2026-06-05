@@ -115,7 +115,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
   const editEvent = (): EncounterEvent | null => { const lay = layerAt(); return lay?.kind === "event" ? lay.event ?? null : null; };
   /** 선택 shop 레이어(있을 때) — offers 저작 대상. */
   const editShop = (): { offers?: ShopOfferDef[]; keepGenerated?: boolean } | null => { const lay = layerAt(); return lay?.kind === "shop" ? lay : null; };
-  const OUTCOME_DEFAULT: Record<string, EncounterOutcome> = { nothing: { kind: "nothing" }, heal: { kind: "heal", pct: 0.3 }, hurt: { kind: "hurt", pct: 0.15 }, gold: { kind: "gold", amount: 20 }, upgradeRandom: { kind: "upgradeRandom" }, learnUniversal: { kind: "learnUniversal" } };
+  const OUTCOME_DEFAULT: Record<string, EncounterOutcome> = { nothing: { kind: "nothing" }, heal: { kind: "heal", pct: 30 }, hurt: { kind: "hurt", pct: 15 }, gold: { kind: "gold", amount: 20 }, upgradeRandom: { kind: "upgradeRandom" }, learnUniversal: { kind: "learnUniversal" } };
 
   return {
     data: () => (mode === "list" ? listData() : mode === "nodeEdit" ? nodeEditData() : editData()),
@@ -203,7 +203,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
       onSetOutcomeField(ci, key, value) { const ev = editEvent(); const r = ev?.choices[ci]?.result; if (!r) return; (r as Record<string, unknown>)[key] = value; save(); deps.rerender(); },
       onSetChoiceMode(ci, mode) {
         const ev = editEvent(); const c = ev?.choices[ci]; if (!c) return;
-        if (mode === "gamble") { c.gamble = { chance: 0.5, win: { kind: "gold", amount: 20 }, lose: { kind: "hurt", pct: 0.15 } }; delete c.result; }
+        if (mode === "gamble") { c.gamble = { chance: 50, win: { kind: "gold", amount: 20 }, lose: { kind: "hurt", pct: 15 } }; delete c.result; }
         else { c.result = { kind: "nothing" }; delete c.gamble; }
         save(); deps.rerender();
       },

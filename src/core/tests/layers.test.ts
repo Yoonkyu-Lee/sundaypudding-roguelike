@@ -130,7 +130,7 @@ test("보상 레이어: treasure 노드 = core:[reward] (전투 없이 보상)",
 test("상점 진열 저작: shop 레이어 offers = 저작 진열만(절차생성 대체), keepGenerated면 병행", () => {
   const offers = [
     { kind: "buyItem" as const, itemId: "wood_bat", cost: 12 },
-    { kind: "heal" as const, pct: 0.3, cost: 8 },
+    { kind: "heal" as const, pct: 30, cost: 8 },
   ];
   const run = createRun(5, coreDef([{ kind: "shop", offers }]).roster, coreDef([{ kind: "shop", offers }]));
   enterNode(run, "b");

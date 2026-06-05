@@ -3,14 +3,15 @@ import type { RunState } from "./types.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { SKILLS } from "../../data/skills.ts";
 import type { EncounterOutcome } from "../../data/events.ts";
+import { roundDiv } from "../util.ts";
 import { ownsUpgradeLine } from "./rewards.ts";
 import { healParty, upgradeOwned, learnOwned, completeNode } from "./helpers.ts";
 import { advanceCore } from "./layers.ts";
 import { fireRunTrigger } from "./passives.ts";
 
 function applyOutcome(run: RunState, o: EncounterOutcome): void {
-  if (o.kind === "heal") { healParty(run, o.pct); run.log.push(`파티 ${Math.round(o.pct * 100)}% 회복`); }
-  else if (o.kind === "hurt") { for (const m of run.party) if (m.hp > 0) m.hp = Math.max(1, m.hp - Math.round(m.maxHp * o.pct)); run.log.push(`파티 ${Math.round(o.pct * 100)}% 피해`); fireRunTrigger(run, { on: "partyHpChange", dir: "hurt" }); }
+  if (o.kind === "heal") { healParty(run, o.pct); run.log.push(`파티 ${o.pct}% 회복`); }
+  else if (o.kind === "hurt") { for (const m of run.party) if (m.hp > 0) m.hp = Math.max(1, m.hp - roundDiv(m.maxHp * o.pct, 100)); run.log.push(`파티 ${o.pct}% 피해`); fireRunTrigger(run, { on: "partyHpChange", dir: "hurt" }); }
   else if (o.kind === "gold") { run.gold = Math.max(0, run.gold + o.amount); run.log.push(`골드 ${o.amount >= 0 ? "+" : ""}${o.amount}`); }
   else if (o.kind === "upgradeRandom") {
     const cand = run.party.filter((m) => m.hp > 0).flatMap((m) => m.ownedSkillIds.filter((sid) => SKILLS[sid]?.nextTierId).map((sid) => ({ m, sid })));

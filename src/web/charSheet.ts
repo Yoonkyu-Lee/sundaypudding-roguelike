@@ -72,7 +72,7 @@ export function itemDesc(it: ItemDef): string {
   if (m?.hp) p.push(`HP +${m.hp}`);
   if (it.shieldGainAdd) p.push(`쉴드획득 +${it.shieldGainAdd}`);
   if (m?.critChance) p.push(`치명 +${m.critChance}%`);
-  if (m?.critMultiplier) p.push(`치명배수 +${r1(m.critMultiplier)}`);
+  if (m?.critMultiplier) p.push(`치명배수 +${r1(m.critMultiplier / 100)}`); // 정수 퍼센트(30=+0.3)
   if (m?.evasion) p.push(`회피 +${m.evasion}`);
   if (m?.accuracy) p.push(`명중 +${m.accuracy}`);
   if (m?.speedMin || m?.speedMax) p.push(`속도 +${m.speedMin ?? 0}~+${m.speedMax ?? 0}`);
@@ -124,7 +124,7 @@ function statRows(d: SheetData): string {
     row("회피", `${e.evasion}`, `${b.evasion}`, "명중에서 차감", e.evasion - b.evasion),
     row("명중", `${e.accuracy}`, `${b.accuracy}`, "기본 0 + 스킬", e.accuracy - b.accuracy),
     row("치명%", `${e.critChance}%`, `${b.critChance}%`, "", e.critChance - b.critChance),
-    row("치명배수", `×${r1(e.critMultiplier)}`, `×${r1(b.critMultiplier)}`, "", e.critMultiplier - b.critMultiplier),
+    row("치명배수", `×${r1(e.critMultiplier / 100)}`, `×${r1(b.critMultiplier / 100)}`, "", (e.critMultiplier - b.critMultiplier) / 100), // 정수 퍼센트(160=×1.6)
   ].join("");
 }
 

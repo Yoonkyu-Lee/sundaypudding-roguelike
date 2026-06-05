@@ -2,6 +2,7 @@
 // 전투 디스패처(combat/passives)와 분리: 상태가 RunState/PartyMemberState. 룰 컴파일은 재사용.
 import type { Condition, Effect, EffTarget, NodeType, PartyMemberState } from "../types.ts";
 import type { RunState } from "./types.ts";
+import { roundDiv } from "../util.ts";
 import { compileRules } from "../combat/passives/index.ts";
 
 export interface RunTriggerCtx { on: "nodeEnter" | "nodeClear" | "actStart" | "goldGain" | "partyHpChange"; nodeType?: NodeType; dir?: "heal" | "hurt"; }
@@ -32,7 +33,7 @@ function targets(run: RunState, owner: PartyMemberState, t: EffTarget): PartyMem
 function applyRunEffect(run: RunState, owner: PartyMemberState, e: Effect): void {
   switch (e.do) {
     case "goldDelta": run.gold = Math.max(0, run.gold + e.amount); run.log.push(`골드 ${e.amount >= 0 ? "+" : ""}${e.amount} (패시브)`); break;
-    case "healParty": for (const m of run.party) if (m.hp > 0) m.hp = Math.min(m.maxHp, m.hp + Math.round(m.maxHp * e.pct)); break;
+    case "healParty": for (const m of run.party) if (m.hp > 0) m.hp = Math.min(m.maxHp, m.hp + roundDiv(m.maxHp * e.pct, 100)); break;
     case "grantRunStatus":
       for (const m of targets(run, owner, e.target)) (run.pendingStatuses[m.charId] ??= []).push({ statusId: e.statusId, stacks: e.stacks, duration: e.duration });
       break;

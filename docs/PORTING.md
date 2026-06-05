@@ -89,7 +89,7 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 ## 7. 진행 상태 (각 슬라이스 `/slice-wrap`이 갱신)
 
 - [x] P0-1 행동 벡터 포맷 + emitter (`harness/vector.ts`, record→replay 바이트동일 입증)
-- [ ] P0-2 zero-f64 정수화 (동작변경 승인)
+- [x] P0-2 zero-f64 정수화 — crit/frost/pct 정수퍼센트(`util.roundDiv`). 코어 게임수학 f64 0. **골든 바이트 동일**(코퍼스 관측 변화 0 → D2 승인 게이트 미발동). AI 점수 f64는 이연(differential 무관)
 - [ ] P0-3 전역상태→컨텍스트
 - [ ] P0-4 데이터 JSON화
 - [ ] P0-5 DATA-SERIALIZATION-CONTRACT

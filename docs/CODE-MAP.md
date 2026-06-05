@@ -24,7 +24,7 @@ src/
 ```
 src/core/
   rng.ts            시드 PRNG. 모든 무작위의 유일 출처(결정론, 8.3) → Rng
-  util.ts           cross-cutting 소도구 + 상태 QUERY(사이클 방지 leaf): clamp·samePos·unitById·
+  util.ts           cross-cutting 소도구 + 상태 QUERY(사이클 방지 leaf): clamp·roundDiv(정수 반올림 나눗셈, zero-f64)·samePos·unitById·
                     aliveUnits·hasStatus·totalStacks·statusNumSum·statusFlag·critPctOf·isFrozen
   types.ts          ▸배럴: export * from types/{content,runtime}
   types/

@@ -115,7 +115,7 @@ function completeFloor(run: RunState, clear: { toFloor?: string }): void {
   run.currentNodeId = f.entryNodeId;
   run.activeNodeId = null;
   run.battle = null;
-  healParty(run, 0.5, true); // 층 전환: 전투불능 부활 + 50% 회복
+  healParty(run, 50, true); // 층 전환: 전투불능 부활 + 50% 회복(정수 퍼센트)
   run.phase = "map";
   run.log.push(`${f.name ?? `층 ${run.floor + 1}`} 진입 — 전투불능 부활 + 파티 50% 회복`);
   fireRunTrigger(run, { on: "actStart" });

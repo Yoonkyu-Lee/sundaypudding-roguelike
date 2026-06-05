@@ -7,6 +7,12 @@ export function clamp(n: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, n));
 }
 
+/** 정수 반올림 나눗셈 (zero-f64, NUMERIC-POLICY 옵션B): round-half-up(n/d). n≤0이면 0(데미지 음수 클램프 겸용).
+ * 퍼센트 적용의 단일 진실원 — 예: roundDiv(maxHp*pct, 100), roundDiv(base*frostPct*critPct, 10000). */
+export function roundDiv(n: number, d: number): number {
+  return n <= 0 ? 0 : Math.floor((n + (d >> 1)) / d);
+}
+
 export function samePos(a: { row: number; col: number }, b: { row: number; col: number }): boolean {
   return a.row === b.row && a.col === b.col;
 }

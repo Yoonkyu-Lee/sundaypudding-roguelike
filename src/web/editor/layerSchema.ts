@@ -12,7 +12,7 @@ export const LAYER_SPECS: Record<string, LayerSpec> = {
   shop: { label: "🏪 상점", fields: [], make: () => ({ kind: "shop" }) },
   event: { label: "❓ 인카운터", fields: [], make: () => ({ kind: "event" }) },
   gold: { label: "💰 골드 ±", fields: [{ key: "amount", label: "양", type: "number" }], make: () => ({ kind: "gold", amount: 10 }) },
-  heal: { label: "❤ 회복", fields: [{ key: "pct", label: "비율(0~1)", type: "number", step: 0.1 }, { key: "revive", label: "전투불능 부활", type: "bool" }], make: () => ({ kind: "heal", pct: 0.5 }) },
+  heal: { label: "❤ 회복", fields: [{ key: "pct", label: "퍼센트(0~100)", type: "number" }, { key: "revive", label: "전투불능 부활", type: "bool" }], make: () => ({ kind: "heal", pct: 50 }) },
   grantStatus: { label: "✨ 상태 부여(다음 전투)", fields: [{ key: "charId", label: "대상(비움=전원)", type: "select", optionsFrom: "chars", allowEmpty: true }, { key: "statusId", label: "상태", type: "select", optionsFrom: "statuses" }, { key: "stacks", label: "스택", type: "number" }, { key: "duration", label: "지속", type: "number" }], make: () => ({ kind: "grantStatus", statusId: "", stacks: 1, duration: 2 }) },
   text: { label: "💬 대사/로그", fields: [{ key: "text", label: "내용", type: "text" }], make: () => ({ kind: "text", text: "" }) },
 };

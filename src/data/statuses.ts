@@ -30,7 +30,7 @@ export const STATUS_DEFS: Record<StatusDefId, StatusDef> = {
     id: "frost",
     name: "동상",
     icon: "🥶",
-    damageDealtMult: 0.5, // 주는 데미지 50%↓ (전역 곱연산 예외, 3.7)
+    damageDealtMult: 50, // 주는 데미지 50%↓ (전역 곱연산 예외, 3.7)
   },
   fear: {
     id: "fear",
@@ -72,7 +72,7 @@ export const STATUS_DEFS: Record<StatusDefId, StatusDef> = {
   // ── 공격/치명 보정 (3.6 공위증류) ──
   might: { id: "might", name: "투지", icon: "💪", buff: true, dmgDealtFlat: 6 }, // 공격력↑(공위증)
   weaken: { id: "weaken", name: "약화", icon: "📉", dmgDealtFlat: -5 }, // 공격력↓
-  edge: { id: "edge", name: "예리", icon: "🎯", buff: true, critChanceAdd: 30, critMultiplierAdd: 0.5 }, // 치명↑
+  edge: { id: "edge", name: "예리", icon: "🎯", buff: true, critChanceAdd: 30, critMultiplierAdd: 50 }, // 치명↑
   ambush: { id: "ambush", name: "은신", icon: "🥷", buff: true, critChanceAdd: 100 }, // 다음 공격 무조건 치명
   invincible: { id: "invincible", name: "무적", icon: "💠", buff: true, invincible: true }, // 모든 피해 0
   taunt: { id: "taunt", name: "도발", icon: "📣", taunt: true }, // 적 공격 집중 유도(AI 참조)

@@ -1,6 +1,6 @@
 // 효과 적용 (then) — 기존 전투 프리미티브 재사용. move는 인라인(skills.ts 사이클 회피).
 import type { Effect, EffTarget, GameState, Pos, Unit } from "../../types.ts";
-import { clamp, hasStatus, samePos } from "../../util.ts";
+import { clamp, hasStatus, roundDiv, samePos } from "../../util.ts";
 import { computeDamage, dealRawDamage } from "../damage.ts";
 import { applyStatusInstance } from "../status.ts";
 import { insertInterrupts } from "../interrupt.ts";
@@ -46,8 +46,8 @@ export function applyEffect(state: GameState, rctx: RuleCtx, eff: Effect): void 
     case "move": for (const tgt of resolveTargets(state, rctx, eff.target)) if (tgt.alive) moveUnit(state, tgt, eff.deltaCol); break;
     case "grantInterrupt": { const subs: string[] = []; for (const tgt of resolveTargets(state, rctx, eff.target)) for (let i = 0; i < eff.count; i++) subs.push(tgt.uid); insertInterrupts(state, subs); break; }
     case "statMod": for (const tgt of resolveTargets(state, rctx, eff.target)) tgt.statMods[eff.stat] = (tgt.statMods[eff.stat] ?? 0) + eff.delta; break;
-    case "healByDamage": { const amt = Math.round((rctx.damage ?? 0) * eff.pct / 100); if (amt > 0) for (const tgt of resolveTargets(state, rctx, eff.target)) { if (!tgt.alive) continue; const b = tgt.hp; tgt.hp = Math.min(tgt.hpMax, tgt.hp + amt); state.log.push({ t: "heal", targetUid: tgt.uid, amount: tgt.hp - b }); } break; }
-    case "reflectByDamage": { const amt = Math.round((rctx.damage ?? 0) * eff.pct / 100); if (amt > 0) for (const tgt of resolveTargets(state, rctx, eff.target)) dealRawDamage(state, tgt, amt, { attackerUid: owner.uid }); break; }
+    case "healByDamage": { const amt = roundDiv((rctx.damage ?? 0) * eff.pct, 100); if (amt > 0) for (const tgt of resolveTargets(state, rctx, eff.target)) { if (!tgt.alive) continue; const b = tgt.hp; tgt.hp = Math.min(tgt.hpMax, tgt.hp + amt); state.log.push({ t: "heal", targetUid: tgt.uid, amount: tgt.hp - b }); } break; }
+    case "reflectByDamage": { const amt = roundDiv((rctx.damage ?? 0) * eff.pct, 100); if (amt > 0) for (const tgt of resolveTargets(state, rctx, eff.target)) dealRawDamage(state, tgt, amt, { attackerUid: owner.uid }); break; }
     case "removeStatus": for (const tgt of resolveTargets(state, rctx, eff.target)) tgt.statuses = tgt.statuses.filter((s) => s.defId !== eff.statusId); break;
     case "castSkill": {
       const sk = SKILLS[eff.skillId];

@@ -28,7 +28,7 @@ function offerRow(o: ShopOfferDef, i: number): string {
 
 /** 새 품목 기본값(종류별) — 첫 옵션으로 유효 id 채움. */
 export function defaultShopOffer(kind: string): ShopOfferDef {
-  if (kind === "heal") return { kind: "heal", pct: 0.5, cost: 15 };
+  if (kind === "heal") return { kind: "heal", pct: 50, cost: 15 };
   if (kind === "learn") return { kind: "learn", charId: CHAR_OPTS[0]?.value ?? "", skillId: SKILL_OPTS[0]?.value ?? "", cost: 20 };
   return { kind: "buyItem", itemId: ITEM_OPTS[0]?.value ?? "", cost: 30 };
 }

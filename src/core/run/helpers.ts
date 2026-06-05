@@ -2,6 +2,7 @@
 // 노드 조회 + 파티 회복(+모험 트리거) + 노드 완료(+nodeClear) + 스킬 보유/강화 변이.
 import type { DecoratorLayer, FloorDef, MapNode, PartyMemberState } from "../types.ts";
 import type { RunState } from "./types.ts";
+import { roundDiv } from "../util.ts";
 import { liveReachable } from "./graph.ts";
 import { fireRunTrigger } from "./passives.ts";
 
@@ -19,7 +20,7 @@ export function runInstantLayers(run: RunState, layers: DecoratorLayer[] | undef
         break;
       case "heal":
         healParty(run, L.pct, !!L.revive);
-        run.log.push(`파티 ${Math.round(L.pct * 100)}% 회복`);
+        run.log.push(`파티 ${L.pct}% 회복`);
         break;
       case "grantStatus": {
         const ids = L.charId ? [L.charId] : run.party.map((m) => m.charId);
@@ -45,14 +46,14 @@ export function node(run: RunState, id: string): MapNode {
   return n;
 }
 
-/** 파티 회복. revive=true면 전투불능(hp≤0)도 maxHp*pct로 부활(휴식·액트전환). false면 생존자만 회복. */
+/** 파티 회복. pct=정수 퍼센트(50=50%). revive=true면 전투불능(hp≤0)도 maxHp×pct%로 부활(휴식·액트전환). false면 생존자만. */
 export function healParty(run: RunState, pct: number, revive = false): void {
   for (const m of run.party) {
     if (m.hp <= 0) {
-      if (revive) m.hp = Math.max(1, Math.round(m.maxHp * pct)); // 부활
+      if (revive) m.hp = Math.max(1, roundDiv(m.maxHp * pct, 100)); // 부활
       continue;
     }
-    m.hp = Math.min(m.maxHp, m.hp + Math.round(m.maxHp * pct));
+    m.hp = Math.min(m.maxHp, m.hp + roundDiv(m.maxHp * pct, 100));
   }
   fireRunTrigger(run, { on: "partyHpChange", dir: "heal" });
 }

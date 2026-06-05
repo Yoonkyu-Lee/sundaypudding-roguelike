@@ -39,7 +39,7 @@ export interface StatusDef {
   hot?: { trigger: StatusTrigger; healPerStack: number };
   /** 행동 봉쇄(빙결): 정규 턴 행동 불가 */
   actionDenial?: boolean;
-  /** 주는 데미지 곱연산 배율(동상 0.5). 표준 전역효과만 곱연산 허용(3.7) */
+  /** 주는 데미지 곱연산 배율(정수 퍼센트, 동상 50=×0.5). 표준 전역효과만 곱연산 허용(3.7). zero-f64(P0-2) */
   damageDealtMult?: number;
   /** 쉴드 잠식 배율(공포): 들어온 피해 1이 쉴드를 (스택)만큼 깎음. HP 효율 불변 (3.5) */
   shieldShred?: boolean;
@@ -53,7 +53,7 @@ export interface StatusDef {
   dmgDealtFlat?: number;
   /** 치명타 확률 가산(%) */
   critChanceAdd?: number;
-  /** 치명타 배수 가산 */
+  /** 치명타 배수 가산(정수 퍼센트, 예리 50=+0.5). zero-f64(P0-2) */
   critMultiplierAdd?: number;
   /** 무적: 모든 피해 0 (백병원 등) */
   invincible?: boolean;
@@ -150,7 +150,7 @@ export interface Character {
   evasion: number; // 회피 — 명중에서 차감 (2.6)
   accuracy: number; // 명중 가산, 기본 0 (2.7)
   critChance: number; // 치명 확률 %, 기본 10 (2.6)
-  critMultiplier: number; // 치명 배수, 기본 1.5 (2.6)
+  critMultiplier: number; // 치명 배수(정수 퍼센트, 150=×1.5). zero-f64(P0-2) (2.6)
   skillIds: string[]; // 보유 풀. 슬라이스에선 앞 4개를 활성으로 사용
   /** 플레이어가 본거지에서 편성 가능한 아군 후보인가. 적/잡몹은 false/미설정. (엔진 미해석 — 허브 선택 풀 카테고리화) */
   playable?: boolean;

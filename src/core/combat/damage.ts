@@ -1,16 +1,17 @@
 // 데미지/피해 적용 (2.5/2.9/3.7) — 스킬 상수 데미지, 쉴드·공포·관통·불사, 미리보기.
 import type { GameState, Skill, Unit } from "../types.ts";
 import { STATUS_DEFS } from "../../data/statuses.ts";
-import { hasStatus, statMod, statusFlag, statusNumSum, totalStacks } from "../util.ts";
+import { hasStatus, roundDiv, statMod, statusFlag, statusNumSum, totalStacks } from "../util.ts";
 import { getFormationBonus } from "./formation.ts";
 import { fireTrigger } from "./passives/index.ts";
 
-/** 데미지 계산: (스킬상수 + 무기보정 + 합연산보정[공위증/약화]) × 전역배율(동상) × crit. (3.7 순서) */
+/** 데미지 계산(정수, zero-f64): (스킬상수 + 무기보정 + 합연산보정) × 동상% × crit%, 마지막에 한 번 반올림. (3.7 순서)
+ * 배율은 정수 퍼센트(×100): 동상 50=×0.5, critMultiplier 150=×1.5. num/10000 = base×(frostPct/100)×(critPct/100). */
 export function computeDamage(actor: Unit, base: number, crit: boolean): number {
-  let dmg = base + actor.equipDmgFlat + statusNumSum(actor, "dmgDealtFlat"); // 무기 dmgFlat(4.3) + 공위증(+)/약화(-)
-  if (hasStatus(actor, "frost")) dmg *= STATUS_DEFS["frost"].damageDealtMult ?? 1; // 곱연산(전역)
-  if (crit) dmg *= actor.critMultiplier + statMod(actor, "critMultiplier") + statusNumSum(actor, "critMultiplierAdd");
-  return Math.max(0, Math.round(dmg));
+  const flat = base + actor.equipDmgFlat + statusNumSum(actor, "dmgDealtFlat"); // 무기 dmgFlat(4.3) + 공위증(+)/약화(-)
+  const frostPct = hasStatus(actor, "frost") ? (STATUS_DEFS["frost"].damageDealtMult ?? 100) : 100; // 곱연산(전역)
+  const critPct = crit ? actor.critMultiplier + statMod(actor, "critMultiplier") + statusNumSum(actor, "critMultiplierAdd") : 100;
+  return roundDiv(flat * frostPct * critPct, 10000); // n≤0이면 0(약화 음수 클램프 겸용)
 }
 
 /** 쉴드 → HP 순으로 피해 적용 (2.9). 공포(쉴드 잠식)·관통(쉴드 무시)·불사(생존) 반영. */

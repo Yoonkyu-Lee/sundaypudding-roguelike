@@ -15,7 +15,7 @@ function materializeOffers(run: RunState, defs: ShopOfferDef[], mk: () => string
   const out: ShopOffer[] = [];
   for (const d of defs) {
     if (d.kind === "buyItem") { const it = ITEMS[d.itemId]; if (it) out.push({ id: mk(), kind: "buyItem", cost: d.cost, itemId: it.id, label: `「${it.name}」` }); }
-    else if (d.kind === "heal") out.push({ id: mk(), kind: "heal", cost: d.cost, pct: d.pct, label: `치료: 파티 ${Math.round(d.pct * 100)}% 회복` });
+    else if (d.kind === "heal") out.push({ id: mk(), kind: "heal", cost: d.cost, pct: d.pct, label: `치료: 파티 ${d.pct}% 회복` });
     else if (d.kind === "learn") { const c = CHARACTERS[d.charId], sk = SKILLS[d.skillId]; if (c && sk && run.party.some((p) => p.charId === d.charId && p.hp > 0)) out.push({ id: mk(), kind: "learn", cost: d.cost, charId: d.charId, skillId: d.skillId, label: `스킬: ${c.name} 「${sk.name}」` }); }
   }
   return out;
@@ -49,7 +49,7 @@ function generateProcedural(run: RunState, mk: () => string): ShopOffer[] {
   const picked: ShopOffer[] = [];
   while (picked.length < 3 && pool.length) picked.push(pool.splice(run.rng.int(0, pool.length - 1), 1)[0]);
   picked.push(...genItemOffers(run, mk, 2)); // 장착 아이템 진열 (4.3)
-  picked.push({ id: mk(), kind: "heal", cost: 15, pct: 0.5, label: "치료: 파티 50% 회복" });
+  picked.push({ id: mk(), kind: "heal", cost: 15, pct: 50, label: "치료: 파티 50% 회복" });
   return picked;
 }
 

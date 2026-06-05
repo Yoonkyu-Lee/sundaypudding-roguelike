@@ -8,7 +8,7 @@ export const ITEMS: Record<string, ItemDef> = {
   wood_bat: { id: "wood_bat", name: "각목", slot: "weapon", icon: "🏏", dmgFlat: 3, tier: 1, nextTierId: "nailed_bat" },
   nailed_bat: { id: "nailed_bat", name: "대못 박은 각목", slot: "weapon", icon: "🏏", dmgFlat: 6, mods: { critChance: 5 }, tier: 2 },
   brass_knuckle: { id: "brass_knuckle", name: "황동 너클", slot: "weapon", icon: "🥊", dmgFlat: 4, mods: { critChance: 8 } },
-  sashimi_knife: { id: "sashimi_knife", name: "사시미 칼", slot: "weapon", icon: "🔪", dmgFlat: 2, mods: { critChance: 12, critMultiplier: 0.3 } },
+  sashimi_knife: { id: "sashimi_knife", name: "사시미 칼", slot: "weapon", icon: "🔪", dmgFlat: 2, mods: { critChance: 12, critMultiplier: 30 } },
 
   // ── 방어구 (HP +N, 쉴드 획득량 +N) ──
   leather_vest: { id: "leather_vest", name: "가죽 조끼", slot: "armor", icon: "🦺", mods: { hp: 10 } },
