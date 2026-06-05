@@ -6,6 +6,7 @@ import { createBattle, step, getLegalActions } from "../../engine.ts";
 import { chooseAction } from "../../ai.ts";
 import type { Encounter } from "../../../data/encounters.ts";
 import { Rng } from "../../rng.ts";
+import { canonicalLog } from "./canonical.ts";
 
 /** 스트레스 런 1판의 관측 트레이스(전투 이벤트 로그 시퀀스 + 최종 다이제스트). */
 export function stressTrace(seed: number, runDef: RunDef): string[] {
@@ -36,5 +37,5 @@ export function battleTrace(seed: number, enc: Encounter, mode: "ai" | "random" 
     }
     n++;
   }
-  return JSON.stringify(state.log);
+  return canonicalLog(state.log);
 }

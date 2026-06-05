@@ -10,6 +10,7 @@ import { Rng } from "../../rng.ts";
 import { step, getLegalActions, unitById } from "../../engine.ts";
 import { chooseAction } from "../../ai.ts";
 import { enumerateRichActions } from "./richActions.ts";
+import { canonicalLog } from "./canonical.ts";
 import { createRun, enterNode, resolveBattleEnd, chooseReward, buyShopOffer, leaveShop, chooseEncounterOption } from "../../run.ts";
 import type { RunState, RunDef } from "../../run.ts";
 import { checkCombatInvariants, checkRunInvariants } from "../invariants/index.ts";
@@ -103,7 +104,7 @@ export function stressRun(seed: number, runDef: RunDef, opts: StressRunOpts = {}
             battleSteps++;
             if (check) violations.push(...checkCombatInvariants(b));
           }
-          if (opts.trace) opts.trace.push(`B ${JSON.stringify(b.log)}`);
+          if (opts.trace) opts.trace.push(`B ${canonicalLog(b.log)}`);
           resolveBattleEnd(run);
           break;
         }

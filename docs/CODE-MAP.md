@@ -85,7 +85,7 @@ src/core/
     harness/          ▸검증 harness. stressRun.ts(stressRun — 시드결정 무작위 합법행동으로 런 전체 구동·매 step 불변식 검사·
                       크래시/교착 가드·정책 random|ai-allies|ai·richActions 옵션·phase 커버리지. "stress run"=검증용 무작위 한 판, 게임 캠페인 모드와 무관) ·
                       richActions.ts(enumerateRichActions — getLegalActions(targetUid)이 못 내는 targetCell·빈칸 AoE 앵커·free-cell(cells) 형태까지 열거, 명령공간 확대) ·
-                      selfConsistency.ts(stressTrace·tracesMatch·battleTrace — 같은 시드 2회=동일 로그) · index.ts 배럴
+                      selfConsistency.ts(stressTrace·tracesMatch·battleTrace — 같은 시드 2회=동일 로그) · canonical.ts(canonicalJson/canonicalLog — 정렬키·정수·undefined생략 직렬화, TS↔Rust 바이트동일 계약 [`SERIALIZATION-CONTRACT.md`]) · index.ts 배럴
     golden/           ▸골든 이벤트 로그 코퍼스. corpus.ts(computeManifest — run×정책×시드×rich + 전투 픽스처의 canonical 트레이스 SHA 매니페스트) · manifest.json(동결 골든, 커밋됨)
     stress.test.ts    무작위 스트레스 런(전 런×정책×시드 크래시·교착·위반 0 + rich 행동 자극 + phase 커버리지)
     golden.test.ts    골든 코퍼스 회귀(동결 manifest와 SHA 비교 — 침묵 로그 드리프트 검출. 갱신=npm run golden:update)
