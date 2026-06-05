@@ -110,4 +110,10 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 - [~] P1-12 세션 API (순수 Rust 로직 완료 — Tauri 셸은 P1-13):
   - [x] `observation.rs`(build_observation·build_legal_actions) — 뷰(UnitView/StatusView/LegalActionView/Observation, Serialize). seed42 관측 TS 바이트동일(한글명·이모지아바타·스킬라벨·명중%·포메이션)
   - [x] `session.rs`(Session: new_demo·step_action→**StepResult{eventDelta, observation}**) — 매 step 전체상태 미전송. 누적델타==전체로그·종료관측 테스트. Tauri 커맨드가 이 API를 얇게 감쌈
-- [ ] P1-13 프론트 피처플래그 → 최종 Tauri2 검증
+- [ ] P1-13 프론트 피처플래그 → 최종 Tauri2 검증 **(사용자 주도 — 데스크톱 셸 + 육안 검증)**
+  > P0~P1-12로 **결정론 엔진 + 세션 경계가 전부 바이트-검증 완료**. P1-13은 본질적으로 "데스크톱 앱을 띄워 플레이가 맞는지 눈으로 확인"하는 단계라 자동 검증 불가 — 사용자가 직접 구동. Tauri 툴체인을 레포에 추가하는 결정도 사용자 몫. 기본 워크스페이스(`cargo test`/`npm run check`)는 가볍게 유지하려 Tauri를 멤버에서 제외.
+  > **실행 계획(사용자 확인 후 스캐폴드):**
+  > 1. `app/`(워크스페이스 밖) Tauri2 앱 크레이트 — `spr-core` 의존, `#[tauri::command] create_session(seed)→{observation}` · `battle_step(action)→StepResult` 가 `session::Session`을 얇게 감쌈(상태는 `tauri::State<Mutex<Session>>`).
+  > 2. `src/web` 백엔드 추상화: 현재 TS 코어 직접호출을 인터페이스로 빼고, **피처플래그**(예: `?core=rust` 또는 빌드 env)로 ① TS 코어(기존) ② Tauri IPC(`invoke('battle_step', …)`→eventDelta 재생) 선택. 이벤트 로그 재생(8.5)은 이미 델타 기반이라 어댑터만.
+  > 3. 검증: `tauri dev`로 앱 구동 → 데모 전투를 **TS 모드와 Rust 모드 양쪽 플레이**, 동일 시드 동일 진행/연출 확인(델타 = 엔진 differential이 이미 보장). 필요시 WebView2/`tauri-cli` 설치.
+  > **선결 결정**: (a) Tauri 툴체인을 이 머신/레포에 추가할지, (b) 프론트 피처플래그 방식(쿼리파라미터 vs 빌드분기).
