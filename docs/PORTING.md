@@ -88,7 +88,7 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 
 ## 7. 진행 상태 (각 슬라이스 `/slice-wrap`이 갱신)
 
-- [ ] P0-1 행동 벡터 포맷 + emitter
+- [x] P0-1 행동 벡터 포맷 + emitter (`harness/vector.ts`, record→replay 바이트동일 입증)
 - [ ] P0-2 zero-f64 정수화 (동작변경 승인)
 - [ ] P0-3 전역상태→컨텍스트
 - [ ] P0-4 데이터 JSON화
