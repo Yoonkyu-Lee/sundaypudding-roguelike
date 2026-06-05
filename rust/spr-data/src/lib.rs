@@ -3,6 +3,7 @@
 //! → 로더 + canonical 직렬화 계약을 *전 실데이터*(Korean/emoji 포함)로 검증. 타입 구조체는 엔진 슬라이스(P1-9)에서 도입.
 use serde_json::Value;
 use spr_types::data::{Character, Encounter, StatusDef};
+use spr_types::skills::Skill;
 use std::collections::HashMap;
 
 /// 커밋된 데이터 번들 JSON(컴파일 시 임베드 — 런타임 경로 불요). TS `npm run data:export` 산출.
@@ -26,6 +27,11 @@ pub fn demo_encounter() -> Encounter {
 /// 상태이상 정의 맵(id→StatusDef).
 pub fn status_defs() -> HashMap<String, StatusDef> {
     serde_json::from_value(data_value()["statuses"].clone()).expect("statuses 역직렬화")
+}
+
+/// 스킬 맵(id→Skill). 타겟팅·스킬해소 엔진이 소비.
+pub fn skills() -> HashMap<String, Skill> {
+    serde_json::from_value(data_value()["skills"].clone()).expect("skills 역직렬화")
 }
 
 #[cfg(test)]

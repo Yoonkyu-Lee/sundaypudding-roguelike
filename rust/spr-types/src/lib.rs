@@ -5,3 +5,4 @@ pub mod combat;
 pub mod data;
 pub mod map;
 pub mod rng;
+pub mod skills;

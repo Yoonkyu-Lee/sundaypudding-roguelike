@@ -1,7 +1,7 @@
 //! 전투 런타임 타입 (TS `types/runtime.ts`). 이벤트는 canonical 직렬화 대상(SERIALIZATION-CONTRACT).
 use crate::data::Pos;
 use crate::rng::Rng;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// 상태이상 인스턴스 (원장 1건).
@@ -62,6 +62,25 @@ pub struct SpeedRoll {
     pub speed: i64,
 }
 
+/// 플레이어/AI 행동(런타임 입력 — step이 소비). 행동벡터로 기록·재생(TS Action).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum Action {
+    #[serde(rename = "skill")]
+    Skill {
+        #[serde(rename = "skillId")]
+        skill_id: String,
+        #[serde(rename = "targetUid", skip_serializing_if = "Option::is_none", default)]
+        target_uid: Option<String>,
+        #[serde(rename = "targetCell", skip_serializing_if = "Option::is_none", default)]
+        target_cell: Option<Pos>,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        cells: Option<Vec<Pos>>,
+    },
+    #[serde(rename = "skip")]
+    Skip,
+}
+
 /// 이벤트 로그 (canonical 직렬화 — TS GameEvent). 변종은 포팅 진행하며 추가.
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "t")]
@@ -88,6 +107,29 @@ pub enum GameEvent {
     },
     #[serde(rename = "death")]
     Death { uid: String },
+    #[serde(rename = "statusApplied")]
+    StatusApplied {
+        #[serde(rename = "targetUid")]
+        target_uid: String,
+        #[serde(rename = "statusId")]
+        status_id: String,
+        stacks: i64,
+        duration: i64,
+    },
+    #[serde(rename = "heal")]
+    Heal {
+        #[serde(rename = "targetUid")]
+        target_uid: String,
+        amount: i64,
+    },
+    #[serde(rename = "statusTick")]
+    StatusTick {
+        #[serde(rename = "targetUid")]
+        target_uid: String,
+        #[serde(rename = "statusId")]
+        status_id: String,
+        dmg: i64,
+    },
 }
 
 pub struct GameState {
