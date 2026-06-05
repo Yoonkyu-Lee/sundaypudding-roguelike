@@ -1,0 +1,27 @@
+# Tauri2 데스크톱 셸 (P1-13) — 워크스페이스 밖 독립 크레이트(기본 cargo test/check 가볍게 유지).
+# spr-core 세션 API를 #[tauri::command]로 얇게 노출. 빌드: cargo install tauri-cli --version "^2" && cargo tauri dev
+[package]
+name = "spr-app"
+version = "0.0.1"
+edition = "2021"
+
+# 독립 워크스페이스 선언 — rust/ 워크스페이스에 흡수되지 않음(가벼운 게이트 유지).
+[workspace]
+
+[lib]
+name = "spr_app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+spr-core = { path = "../rust/spr-core" }
+spr-types = { path = "../rust/spr-types" }
+
+[features]
+# 기본 prod 빌드시 개발용 자산서버 비활성(Tauri 관례).
+custom-protocol = ["tauri/custom-protocol"]
