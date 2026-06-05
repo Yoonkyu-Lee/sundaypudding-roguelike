@@ -36,6 +36,8 @@ pub struct Unit {
     pub alive: bool,
     pub stat_mods: HashMap<String, i64>,
     pub turn_count: i64,
+    pub equip_dmg_flat: i64,        // 장착 무기 dmgFlat 합(4.3) — computeDamage 합산
+    pub equip_shield_gain_add: i64, // 장착 방어구 쉴드획득 보정 합(4.3)
 }
 
 pub type TurnKind = &'static str; // "normal" | "interrupt"
@@ -72,6 +74,20 @@ pub enum GameEvent {
     },
     #[serde(rename = "turnStart")]
     TurnStart { uid: String, kind: String },
+    #[serde(rename = "damage")]
+    Damage {
+        #[serde(rename = "targetUid")]
+        target_uid: String,
+        base: i64,
+        #[serde(rename = "final")]
+        final_: i64,
+        #[serde(rename = "toShield")]
+        to_shield: i64,
+        #[serde(rename = "toHp")]
+        to_hp: i64,
+    },
+    #[serde(rename = "death")]
+    Death { uid: String },
 }
 
 pub struct GameState {

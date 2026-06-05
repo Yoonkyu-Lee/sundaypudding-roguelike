@@ -99,7 +99,8 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 - [x] P1-8 런 그래프 — `spr-core/graph.rs`: hex_adjacent·neighbor_ids·live_reachable·validate_run 등. TS parity(yain: validateRun ok·neighbor·liveReachable·clear 일치). 미방문회피·edge순서 보존
 - [~] P1-9 전투 수직 슬라이스 (sub-slice 진행):
   - [x] 9a createBattle + startRound + advance — `spr-core/battle.rs`. roundStart(SPD주사위 RNG)·turnStart 이벤트 TS 바이트동일(DEMO seed42). RNG 소비순서·서열정렬 검증
-  - [ ] 9b damage(computeDamage/dealRawDamage) · 9c status · 9d targeting · 9e skills · 9f passives · 9g interrupt · 9h flow(step)→풀 differential
+  - [x] 9b damage — `util.rs`(round_div·has_status·total_stacks·status_num_sum·status_flag·is_frozen) + `damage.rs`(compute_damage·deal_raw_damage) + StatusDef. TS parity(클린/frost/edge·쉴드/공포/관통/무적/불사/사망)
+  - [ ] 9c status(apply/tick) · 9d targeting · 9e skills · 9f passives · 9g interrupt · 9h flow(step)→풀 differential
 - [ ] P1-10~11 골든/스트레스 벡터 재생
 - [ ] P1-12 Tauri 세션 API
 - [ ] P1-13 프론트 피처플래그 → 최종 Tauri2 검증

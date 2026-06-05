@@ -42,3 +42,66 @@ pub struct Character {
     #[serde(rename = "skillIds")]
     pub skill_ids: Vec<String>,
 }
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct Dot {
+    pub trigger: String, // turnStart|turnEnd|onAction
+    #[serde(rename = "dmgPerStack")]
+    pub dmg_per_stack: i64,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct Hot {
+    pub trigger: String,
+    #[serde(rename = "healPerStack")]
+    pub heal_per_stack: i64,
+}
+
+/// 상태이상 정의(거동 데이터, TS content.ts StatusDef). 누락 옵셔널은 None/false.
+#[derive(Debug, Clone, Deserialize)]
+pub struct StatusDef {
+    pub id: String,
+    pub name: String,
+    pub icon: String,
+    #[serde(default)]
+    pub buff: bool,
+    pub dot: Option<Dot>,
+    pub hot: Option<Hot>,
+    #[serde(rename = "actionDenial", default)]
+    pub action_denial: bool,
+    #[serde(rename = "damageDealtMult")]
+    pub damage_dealt_mult: Option<i64>,
+    #[serde(rename = "shieldShred", default)]
+    pub shield_shred: bool,
+    #[serde(default)]
+    pub pierce: bool,
+    #[serde(default)]
+    pub undying: bool,
+    #[serde(rename = "grantsInterrupt", default)]
+    pub grants_interrupt: bool,
+    #[serde(rename = "dmgDealtFlat")]
+    pub dmg_dealt_flat: Option<i64>,
+    #[serde(rename = "critChanceAdd")]
+    pub crit_chance_add: Option<i64>,
+    #[serde(rename = "critMultiplierAdd")]
+    pub crit_multiplier_add: Option<i64>,
+    #[serde(default)]
+    pub invincible: bool,
+    #[serde(default)]
+    pub taunt: bool,
+    #[serde(rename = "speedMod")]
+    pub speed_mod: Option<i64>,
+}
+
+impl StatusDef {
+    /// statusNumSum용 수치 필드 조회(없으면 0).
+    pub fn num_field(&self, key: &str) -> i64 {
+        match key {
+            "dmgDealtFlat" => self.dmg_dealt_flat.unwrap_or(0),
+            "critChanceAdd" => self.crit_chance_add.unwrap_or(0),
+            "critMultiplierAdd" => self.crit_multiplier_add.unwrap_or(0),
+            "speedMod" => self.speed_mod.unwrap_or(0),
+            _ => 0,
+        }
+    }
+}

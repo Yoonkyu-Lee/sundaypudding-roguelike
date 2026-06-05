@@ -29,6 +29,8 @@ pub fn make_unit(c: &Character, side: &str, idx: usize, pos: Pos) -> Unit {
         alive: true,
         stat_mods: HashMap::new(),
         turn_count: 0,
+        equip_dmg_flat: 0,
+        equip_shield_gain_add: 0,
     }
 }
 
