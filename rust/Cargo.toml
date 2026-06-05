@@ -1,0 +1,10 @@
+# Sunday Pudding 로그라이크 — Rust 코어 (TS src/core/ 포팅, PORTING.md).
+# 크레이트 의존그래프 = 레이어: spr-types ← spr-data ← spr-core ← spr-cli (Cargo가 단방향 컴파일 강제).
+# 현재 P1-6: spr-types(rng) 스캐폴드. 나머지는 슬라이스 진행하며 추가.
+[workspace]
+resolver = "2"
+members = ["spr-types"]
+
+[workspace.package]
+version = "0.0.1"
+edition = "2021"

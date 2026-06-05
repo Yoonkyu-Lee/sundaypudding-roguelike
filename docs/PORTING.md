@@ -40,7 +40,8 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 5. **`DATA-SERIALIZATION-CONTRACT.md`** 작성 — union 판별자(`kind`/`do`/`c`/`on`)·absent vs null·정수/퍼센트 스케일·배열=의미순서·ID 참조검증·passive DSL(`types/passives.ts`)·AI 프로파일(`ai/profile.ts`). TS에 DATA 계약 검증 추가.
 
 ### Phase 1 — Rust 포팅 (`/port-slice` + `/differential`)
-6. Cargo workspace: `spr-types` + 시드 RNG(부호 계약) + canonical 직렬화([`SERIALIZATION-CONTRACT.md`](SERIALIZATION-CONTRACT.md)).
+6. [진행] Cargo workspace `rust/` + 시드 RNG(부호 계약) + canonical 직렬화([`SERIALIZATION-CONTRACT.md`](SERIALIZATION-CONTRACT.md)).
+   - ✅ workspace `rust/`(spr-types) + **RNG 바이트 동일 이식**(`spr-types/src/rng.rs`, mulberry32 u32, TS parity 테스트 5시드·int·chance). `npm run check`가 `cargo test` 게이트 실행. ☐ canonical 직렬화 함수(Rust) 후속.
 7. 데이터 로더 포팅 + 전 JSON 검증(DATA 계약).
 8. 런 그래프/도달성 포팅(`run/graph.ts`).
 9. **전투 수직 슬라이스**(한 단위 — 순환: `flow → turnOrder → targeting → status → damage → skills → passives`).
@@ -92,7 +93,8 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 - [x] P0-2 zero-f64 정수화 — crit/frost/pct 정수퍼센트(`util.roundDiv`). 코어 게임수학 f64 0. **골든 바이트 동일**(코퍼스 관측 변화 0 → D2 승인 게이트 미발동). AI 점수 f64는 이연(differential 무관)
 - [x] P0-3 전역상태→컨텍스트 — passives `depth`/`activeKeys`→`GameState.fireDepth`/`fireActiveKeys`(string[]), run `firing`→`RunState.firing`. 동작 보존(골든 불변), 세이브 왕복 OK, 모듈 전역 mut 0
 - [x] P0-4 데이터 JSON화 — `scripts/export-data.ts`→`src/data/data.generated.json`(canonical 번들 10맵), `npm run data:export`, 드리프트 게이트(`data-export.test`). TS=타입 authoring 소스 + 파생 게이트 JSON. Rust serde 로드 대상
-- [x] P0-5 DATA-SERIALIZATION-CONTRACT — `docs/DATA-SERIALIZATION-CONTRACT.md`(판별자·정수스케일·배열순서·ID참조·absent) + `data-refs.test` 참조 무결성 게이트(dangling 0). **Phase 0 완료 → Phase 1 진입 준비**
+- [x] P0-5 DATA-SERIALIZATION-CONTRACT — `docs/DATA-SERIALIZATION-CONTRACT.md`(판별자·정수스케일·배열순서·ID참조·absent) + `data-refs.test` 참조 무결성 게이트(dangling 0). **Phase 0 완료**
+- [~] P1-6 Rust workspace + RNG — `rust/`(spr-types) 스캐폴드 + RNG 바이트동일(`rng.rs`, TS parity 5시드). `npm run check`에 `cargo test` 게이트 통합. canonical 직렬화(Rust) 후속
 - [ ] P1-6 Rust workspace(types/rng/canonical)
 - [ ] P1-7 데이터 로더
 - [ ] P1-8 런 그래프

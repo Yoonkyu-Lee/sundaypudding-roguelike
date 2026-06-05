@@ -110,6 +110,16 @@ src/core/
 ```
 > 테스트 배치: **코어=`core/tests/`에 모음**(파사드 경유 통합), **단일 모듈 단위테스트는 코로케이트**(`web/hexgeo.test.ts`·`web/editor/ops.test.ts`·`web/editor/editor-data.test.ts`[템플릿/store/스키마 정합성 W]). `node --test` 자동 디스커버리(`*.test.ts`) — 새 파일은 목록 갱신 불필요. 에디터 정합성 불변식(U/V/W)은 ops·hexgeo·editor-data 테스트가 커버.
 
+## rust/ (TS→Rust 포팅, Phase 1 — PORTING.md)
+
+```
+rust/                Cargo workspace (크레이트 의존그래프 = 레이어 단방향 컴파일강제)
+  Cargo.toml         workspace (members: spr-types …)
+  spr-types/         의존 0 — 타입·프리미티브
+    src/rng.rs       Rng(mulberry32 u32) — TS src/core/rng.ts 바이트동일(parity 테스트). 부호계약=u32
+```
+> `npm run check`가 rust/ 존재 시 `cargo test` 게이트 실행. 후속 크레이트(spr-data←spr-core←spr-cli)는 슬라이스 진행하며 추가.
+
 ## data / view 파일
 
 | 파일 | 레이어 | 책임 | 핵심 export |

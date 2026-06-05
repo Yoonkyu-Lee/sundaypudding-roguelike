@@ -118,6 +118,14 @@ const passed = /pass (\d+)/.exec(test.out)?.[1];
 console.log(test.ok ? `ok (${passed} pass)` : "FAIL");
 if (!test.ok) fail(`테스트 실패:\n${test.out.trim().split("\n").slice(-15).join("\n")}`);
 
+// ── 5.5) Rust 게이트 (rust/ 존재 시 — 포팅 Phase 1, PORTING.md) ──────────────
+if (existsSync(join(ROOT, "rust", "Cargo.toml"))) {
+  process.stdout.write("cargo test… ");
+  const cargo = run("cargo test --manifest-path rust/Cargo.toml -q");
+  console.log(cargo.ok ? "ok" : "FAIL");
+  if (!cargo.ok) fail(`cargo test 실패:\n${cargo.out.trim().split("\n").slice(-15).join("\n")}`);
+}
+
 // ── 6) 데모 해시 회귀 (결정론 = 순수 리팩토링 안전망) ─────────────────────────
 const GOLD = join(ROOT, "scripts", "golden-hashes.json");
 const SEEDS = [1, 42, 7];
