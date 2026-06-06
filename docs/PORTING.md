@@ -127,6 +127,12 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
   > 3. 검증: `tauri dev`로 앱 구동 → 데모 전투를 **TS 모드와 Rust 모드 양쪽 플레이**, 동일 시드 동일 진행/연출 확인(델타 = 엔진 differential이 이미 보장). 필요시 WebView2/`tauri-cli` 설치.
   > **선결 결정**: (a) Tauri 툴체인을 이 머신/레포에 추가할지, (b) 프론트 피처플래그 방식(쿼리파라미터 vs 빌드분기).
 
+### Phase 4 — TS 코어 은퇴 (캡슐 → 기본전환·소킹 → 가지치기)
+> Rust 패리티 바이트검증 완료 → TS 엔진을 단계적 은퇴. **삭제 아닌 아카이브**(태그/브랜치 = 재실행 가능한 오라클 보관). 단칼 절단 X.
+- [x] **4-1 캡슐 + 기본값 전환** (2026-06): tag `ts-golden-oracle` + branch `archive/ts-core` @ccf3504(TS 엔진·differential·골든생성기 온전). `main.ts` 기본 부팅 = Rust 풀게임(Tauri 감지) — `?core=ts&full=1`=TS풀게임(A/B), `?core=rust&full=1`=Rust, `?core=rust|ts`=전투데모. `tauri.conf` devUrl 파라미터 제거(dev·prod 모두 새 기본경로). **TS 풀게임 경로는 잠재워두되 유지**(소킹 폴백).
+- [ ] **4-2 소킹**: Rust-기본으로 실플레이 — differential이 못 잡는 UX/통합 버그(예: 프리즈·클릭) 솎기. TS는 살아있는 A/B 폴백.
+- [ ] **4-3 가지치기**: 소킹 통과 후 은퇴 세트 제거(히스토리+아카이브 보존). **남김**: `src/core/types/`(IPC 계약 스키마)·`src/core/run/graph.ts`(hex/validate 순수유틸, 에디터용)·`src/data/`·`scripts/export-data.ts`. **제거**: TS 엔진(`core/combat`·`ai`·`rng`·`engine`·`run/*` 로직)·`core/tests`(골든/differential)·골든생성기(`export-diff-corpus`·`export-ai-corpus`·`golden-update`·`stress-sweep`)·TS 프론트 게임경로(`main.ts` TS분기·`render.ts` renderApp/computeTgtFromState·`overlay.ts` TS판·TS `handlers/`·`save.ts`·`hub.ts` makeRun·`coreAdapter`/`rustBattle`). **주의**: 제거 후 골든 재생성·differential 불가(아카이브 체크아웃 필요) → 신규 메커니즘은 Rust 직접+회귀픽스처.
+
 ### Phase 3 — 실제 프론트를 Rust 코어로 (똑같은 경험, 엔진만 Rust)
 > 목표: TS+웹렌더 프로그램 **전부와 똑같은 경험** — 실제 렌더러(맵·전투UI·타임라인) 그대로, 엔진만 Rust. 정공법(프론트 재설계).
 - [x] P3-1 실제 런 화면 — `rustRun.ts` 비전투(맵/보상/상점/인카운터/결과)를 **실제 `renderRunScreen`**(RunView 기반, TS 바이트동일)에 직결. 헥스맵·카메라·파티패널 그대로, 핸들러 Rust IPC.
