@@ -9,14 +9,14 @@ use spr_types::data::{Character, Pos};
 use spr_types::skills::Skill;
 use std::collections::HashMap;
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct StatusSource {
     pub unit: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub via: Option<String>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct StatusView {
     pub id: String,
     pub icon: String,

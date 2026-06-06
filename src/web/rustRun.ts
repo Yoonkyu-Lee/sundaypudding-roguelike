@@ -7,12 +7,13 @@ import { SKILLS } from "../data/skills.ts";
 import { DEFAULT_RUN } from "../data/runs/index.ts";
 import { renderRunScreen, type RunHandlers } from "./runRender.ts";
 import { renderAppObs, type ObsTargeting } from "./render.ts";
-import { createTimelinePanel } from "./battle/timelinePanel.ts";
+import { createTimelinePanel, type RollView } from "./battle/timelinePanel.ts";
 import type { Handlers, SkillBarEntry, Ui } from "./battle/shared.ts";
 import { renderTitle, renderHub, renderPause, type ShellHandlers } from "./shell.ts";
 import { createHub } from "./hub.ts";
 import { renderEditor } from "./editor/editorRender.ts";
 import { createEditor } from "./editor/controller.ts";
+import { createRustOverlay, type RustOverlay, type SheetBundle } from "./rustOverlay.ts";
 import { grantWin } from "./meta.ts";
 
 interface BattleView { observation: Observation | null; skillBar: SkillBarEntry[] }
@@ -38,6 +39,8 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
   let cur: { obs: Observation; bar: SkillBarEntry[] } | null = null;
   let logEvents: GameEvent[] = [];
   let tgtInfo: ObsTargeting | null = null; // 타겟팅 미리보기(IPC battle_targeting)
+  let bundle: SheetBundle | null = null; // 시트/편성 오버레이 원시 데이터(IPC run_sheet_data)
+  let overlay: RustOverlay | null = null; // 아래에서 생성(render/mutate 전방참조)
   const hub = createHub();
 
   // 허브 data()용 stub run(편성=빈 파티 / 진행=현재 view.party). hub.data는 party/floor/runDef.floors만 사용.
@@ -59,6 +62,17 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
     try { view = await callView(cmd, args); } catch (e) { showErr(cmd, e); return; } finally { busy = false; }
     if (view.phase === "battle") { await enterBattle(); } else { render(); }
   }
+
+  // ── 시트/편성 오버레이(Rust 백킹) ──
+  async function refreshBundle(): Promise<void> { try { bundle = (await invoke!("run_sheet_data")) as SheetBundle; } catch (e) { showErr("run_sheet_data", e); } }
+  async function openOverlay(): Promise<void> { await refreshBundle(); render(); }
+  overlay = createRustOverlay({
+    app, ui, invoke: invoke!,
+    getBundle: () => bundle,
+    // 변이(장착/활성/진형) → 뷰·번들 재조회 → 재렌더(맵 진형/오버레이 동기).
+    mutate: (fn) => { void (async () => { try { await fn(); view = await callView("run_view"); await refreshBundle(); } catch (e) { showErr("overlay", e); return; } render(); })(); },
+    rerender: render,
+  });
 
   // ── 셸(타이틀/허브/일시정지/에디터) ──
   const shell: ShellHandlers = {
@@ -92,7 +106,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
     onRestart: () => shell.onNewRun(),
     onToHub: () => shell.onToHub(),
     onPause: () => { pauseOpen = true; render(); },
-    onOpenParty: () => {}, // 파티 편성 오버레이는 후속(Rust 시트/편성)
+    onOpenParty: (charId) => { ui.partyOpen = true; ui.sheetCharId = charId; void openOverlay(); },
   };
 
   // ── 전투 ──
@@ -101,6 +115,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
     if (!cur) return;
     renderAppObs(app, cur.obs, cur.bar, logEvents, ui, battleHandlers, panel, tgtInfo ?? undefined);
     if (pauseOpen) renderPause(app, shell);
+    if (overlay) overlay.renderOverlay();
   }
   // 호버 칸의 HP 손실 예고 + 끼어들기 고스트를 IPC로 가져와 캐시 후 재렌더.
   async function fetchTargeting(): Promise<void> {
@@ -109,7 +124,25 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
     try { tgtInfo = (await invoke!("run_battle_targeting", { skillId: sid, row: pos.row, col: pos.col })) as ObsTargeting; } catch { tgtInfo = null; }
     if (ui.selectedSkillId === sid && ui.hoverCell?.row === pos.row && ui.hoverCell?.col === pos.col) renderBattle();
   }
-  async function enterBattle(): Promise<void> { ui.selectedSkillId = null; ui.hoverCell = null; tgtInfo = null; logEvents = []; await refreshBattle(); renderBattle(); await maybeAuto(); }
+  // 라운드 시작 시 SPD 주사위 연출(roundStart 델타). 연출 끝나면 onDone에서 전투 진행. 연출 없으면 false.
+  function playDice(delta: GameEvent[]): boolean {
+    if (!cur) return false;
+    const rs = [...delta].reverse().find((e) => e.t === "roundStart");
+    if (!rs || rs.t !== "roundStart") return false;
+    const all = [...cur.obs.allies, ...cur.obs.enemies];
+    const views: RollView[] = rs.rolls.map((r) => { const u = all.find((x) => x.uid === r.uid); return { ...r, name: u?.name ?? r.uid, avatar: u?.avatar, side: (u?.side ?? "ally") as "ally" | "enemy" }; });
+    busy = true;
+    renderBattle(); // 셸·패널 마운트 보장
+    panel.playRoll(rs.round, views, rs.order.map((e) => e.uid), () => { busy = false; renderBattle(); void maybeAuto(); });
+    return true;
+  }
+  async function enterBattle(): Promise<void> {
+    ui.selectedSkillId = null; ui.hoverCell = null; tgtInfo = null; logEvents = [];
+    await refreshBattle();
+    const init = (await invoke!("run_battle_init")) as BattleStepResult;
+    logEvents.push(...init.eventDelta);
+    if (!playDice(init.eventDelta)) { renderBattle(); await maybeAuto(); }
+  }
   async function maybeAuto(): Promise<void> {
     while (appState === "run" && view?.phase === "battle" && cur && cur.obs.phase === "inProgress" && cur.obs.current?.side === "enemy") {
       await new Promise((r) => setTimeout(r, 240)); await step("run_battle_ai_step");
@@ -130,7 +163,9 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
     }
     view = res.view; busy = false;
     if (view.phase !== "battle") { cur = null; render(); return; }
-    await refreshBattle(); renderBattle(); await maybeAuto();
+    await refreshBattle();
+    if (playDice(res.eventDelta)) return; // 새 라운드 주사위 → onDone에서 렌더+진행
+    renderBattle(); await maybeAuto();
   }
 
   const battleHandlers: Handlers = {
@@ -159,7 +194,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
     onSkip: () => { if (busy) return; ui.selectedSkillId = null; void step("run_battle_step", { action: { type: "skip" } as Action }); },
     onToggleDetail: () => { ui.sheetDetail = !ui.sheetDetail; renderBattle(); },
     onNewBattle: () => shell.onNewRun(),
-    onOpenSheet: () => {},
+    onOpenSheet: (uid) => { ui.sheetUid = uid; void openOverlay(); },
     onPause: () => { pauseOpen = true; render(); },
   };
 
@@ -173,7 +208,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
       return;
     }
     if (view?.phase === "battle") { renderBattle(); }
-    else { renderRunScreen(app, view!, runHandlers); if (pauseOpen) renderPause(app, shell); else app.querySelector(".pause-overlay")?.remove(); }
+    else { renderRunScreen(app, view!, runHandlers); if (pauseOpen) renderPause(app, shell); else app.querySelector(".pause-overlay")?.remove(); overlay?.renderOverlay(); }
   }
 
   // Esc: 런 중 일시정지 토글 / 에디터 단축키
@@ -187,7 +222,8 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
       return;
     }
     if (e.key !== "Escape" || appState !== "run") return;
-    if (ui.selectedSkillId) battleHandlers.onCancel();
+    if (ui.sheetUid || ui.partyOpen) { ui.sheetUid = null; ui.partyOpen = false; ui.sheetCharId = null; render(); }
+    else if (ui.selectedSkillId) battleHandlers.onCancel();
     else { pauseOpen = !pauseOpen; render(); }
   });
   window.addEventListener("contextmenu", (e) => { if (appState !== "editor" && !(e.target as HTMLElement)?.closest("input,textarea")) e.preventDefault(); });

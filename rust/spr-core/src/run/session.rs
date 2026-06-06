@@ -2,12 +2,12 @@
 //! 전투만이던 `session::Session`을 런 전체로 확장: 맵 진행·노드 해소·보상·상점·인카운터·전투.
 //! 뷰 = RunView(맵/파티), 전투 중에는 battle 관측 + 이벤트 델타. Tauri 커맨드는 이 API를 얇게 감쌈.
 use super::data::RunData;
-use super::view::{get_run_view, RunView};
+use super::view::{get_run_view, RunView, SkillView};
 use super::{buy_shop_offer, choose_encounter_option, choose_reward, create_run, enter_node, leave_shop, move_party_member, resolve_battle_end, set_active_skill, RunState};
 use crate::ai::choose_action;
 use crate::flow::step;
 use crate::interrupt::predict_interrupt_subjects;
-use crate::observation::{build_observation, Observation};
+use crate::observation::{build_observation, Observation, StatusView};
 use crate::preview::{preview_damage, preview_damage_parts, preview_hp_loss, DmgParts, HpLoss};
 use crate::run::items::{equip_item, unequip_item};
 use crate::skills::resolve_anchor_uid;
@@ -15,6 +15,7 @@ use crate::targeting::{compute_area_cells, side_dims};
 use serde::Serialize;
 use spr_types::combat::{Action, GameEvent};
 use spr_types::data::Pos;
+use spr_types::party::Equipped;
 use spr_types::skills::SkillEffect;
 use std::collections::HashMap;
 
@@ -55,10 +56,74 @@ pub struct BattleStepResult {
     pub view: RunView,
 }
 
+/// 캐릭터 시트/파티 편성 오버레이용 원시 데이터 묶음 — 프론트가 정적 데이터(base/특성/패시브 설명)로 보강해 SheetData 조립.
+#[derive(Serialize)]
+pub struct SheetMember {
+    #[serde(rename = "charId")]
+    pub char_id: String,
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub avatar: Option<String>,
+    pub pos: Pos,
+    pub hp: i64,
+    #[serde(rename = "hpMax")]
+    pub hp_max: i64,
+    pub alive: bool,
+    pub equipped: Equipped,
+    pub skills: Vec<SkillView>,
+    #[serde(rename = "activeCount")]
+    pub active_count: usize,
+}
+#[derive(Serialize)]
+pub struct SheetBattleUnit {
+    pub uid: String,
+    #[serde(rename = "charId")]
+    pub char_id: String,
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub avatar: Option<String>,
+    pub side: String,
+    pub hp: i64,
+    #[serde(rename = "hpMax")]
+    pub hp_max: i64,
+    pub shield: i64,
+    pub statuses: Vec<StatusView>,
+    pub skills: Vec<SkillView>,
+    #[serde(rename = "activeCount")]
+    pub active_count: usize,
+    pub equipped: Equipped,
+}
+#[derive(Serialize)]
+pub struct SheetBundle {
+    #[serde(rename = "inBattle")]
+    pub in_battle: bool,
+    pub members: Vec<SheetMember>,
+    pub inventory: Vec<String>,
+    #[serde(rename = "battleUnits")]
+    pub battle_units: Vec<SheetBattleUnit>,
+}
+
 pub struct RunSession {
     run: RunState,
     d: RunData,
     delivered: usize,
+}
+
+/// 스킬 id 목록 → SkillView(이름/티어/활성/업글가능/시그니처). active_set에 들어있으면 활성.
+fn skill_views(ids: &[String], active: &[String], d: &RunData) -> Vec<SkillView> {
+    ids.iter()
+        .map(|sid| {
+            let sk = d.skills.get(sid);
+            SkillView {
+                id: sid.clone(),
+                name: sk.map(|s| s.name.clone()).unwrap_or_else(|| sid.clone()),
+                tier: sk.and_then(|s| s.tier).unwrap_or(1),
+                active: active.iter().any(|a| a == sid),
+                can_upgrade: sk.map(|s| s.next_tier_id.is_some()).unwrap_or(false),
+                signature: sk.map(|s| s.exclusive_to.is_some()).unwrap_or(false),
+            }
+        })
+        .collect()
 }
 
 impl RunSession {
@@ -129,6 +194,82 @@ impl RunSession {
         BattleView { observation, skill_bar }
     }
 
+    /// 캐릭터 시트/파티 편성 오버레이 원시 데이터. 맵 파티원(장착·보유스킬) + (전투 중이면) 전투유닛(상태이상·쉴드·learnset).
+    pub fn sheet_data(&self) -> SheetBundle {
+        let in_battle = self.run.battle.is_some();
+        // 전투 중이면 실시간 HP 매핑(아군 charId → 전투 unit hp/hpMax).
+        let live_hp: HashMap<String, (i64, i64)> = self
+            .run
+            .battle
+            .as_ref()
+            .map(|b| b.units.iter().filter(|u| u.side == "ally").map(|u| (u.char_id.clone(), (u.hp, u.hp_max))).collect())
+            .unwrap_or_default();
+        let members = self
+            .run
+            .party
+            .iter()
+            .map(|m| {
+                let c = &self.d.chars[&m.char_id];
+                let (hp, hp_max) = live_hp.get(&m.char_id).copied().unwrap_or((m.hp, m.max_hp));
+                SheetMember {
+                    char_id: m.char_id.clone(),
+                    name: c.name.clone(),
+                    avatar: c.avatar.clone(),
+                    pos: m.pos,
+                    hp,
+                    hp_max,
+                    alive: m.hp > 0,
+                    equipped: m.equipped.clone(),
+                    skills: skill_views(&m.owned_skill_ids, &m.active_skill_ids, &self.d),
+                    active_count: m.active_skill_ids.len(),
+                }
+            })
+            .collect();
+        let battle_units = match &self.run.battle {
+            Some(b) => {
+                let obs = build_observation(b, &self.d.chars, &self.d.skills, &self.d.defs);
+                let mut sv: HashMap<&str, (&Vec<StatusView>, i64, i64, i64)> = HashMap::new();
+                for v in obs.allies.iter().chain(obs.enemies.iter()) {
+                    sv.insert(v.uid.as_str(), (&v.statuses, v.shield, v.hp, v.hp_max));
+                }
+                b.units
+                    .iter()
+                    .map(|u| {
+                        let ch = &self.d.chars[&u.char_id];
+                        // 아군 = 보유 스킬풀, 적 = learnset 전체 노출(TS buildBattleSheet).
+                        let owned: Vec<String> = if u.side == "ally" {
+                            self.run.party.iter().find(|p| p.char_id == u.char_id).map(|p| p.owned_skill_ids.clone()).unwrap_or_else(|| ch.skill_ids.clone())
+                        } else {
+                            ch.skill_ids.clone()
+                        };
+                        let equipped = if u.side == "ally" {
+                            self.run.party.iter().find(|p| p.char_id == u.char_id).map(|p| p.equipped.clone()).unwrap_or_default()
+                        } else {
+                            Equipped::default()
+                        };
+                        let (statuses, shield, hp, hp_max) = sv.get(u.uid.as_str()).map(|&(s, sh, h, hm)| (s.clone(), sh, h, hm)).unwrap_or((Vec::new(), u.shield, u.hp, u.hp_max));
+                        SheetBattleUnit {
+                            uid: u.uid.clone(),
+                            char_id: u.char_id.clone(),
+                            name: u.name.clone(),
+                            avatar: ch.avatar.clone(),
+                            side: u.side.clone(),
+                            hp,
+                            hp_max,
+                            shield,
+                            statuses,
+                            skills: skill_views(&owned, &u.active_skill_ids, &self.d),
+                            active_count: u.active_skill_ids.len(),
+                            equipped,
+                        }
+                    })
+                    .collect()
+            }
+            None => Vec::new(),
+        };
+        SheetBundle { in_battle, members, inventory: self.run.inventory.clone(), battle_units }
+    }
+
     // ── 맵/노드 액션 ──
     pub fn enter_node(&mut self, node_id: &str) {
         enter_node(&mut self.run, node_id, &self.d);
@@ -168,6 +309,11 @@ impl RunSession {
             self.delivered = b.log.len();
         }
         BattleStepResult { event_delta: delta, observation: self.battle_observation(), view: self.view() }
+    }
+
+    /// 전투 진입 초기 델타(createBattle 로그 — 라운드1 주사위 등). 첫 렌더/연출용. 델타 전달 마킹.
+    pub fn battle_init(&mut self) -> BattleStepResult {
+        self.collect()
     }
 
     /// 플레이어 행동 1회 적용 → 종료 시 자동 resolveBattleEnd. 델타+관측+뷰.
