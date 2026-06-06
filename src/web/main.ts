@@ -227,17 +227,23 @@ window.addEventListener("keydown", (e) => {
 // 우클릭 네이티브 메뉴 차단(게임 톤) — 에디터(개발자 도구)·입력 필드(붙여넣기)는 예외
 window.addEventListener("contextmenu", (e) => { if (appState === "editor" || inEditableField(e)) return; e.preventDefault(); });
 
-// 부팅: `?core=rust|ts` 면 **전투 엔진 검증 하네스**(P1-13 — Rust/TS 백엔드로 데모 전투),
-// 아니면 일반 게임(타이틀→허브→런, TS 그대로). 하네스는 기존 흐름을 건드리지 않는 별도 진입.
-const params = new URLSearchParams(location.search);
-const coreFlag = params.get("core");
-if ((coreFlag === "rust" || coreFlag === "ts") && params.get("full") === "1") {
-  mountRustRun(app, seed); // 풀 게임(Rust RunSession)
-} else if (coreFlag === "rust" || coreFlag === "ts") {
-  mountRustBattle(app, seed); // 전투 데모
-} else {
+// 부팅 (TS 코어 은퇴 — 기본값 전환·소킹기): **기본 = Rust 풀게임**(Tauri 런타임 = 제품 셸).
+//  - 명시 `?core=rust&full=1` / 파라미터 없음 + Tauri  → Rust 풀게임(RunSession, 제품 기본)
+//  - 명시 `?core=ts&full=1`  / 파라미터 없음 + 브라우저 → TS 풀게임(골든 엔진 — 소킹 A/B 폴백, 아카이브 전까지 유지)
+//  - `?core=rust|ts`(full 없음)                       → 전투 데모 하네스(엔진 비교)
+// TS 풀게임 경로는 잠재워두되 살려둠 — differential이 못 잡는 UX/통합 버그를 실플레이로 솎는 보험.
+function bootTsFullGame(): void {
   const loaded = loadRun();
   if (loaded) { run = loaded; runActive = true; seed = run.seed; }
   else run = makeRun(seed);
   render();
 }
+const params = new URLSearchParams(location.search);
+const coreFlag = params.get("core");
+const full = params.get("full") === "1";
+const hasTauri = !!(globalThis as { __TAURI__?: { core?: { invoke?: unknown } } }).__TAURI__?.core?.invoke;
+if (coreFlag === "ts" && full) bootTsFullGame();          // 명시적 TS 풀게임(A/B)
+else if (coreFlag === "rust" && full) mountRustRun(app, seed); // 명시적 Rust 풀게임
+else if (coreFlag === "rust" || coreFlag === "ts") mountRustBattle(app, seed); // 전투 데모
+else if (hasTauri) mountRustRun(app, seed);               // ★ 기본 = Rust(제품 셸)
+else bootTsFullGame();                                    // 브라우저 폴백 = TS 풀게임(소킹)
