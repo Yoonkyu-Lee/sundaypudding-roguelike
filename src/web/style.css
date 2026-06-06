@@ -728,3 +728,22 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .hub-pick .hub-mst-bar { width: 100%; display: block; }
 .hub-pickcount { margin-top: 12px; text-align: center; font-size: 12px; color: var(--accent); }
 .hub-controls .act[disabled] { opacity: .4; cursor: not-allowed; }
+
+/* ── 전투 엔진 검증 하네스 (P1-13, rustBattle.ts) ── */
+.rb-root { display: flex; flex-direction: column; gap: 12px; padding: 14px 18px; max-width: 1100px; margin: 0 auto; }
+.rb-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.rb-head h1 { font-size: 18px; margin: 0; color: var(--accent); }
+.rb-badge { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+.rb-badge.rust { background: #b7410e; color: #fff; }
+.rb-badge.ts { background: #2d79c7; color: #fff; }
+.rb-phase { font-size: 13px; color: var(--txt); }
+.rb-seed { font-size: 12px; color: var(--dim); }
+.rb-ctl { background: var(--panel2); color: var(--txt); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+.rb-ctl:hover:not([disabled]) { border-color: var(--accent); }
+.rb-ctl[disabled] { opacity: .4; cursor: not-allowed; }
+.rb-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.rb-act { background: var(--panel); color: var(--txt); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 13px; }
+.rb-act:hover { border-color: var(--accent); background: var(--panel2); }
+.rb-act small { color: var(--dim); }
+.rb-log { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.rb-log .loginner { font-family: ui-monospace, monospace; font-size: 12px; line-height: 1.6; color: var(--dim); max-height: 220px; overflow-y: auto; }

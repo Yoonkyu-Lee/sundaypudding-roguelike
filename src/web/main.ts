@@ -16,6 +16,7 @@ import { saveRun, clearSave, loadRun } from "./save.ts";
 import { renderEditor } from "./editor/editorRender.ts";
 import { createEditor } from "./editor/controller.ts";
 import { makeBattleHandlers, makeRunHandlers, type AppCtx } from "./handlers/index.ts";
+import { mountRustBattle } from "./rustBattle.ts";
 
 const app = document.getElementById("app")!;
 const panel = createTimelinePanel(); // 행동서열 패널 — 주사위(rolling)↔전투(live) 한 컴포넌트, 전투 셸에 영속 마운트
@@ -225,8 +226,14 @@ window.addEventListener("keydown", (e) => {
 // 우클릭 네이티브 메뉴 차단(게임 톤) — 에디터(개발자 도구)·입력 필드(붙여넣기)는 예외
 window.addEventListener("contextmenu", (e) => { if (appState === "editor" || inEditableField(e)) return; e.preventDefault(); });
 
-// 부팅: 저장된 런이 있으면 복원(이어하기 가능), 없으면 새 런 준비. 화면은 타이틀부터.
-const loaded = loadRun();
-if (loaded) { run = loaded; runActive = true; seed = run.seed; }
-else run = makeRun(seed);
-render();
+// 부팅: `?core=rust|ts` 면 **전투 엔진 검증 하네스**(P1-13 — Rust/TS 백엔드로 데모 전투),
+// 아니면 일반 게임(타이틀→허브→런, TS 그대로). 하네스는 기존 흐름을 건드리지 않는 별도 진입.
+const coreFlag = new URLSearchParams(location.search).get("core");
+if (coreFlag === "rust" || coreFlag === "ts") {
+  mountRustBattle(app, seed);
+} else {
+  const loaded = loadRun();
+  if (loaded) { run = loaded; runActive = true; seed = run.seed; }
+  else run = makeRun(seed);
+  render();
+}
