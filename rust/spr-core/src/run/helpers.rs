@@ -1,5 +1,7 @@
 //! 런 공유 변이 헬퍼 (TS `core/run/helpers.ts`). 노드 조회·파티 회복·스킬 보유/강화 변이.
-//! 시퀀서/run-passive 의존(runInstantLayers·completeNode·fireRunTrigger)은 P2-3/P2-5서.
+//! 시퀀서/runInstantLayers·completeNode는 P2-6서.
+use super::data::RunData;
+use super::passives::{fire_run_trigger, RunTriggerCtx};
 use super::types::RunState;
 use crate::util::round_div;
 use spr_types::map::FloorDef;
@@ -16,8 +18,7 @@ pub fn node<'a>(run: &'a RunState, id: &str) -> &'a spr_types::map::MapNode {
 }
 
 /// 파티 회복. pct=정수퍼센트. revive=true면 전투불능(hp≤0)도 maxHp×pct%로 부활. TS healParty.
-/// (fireRunTrigger(partyHpChange)는 P2-5서 — 현재 run 패시브 미발화.)
-pub fn heal_party(run: &mut RunState, pct: i64, revive: bool) {
+pub fn heal_party(run: &mut RunState, pct: i64, revive: bool, d: &RunData) {
     for m in &mut run.party {
         if m.hp <= 0 {
             if revive {
@@ -27,6 +28,9 @@ pub fn heal_party(run: &mut RunState, pct: i64, revive: bool) {
         }
         m.hp = (m.hp + round_div(m.max_hp * pct, 100)).min(m.max_hp);
     }
+    let mut ctx = RunTriggerCtx::new("partyHpChange");
+    ctx.dir = Some("heal".to_string());
+    fire_run_trigger(run, &ctx, d);
 }
 
 /// 스킬 티어 교체(강화) — 보유/활성 양쪽. TS upgradeOwned.

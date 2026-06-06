@@ -4,7 +4,7 @@
 use serde_json::Value;
 use spr_types::ai::AiProfile;
 use spr_types::data::{Character, Encounter, FormationLayout, ItemDef, Placement, StatusDef};
-use spr_types::map::RunDef;
+use spr_types::map::{EncounterEvent, RunDef};
 use spr_types::passives::TraitDef;
 use spr_types::skills::Skill;
 use std::collections::HashMap;
@@ -70,6 +70,11 @@ pub fn ai_profiles() -> HashMap<String, AiProfile> {
 /// 저작 런 맵(id→RunDef). 런 오케스트레이션이 소비. (레이어/core 본문은 시퀀서 슬라이스서 확장)
 pub fn runs() -> HashMap<String, RunDef> {
     serde_json::from_value(data_value()["runs"].clone()).expect("runs 역직렬화")
+}
+
+/// 인카운터 이벤트 풀(순서 보존 — event 레이어 랜덤 선택). TS ENCOUNTER_EVENTS.
+pub fn encounter_events() -> Vec<EncounterEvent> {
+    serde_json::from_value(data_value()["encounterEvents"].clone()).expect("encounterEvents 역직렬화")
 }
 
 /// 기본 런(yain, 없으면 첫 런). TS DEFAULT_RUN.

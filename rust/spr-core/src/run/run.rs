@@ -145,14 +145,15 @@ mod tests {
 
     #[test]
     fn heal_and_party_mutations() {
+        let d = crate::run::RunData::load();
         let mut r = make();
         // heal_party(50,false): 생존자만 +50% maxHp 캡. kim 46→ hp10이면 33.
         r.party[0].hp = 10;
         r.party[1].hp = 0; // shin 전투불능
-        heal_party(&mut r, 50, false);
+        heal_party(&mut r, 50, false, &d);
         assert_eq!(r.party[0].hp, 33); // 10 + floor((46*50+50)/100)=10+23
         assert_eq!(r.party[1].hp, 0); // revive=false → 부활 안 함
-        heal_party(&mut r, 50, true);
+        heal_party(&mut r, 50, true, &d);
         assert_eq!(r.party[1].hp, 25); // shin maxHp50: roundDiv(50*50,100)=25 부활
 
         // 편성 교대: shanghai(1,2)를 kim 자리(1,0)로 → 위치 swap.

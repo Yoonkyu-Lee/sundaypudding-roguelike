@@ -132,7 +132,7 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 - [x] P2-2 런 타입/헬퍼/생성 — 데이터번들 runs 추가(P2-2a) + spr-types(party.rs·map.rs 확장: RunDef roster/useMastery·EncounterEvent) + spr-data runs()/default_run() + spr-core/run/(types: RunState/RewardOption/ShopOffer·helpers: cur_floor/node/heal_party/upgrade_owned/learn_owned·run: create_run/move_party_member/set_active_skill). **create_run TS 바이트동일**(초기상태+party+**RNG 시드초기화 seed^0x9e3779b9=481316**) + heal/편성 변이 검증
 - [x] P2-3 create_battle 성장 변종 — `battle.rs`(make_unit_grown·equip_bonus·**create_battle_grown**) + spr-types ItemDef·NodeRule·PendingStatus + spr-data items()/node_rosters(). 파티 HP/성장/장착(dmgFlat·스탯)/계승상태/노드룰 주입. **성장 파티 AI 풀전투 differential**(kim 무기+스킬보너스+regen계승+battleStart대사룰) TS 바이트동일
 - [x] P2-4 rewards + items — `run/rewards.rs`(gen_rewards·unlocked_tier·owns_upgrade_line·tier_ok) + `run/items.rs`(recompute_hp·equip/unequip·gen_item_offers·item_reward_options) + ItemDef.name·Skill.tier/nextTierId·itemPool 번들. **genRewards differential** 9 seed/tier — RNG 추첨·풀순서·한글라벨 바이트동일. (상점 오케스트레이션=P2-6)
-- [ ] P2-5 run passives (run 스코프 트리거)
+- [x] P2-5 run passives + RunData 번들 — `run/passives.rs`(fire_run_trigger: nodeEnter/nodeClear/goldGain/partyHpChange, RNG·f64 hpPct·재진입가드 firing) + `run/data.rs`(RunData: 데이터맵 1회로드). heal_party가 partyHpChange 발화. **directed parity**: miser(nodeClear +3G)·warspirit(nodeEnter boss→전원 might 계승) TS 동일
 - [ ] P2-6 run.ts 오케스트레이션 (createRun·stepCore·resolveBattleEnd·노드해소)
 - [ ] P2-7 save + view (직렬화·getRunView)
 - [ ] P2-8 풀 런 differential (TS 런 플레이스루 기록 → Rust 재생 바이트 동일) + 하네스 확장(풀 게임 Rust 백엔드)
