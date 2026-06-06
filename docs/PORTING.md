@@ -131,8 +131,9 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 > 목표: TS+웹렌더 프로그램 **전부와 똑같은 경험** — 실제 렌더러(맵·전투UI·타임라인) 그대로, 엔진만 Rust. 정공법(프론트 재설계).
 - [x] P3-1 실제 런 화면 — `rustRun.ts` 비전투(맵/보상/상점/인카운터/결과)를 **실제 `renderRunScreen`**(RunView 기반, TS 바이트동일)에 직결. 헥스맵·카메라·파티패널 그대로, 핸들러 Rust IPC.
 - [x] P3-2 실제 전투 UI — `renderApp`→`renderBattleZones`(GameState 비의존)+`renderAppObs` 분리, `actionPanel`/`timeline`/`formatEvent`를 SkillBarEntry/관측 기반. preview 프리미티브(P3-2a) + `RunSession.battle_view`(obs+skillBar) + `run_battle_view`. 실제 셸·그리드·스킬카드(피해)·타임라인·로그·타겟팅 = Rust IPC. TS 게임 경로 무변.
-- [ ] P3-2c 타겟팅 미리보기 IPC — hp-loss 오버레이·끼어들기 고스트·빈칸AoE 앵커(현재 Rust 모드 생략; preview_hp_loss/predict_interrupt는 포팅됨, IPC 노출만)
-- [ ] P3-3 캐릭터 시트/파티 편성 오버레이(onOpenSheet/onOpenParty) Rust 백엔드 + 라운드 주사위 연출(playRoll, roundStart 델타)
+- [x] P3-2c 타겟팅 미리보기 IPC — `RunSession.battle_targeting`(앵커칸 영향 유닛별 `preview_hp_loss` + `predict_interrupt` 고스트) + `run_battle_targeting`. `computeTgtFromObs`가 IPC `prev`로 previewLoss/ghostNames 주입(호버 fetch→캐시→재렌더). 빨간 예고바·−N·끼어들기 고스트 복원
+- [x] P3-3 캐릭터 시트/파티 편성 오버레이 + 주사위 연출 — `rustOverlay.ts`(맵 파티편성 `renderPartyView`/전투 시트 `renderCharSheet`) + `run_sheet_data`(SheetBundle), 변이=`run_equip/unequip/set_active/move`. 주사위=`playDice`(roundStart 델타→`panel.playRoll`)+`run_battle_init`(초기 델타). **전투 종료 프리즈 수정**(battle_step 반환 뷰를 resolve 후로) + 전투 헤더 정리(seed입력·새전투 제거)
+> **✅ Phase 3 완료 (2026-06).** TS+웹으로 만든 전체 프로그램(타이틀·허브·런 에디터·맵·보상/상점/인카운터·전투[타겟팅·HP예고·고스트·주사위]·시트/편성·일시정지·숙련도 메타)이 **실제 렌더러 그대로, 엔진만 Rust**로 `?core=rust&full=1`에서 구동. 남은 것 = save 영속화(게임로직 아님) + TS 코어 은퇴(검증 끝낸 뒤).
 
 ### Phase 2 — 완전 마이그레이션 (런/AI → Rust, 같은 differential 패턴)
 > **✅ 전 게임로직 마이그레이션 완료 (2026-06).** 전투+AI+런 오케스트레이션이 모두 Rust로 이식·**바이트 검증**(풀 런 differential: 맵·전투·보상RNG·상점·인카운터·런패시브·성장·층전환). 풀 게임 세션 API(`RunSession`) + Tauri 커맨드 14종 + `?core=rust&full=1` 하네스로 **전체 로그라이크가 Rust 코어로 플레이됨**. 남은 것 = save 왕복(영속화, 전 GameState serde — 게임로직 아님)뿐.
