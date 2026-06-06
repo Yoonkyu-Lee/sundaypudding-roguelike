@@ -1,7 +1,8 @@
-// 풀 게임 Rust 하네스 (P2-7) — `?core=rust&full=1`. 전체 로그라이크를 Rust RunSession(IPC)으로 구동.
-// 맵 진행·보상·상점·인카운터·전투 전부 Rust 코어. 전투는 실제 unitCard 그리드 재사용(관측은 TS와 바이트 동일).
-// 범위: yain 런. AI 적턴 자동(run_battle_ai_step). 타입스크립트 코어와 동일 differential 입증분의 육안 확인.
+// 풀 게임 Rust 하네스 (P2-7/P3) — `?core=rust&full=1`. 전체 로그라이크를 Rust RunSession(IPC)으로 구동.
+// **비전투(맵/보상/상점/인카운터/결과) = 실제 renderRunScreen**(RunView 기반, TS와 동일 UI). 전투는 P3-2서 실제 renderApp로.
 import type { Action, GameEvent, Observation, UnitView } from "../core/types.ts";
+import type { RunView } from "../core/run.ts";
+import { renderRunScreen, type RunHandlers } from "./runRender.ts";
 import { unitCard } from "./battle/unitCard.ts";
 import { esc, type TgtCtx } from "./battle/shared.ts";
 
@@ -13,18 +14,7 @@ function invoker(): Invoke | null {
   return t?.core?.invoke ?? null;
 }
 
-interface RunView {
-  phase: string; floor: number; totalFloors: number; gold: number;
-  nodes: { id: string; type: string; status: string; label?: string }[];
-  party: { name: string; charId: string; hp: number; maxHp: number; alive: boolean; activeCount: number; skills: { id: string; name: string; active: boolean }[] }[];
-  rewards: { id: string; label: string }[] | null;
-  shop: { id: string; cost: number; label: string }[] | null;
-  encounter: { id: string; title: string; text: string; choices: { id: string; label: string }[] } | null;
-  log: string[];
-}
 interface BattleStepResult { eventDelta: GameEvent[]; observation: Observation | null; view: RunView }
-
-const NODE_ICON: Record<string, string> = { start: "🚪", battle: "⚔️", elite: "💀", boss: "👑", shop: "🛒", rest: "🏕️", encounter: "❓", clear: "🏁" };
 
 export function mountRustRun(app: HTMLElement, startSeed: number): void {
   const invoke = invoker();
@@ -59,7 +49,6 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
   async function enterBattle(): Promise<void> {
     obs = (await invoke!("run_battle_obs")) as Observation | null;
     render();
-    // 적 턴이면 자동 진행
     await maybeAuto();
   }
 
@@ -80,47 +69,35 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
     await maybeAuto();
   }
 
-  function partyBar(): string {
-    return `<div class="rr-party">${view.party.map((p) => `<div class="rr-pm ${p.alive ? "" : "dead"}"><span class="rr-nm">${esc(p.name)}</span><div class="rr-hpbar"><div class="rr-hp" style="width:${Math.max(0, (p.hp / p.maxHp) * 100)}%"></div></div><span class="rr-hpn">${p.hp}/${p.maxHp}</span></div>`).join("")}</div>`;
-  }
-  function logBox(): string {
-    return `<div class="rb-log"><div class="loginner">${view.log.slice(-12).map(esc).join("<br>")}</div></div>`;
-  }
-  function header(): string {
-    return `<header class="rb-head"><h1>🍮 풀 게임</h1><span class="rb-badge rust">Rust 코어 · RunSession (IPC)</span><span class="rb-phase">${esc(view.phase)} · 층 ${view.floor}/${view.totalFloors}</span><span class="rb-seed">💰${view.gold} · seed ${seed}</span><button class="rb-ctl" data-new="1">새 게임</button></header>`;
+  // 비전투(런) 화면 — 실제 renderRunScreen + Rust IPC 핸들러.
+  const runHandlers: RunHandlers = {
+    onNode: (id) => act("run_enter_node", { nodeId: id }),
+    onReward: (id) => act("run_choose_reward", { optionId: id }),
+    onBuy: (id) => act("run_buy", { offerId: id }),
+    onLeaveShop: () => act("run_leave_shop"),
+    onEncounterChoice: (id) => act("run_encounter", { choiceId: id }),
+    onToggleSkill: (charId, skillId) => act("run_set_active", { charId, skillId }),
+    onRestart: () => { seed += 1; start(); },
+    onToHub: () => { seed += 1; start(); },
+    onPause: () => {}, // 하네스: 일시정지 메뉴 생략
+    onOpenParty: () => {}, // 파티 편성 오버레이는 P3-3서(Rust 백엔드 시트/편성)
+  };
+
+  function battleScreen(): void {
+    const cur = obs?.current?.uid ?? null;
+    const acts = obs && obs.phase === "inProgress" && obs.current?.side === "ally"
+      ? obs.legalActions.map((la, i) => `<button class="rb-act" data-ai="${i}">${esc(la.label)}${la.hitChance != null ? ` <small>${la.hitChance}%</small>` : ""}</button>`).join("")
+      : `<span class="rb-phase">적 행동 중…</span>`;
+    app.innerHTML = `<div class="rb-root">
+      <header class="rb-head"><h1>🍮 전투</h1><span class="rb-badge rust">Rust 코어 (IPC)</span><span class="rb-seed">seed ${seed}</span></header>
+      <div class="arena">${grid("아군", obs!.allies, "ally", cur)}${grid("적", obs!.enemies, "enemy", cur)}</div>
+      <div class="rb-actions">${acts}</div></div>`;
+    app.querySelectorAll<HTMLButtonElement>(".rb-act[data-ai]").forEach((b) => b.addEventListener("click", () => battleStep("run_battle_step", { action: obs!.legalActions[Number(b.dataset.ai)].action as Action })));
   }
 
   function render(): void {
-    let body = "";
-    if (view.phase === "battle" && obs) {
-      const cur = obs.current?.uid ?? null;
-      const acts = obs.phase === "inProgress" && obs.current?.side === "ally"
-        ? obs.legalActions.map((la, i) => `<button class="rb-act" data-ai="${i}">${esc(la.label)}${la.hitChance != null ? ` <small>${la.hitChance}%</small>` : ""}</button>`).join("")
-        : `<span class="rb-phase">적 행동 중…</span>`;
-      body = `<div class="arena">${grid("아군", obs.allies, "ally", cur)}${grid("적", obs.enemies, "enemy", cur)}</div><div class="rb-actions">${acts}</div>`;
-    } else if (view.phase === "map") {
-      const ns = view.nodes.filter((n) => n.status === "reachable");
-      body = `<div class="rr-section"><h2>다음 행선지</h2><div class="rb-actions">${ns.map((n) => `<button class="rb-act" data-node="${n.id}">${NODE_ICON[n.type] ?? "•"} ${esc(n.label ?? n.type)}</button>`).join("") || "(없음)"}</div></div>`;
-    } else if (view.phase === "reward" && view.rewards) {
-      body = `<div class="rr-section"><h2>보상 선택</h2><div class="rb-actions">${view.rewards.map((r) => `<button class="rb-act" data-rw="${r.id}">${esc(r.label)}</button>`).join("")}</div></div>`;
-    } else if (view.phase === "shop" && view.shop) {
-      body = `<div class="rr-section"><h2>상점 (💰${view.gold})</h2><div class="rb-actions">${view.shop.map((o) => `<button class="rb-act" data-buy="${o.id}" ${view.gold < o.cost ? "disabled" : ""}>${esc(o.label)} <small>${o.cost}G</small></button>`).join("")}<button class="rb-ctl" data-leave="1">나가기</button></div></div>`;
-    } else if (view.phase === "encounter" && view.encounter) {
-      const e = view.encounter;
-      body = `<div class="rr-section"><h2>${esc(e.title)}</h2><p class="rr-text">${esc(e.text)}</p><div class="rb-actions">${e.choices.map((c) => `<button class="rb-act" data-enc="${c.id}">${esc(c.label)}</button>`).join("")}</div></div>`;
-    } else if (view.phase === "won" || view.phase === "lost") {
-      body = `<div class="rr-section"><h2>${view.phase === "won" ? "🎉 클리어!" : "💀 패배"}</h2><div class="rb-actions"><button class="rb-act" data-new="1">새 게임 (seed ${seed + 1})</button></div></div>`;
-    }
-
-    app.innerHTML = `<div class="rb-root">${header()}${partyBar()}${body}${logBox()}</div>`;
-    app.querySelector<HTMLButtonElement>("[data-new]")?.addEventListener("click", () => { seed += 1; start(); });
-    app.querySelectorAll<HTMLButtonElement>("[data-node]").forEach((b) => b.addEventListener("click", () => act("run_enter_node", { nodeId: b.dataset.node })));
-    app.querySelectorAll<HTMLButtonElement>("[data-rw]").forEach((b) => b.addEventListener("click", () => act("run_choose_reward", { optionId: b.dataset.rw })));
-    app.querySelectorAll<HTMLButtonElement>("[data-buy]").forEach((b) => b.addEventListener("click", () => act("run_buy", { offerId: b.dataset.buy })));
-    app.querySelector<HTMLButtonElement>("[data-leave]")?.addEventListener("click", () => act("run_leave_shop"));
-    app.querySelectorAll<HTMLButtonElement>("[data-enc]").forEach((b) => b.addEventListener("click", () => act("run_encounter", { choiceId: b.dataset.enc })));
-    app.querySelectorAll<HTMLButtonElement>(".rb-act[data-ai]").forEach((b) => b.addEventListener("click", () => battleStep("run_battle_step", { action: obs!.legalActions[Number(b.dataset.ai)].action as Action })));
-    const lp = app.querySelector<HTMLElement>(".loginner"); if (lp) lp.scrollTop = lp.scrollHeight;
+    if (view.phase === "battle" && obs) { battleScreen(); return; }
+    renderRunScreen(app, view, runHandlers); // 실제 런 화면(맵·보상·상점·인카운터·결과)
   }
 
   start();
