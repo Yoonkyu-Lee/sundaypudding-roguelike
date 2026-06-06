@@ -89,6 +89,9 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 
 ## 7. 진행 상태 (각 슬라이스 `/slice-wrap`이 갱신)
 
+> **✅ Phase 1 완료 (2026-06).** Phase 0(P0-1~5) + Phase 1(P1-6~13) 전부 완료. **전투 코어 + 런 그래프 + 세션 API가 TS 골든과 바이트 동일**(differential 40벡터/679스텝 + 풀 전투 differential), Tauri2 앱 `?core=rust` 하네스로 육안 확인. TS는 골든 오라클로 유지.
+> **완전 마이그레이션의 다음 단계(Phase 2+)**: 같은 패턴(포팅 → 같은 시드·행동벡터로 TS 골든과 이벤트 로그 바이트 대조 → 하네스 육안)으로 **런 오케스트레이션(`run.ts`)·AI(`ai.ts`)·허브/메타**를 이식. 그러면 풀 게임이 Rust 백엔드로 구동(IPC 확장 + 타겟팅 프리뷰 API 포팅 시 풀 전투 UI 패리티).
+
 - [x] P0-1 행동 벡터 포맷 + emitter (`harness/vector.ts`, record→replay 바이트동일 입증)
 - [x] P0-2 zero-f64 정수화 — crit/frost/pct 정수퍼센트(`util.roundDiv`). 코어 게임수학 f64 0. **골든 바이트 동일**(코퍼스 관측 변화 0 → D2 승인 게이트 미발동). AI 점수 f64는 이연(differential 무관)
 - [x] P0-3 전역상태→컨텍스트 — passives `depth`/`activeKeys`→`GameState.fireDepth`/`fireActiveKeys`(string[]), run `firing`→`RunState.firing`. 동작 보존(골든 불변), 세이브 왕복 OK, 모듈 전역 mut 0
@@ -110,7 +113,7 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 - [~] P1-12 세션 API (순수 Rust 로직 완료 — Tauri 셸은 P1-13):
   - [x] `observation.rs`(build_observation·build_legal_actions) — 뷰(UnitView/StatusView/LegalActionView/Observation, Serialize). seed42 관측 TS 바이트동일(한글명·이모지아바타·스킬라벨·명중%·포메이션)
   - [x] `session.rs`(Session: new_demo·step_action→**StepResult{eventDelta, observation}**) — 매 step 전체상태 미전송. 누적델타==전체로그·종료관측 테스트. Tauri 커맨드가 이 API를 얇게 감쌈
-- [~] P1-13 프론트 피처플래그 → 최종 Tauri2 검증 — **스캐폴드 완료(미빌드), 육안 검증은 사용자 `cargo tauri dev`**
+- [x] P1-13 프론트 피처플래그 → 최종 Tauri2 검증 — **완료(빌드·구동·하네스·사용자 육안 확인 ✅)**
   - [x] `app/`(워크스페이스 밖 독립 크레이트 — 게이트 영향 0) Tauri2 셸: `main.rs` `#[tauri::command] create_session/battle_step/observation`가 `spr_core::session::Session` 래핑(`State<Mutex<Option<Session>>>`) + `Cargo.toml`/`build.rs`/`tauri.conf.json`(withGlobalTauri)/`README.md`(구동·검증 체크리스트)
   - [x] `src/web/coreAdapter.ts` 피처플래그: `selectBattleBackend()` — `?core=rust`+Tauri 런타임=Rust(invoke), 아니면 TS. 두 백엔드 `{create(seed),step(action)}→{eventDelta,observation}` 동형. typecheck/배럴 통과
   - [x] **빌드·구동 확인** — `@tauri-apps/cli` 설치 + tauri icon 세트 + `app/` 컴파일·`spr-app.exe` 실행 확인(WebView2 OK). 2-스텝 구동(vite + `app/` tauri dev), devUrl=`?core=rust`
