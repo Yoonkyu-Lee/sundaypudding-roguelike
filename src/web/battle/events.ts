@@ -1,8 +1,9 @@
 // 이벤트 → 사람 가독 한 줄 (8.5 로그 재생). render에서 분리(1모듈=1책임).
-import type { GameEvent, GameState } from "../../core/types.ts";
+// 이름 해소만 필요 → {uid,name}[] 받음(GameState 비의존 — TS는 state.units, Rust 모드는 관측 유닛).
+import type { GameEvent } from "../../core/types.ts";
 
-export function formatEvent(state: GameState, e: GameEvent): string | null {
-  const nm = (uid?: string) => state.units.find((u) => u.uid === uid)?.name ?? uid ?? "?";
+export function formatEvent(units: { uid: string; name: string }[], e: GameEvent): string | null {
+  const nm = (uid?: string) => units.find((u) => u.uid === uid)?.name ?? uid ?? "?";
   switch (e.t) {
     case "roundStart": return `<b>── ROUND ${e.round} ──</b>`;
     case "turnStart": return `· <i>${nm(e.uid)}의 턴${e.kind === "interrupt" ? " ⚡끼어들기" : ""}</i>`;

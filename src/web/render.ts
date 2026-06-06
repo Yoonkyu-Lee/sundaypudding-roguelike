@@ -123,7 +123,7 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
   mainEl.innerHTML = `${dlg}<div class="arena">${grid("아군", obs.allies, "ally", curUid, ui.damaged, ui.moved, tgt)}${grid("적", obs.enemies, "enemy", curUid, ui.damaged, ui.moved, tgt)}</div>${actionPanel(obs, state, ui)}`;
 
   // 로그 존
-  const logHtml = state.log.slice(-40).map((e) => formatEvent(state, e)).filter(Boolean).join("<br>");
+  const logHtml = state.log.slice(-40).map((e) => formatEvent(state.units, e)).filter(Boolean).join("<br>");
   const sideEl = app.querySelector<HTMLElement>(".battleside")!;
   sideEl.innerHTML = `<div class="logpanel"><h2>전투 로그</h2><div class="loginner">${logHtml}</div></div>`;
 

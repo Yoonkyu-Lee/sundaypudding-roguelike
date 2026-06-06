@@ -9,6 +9,7 @@ pub mod graph;
 pub mod interrupt;
 pub mod observation;
 pub mod passives;
+pub mod preview;
 pub mod run;
 pub mod session;
 pub mod skills;
