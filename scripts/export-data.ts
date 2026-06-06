@@ -13,9 +13,10 @@ import { STATUS_DEFS } from "../src/data/statuses.ts";
 import { NODE_ROSTERS, DEMO_ENCOUNTER } from "../src/data/encounters.ts";
 import { STANDARD_FORMATION } from "../src/data/formations.ts";
 import { ENCOUNTER_EVENTS } from "../src/data/events.ts";
+import { RUNS } from "../src/data/runs/index.ts";
 import { canonicalJson } from "../src/core/tests/harness/canonical.ts";
 
-/** 디자이너 저작 데이터 전체 — Rust가 로드할 단일 번들(런 그래프는 data/runs/*.json 별도). */
+/** 디자이너 저작 데이터 전체 — Rust가 로드할 단일 번들(런 그래프 포함, P2 런 레이어 포팅용). */
 export function dataBundle(): Record<string, unknown> {
   return {
     items: ITEMS,
@@ -28,6 +29,7 @@ export function dataBundle(): Record<string, unknown> {
     demoEncounter: DEMO_ENCOUNTER,
     standardFormation: STANDARD_FORMATION,
     encounterEvents: ENCOUNTER_EVENTS,
+    runs: RUNS, // 저작 런 그래프(id→RunDef). 런 오케스트레이션 포팅이 소비.
   };
 }
 
