@@ -1,17 +1,20 @@
-//! Tauri2 데스크톱 셸 (P1-13) — spr-core 세션 API를 IPC 커맨드로 노출.
-//! 프론트(`src/web`)가 `?core=rust` 모드에서 invoke('create_session'/'battle_step') 호출 → 델타+관측 수신.
-//! Phase 1 범위 = **전투 differential 검증**(데모 전투). run/hub 레이어는 아직 TS(미포팅).
+//! Tauri2 데스크톱 셸 — spr-core 세션 API를 IPC 커맨드로 노출.
+//! `?core=rust`(전투 데모) + `?core=rust&full=1`(풀 게임 RunSession) 모드를 프론트가 invoke로 구동.
 #![cfg_attr(all(not(debug_assertions), target_os = "windows"), windows_subsystem = "windows")]
 
 use serde_json::Value;
+use spr_core::run::RunSession;
 use spr_core::session::Session;
 use spr_types::combat::Action;
+use spr_types::data::Pos;
 use std::sync::Mutex;
 
-/// 단일 활성 전투 세션(데모 검증용). 다중 세션은 후속.
+/// 전투 데모 세션(P1-13).
 struct AppState(Mutex<Option<Session>>);
+/// 풀 게임 런 세션(P2-7).
+struct RunAppState(Mutex<Option<RunSession>>);
 
-/// 새 데모 전투 세션 생성 → 초기 이벤트 델타 + 관측(StepResult JSON).
+// ── 전투 데모 (P1-13) ──
 #[tauri::command]
 fn create_session(seed: u32, state: tauri::State<AppState>) -> Value {
     let mut sess = Session::new_demo(seed);
@@ -21,7 +24,6 @@ fn create_session(seed: u32, state: tauri::State<AppState>) -> Value {
     v
 }
 
-/// 행동 1회 적용 → 이벤트 델타 + 관측. (TS step과 바이트 동일한 이벤트 — differential 보장)
 #[tauri::command]
 fn battle_step(action: Action, state: tauri::State<AppState>) -> Result<Value, String> {
     let mut guard = state.0.lock().unwrap();
@@ -29,7 +31,6 @@ fn battle_step(action: Action, state: tauri::State<AppState>) -> Result<Value, S
     Ok(serde_json::to_value(sess.step_action(&action)).expect("StepResult 직렬화"))
 }
 
-/// 현재 관측만(재렌더용).
 #[tauri::command]
 fn observation(state: tauri::State<AppState>) -> Result<Value, String> {
     let guard = state.0.lock().unwrap();
@@ -37,10 +38,83 @@ fn observation(state: tauri::State<AppState>) -> Result<Value, String> {
     Ok(serde_json::to_value(sess.observation()).expect("Observation 직렬화"))
 }
 
+// ── 풀 게임 런 (P2-7) — RunSession 래핑 ──
+fn with_run<T: serde::Serialize>(state: &tauri::State<RunAppState>, f: impl FnOnce(&mut RunSession) -> T) -> Result<Value, String> {
+    let mut guard = state.0.lock().unwrap();
+    let s = guard.as_mut().ok_or("런 세션 없음 — run_create 먼저")?;
+    Ok(serde_json::to_value(f(s)).expect("직렬화"))
+}
+
+#[tauri::command]
+fn run_create(seed: u32, state: tauri::State<RunAppState>) -> Value {
+    let s = RunSession::new(seed);
+    let v = serde_json::to_value(s.view()).expect("RunView 직렬화");
+    *state.0.lock().unwrap() = Some(s);
+    v
+}
+#[tauri::command]
+fn run_view(state: tauri::State<RunAppState>) -> Result<Value, String> {
+    with_run(&state, |s| s.view())
+}
+#[tauri::command]
+fn run_enter_node(node_id: String, state: tauri::State<RunAppState>) -> Result<Value, String> {
+    with_run(&state, |s| { s.enter_node(&node_id); s.view() })
+}
+#[tauri::command]
+fn run_choose_reward(option_id: String, state: tauri::State<RunAppState>) -> Result<Value, String> {
+    with_run(&state, |s| { s.choose_reward(&option_id); s.view() })
+}
+#[tauri::command]
+fn run_leave_shop(state: tauri::State<RunAppState>) -> Result<Value, String> {
+    with_run(&state, |s| { s.leave_shop(); s.view() })
+}
+#[tauri::command]
+fn run_buy(offer_id: String, state: tauri::State<RunAppState>) -> Result<Value, String> {
+    with_run(&state, |s| { s.buy_offer(&offer_id); s.view() })
+}
+#[tauri::command]
+fn run_encounter(choice_id: String, state: tauri::State<RunAppState>) -> Result<Value, String> {
+    with_run(&state, |s| { s.choose_encounter(&choice_id); s.view() })
+}
+#[tauri::command]
+fn run_move(char_id: String, row: i64, col: i64, state: tauri::State<RunAppState>) -> Result<Value, String> {
+    with_run(&state, |s| { s.move_party(&char_id, Pos { row, col }); s.view() })
+}
+#[tauri::command]
+fn run_set_active(char_id: String, skill_id: String, state: tauri::State<RunAppState>) -> Result<Value, String> {
+    with_run(&state, |s| { s.set_active(&char_id, &skill_id); s.view() })
+}
+#[tauri::command]
+fn run_equip(char_id: String, slot: String, item_id: String, state: tauri::State<RunAppState>) -> Result<Value, String> {
+    with_run(&state, |s| { s.equip(&char_id, &slot, &item_id); s.view() })
+}
+#[tauri::command]
+fn run_unequip(char_id: String, slot: String, state: tauri::State<RunAppState>) -> Result<Value, String> {
+    with_run(&state, |s| { s.unequip(&char_id, &slot); s.view() })
+}
+#[tauri::command]
+fn run_battle_step(action: Action, state: tauri::State<RunAppState>) -> Result<Value, String> {
+    with_run(&state, |s| s.battle_step(&action))
+}
+#[tauri::command]
+fn run_battle_ai_step(state: tauri::State<RunAppState>) -> Result<Value, String> {
+    with_run(&state, |s| s.battle_ai_step())
+}
+#[tauri::command]
+fn run_battle_obs(state: tauri::State<RunAppState>) -> Result<Value, String> {
+    with_run(&state, |s| s.battle_observation())
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(AppState(Mutex::new(None)))
-        .invoke_handler(tauri::generate_handler![create_session, battle_step, observation])
+        .manage(RunAppState(Mutex::new(None)))
+        .invoke_handler(tauri::generate_handler![
+            create_session, battle_step, observation,
+            run_create, run_view, run_enter_node, run_choose_reward, run_leave_shop, run_buy,
+            run_encounter, run_move, run_set_active, run_equip, run_unequip,
+            run_battle_step, run_battle_ai_step, run_battle_obs
+        ])
         .run(tauri::generate_context!())
         .expect("Tauri 앱 구동 실패");
 }

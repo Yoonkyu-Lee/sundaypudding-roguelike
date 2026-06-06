@@ -5,7 +5,7 @@
   "identifier": "com.sundaypudding.roguelike",
   "build": {
     "frontendDist": "../dist",
-    "devUrl": "http://localhost:5173/?core=rust",
+    "devUrl": "http://localhost:5173/?core=rust&full=1",
     "beforeDevCommand": "",
     "beforeBuildCommand": ""
   },

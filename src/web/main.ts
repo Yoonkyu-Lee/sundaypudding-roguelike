@@ -17,6 +17,7 @@ import { renderEditor } from "./editor/editorRender.ts";
 import { createEditor } from "./editor/controller.ts";
 import { makeBattleHandlers, makeRunHandlers, type AppCtx } from "./handlers/index.ts";
 import { mountRustBattle } from "./rustBattle.ts";
+import { mountRustRun } from "./rustRun.ts";
 
 const app = document.getElementById("app")!;
 const panel = createTimelinePanel(); // 행동서열 패널 — 주사위(rolling)↔전투(live) 한 컴포넌트, 전투 셸에 영속 마운트
@@ -228,9 +229,12 @@ window.addEventListener("contextmenu", (e) => { if (appState === "editor" || inE
 
 // 부팅: `?core=rust|ts` 면 **전투 엔진 검증 하네스**(P1-13 — Rust/TS 백엔드로 데모 전투),
 // 아니면 일반 게임(타이틀→허브→런, TS 그대로). 하네스는 기존 흐름을 건드리지 않는 별도 진입.
-const coreFlag = new URLSearchParams(location.search).get("core");
-if (coreFlag === "rust" || coreFlag === "ts") {
-  mountRustBattle(app, seed);
+const params = new URLSearchParams(location.search);
+const coreFlag = params.get("core");
+if ((coreFlag === "rust" || coreFlag === "ts") && params.get("full") === "1") {
+  mountRustRun(app, seed); // 풀 게임(Rust RunSession)
+} else if (coreFlag === "rust" || coreFlag === "ts") {
+  mountRustBattle(app, seed); // 전투 데모
 } else {
   const loaded = loadRun();
   if (loaded) { run = loaded; runActive = true; seed = run.seed; }

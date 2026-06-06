@@ -747,3 +747,14 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .rb-act small { color: var(--dim); }
 .rb-log { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
 .rb-log .loginner { font-family: ui-monospace, monospace; font-size: 12px; line-height: 1.6; color: var(--dim); max-height: 220px; overflow-y: auto; }
+/* 풀 게임 하네스 (rustRun.ts) */
+.rr-party { display: flex; gap: 10px; flex-wrap: wrap; }
+.rr-pm { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; min-width: 120px; }
+.rr-pm.dead { opacity: .45; }
+.rr-nm { font-size: 12px; color: var(--txt); }
+.rr-hpbar { height: 6px; background: #2a2f3e; border-radius: 3px; overflow: hidden; margin: 3px 0; }
+.rr-hp { height: 100%; background: var(--hp); }
+.rr-hpn { font-size: 11px; color: var(--dim); }
+.rr-section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.rr-section h2 { margin: 0 0 10px; font-size: 15px; color: var(--accent); }
+.rr-text { color: var(--txt); font-size: 13px; line-height: 1.6; margin: 0 0 12px; }
