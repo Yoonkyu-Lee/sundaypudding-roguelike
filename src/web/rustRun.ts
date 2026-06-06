@@ -6,7 +6,7 @@ import type { RunState, RunView } from "../core/run.ts";
 import { SKILLS } from "../data/skills.ts";
 import { DEFAULT_RUN } from "../data/runs/index.ts";
 import { renderRunScreen, type RunHandlers } from "./runRender.ts";
-import { renderAppObs } from "./render.ts";
+import { renderAppObs, type ObsTargeting } from "./render.ts";
 import { createTimelinePanel } from "./battle/timelinePanel.ts";
 import type { Handlers, SkillBarEntry, Ui } from "./battle/shared.ts";
 import { renderTitle, renderHub, renderPause, type ShellHandlers } from "./shell.ts";
@@ -37,6 +37,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
   const ui: Ui = { selectedSkillId: null, hoverCell: null, pickedCells: [], damaged: new Set(), moved: new Set(), seed, sheetCharId: null, sheetUid: null, partyOpen: false, sheetDetail: false, dialog: null };
   let cur: { obs: Observation; bar: SkillBarEntry[] } | null = null;
   let logEvents: GameEvent[] = [];
+  let tgtInfo: ObsTargeting | null = null; // 타겟팅 미리보기(IPC battle_targeting)
   const hub = createHub();
 
   // 허브 data()용 stub run(편성=빈 파티 / 진행=현재 view.party). hub.data는 party/floor/runDef.floors만 사용.
@@ -98,10 +99,17 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
   async function refreshBattle(): Promise<void> { try { const bv = (await invoke!("run_battle_view")) as BattleView; cur = bv.observation ? { obs: bv.observation, bar: bv.skillBar } : null; } catch (e) { showErr("run_battle_view", e); } }
   function renderBattle(): void {
     if (!cur) return;
-    renderAppObs(app, cur.obs, cur.bar, logEvents, ui, battleHandlers, panel);
+    renderAppObs(app, cur.obs, cur.bar, logEvents, ui, battleHandlers, panel, tgtInfo ?? undefined);
     if (pauseOpen) renderPause(app, shell);
   }
-  async function enterBattle(): Promise<void> { ui.selectedSkillId = null; ui.hoverCell = null; logEvents = []; await refreshBattle(); renderBattle(); await maybeAuto(); }
+  // 호버 칸의 HP 손실 예고 + 끼어들기 고스트를 IPC로 가져와 캐시 후 재렌더.
+  async function fetchTargeting(): Promise<void> {
+    if (!ui.selectedSkillId || !ui.hoverCell) { tgtInfo = null; renderBattle(); return; }
+    const sid = ui.selectedSkillId; const pos = ui.hoverCell;
+    try { tgtInfo = (await invoke!("run_battle_targeting", { skillId: sid, row: pos.row, col: pos.col })) as ObsTargeting; } catch { tgtInfo = null; }
+    if (ui.selectedSkillId === sid && ui.hoverCell?.row === pos.row && ui.hoverCell?.col === pos.col) renderBattle();
+  }
+  async function enterBattle(): Promise<void> { ui.selectedSkillId = null; ui.hoverCell = null; tgtInfo = null; logEvents = []; await refreshBattle(); renderBattle(); await maybeAuto(); }
   async function maybeAuto(): Promise<void> {
     while (appState === "run" && view?.phase === "battle" && cur && cur.obs.phase === "inProgress" && cur.obs.current?.side === "enemy") {
       await new Promise((r) => setTimeout(r, 240)); await step("run_battle_ai_step");
@@ -130,24 +138,24 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
       if (busy || !cur || cur.obs.phase !== "inProgress") return;
       const sk = SKILLS[id];
       if (sk?.target === "self") { const actor = [...cur.obs.allies, ...cur.obs.enemies].find((u) => u.uid === cur!.obs.current?.uid); if (actor) void step("run_battle_step", { action: { type: "skill", skillId: id, targetCell: { ...actor.pos } } }); return; }
-      ui.selectedSkillId = id; ui.hoverCell = null; ui.pickedCells = []; renderBattle();
+      ui.selectedSkillId = id; ui.hoverCell = null; ui.pickedCells = []; tgtInfo = null; renderBattle();
     },
     onCellClick: (pos) => {
       if (busy || !ui.selectedSkillId) return;
       const skillId = ui.selectedSkillId; const sk = SKILLS[skillId];
       if (sk?.area?.kind === "free") {
         if (!ui.pickedCells.some((p) => p.row === pos.row && p.col === pos.col)) ui.pickedCells.push(pos);
-        if (ui.pickedCells.length >= sk.area.count) { const cells = ui.pickedCells.slice(); ui.selectedSkillId = null; ui.pickedCells = []; ui.hoverCell = null; void step("run_battle_step", { action: { type: "skill", skillId, cells } }); }
+        if (ui.pickedCells.length >= sk.area.count) { const cells = ui.pickedCells.slice(); ui.selectedSkillId = null; ui.pickedCells = []; ui.hoverCell = null; tgtInfo = null; void step("run_battle_step", { action: { type: "skill", skillId, cells } }); }
         else renderBattle();
-      } else { ui.selectedSkillId = null; ui.hoverCell = null; void step("run_battle_step", { action: { type: "skill", skillId, targetCell: pos } }); }
+      } else { ui.selectedSkillId = null; ui.hoverCell = null; tgtInfo = null; void step("run_battle_step", { action: { type: "skill", skillId, targetCell: pos } }); }
     },
     onCellHover: (pos) => {
       if (!ui.selectedSkillId) return;
       // 변경 시에만 재렌더 — innerHTML 교체가 mouseenter 재발화 → 무한 재렌더로 클릭이 삼켜지는 것 방지(TS handlers/battle.ts와 동일).
       const c = ui.hoverCell;
-      if ((pos?.row ?? -9) !== (c?.row ?? -9) || (pos?.col ?? -9) !== (c?.col ?? -9)) { ui.hoverCell = pos; renderBattle(); }
+      if ((pos?.row ?? -9) !== (c?.row ?? -9) || (pos?.col ?? -9) !== (c?.col ?? -9)) { ui.hoverCell = pos; tgtInfo = null; renderBattle(); void fetchTargeting(); }
     },
-    onCancel: () => { ui.selectedSkillId = null; ui.hoverCell = null; ui.pickedCells = []; renderBattle(); },
+    onCancel: () => { ui.selectedSkillId = null; ui.hoverCell = null; ui.pickedCells = []; tgtInfo = null; renderBattle(); },
     onSkip: () => { if (busy) return; ui.selectedSkillId = null; void step("run_battle_step", { action: { type: "skip" } as Action }); },
     onToggleDetail: () => { ui.sheetDetail = !ui.sheetDetail; renderBattle(); },
     onNewBattle: () => shell.onNewRun(),

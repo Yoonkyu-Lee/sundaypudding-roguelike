@@ -87,8 +87,11 @@ function computeTgtFromState(state: GameState, obs: Observation, ui: Ui): { tgt:
   return { tgt, ghostNames };
 }
 
-/** Rust 경로: 관측만으로 타겟팅(유효칸·명중%=legalActions, 면적=순수 computeAreaCells). 미리보기/고스트는 생략(IPC 후속). */
-function computeTgtFromObs(obs: Observation, ui: Ui): { tgt: TgtCtx; ghostNames: string[] } {
+/** Rust 타겟팅 미리보기(IPC battle_targeting 결과) — 유닛별 HP손실 + 끼어들기 고스트. */
+export interface ObsTargeting { previewLoss: Record<string, { hpLoss: number; shieldConsumed: number }>; ghosts: string[] }
+
+/** Rust 경로: 관측만으로 타겟팅(유효칸·명중%=legalActions, 면적=순수 computeAreaCells). 미리보기/고스트는 IPC(prev)로 주입. */
+function computeTgtFromObs(obs: Observation, ui: Ui, prev?: ObsTargeting): { tgt: TgtCtx; ghostNames: string[] } {
   const tgt = inertTgt(obs, ui);
   if (ui.selectedSkillId && obs.current?.side === "ally") {
     tgt.active = true;
@@ -104,9 +107,10 @@ function computeTgtFromObs(obs: Observation, ui: Ui): { tgt: TgtCtx; ghostNames:
       const region = new Set<string>();
       for (const la of obs.legalActions) if (la.action.type === "skill" && la.action.skillId === ui.selectedSkillId && la.targetUid) { const tu = sideUnits.find((u) => u.uid === la.targetUid); if (tu) region.add(ck(tu.pos)); }
       fillFootprint(tgt, skill.area, region, rows, cols, ui);
+      if (prev) for (const [uid, hl] of Object.entries(prev.previewLoss)) tgt.previewLoss.set(uid, hl);
     }
   }
-  return { tgt, ghostNames: [] };
+  return { tgt, ghostNames: prev?.ghosts ?? [] };
 }
 
 function fillFootprint(tgt: TgtCtx, area: Skill["area"], region: Set<string>, rows: number, cols: number, ui: Ui): void {
@@ -144,10 +148,10 @@ export function renderApp(app: HTMLElement, state: GameState, ui: Ui, h: Handler
   renderBattleZones(app, obs, tgt, ghostNames, bar, logHtml, ui, h, panel);
 }
 
-/** Rust 경로 — 관측 + 스킬바 + 로그(이벤트) 직접. 타겟팅은 관측 기반(미리보기/고스트 생략). */
-export function renderAppObs(app: HTMLElement, obs: Observation, bar: SkillBarEntry[], logEvents: GameEvent[], ui: Ui, h: Handlers, panel: TimelinePanel): void {
+/** Rust 경로 — 관측 + 스킬바 + 로그(이벤트) 직접. 타겟팅 미리보기/고스트는 prev(IPC)로 주입. */
+export function renderAppObs(app: HTMLElement, obs: Observation, bar: SkillBarEntry[], logEvents: GameEvent[], ui: Ui, h: Handlers, panel: TimelinePanel, prev?: ObsTargeting): void {
   ensureShell(app, ui, h, panel);
-  const { tgt, ghostNames } = computeTgtFromObs(obs, ui);
+  const { tgt, ghostNames } = computeTgtFromObs(obs, ui, prev);
   const units = [...obs.allies, ...obs.enemies].map((u) => ({ uid: u.uid, name: u.name }));
   const logHtml = logEvents.slice(-40).map((e) => formatEvent(units, e)).filter(Boolean).join("<br>");
   renderBattleZones(app, obs, tgt, ghostNames, bar, logHtml, ui, h, panel);

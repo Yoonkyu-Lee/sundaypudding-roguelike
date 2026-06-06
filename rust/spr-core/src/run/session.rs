@@ -6,14 +6,25 @@ use super::view::{get_run_view, RunView};
 use super::{buy_shop_offer, choose_encounter_option, choose_reward, create_run, enter_node, leave_shop, move_party_member, resolve_battle_end, set_active_skill, RunState};
 use crate::ai::choose_action;
 use crate::flow::step;
+use crate::interrupt::predict_interrupt_subjects;
 use crate::observation::{build_observation, Observation};
-use crate::preview::{preview_damage, preview_damage_parts, DmgParts};
+use crate::preview::{preview_damage, preview_damage_parts, preview_hp_loss, DmgParts, HpLoss};
 use crate::run::items::{equip_item, unequip_item};
+use crate::skills::resolve_anchor_uid;
+use crate::targeting::{compute_area_cells, side_dims};
 use serde::Serialize;
 use spr_types::combat::{Action, GameEvent};
 use spr_types::data::Pos;
 use spr_types::skills::SkillEffect;
 use std::collections::HashMap;
+
+/// 타겟팅 미리보기 — 영향 유닛별 HP 손실(빨간 예고) + 끼어들기 고스트 이름. 프론트 unitCard/타임라인용.
+#[derive(Serialize)]
+pub struct TargetingInfo {
+    #[serde(rename = "previewLoss")]
+    pub preview_loss: HashMap<String, HpLoss>,
+    pub ghosts: Vec<String>,
+}
 
 /// 현재 행동자 활성 스킬 바 1칸(쿨·피해미리보기). 프론트 actionPanel용.
 #[derive(Serialize)]
@@ -172,6 +183,34 @@ impl RunSession {
             resolve_battle_end(&mut self.run, &self.d);
         }
         r
+    }
+
+    /// 타겟팅 미리보기(앵커 칸 기준) — 영향 유닛 HP 손실 + 끼어들기 고스트. TS computeTgt의 previewLoss/ghostNames.
+    pub fn battle_targeting(&self, skill_id: &str, anchor: Pos) -> TargetingInfo {
+        let mut preview_loss: HashMap<String, HpLoss> = HashMap::new();
+        let mut ghosts: Vec<String> = Vec::new();
+        if let Some(b) = &self.run.battle {
+            if let Some(cur) = &b.current {
+                if let (Some(ai), Some(skill)) = (b.units.iter().position(|u| u.uid == cur.uid), self.d.skills.get(skill_id)) {
+                    let actor = &b.units[ai];
+                    let side: &str = if skill.target == "enemy" {
+                        if actor.side == "ally" { "enemy" } else { "ally" }
+                    } else {
+                        actor.side.as_str()
+                    };
+                    let (rows, cols) = side_dims(b, side);
+                    for cell in compute_area_cells(anchor, skill.area.as_ref(), rows, cols) {
+                        if let Some(tu) = b.units.iter().find(|u| u.alive && u.side == side && u.pos == cell) {
+                            preview_loss.insert(tu.uid.clone(), preview_hp_loss(b, actor, skill, tu, &self.d.defs));
+                        }
+                    }
+                    let anchor_uid = resolve_anchor_uid(b, ai, skill, None, Some(anchor), None);
+                    let subs = predict_interrupt_subjects(b, ai, Some(skill), anchor_uid.as_deref(), &self.d.defs);
+                    ghosts = subs.iter().filter_map(|uid| b.units.iter().find(|u| &u.uid == uid).map(|u| u.name.clone())).collect();
+                }
+            }
+        }
+        TargetingInfo { preview_loss, ghosts }
     }
 
     /// AI 한 수(적 턴/자동) — chooseAction 적용.

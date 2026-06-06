@@ -125,6 +125,10 @@ fn run_battle_obs(state: tauri::State<RunAppState>) -> Result<Value, String> {
 fn run_battle_view(state: tauri::State<RunAppState>) -> Result<Value, String> {
     with_run(&state, |s| s.battle_view())
 }
+#[tauri::command]
+fn run_battle_targeting(skill_id: String, row: i64, col: i64, state: tauri::State<RunAppState>) -> Result<Value, String> {
+    with_run(&state, |s| s.battle_targeting(&skill_id, Pos { row, col }))
+}
 
 fn main() {
     tauri::Builder::default()
@@ -134,7 +138,7 @@ fn main() {
             create_session, battle_step, observation,
             run_create, run_create_roster, run_create_def, run_view, run_enter_node, run_choose_reward, run_leave_shop, run_buy,
             run_encounter, run_move, run_set_active, run_equip, run_unequip,
-            run_battle_step, run_battle_ai_step, run_battle_obs, run_battle_view
+            run_battle_step, run_battle_ai_step, run_battle_obs, run_battle_view, run_battle_targeting
         ])
         .run(tauri::generate_context!())
         .expect("Tauri 앱 구동 실패");
