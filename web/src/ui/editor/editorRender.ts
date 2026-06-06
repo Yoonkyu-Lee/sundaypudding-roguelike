@@ -148,7 +148,7 @@ function renderList(app: HTMLElement, data: ListData, h: EditorHandlers): void {
     <header><h1>🗺 런 에디터</h1><button class="hub-link" id="ed-back">타이틀로</button></header>
     <div class="ed-body">
       <div class="ed-toolbar"><button class="act" id="ed-new">＋ 새 런 만들기</button>
-        <span class="hint">드래프트는 즉시 편집·테스트. 내보내기로 JSON을 받아 <code>src/data/runs/</code>에 커밋하면 배포본이 됩니다.</span></div>
+        <span class="hint">드래프트는 즉시 편집·테스트. 내보내기로 JSON을 받아 <code>src/content/runs/</code>에 커밋하면 배포본이 됩니다.</span></div>
       <div class="ed-list">${cards}</div>
     </div>
   </div>`;

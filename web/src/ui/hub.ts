@@ -2,8 +2,8 @@
 // selectedRoster 상태를 캡슐화. 소비자(rustRun)는 data/toggle/setRun만 호출. (메커니즘=엔진, 선택=플레이어 런타임)
 import type { RunState } from "../contract/run.ts";
 import type { RunDef } from "../contract/types.ts";
-import { CHARACTERS } from "../data/characters.ts";
-import { DEFAULT_RUN } from "../data/runs/index.ts";
+import { CHARACTERS } from "../content/characters.ts";
+import { DEFAULT_RUN } from "../content/runs/index.ts";
 import { listRuns, getRun } from "./editor/store.ts";
 import { masteryInfo, getRoster, setRoster } from "./meta.ts";
 import type { HubData } from "./shell.ts";

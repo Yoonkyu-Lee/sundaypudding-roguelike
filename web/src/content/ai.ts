@@ -1,6 +1,6 @@
 // AI 행동결정 정책(우선순위 룰) — 디자이너 작성. 엔진(core/ai)이 해석.
 // 캐릭터가 characters.ts의 aiProfileId로 참조. 룰은 위→아래, 첫 적용가능 룰이 행동 결정.
-// 스키마: core/types/ai.ts (AiProfile). 작성법: src/data/README.md "AI 프로파일" 절.
+// 스키마: core/types/ai.ts (AiProfile). 작성법: src/content/README.md "AI 프로파일" 절.
 import type { AiProfile } from "../contract/types.ts";
 
 export const AI_PROFILES: Record<string, AiProfile> = {

@@ -1,8 +1,8 @@
 // 파티 편성 (통합 파티뷰, 모달) — 좌: 진형 보드(드래그 배치 + 카드 3 장착칸) / 우: 캐릭터 상세 / 하: 장착 인벤토리.
 // 장착 = 드래그앤드롭(인벤토리/슬롯 ↔ 캐릭터/슬롯) 주, 클릭 폴백. 엔진(equipItem/unequipItem/inventory) 재사용.
 import type { Equipped, EquipSlot } from "../contract/types.ts";
-import { ITEMS } from "../data/items.ts";
-import { STANDARD_FORMATION } from "../data/formations.ts";
+import { ITEMS } from "../content/items.ts";
+import { STANDARD_FORMATION } from "../content/formations.ts";
 import { sheetBody, wireSheet, itemDesc, type SheetData, type SheetHandlers } from "./charSheet.ts";
 import { avatarHtml, esc } from "./battle/shared.ts";
 import { beginPointerDrag } from "./drag.ts";

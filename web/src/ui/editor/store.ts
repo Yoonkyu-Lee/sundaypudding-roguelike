@@ -1,7 +1,7 @@
 // 런 에디터 드래프트 영속 (localStorage) + 런 목록 병합. (meta.ts/save.ts 패턴)
 // 진실 = repo JSON(RUNS). 드래프트는 브라우저 작업본 — 즉시 편집·테스트, 내보내기로 repo 커밋.
 import type { RunDef } from "../../contract/types.ts";
-import { RUNS } from "../../data/runs/index.ts";
+import { RUNS } from "../../content/runs/index.ts";
 
 const KEY = "spr_editor_drafts_v1";
 type Drafts = Record<string, RunDef>;
@@ -81,7 +81,7 @@ export function cloneAsDraft(def: RunDef): RunDef {
   return copy;
 }
 
-/** dev 서버에 repo 기록 요청 — src/data/runs/{fileId}.json 작성 + 레지스트리 재생성(F3 미들웨어).
+/** dev 서버에 repo 기록 요청 — src/content/runs/{fileId}.json 작성 + 레지스트리 재생성(F3 미들웨어).
  *  성공 시 def.id가 fileId로 고정됨. 빌드 단일 HTML/프로덕션은 fetch 실패 → ok:false(호출자가 다운로드 폴백). */
 export async function saveToRepo(id: string, fileId: string): Promise<{ ok: boolean; error?: string }> {
   const def = getRun(id);
@@ -95,7 +95,7 @@ export async function saveToRepo(id: string, fileId: string): Promise<{ ok: bool
   }
 }
 
-/** {id}.json 다운로드 — repo src/data/runs/에 넣어 커밋(공유·배포 진실). */
+/** {id}.json 다운로드 — repo src/content/runs/에 넣어 커밋(공유·배포 진실). */
 export function exportRun(id: string): void {
   const def = getRun(id);
   if (!def) return;

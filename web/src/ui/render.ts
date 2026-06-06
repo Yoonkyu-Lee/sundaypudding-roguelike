@@ -2,7 +2,7 @@
 // .battleleft(행동서열 패널)는 TimelinePanel이 소유 → 통짜 재렌더에서 분리(주사위↔타임라인 연속성).
 import type { GameEvent, Observation, Skill } from "../contract/types.ts";
 import { computeAreaCells } from "./battle/areaGeo.ts";
-import { SKILLS } from "../data/skills.ts";
+import { SKILLS } from "../content/skills.ts";
 import { ck, esc, type Handlers, type SkillBarEntry, type TgtCtx, type Ui } from "./battle/shared.ts";
 import { unitCard } from "./battle/unitCard.ts";
 import { actionPanel } from "./battle/actions.ts";

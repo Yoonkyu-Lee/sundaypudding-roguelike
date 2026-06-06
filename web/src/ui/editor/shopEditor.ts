@@ -3,9 +3,9 @@
 import { esc } from "../battle/shared.ts";
 import type { ShopOfferDef } from "../../contract/types.ts";
 import type { EditorHandlers } from "./editorRender.ts";
-import { ITEMS } from "../../data/items.ts";
-import { CHARACTERS } from "../../data/characters.ts";
-import { SKILLS } from "../../data/skills.ts";
+import { ITEMS } from "../../content/items.ts";
+import { CHARACTERS } from "../../content/characters.ts";
+import { SKILLS } from "../../content/skills.ts";
 
 const ITEM_OPTS = Object.values(ITEMS).map((i) => ({ value: i.id, label: `${i.icon ?? ""} ${i.name}` }));
 const CHAR_OPTS = Object.values(CHARACTERS).map((c) => ({ value: c.id, label: c.name }));

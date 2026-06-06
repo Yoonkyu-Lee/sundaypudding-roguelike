@@ -7,9 +7,9 @@ import { battlefieldHtml, wireBattlefield } from "./battlefieldEditor.ts";
 import { ruleEditorHtml, wireRuleEditor } from "./ruleEditor.ts";
 import { eventEditorHtml, wireEventEditor } from "./eventEditor.ts";
 import { shopEditorHtml, wireShopEditor } from "./shopEditor.ts";
-import { CHARACTERS } from "../../data/characters.ts";
-import { STATUS_DEFS } from "../../data/statuses.ts";
-import { NODE_ROSTERS } from "../../data/encounters.ts";
+import { CHARACTERS } from "../../content/characters.ts";
+import { STATUS_DEFS } from "../../content/statuses.ts";
+import { NODE_ROSTERS } from "../../content/encounters.ts";
 
 /** combat 레이어의 유효 적 구성 — 인라인 roster(노드 소유). 비면 엔진 fallback(battle)을 표시(일관성). */
 const effectiveRoster = (sel: { roster?: RosterEntry[] }): RosterEntry[] =>

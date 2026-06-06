@@ -1,7 +1,7 @@
 // 행동 패널: 스킬 선택 모드(균일 카드 4개) vs 타겟팅 모드. 스킬 설명은 skillDesc(데이터).
 // GameState 비의존 — 현재 행동자의 활성 스킬 바(SkillBarEntry[]: 순서·쿨·피해미리보기)를 받음(TS=state 계산, Rust=battle_view IPC).
 import type { Observation } from "../../contract/types.ts";
-import { SKILLS } from "../../data/skills.ts";
+import { SKILLS } from "../../content/skills.ts";
 import { esc, type SkillBarEntry, type Ui } from "./shared.ts";
 import { skillCardBody, skillInline, skillType } from "./skillDesc.ts";
 

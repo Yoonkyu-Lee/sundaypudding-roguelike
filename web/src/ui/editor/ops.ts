@@ -1,7 +1,7 @@
 // 런 에디터 — 층 그래프 순수 변이 + 그리드 계산 (DOM/상태 없음). 컨트롤러가 호출.
 import type { FloorDef, MapNode, NodeType, RunDef } from "../../contract/types.ts";
 import { hexAdjacent } from "../../contract/run.ts";
-import { defaultCore } from "../../data/nodeCores.ts";
+import { defaultCore } from "../../content/nodeCores.ts";
 
 let counter = 0;
 /** 드래프트 내 고유 노드 id (웹 전용 — Date.now 허용). */

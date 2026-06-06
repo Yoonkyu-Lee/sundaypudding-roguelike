@@ -5,7 +5,7 @@ import { defaultShopOffer } from "./shopEditor.ts";
 import { listRuns, getRun, saveDraft, deleteDraft, blankRun, exportRun, isDraft, cloneAsDraft, saveToRepo } from "./store.ts";
 import { addNode, addNodeFromTemplate, moveNode, moveNodes, deleteNode, toggleEdge, adjacentPairs, addFloor, deleteFloor, moveFloor, setNodeLabel } from "./ops.ts";
 import { listTemplates, saveTemplate, deleteTemplate, getTemplate } from "./templates.ts";
-import { NODE_ROSTERS } from "../../data/encounters.ts";
+import { NODE_ROSTERS } from "../../content/encounters.ts";
 
 const edgeKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 import { CATALOG_TYPES, TYPE_ICON, TYPE_NAME } from "../nodeMeta.ts";
@@ -129,7 +129,7 @@ export function createEditor(deps: EditorDeps): { data: () => EditorData; handle
         const fileId = prompt("repo 파일명 (런 id) — 영숫자·_·- 만:", suggested);
         if (!fileId) return;
         const r = await saveToRepo(id, fileId);
-        if (r.ok) alert(`저장됨 → src/data/runs/${fileId}.json (레지스트리 자동 갱신). git에 커밋하세요.`);
+        if (r.ok) alert(`저장됨 → src/content/runs/${fileId}.json (레지스트리 자동 갱신). git에 커밋하세요.`);
         else { alert(`repo 저장 실패: ${r.error}\nJSON 다운로드로 폴백합니다.`); exportRun(id); }
       },
       onDelete(id) { deleteDraft(id); deps.rerender(); },

@@ -3,8 +3,8 @@
 import type { Action, GameEvent, Observation } from "../contract/types.ts";
 import type { RunDef } from "../contract/types.ts";
 import type { RunState, RunView } from "../contract/run.ts";
-import { SKILLS } from "../data/skills.ts";
-import { DEFAULT_RUN } from "../data/runs/index.ts";
+import { SKILLS } from "../content/skills.ts";
+import { DEFAULT_RUN } from "../content/runs/index.ts";
 import { renderRunScreen, type RunHandlers } from "./runRender.ts";
 import { renderAppObs, type ObsTargeting } from "./render.ts";
 import { createTimelinePanel, type RollView } from "./battle/timelinePanel.ts";

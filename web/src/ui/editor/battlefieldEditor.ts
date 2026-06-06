@@ -2,7 +2,7 @@
 // 아군 보드는 읽기전용(RunDef.roster, 런 시작 시 정해짐). 인게임 arena와 동형 → 디자이너=플레이어 시점.
 import { esc } from "../battle/shared.ts";
 import { beginPointerDrag } from "../drag.ts";
-import { CHARACTERS } from "../../data/characters.ts";
+import { CHARACTERS } from "../../content/characters.ts";
 import type { RosterEntry } from "./editorRender.ts";
 
 const nameOf = (id: string) => CHARACTERS[id]?.name ?? id;

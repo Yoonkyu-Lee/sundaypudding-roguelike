@@ -1,8 +1,8 @@
 // 트리거 룰 에디터 (Phase E4) — 노드 rules[]를 when/if/then으로 조립. 특성/패시브와 같은 언어.
 import { esc } from "../battle/shared.ts";
 import { describeRule } from "../battle/passiveDesc.ts";
-import { STATUS_DEFS } from "../../data/statuses.ts";
-import { CHARACTERS } from "../../data/characters.ts";
+import { STATUS_DEFS } from "../../content/statuses.ts";
+import { CHARACTERS } from "../../content/characters.ts";
 import type { NodeEditData, EditorHandlers } from "./editorRender.ts";
 import type { FieldSpec } from "./layerSchema.ts";
 import { WHEN_SPECS, WHEN_KINDS, COND_SPECS, COND_KINDS, EFFECT_SPECS, EFFECT_KINDS, whenKindOf, condKindOf, effectKindOf } from "./ruleSchema.ts";

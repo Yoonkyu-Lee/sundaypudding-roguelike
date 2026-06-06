@@ -53,15 +53,15 @@ for (const f of coreFiles) {
     if (pat.test(txt)) fail(`코어 결정론 위반(${pat.source}): ${rel(f)} — 무작위는 state.rng만`);
   }
   if (f.endsWith(".test.ts")) continue; // 아래는 비테스트만
-  if (/\bconsole\s*\./.test(txt)) fail(`코어 IO 위반(console): ${rel(f)} — 출력은 cli/web에서만`);
-  if (/from\s+["'][^"']*\/(cli|web)\//.test(txt) || /from\s+["']\.\.?\/(cli|web)/.test(txt))
-    fail(`코어→뷰 의존(단방향 위반): ${rel(f)} — core는 view를 import하지 않음`);
+  if (/\bconsole\s*\./.test(txt)) fail(`계약 IO 위반(console): ${rel(f)} — 출력은 ui에서만`);
+  if (/from\s+["'][^"']*\/ui\//.test(txt) || /from\s+["']\.\.?\/ui\//.test(txt))
+    fail(`계약→뷰 의존(단방향 위반): ${rel(f)} — contract는 ui를 import하지 않음`);
   if (/\brequire\(["']readline/.test(txt) || /from\s+["']node:readline/.test(txt))
     fail(`코어 IO 위반(readline): ${rel(f)}`);
 }
 
 // ── 2.5) 웹 게임-티 가드 (CLAUDE 평행개발: 플레이어 표면은 브라우저 네이티브 UI 노출 금지) ──
-// player 표면 = src/web/ − editor/(디자이너 도구 면제). 네이티브 다이얼로그·툴팁·드롭다운·링크 금지.
+// player 표면 = src/ui/ − editor/(디자이너 도구 면제). 네이티브 다이얼로그·툴팁·드롭다운·링크 금지.
 const WEB_TELLS: { pat: RegExp; why: string }[] = [
   { pat: /\balert\(/, why: "네이티브 alert → 인게임 토스트/모달" },
   { pat: /\bconfirm\(/, why: "네이티브 confirm → 인게임 확인 모달" },
@@ -72,7 +72,7 @@ const WEB_TELLS: { pat: RegExp; why: string }[] = [
   { pat: /<select(\s|>)/, why: "네이티브 <select> 드롭다운 → div 기반 커스텀" },
   { pat: /<a\s+href|target="_blank"/, why: "하이퍼링크/새탭 → 인게임 라우팅" },
 ];
-const playerWeb = srcFiles.filter((f) => rel(f).startsWith("src/web/") && !rel(f).startsWith("src/web/editor/") && !f.endsWith(".test.ts"));
+const playerWeb = srcFiles.filter((f) => rel(f).startsWith("src/ui/") && !rel(f).startsWith("src/ui/editor/") && !f.endsWith(".test.ts"));
 for (const f of playerWeb) {
   const txt = readFileSync(f, "utf8");
   for (const { pat, why } of WEB_TELLS) if (pat.test(txt)) fail(`웹 게임-티(${pat.source}): ${rel(f)} — ${why}`);

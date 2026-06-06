@@ -1,7 +1,7 @@
 // 상태이상 칩 + 상세 팝오버 (3.1 원장: 스택/지속/다음변화/출처). 호버·포커스(클릭)로 펼침 — JS 불필요.
 // 거동 설명은 STATUS_DEFS(데이터)에서 생성. 출처는 관측(UnitView.statuses.sources)에서.
 import type { StatusDef, UnitView } from "../../contract/types.ts";
-import { STATUS_DEFS } from "../../data/statuses.ts";
+import { STATUS_DEFS } from "../../content/statuses.ts";
 import { esc } from "./shared.ts";
 
 const TRIG: Record<string, string> = { turnStart: "턴 시작 시", turnEnd: "턴 종료 시", onAction: "행동 시" };

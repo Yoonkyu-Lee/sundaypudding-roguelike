@@ -1,10 +1,10 @@
 // Rust 경로 오버레이 컨트롤러 — 맵=파티 편성(통합 파티뷰) / 전투=단독 캐릭터 시트.
 // overlay.ts(TS RunState 직접)의 Rust판: 원시 데이터는 IPC(run_sheet_data) 묶음, 정적 보강(base/특성/패시브)은 프론트.
 // 변이(장착/활성/진형)는 Rust IPC(run_equip/run_unequip/run_set_active/run_move) → 번들·뷰 재조회 → 재렌더.
-import { CHARACTERS } from "../data/characters.ts";
-import { TRAITS } from "../data/traits.ts";
-import { ITEMS } from "../data/items.ts";
-import { SKILLS } from "../data/skills.ts";
+import { CHARACTERS } from "../content/characters.ts";
+import { TRAITS } from "../content/traits.ts";
+import { ITEMS } from "../content/items.ts";
+import { SKILLS } from "../content/skills.ts";
 import { renderCharSheet, type SheetData, type SheetHandlers, type SheetSkill, type SheetTrait } from "./charSheet.ts";
 import { describeRule, describeSkillPassives } from "./battle/passiveDesc.ts";
 import { renderPartyView, type PartyBoardMember, type PartyViewHandlers } from "./partyView.ts";

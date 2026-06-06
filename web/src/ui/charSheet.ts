@@ -2,8 +2,8 @@
 // 호출자가 baseStats·현재 HP·equipped·inventory·skills를 조립 → 시트는 장착 보정(현재값)·델타·픽커 렌더.
 // 장착 메커니즘(슬라이스2): 맵 editable이면 슬롯에 장착/교체/해제, 전투는 읽기전용.
 import type { EquipSlot, ItemDef, UnitView } from "../contract/types.ts";
-import { ITEMS } from "../data/items.ts";
-import { SKILLS } from "../data/skills.ts";
+import { ITEMS } from "../content/items.ts";
+import { SKILLS } from "../content/skills.ts";
 import { statusChipsList } from "./battle/status.ts";
 import { skillInline, skillType, skillTraits, traitsHtml } from "./battle/skillDesc.ts";
 import { avatarHtml, esc, r1 } from "./battle/shared.ts";

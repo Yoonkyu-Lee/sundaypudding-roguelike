@@ -4,16 +4,16 @@
 // canonical: 정렬키·정수전용(P0-2 후 데이터에 float 0)·undefined 생략 → Rust BTreeMap/i64로 동일 바이트.
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { ITEMS, ITEM_POOL } from "../src/data/items.ts";
-import { SKILLS } from "../src/data/skills.ts";
-import { CHARACTERS } from "../src/data/characters.ts";
-import { TRAITS } from "../src/data/traits.ts";
-import { AI_PROFILES } from "../src/data/ai.ts";
-import { STATUS_DEFS } from "../src/data/statuses.ts";
-import { NODE_ROSTERS, DEMO_ENCOUNTER } from "../src/data/encounters.ts";
-import { STANDARD_FORMATION } from "../src/data/formations.ts";
-import { ENCOUNTER_EVENTS } from "../src/data/events.ts";
-import { RUNS } from "../src/data/runs/index.ts";
+import { ITEMS, ITEM_POOL } from "../src/content/items.ts";
+import { SKILLS } from "../src/content/skills.ts";
+import { CHARACTERS } from "../src/content/characters.ts";
+import { TRAITS } from "../src/content/traits.ts";
+import { AI_PROFILES } from "../src/content/ai.ts";
+import { STATUS_DEFS } from "../src/content/statuses.ts";
+import { NODE_ROSTERS, DEMO_ENCOUNTER } from "../src/content/encounters.ts";
+import { STANDARD_FORMATION } from "../src/content/formations.ts";
+import { ENCOUNTER_EVENTS } from "../src/content/events.ts";
+import { RUNS } from "../src/content/runs/index.ts";
 import { canonicalJson } from "./canonical.ts";
 
 /** 디자이너 저작 데이터 전체 — Rust가 로드할 단일 번들(런 그래프 포함, P2 런 레이어 포팅용). */
@@ -39,10 +39,10 @@ export function dataBundleJson(): string {
   return canonicalJson(dataBundle());
 }
 
-export const BUNDLE_PATH = resolve(import.meta.dirname, "..", "src", "data", "data.generated.json");
+export const BUNDLE_PATH = resolve(import.meta.dirname, "..", "src", "content", "data.generated.json");
 
 // 직접 실행 시 파일 작성(테스트 import 시엔 작성 안 함)
 if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith("export-data.ts")) {
   writeFileSync(BUNDLE_PATH, dataBundleJson() + "\n");
-  console.log(`데이터 번들 방출: ${Object.keys(dataBundle()).length} 맵 → src/data/data.generated.json`);
+  console.log(`데이터 번들 방출: ${Object.keys(dataBundle()).length} 맵 → src/content/data.generated.json`);
 }

@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 // 웹 프론트(플레이어 GUI). dev: vite 서버(localhost:5173), Rust 엔진은 Tauri IPC로 호출.
 // build: 일반 multi-file dist/(index.html + assets/ + avatars/) → Tauri가 frontendDist로 통째 번들(단일 데스크톱 앱).
 
-const RUNS_DIR = join(dirname(fileURLToPath(import.meta.url)), "src", "data", "runs");
+const RUNS_DIR = join(dirname(fileURLToPath(import.meta.url)), "src", "content", "runs");
 const SAFE_ID = /^[a-zA-Z0-9_-]{1,40}$/;
 
 // runs.generated.ts 재생성 — src/data/runs/*.json을 스캔해 RUNS 레지스트리를 결정론적으로 통째로 쓴다.

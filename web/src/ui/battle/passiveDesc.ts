@@ -1,7 +1,7 @@
 // 패시브/특성 룰 → 사람이 읽는 한 줄 (when · if → then). core 순수성 위해 web 전용.
 import type { Condition, Effect, EffTarget, PassiveRule, Skill, Trigger } from "../../contract/types.ts";
-import { STATUS_DEFS } from "../../data/statuses.ts";
-import { SKILLS } from "../../data/skills.ts";
+import { STATUS_DEFS } from "../../content/statuses.ts";
+import { SKILLS } from "../../content/skills.ts";
 
 const CMP: Record<string, string> = { lt: "<", lte: "≤", eq: "=", gte: "≥", gt: ">" };
 const TGT: Record<EffTarget, string> = { self: "자신", subject: "상대", target: "대상", allAllies: "아군 전체", allEnemies: "적 전체", otherAllies: "아군(자신 제외)", otherEnemies: "적(대상 제외)", randomEnemy: "무작위 적", randomAlly: "무작위 아군" };
