@@ -59,6 +59,31 @@ impl RunSession {
         RunSession { run, d, delivered: 0 }
     }
 
+    /// 허브 편성(선택 charId 1~4)으로 세션 생성 — 기본 슬롯 배치(rosterFromIds). TS hub.makeRun 대응.
+    pub fn new_roster(seed: u32, char_ids: Vec<String>) -> Self {
+        let d = RunData::load();
+        let rd = spr_data::default_run();
+        let slots = [(1i64, 0i64), (2, 0), (1, 2), (2, 2)];
+        let roster: Vec<spr_types::data::Placement> = char_ids
+            .iter()
+            .take(4)
+            .enumerate()
+            .map(|(i, id)| spr_types::data::Placement { char_id: id.clone(), pos: Pos { row: slots[i].0, col: slots[i].1 } })
+            .collect();
+        let use_mastery = rd.use_mastery;
+        let run = create_run(seed, &roster, &rd, &HashMap::new(), use_mastery, &d.chars);
+        RunSession { run, d, delivered: 0 }
+    }
+
+    /// 저작 런(에디터 테스트플레이) 세션 생성 — RunDef 직접. TS testRun 대응.
+    pub fn new_def(seed: u32, run_def: spr_types::map::RunDef) -> Self {
+        let d = RunData::load();
+        let roster = run_def.roster.clone();
+        let use_mastery = run_def.use_mastery;
+        let run = create_run(seed, &roster, &run_def, &HashMap::new(), use_mastery, &d.chars);
+        RunSession { run, d, delivered: 0 }
+    }
+
     pub fn phase(&self) -> &str {
         &self.run.phase
     }

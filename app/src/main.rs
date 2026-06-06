@@ -52,6 +52,23 @@ fn run_create(seed: u32, state: tauri::State<RunAppState>) -> Value {
     *state.0.lock().unwrap() = Some(s);
     v
 }
+/// 허브 편성으로 런 생성(선택 charId 목록).
+#[tauri::command]
+fn run_create_roster(seed: u32, char_ids: Vec<String>, state: tauri::State<RunAppState>) -> Value {
+    let s = RunSession::new_roster(seed, char_ids);
+    let v = serde_json::to_value(s.view()).expect("RunView 직렬화");
+    *state.0.lock().unwrap() = Some(s);
+    v
+}
+/// 저작 런(에디터 테스트플레이) 생성 — RunDef JSON.
+#[tauri::command]
+fn run_create_def(seed: u32, run_def: Value, state: tauri::State<RunAppState>) -> Result<Value, String> {
+    let rd: spr_types::map::RunDef = serde_json::from_value(run_def).map_err(|e| format!("RunDef 파싱: {}", e))?;
+    let s = RunSession::new_def(seed, rd);
+    let v = serde_json::to_value(s.view()).expect("RunView 직렬화");
+    *state.0.lock().unwrap() = Some(s);
+    Ok(v)
+}
 #[tauri::command]
 fn run_view(state: tauri::State<RunAppState>) -> Result<Value, String> {
     with_run(&state, |s| s.view())
@@ -115,7 +132,7 @@ fn main() {
         .manage(RunAppState(Mutex::new(None)))
         .invoke_handler(tauri::generate_handler![
             create_session, battle_step, observation,
-            run_create, run_view, run_enter_node, run_choose_reward, run_leave_shop, run_buy,
+            run_create, run_create_roster, run_create_def, run_view, run_enter_node, run_choose_reward, run_leave_shop, run_buy,
             run_encounter, run_move, run_set_active, run_equip, run_unequip,
             run_battle_step, run_battle_ai_step, run_battle_obs, run_battle_view
         ])
