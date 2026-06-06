@@ -50,6 +50,7 @@ pub struct Unit {
     pub turn_count: i64,
     pub skill_dmg_bonus: HashMap<String, i64>, // 스킬별 데미지 보너스(런 성장, 4.6)
     pub rules: Vec<CompiledRule>,   // 컴파일된 패시브(스킬 passives + 특성 + 노드)
+    pub ai_profile_id: Option<String>, // 적/자동플레이 행동결정 정책(data/ai)
     pub equip_dmg_flat: i64,        // 장착 무기 dmgFlat 합(4.3) — computeDamage 합산
     pub equip_shield_gain_add: i64, // 장착 방어구 쉴드획득 보정 합(4.3)
 }

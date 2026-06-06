@@ -2,6 +2,7 @@
 //! P1-7: 번들을 `serde_json::Value`로 로드 + **canonical 라운드트립 게이트**(로드→Rust canonical→커밋 바이트 일치).
 //! → 로더 + canonical 직렬화 계약을 *전 실데이터*(Korean/emoji 포함)로 검증. 타입 구조체는 엔진 슬라이스(P1-9)에서 도입.
 use serde_json::Value;
+use spr_types::ai::AiProfile;
 use spr_types::data::{Character, Encounter, FormationLayout, StatusDef};
 use spr_types::passives::TraitDef;
 use spr_types::skills::Skill;
@@ -43,6 +44,11 @@ pub fn standard_formation() -> FormationLayout {
 /// 특성 맵(id→TraitDef). 룰 컴파일이 charId의 traitIds로 조회.
 pub fn traits() -> HashMap<String, TraitDef> {
     serde_json::from_value(data_value()["traits"].clone()).expect("traits 역직렬화")
+}
+
+/// AI 프로파일 맵(id→AiProfile). chooseAction이 actor.aiProfileId로 조회.
+pub fn ai_profiles() -> HashMap<String, AiProfile> {
+    serde_json::from_value(data_value()["aiProfiles"].clone()).expect("aiProfiles 역직렬화")
 }
 
 #[cfg(test)]

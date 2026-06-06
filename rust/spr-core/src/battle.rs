@@ -46,6 +46,7 @@ pub fn make_unit(
         turn_count: 0,
         skill_dmg_bonus: HashMap::new(),
         rules,
+        ai_profile_id: c.ai_profile_id.clone(),
         equip_dmg_flat: 0,
         equip_shield_gain_add: 0,
     }

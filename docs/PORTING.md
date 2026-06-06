@@ -126,3 +126,13 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
   > 2. `src/web` 백엔드 추상화: 현재 TS 코어 직접호출을 인터페이스로 빼고, **피처플래그**(예: `?core=rust` 또는 빌드 env)로 ① TS 코어(기존) ② Tauri IPC(`invoke('battle_step', …)`→eventDelta 재생) 선택. 이벤트 로그 재생(8.5)은 이미 델타 기반이라 어댑터만.
   > 3. 검증: `tauri dev`로 앱 구동 → 데모 전투를 **TS 모드와 Rust 모드 양쪽 플레이**, 동일 시드 동일 진행/연출 확인(델타 = 엔진 differential이 이미 보장). 필요시 WebView2/`tauri-cli` 설치.
   > **선결 결정**: (a) Tauri 툴체인을 이 머신/레포에 추가할지, (b) 프론트 피처플래그 방식(쿼리파라미터 vs 빌드분기).
+
+### Phase 2 — 완전 마이그레이션 (런/AI/허브 → Rust, 같은 differential 패턴)
+- [x] **P2-1 AI** — `spr-types/ai.rs`(AiProfile/AiRule/AiCondition) + `spr-data ai_profiles()` + `spr-core/ai.rs`(choose_action·apply_profile·greedy, **f64 스코어 TS 동일 연산**) + Character/Unit `aiProfileId`. **AI 구동 풀 전투 differential**(`tests/ai-corpus.generated.json`, `npm run ai:corpus`): demo(그리디)+profiled(4 프로파일) × 5시드 → 전체 로그 바이트 동일. AI는 순수·결정론 → Rust 자가구동 재현(AI+전투 동시 검증)
+- [ ] P2-2 런 타입/헬퍼 (RunState·party·item 헬퍼) — 골든: 세이브 왕복
+- [ ] P2-3 encounter + layers (노드→인코딩, 레이어 해소)
+- [ ] P2-4 rewards + shop + items (보상생성·상점진열)
+- [ ] P2-5 run passives (run 스코프 트리거)
+- [ ] P2-6 run.ts 오케스트레이션 (createRun·stepCore·resolveBattleEnd·노드해소)
+- [ ] P2-7 save + view (직렬화·getRunView)
+- [ ] P2-8 풀 런 differential (TS 런 플레이스루 기록 → Rust 재생 바이트 동일) + 하네스 확장(풀 게임 Rust 백엔드)

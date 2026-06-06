@@ -54,6 +54,8 @@ pub struct Character {
     pub skill_ids: Vec<String>,
     #[serde(rename = "traitIds", default)]
     pub trait_ids: Vec<String>,
+    #[serde(rename = "aiProfileId", default)]
+    pub ai_profile_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
