@@ -599,7 +599,7 @@
 - **AI 행동결정 정책(우선순위 룰)**: "턴이 왔을 때 합법 행동 중 무엇을 고를지"의 디자이너 언어(반응형 패시브와 별개의 *능동* 결정). `AiProfile = { rules: AiRule[] }`, `AiRule = {if?:AiCondition[], prefer?:SkillKindPref, target?:TargetPref, weight?}`. 위→아래 첫 적용가능(조건 참 AND 합법행동 존재) 룰이 결정, 없으면 **공유 그리디 fallback**(도발 우선·최저 HP·최고 명중). **prefer**(damage/heal/shield/applyStatus/cleanse/any) · **target**(lowest/highestHpEnemy·lowestHpAlly·front/backmostEnemy·self·anyEnemy/Ally) · **AiCondition**(selfHpPct·ally/enemyHpPctBelow·self/enemy HasStatus·selfMissingStatus·round·outnumbered·allyCount) · **weight**(backline/frontlineTarget·lowHpTarget·hitChance·critChance, 보조 정렬). 캐릭터가 `aiProfileId`로 참조(없으면 그리디=기존 동작). 결정론(rng 미사용, 동점=인덱스). 스키마=`core/types/ai.ts`, 해석=`ai/profile.ts`, 콘텐츠=`data/ai.ts`. 작성법=`src/data/README.md`.
 
 **프리미티브-갭 결정 프로토콜 (필수·사용자에게 명시):**
-새 기능 요청 → ① 기존 프리미티브 **조합으로 원자적으로 표현 가능한가?** → ② **가능 = 데이터-온리**(`src/data`만 수정, 엔진 불변) → ③ **불가 = 프리미티브 갭**: 엔진 변경 필요. 이때 **구현 전 사용자에게 정해진 형식으로 보고하고 승인받는다**:
+새 기능 요청 → ① 기존 프리미티브 **조합으로 원자적으로 표현 가능한가?** → ② **가능 = 데이터-온리**(`web/src/content`만 수정, 엔진 불변) → ③ **불가 = 프리미티브 갭**: 엔진 변경 필요. 이때 **구현 전 사용자에게 정해진 형식으로 보고하고 승인받는다**:
 
 > "이 기능은 새 엔진 프리미티브가 필요합니다 — **[무엇]**. 기존 [관련 프리미티브]로는 원자적으로 불가합니다(이유: …). 추가 위치: `types/content.ts`(스키마) + `core/<module>`(해석). 데이터-온리가 아닙니다."
 

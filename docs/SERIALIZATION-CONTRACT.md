@@ -4,8 +4,8 @@
 > JS `JSON.stringify`는 키를 **삽입 순서**로 내고 Rust serde는 **선언/정렬 순서**로 내므로, 자동으로는 어긋난다.
 > 이 계약을 양쪽이 지키면 `GameEvent[]`의 직렬화가 바이트 단위로 일치한다.
 >
-> **구현(TS)**: [`src/core/tests/harness/canonical.ts`](../src/core/tests/harness/canonical.ts) `canonicalJson`/`canonicalLog`.
-> 골든 코퍼스([`golden/`](INVARIANTS.md))·self-consistency가 이 직렬화로 비교.
+> **구현**: Rust `engine/spr-types/src/canonical.rs`(엔진 — 이벤트 로그·데이터 번들). 데이터 export용 TS 동형 구현은 `web/scripts/canonical.ts`(`canonicalJson`). 옛 TS 골든 하네스(`src/core/tests/harness/canonical.ts`)는 엔진 은퇴로 제거(`archive/ts-core` 보관).
+> differential 회귀 벡터(`engine/spr-core/tests/*.generated.json`)가 이 직렬화로 비교.
 
 ---
 
@@ -20,7 +20,7 @@
 > TS `canonicalJson`은 ②를 `Number.isInteger`로 강제(위반 시 throw) → 부동소수 회귀를 즉시 검출.
 > 슬라이스1(포메이션 정수화) 이후 전투 이벤트 로그 수치는 **전부 정수**라 이 계약이 성립한다([`NUMERIC-POLICY.md`](NUMERIC-POLICY.md)).
 
-## 2. `GameEvent` 필드 (전부 정수 수치 — `src/core/types/runtime.ts`)
+## 2. `GameEvent` 필드 (전부 정수 수치 — 엔진 `engine/spr-types/src/combat.rs` · TS DTO `web/src/contract/types/runtime.ts`)
 
 | `t` | 필드(타입) |
 |---|---|

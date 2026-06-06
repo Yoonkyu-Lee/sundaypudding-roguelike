@@ -112,6 +112,7 @@ registerLayer("combat", { schema:[{roster:'rosterGrid'},{formationBonus:'bool'},
 ## 구현 플랜 (슬라이스)
 
 > **규모**: 이건 단일 슬라이스가 아니라 **에픽**(맵 노드 엔진 재구성). 단계(Phase)별로 묶고, 각 Phase 안에서 `/slice-plan`으로 슬라이스 단위 실행. 분류 표기: `[엔진 프리미티브 추가]` / `[데이터-온리]` / `[웹 기능]`.
+> **경로 주의**: 아래 플랜의 `core/run/*.ts`·`types/map.ts` 등은 **TS 시절 기록**(엔진 마이그레이션 전). 현 엔진=Rust `engine/spr-core`(예: `core/run/layers.ts` → `engine/spr-core/src/run/layers.rs`), 계약 타입=`web/src/contract/types`, 콘텐츠=`web/src/content`. 현 매핑은 [`CODE-MAP.md`](CODE-MAP.md)가 SoT.
 > **불변 유지**: 결정론·코어 순수성·이벤트 로그 구동·기존 테스트 green. 매 슬라이스 데모 골든 영향 없음(데모=단일 전투).
 
 ### Phase A — 레이어 프레임워크 골격 (엔진) `[엔진 프리미티브 추가]`

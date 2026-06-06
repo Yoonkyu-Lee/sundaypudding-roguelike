@@ -1,5 +1,7 @@
 # PORTING.md — TS→Rust 마이그레이션 워크플로 (SoT)
 
+> **✅ 완료 (이력 문서).** 마이그레이션 완결 — 엔진=Rust `engine/spr-core` 단일. TS 골든 엔진+differential 하네스는 `archive/ts-core` 브랜치 + `tag ts-golden-oracle`에 재실행 가능 상태로 보관. 아래 본문은 **포팅 당시의 계획·워크플로 기록**이며 경로(`src/core`·`rust/`·`app/`)는 그 시점 기준 — 현 구조는 `engine/`·`desktop/`·`web/`, 매핑은 [`CODE-MAP.md`](CODE-MAP.md)가 SoT.
+>
 > **목적**: `src/core/`(TS 결정론 엔진)를 Rust로 **자율 포팅**하기 위한 워크플로 진실원.
 > 사용자는 **최종에 Tauri2 프론트로만 검증**하고, 그 외는 **differential harness**(TS=골든 오라클,
 > Rust=DUT, 같은 시드+행동 → **바이트 동일 이벤트 로그**)로 자가검수한다.
