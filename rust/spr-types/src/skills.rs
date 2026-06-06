@@ -84,6 +84,12 @@ pub struct Skill {
     /// 출전 시 작동하는 패시브 룰(능동 effects와 공존 가능).
     #[serde(default)]
     pub passives: Option<Vec<crate::passives::PassiveRule>>,
+    /// 강화 티어(4.6). 보상 숙련도 게이팅용. 기본 1.
+    #[serde(default)]
+    pub tier: Option<i64>,
+    /// 다음 티어 스킬 id(강화 체인). 없으면 최종.
+    #[serde(rename = "nextTierId", default)]
+    pub next_tier_id: Option<String>,
 }
 
 fn default_true() -> bool {

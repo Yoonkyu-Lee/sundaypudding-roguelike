@@ -47,6 +47,11 @@ pub fn node_rosters() -> HashMap<String, Vec<Placement>> {
     serde_json::from_value(data_value()["nodeRosters"].clone()).expect("nodeRosters 역직렬화")
 }
 
+/// 보상/상점 추첨 풀(아이템 id 순서 보존). TS ITEM_POOL.
+pub fn item_pool() -> Vec<String> {
+    serde_json::from_value(data_value()["itemPool"].clone()).expect("itemPool 역직렬화")
+}
+
 /// 표준 포메이션(6.3). 아군 기본·보스전 적용.
 pub fn standard_formation() -> FormationLayout {
     serde_json::from_value(data_value()["standardFormation"].clone()).expect("standardFormation 역직렬화")

@@ -131,6 +131,7 @@ pub struct ItemMods {
 #[derive(Debug, Clone, Deserialize)]
 pub struct ItemDef {
     pub id: String,
+    pub name: String,
     pub slot: String, // weapon|armor|held
     #[serde(default)]
     pub mods: Option<ItemMods>,

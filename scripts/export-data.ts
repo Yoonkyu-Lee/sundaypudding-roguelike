@@ -4,7 +4,7 @@
 // canonical: 정렬키·정수전용(P0-2 후 데이터에 float 0)·undefined 생략 → Rust BTreeMap/i64로 동일 바이트.
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { ITEMS } from "../src/data/items.ts";
+import { ITEMS, ITEM_POOL } from "../src/data/items.ts";
 import { SKILLS } from "../src/data/skills.ts";
 import { CHARACTERS } from "../src/data/characters.ts";
 import { TRAITS } from "../src/data/traits.ts";
@@ -20,6 +20,7 @@ import { canonicalJson } from "../src/core/tests/harness/canonical.ts";
 export function dataBundle(): Record<string, unknown> {
   return {
     items: ITEMS,
+    itemPool: ITEM_POOL, // 보상/상점 추첨 풀(아이템 id 리스트)
     skills: SKILLS,
     characters: CHARACTERS,
     traits: TRAITS,

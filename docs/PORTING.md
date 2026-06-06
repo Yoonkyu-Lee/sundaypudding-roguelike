@@ -131,7 +131,7 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 - [x] **P2-1 AI** — `spr-types/ai.rs`(AiProfile/AiRule/AiCondition) + `spr-data ai_profiles()` + `spr-core/ai.rs`(choose_action·apply_profile·greedy, **f64 스코어 TS 동일 연산**) + Character/Unit `aiProfileId`. **AI 구동 풀 전투 differential**(`tests/ai-corpus.generated.json`, `npm run ai:corpus`): demo(그리디)+profiled(4 프로파일) × 5시드 → 전체 로그 바이트 동일. AI는 순수·결정론 → Rust 자가구동 재현(AI+전투 동시 검증)
 - [x] P2-2 런 타입/헬퍼/생성 — 데이터번들 runs 추가(P2-2a) + spr-types(party.rs·map.rs 확장: RunDef roster/useMastery·EncounterEvent) + spr-data runs()/default_run() + spr-core/run/(types: RunState/RewardOption/ShopOffer·helpers: cur_floor/node/heal_party/upgrade_owned/learn_owned·run: create_run/move_party_member/set_active_skill). **create_run TS 바이트동일**(초기상태+party+**RNG 시드초기화 seed^0x9e3779b9=481316**) + heal/편성 변이 검증
 - [x] P2-3 create_battle 성장 변종 — `battle.rs`(make_unit_grown·equip_bonus·**create_battle_grown**) + spr-types ItemDef·NodeRule·PendingStatus + spr-data items()/node_rosters(). 파티 HP/성장/장착(dmgFlat·스탯)/계승상태/노드룰 주입. **성장 파티 AI 풀전투 differential**(kim 무기+스킬보너스+regen계승+battleStart대사룰) TS 바이트동일
-- [ ] P2-4 rewards + shop + items (보상생성·상점진열)
+- [x] P2-4 rewards + items — `run/rewards.rs`(gen_rewards·unlocked_tier·owns_upgrade_line·tier_ok) + `run/items.rs`(recompute_hp·equip/unequip·gen_item_offers·item_reward_options) + ItemDef.name·Skill.tier/nextTierId·itemPool 번들. **genRewards differential** 9 seed/tier — RNG 추첨·풀순서·한글라벨 바이트동일. (상점 오케스트레이션=P2-6)
 - [ ] P2-5 run passives (run 스코프 트리거)
 - [ ] P2-6 run.ts 오케스트레이션 (createRun·stepCore·resolveBattleEnd·노드해소)
 - [ ] P2-7 save + view (직렬화·getRunView)
