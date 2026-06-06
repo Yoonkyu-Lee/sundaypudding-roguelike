@@ -8,22 +8,26 @@ Rust 코어(`rust/spr-core`) 포팅을 **실제 데스크톱 앱에서 육안 �
 - 이벤트 로그는 TS와 **바이트 동일**(differential 40벡터/679스텝 입증). 이 앱은 그 동치를 *눈으로* 확인하는 단계.
 - run/hub/맵 진행 레이어는 아직 TS(미포팅) → 풀 앱 통합은 후속.
 
-## 선결 (이 머신엔 미설치)
+## 선결
 
 ```bash
-cargo install tauri-cli --version "^2"   # cargo-tauri 2.x
-# Windows: WebView2 런타임(대개 Win11 기본 탑재), MSVC 빌드툴
+npm install -D @tauri-apps/cli@^2   # 프리빌트 CLI (cargo install보다 빠름) — 이미 devDep에 추가됨
+# Windows: WebView2 런타임(대개 Win11 기본), MSVC 빌드툴
 ```
 
-## 구동
+## 구동 (검증된 2-스텝 — beforeDevCommand 비움)
 
 ```bash
-# 1) 개발 모드(HMR) — Vite devUrl(5173) + Tauri 윈도우
-cargo tauri dev            # app/ 에서
+# 터미널 1 (레포 루트): Vite dev 서버
+npm run dev                 # http://localhost:5173
 
-# 2) 프론트에서 Rust 코어 선택: 앱 윈도우 URL에 ?core=rust
-#    (없으면 TS 코어로 동작 — 같은 화면, 같은 시드 = 같은 진행이어야)
+# 터미널 2 (app/): Tauri 윈도우 — devUrl(5173) 로드
+cd app && npx tauri dev
+
+# 프론트에서 Rust 코어 선택: 앱 윈도우 URL에 ?core=rust
+#   (없으면 TS 코어 — 같은 화면·같은 시드 = 같은 진행이어야)
 ```
+> 첫 `npx tauri dev`는 tauri 의존 트리 컴파일로 ~1~2분. 이후 캐시.
 
 ## 검증 체크리스트 (P1-13 완료 기준)
 

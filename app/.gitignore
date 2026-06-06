@@ -1,1 +1,7 @@
 /target
+/gen
+# 모바일/UWP 아이콘(데스크톱 미사용 — tauri icon 부산물)
+/icons/android
+/icons/ios
+/icons/Square*.png
+/icons/StoreLogo.png

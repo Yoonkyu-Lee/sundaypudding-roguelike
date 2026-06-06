@@ -8,10 +8,6 @@ edition = "2021"
 # 독립 워크스페이스 선언 — rust/ 워크스페이스에 흡수되지 않음(가벼운 게이트 유지).
 [workspace]
 
-[lib]
-name = "spr_app_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
-
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
