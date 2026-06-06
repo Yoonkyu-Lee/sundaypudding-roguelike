@@ -233,4 +233,40 @@ mod tests {
             UpgradeSkill { id, .. } | LearnSkill { id, .. } | Item { id, .. } | Heal { id, .. } => id.clone(),
         }
     }
+
+    #[test]
+    fn battle_step_targetcell_player_action() {
+        // 플레이어 행동 경로 검증: 전투 진입 → 아군 턴에 targetCell(적 위치) 행동 → 스킬 해소(로그 증가). 패닉 없음.
+        let mut s = RunSession::new(42);
+        let mut guard = 0;
+        // 전투 진입까지(맵 reachable[0]).
+        while s.phase() != "battle" && guard < 50 {
+            guard += 1;
+            if s.phase() == "map" {
+                let n = s.run.reachable[0].clone();
+                s.enter_node(&n);
+            } else {
+                break;
+            }
+        }
+        assert_eq!(s.phase(), "battle", "전투 진입");
+        // 적 턴이면 자동 진행해 아군 턴 확보.
+        let mut g2 = 0;
+        while s.battle_current_is_enemy() && s.run.battle.as_ref().map(|b| b.phase == "inProgress").unwrap_or(false) && g2 < 50 {
+            g2 += 1;
+            s.battle_ai_step();
+        }
+        let b = s.run.battle.as_ref().unwrap();
+        assert_eq!(b.phase, "inProgress");
+        let actor = b.units.iter().find(|u| Some(&u.uid) == b.current.as_ref().map(|c| &c.uid)).unwrap();
+        assert_eq!(actor.side, "ally", "아군 턴");
+        // 첫 활성 데미지 스킬 + 첫 적 위치를 targetCell로.
+        let skill_id = actor.active_skill_ids[0].clone();
+        let enemy_pos = b.units.iter().find(|u| u.side == "enemy" && u.alive).unwrap().pos;
+        let before = b.log.len();
+        let action = Action::Skill { skill_id: skill_id.clone(), target_uid: None, target_cell: Some(enemy_pos), cells: None };
+        let res = s.battle_step(&action);
+        // 행동이 적용돼 로그가 늘고(skillUsed 등) 델타 비어있지 않음.
+        assert!(!res.event_delta.is_empty(), "targetCell 행동 → 이벤트 발생해야(시전됨). skill={} pos={:?} before={}", skill_id, enemy_pos, before);
+    }
 }

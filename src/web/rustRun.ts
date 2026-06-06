@@ -47,10 +47,15 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
   function selectedIds(): string[] { return hub.data(stubRun(), false).pool.filter((p) => p.selected).map((p) => p.charId); }
 
   // ── IPC 호출 ──
+  function showErr(where: string, err: unknown): void {
+    ui.dialog = { speaker: `IPC오류(${where})`, text: String(err) };
+    busy = false;
+    if (appState === "run" && view) render();
+  }
   async function callView(cmd: string, args?: Record<string, unknown>): Promise<RunView> { return (await invoke!(cmd, args)) as RunView; }
   async function act(cmd: string, args?: Record<string, unknown>): Promise<void> {
     if (busy) return; busy = true;
-    view = await callView(cmd, args); busy = false;
+    try { view = await callView(cmd, args); } catch (e) { showErr(cmd, e); return; } finally { busy = false; }
     if (view.phase === "battle") { await enterBattle(); } else { render(); }
   }
 
@@ -90,7 +95,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
   };
 
   // ── 전투 ──
-  async function refreshBattle(): Promise<void> { const bv = (await invoke!("run_battle_view")) as BattleView; cur = bv.observation ? { obs: bv.observation, bar: bv.skillBar } : null; }
+  async function refreshBattle(): Promise<void> { try { const bv = (await invoke!("run_battle_view")) as BattleView; cur = bv.observation ? { obs: bv.observation, bar: bv.skillBar } : null; } catch (e) { showErr("run_battle_view", e); } }
   function renderBattle(): void { if (cur) { renderAppObs(app, cur.obs, cur.bar, logEvents, ui, battleHandlers, panel); if (pauseOpen) renderPause(app, shell); } }
   async function enterBattle(): Promise<void> { ui.selectedSkillId = null; ui.hoverCell = null; logEvents = []; await refreshBattle(); renderBattle(); await maybeAuto(); }
   async function maybeAuto(): Promise<void> {
@@ -100,7 +105,8 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
   }
   async function step(cmd: string, args?: Record<string, unknown>): Promise<void> {
     if (busy) return; busy = true;
-    const res = (await invoke!(cmd, args)) as BattleStepResult;
+    let res: BattleStepResult;
+    try { res = (await invoke!(cmd, args)) as BattleStepResult; } catch (e) { showErr(cmd, e); renderBattle(); return; }
     logEvents.push(...res.eventDelta);
     ui.damaged = new Set(res.eventDelta.flatMap((e) => (e.t === "damage" ? [e.targetUid] : [])));
     ui.moved = new Set(res.eventDelta.flatMap((e) => (e.t === "move" ? [e.uid] : [])));
