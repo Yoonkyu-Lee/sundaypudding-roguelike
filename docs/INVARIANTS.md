@@ -1,13 +1,10 @@
-# 불변식 카탈로그 — Claude Code 코드 리뷰 도출 (INVARIANTS-FROM-CLAUDE-CODE)
+# 불변식 카탈로그 (INVARIANTS) — 게임 로직 스펙
 
-> **작성 방식**: `src/core/` 전 모듈 + `src/web/editor/`(저작 도구)를 8개 도메인으로 나눠 정독,
-> **실제로 강제되(거나 강제되어야 하)는 규칙**만 근거(파일:함수)와 함께 도출. 기존 테스트·
-> `INVARIANTS-FROM-REPO.md`를 참고하지 않고 **코드에서 독립적으로** 만들었다(오염 방지).
-> 핵심 전투 흐름·서열·런 진행·끼어들기·포메이션은 작성자가 코드를 **직접 재확인**했다.
+> **무엇**: 게임 엔진(현 `rust/spr-core`)이 **항상 지켜야 하는 규칙**의 카탈로그. 8개 도메인 정독으로 도출(근거=파일:함수). 옛 TS 코드리뷰 산출(`INVARIANTS-FROM-CLAUDE-CODE` + 교차검증용 `INVARIANTS-FROM-REPO`)을 **여기로 통합**.
 >
-> **용도**: ① 불변식 assertion 모듈(`src/core/tests/invariants/`)의 명세. ② 무작위 스트레스 런 하네스가
-> 두들길 규칙. ③ 향후 Rust 포팅 시 differential harness의 비교 기준. ④ `INVARIANTS-FROM-REPO.md`와
-> 교차 검증할 산출물(§ 마지막).
+> **검증**: 이 불변식들은 이제 **Rust 엔진**이 지키고, `cargo test`(differential 회귀 — 동결 골든 벡터 재생)가 회귀를 막는다. (옛 TS 불변식 assertion 하네스 `src/core/tests/invariants/`·스트레스 런은 엔진 은퇴로 제거 — 재실행은 `archive/ts-core` 체크아웃.)
+>
+> **경로 주의**: 본문의 `src/core/...`·`combat/`·`run/` 경로는 **TS 시절 기준**. 현 엔진 모듈 매핑은 [`CODE-MAP.md`](CODE-MAP.md)의 `rust/spr-core` 트리 참조(대부분 동일 이름: `damage.rs`·`flow.rs`·`run/run.rs`). 규칙 자체는 언어 무관하게 유효.
 >
 > **경계 정의(무엇을 보고 무엇을 안 보나)** — 설계 8.2 "결정 정보는 전부 observation에":
 > - ✅ **비교/검사 대상**: 이벤트 로그 시퀀스(`GameEvent[]` 종류·순서·필드), Observation 노출값
@@ -468,7 +465,9 @@
 
 ---
 
-# Part 7 — `INVARIANTS-FROM-REPO.md` 교차 검증 메모
+# Part 7 — `INVARIANTS-FROM-REPO` 교차 검증 메모 (통합 근거)
+
+> (옛 별도 문서 `INVARIANTS-FROM-REPO.md`는 **이 카탈로그에 흡수**됨 — 아래는 두 산출물 대조로, 이 문서가 그걸 포괄함을 보인 기록.)
 
 REPO 문서(A~M)와 본 카탈로그(A~W) 대조 결과:
 

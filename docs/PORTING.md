@@ -52,7 +52,7 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 
 ## 3. 슬라이스 프로토콜 (`/port-slice` — RPI)
 
-1. **Research** (코드 0줄): TS 원본 모듈 + 걸리는 불변식([`INVARIANTS-FROM-CLAUDE-CODE.md`](INVARIANTS-FROM-CLAUDE-CODE.md)) + 그 모듈의 differential 벡터를 읽는다.
+1. **Research** (코드 0줄): TS 원본 모듈 + 걸리는 불변식([`INVARIANTS.md`](INVARIANTS.md)) + 그 모듈의 differential 벡터를 읽는다.
 2. **Plan** (`plans/port-<module>.md`): Rust가 무엇을 1:1로 옮기는지, **무엇을 안 바꾸는지**, differential 합격선. → **Codex 플랜 리뷰**(D3).
 3. **Implement**: 새 세션(플랜만 로드, DumbZone 회피). Rust 작성.
 4. **differential 게이트**: `/differential`로 TS↔Rust 벡터 재생 → **첫 어긋난 step+event** + 그 시점 **RNG-state**(rngTrace) 보고. 바이트 동일까지 반복. 막히면 요약→새 세션 또는 `codex:rescue`.

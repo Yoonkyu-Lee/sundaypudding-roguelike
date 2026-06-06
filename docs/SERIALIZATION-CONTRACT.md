@@ -5,7 +5,7 @@
 > 이 계약을 양쪽이 지키면 `GameEvent[]`의 직렬화가 바이트 단위로 일치한다.
 >
 > **구현(TS)**: [`src/core/tests/harness/canonical.ts`](../src/core/tests/harness/canonical.ts) `canonicalJson`/`canonicalLog`.
-> 골든 코퍼스([`golden/`](INVARIANTS-FROM-CLAUDE-CODE.md))·self-consistency가 이 직렬화로 비교.
+> 골든 코퍼스([`golden/`](INVARIANTS.md))·self-consistency가 이 직렬화로 비교.
 
 ---
 

@@ -1,5 +1,5 @@
 // 에디터 데이터 정합성(저작 도구) — 템플릿 라이브러리·드래프트 store·레이어 스키마.
-// INVARIANTS-FROM-CLAUDE-CODE Part 4 W. localStorage는 node에서 없음 → 영속은 no-op(인메모리 의미론 검증).
+// INVARIANTS Part 4 W. localStorage는 node에서 없음 → 영속은 no-op(인메모리 의미론 검증).
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { saveTemplate, listTemplates, getTemplate, deleteTemplate, type NodeTemplateContent } from "./templates.ts";

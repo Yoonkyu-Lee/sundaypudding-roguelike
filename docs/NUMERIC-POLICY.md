@@ -2,7 +2,7 @@
 
 > **목적**: TS `number`(IEEE754 double) → Rust 수치 타입 포팅 시 **로그 100% 일치**를 위해
 > 반올림/분수 연산을 어떻게 다룰지 결정한다. 반올림 지점 전수 목록은
-> [`INVARIANTS-FROM-CLAUDE-CODE.md` Part 5](INVARIANTS-FROM-CLAUDE-CODE.md#part-5--수치-반올림-지점-ulp-함정--포팅-시-정확-복제-대상).
+> [`INVARIANTS.md` Part 5](INVARIANTS.md#part-5--수치-반올림-지점-ulp-함정--포팅-시-정확-복제-대상).
 >
 > **상태**: 분석·권고(🔸). 실제 포팅은 검증 인프라(1~6단계) 완료 후. 지금은 **반올림 지점을
 > 스트레스 런 하네스+self-consistency가 동일성으로 묶어두는 것**이 1차 방어.
