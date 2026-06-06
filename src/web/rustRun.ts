@@ -96,7 +96,11 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
 
   // ── 전투 ──
   async function refreshBattle(): Promise<void> { try { const bv = (await invoke!("run_battle_view")) as BattleView; cur = bv.observation ? { obs: bv.observation, bar: bv.skillBar } : null; } catch (e) { showErr("run_battle_view", e); } }
-  function renderBattle(): void { if (cur) { renderAppObs(app, cur.obs, cur.bar, logEvents, ui, battleHandlers, panel); if (pauseOpen) renderPause(app, shell); } }
+  function renderBattle(): void {
+    if (!cur) return;
+    renderAppObs(app, cur.obs, cur.bar, logEvents, ui, battleHandlers, panel);
+    if (pauseOpen) renderPause(app, shell);
+  }
   async function enterBattle(): Promise<void> { ui.selectedSkillId = null; ui.hoverCell = null; logEvents = []; await refreshBattle(); renderBattle(); await maybeAuto(); }
   async function maybeAuto(): Promise<void> {
     while (appState === "run" && view?.phase === "battle" && cur && cur.obs.phase === "inProgress" && cur.obs.current?.side === "enemy") {
@@ -137,7 +141,12 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
         else renderBattle();
       } else { ui.selectedSkillId = null; ui.hoverCell = null; void step("run_battle_step", { action: { type: "skill", skillId, targetCell: pos } }); }
     },
-    onCellHover: (pos) => { if (!ui.selectedSkillId) return; ui.hoverCell = pos; renderBattle(); },
+    onCellHover: (pos) => {
+      if (!ui.selectedSkillId) return;
+      // 변경 시에만 재렌더 — innerHTML 교체가 mouseenter 재발화 → 무한 재렌더로 클릭이 삼켜지는 것 방지(TS handlers/battle.ts와 동일).
+      const c = ui.hoverCell;
+      if ((pos?.row ?? -9) !== (c?.row ?? -9) || (pos?.col ?? -9) !== (c?.col ?? -9)) { ui.hoverCell = pos; renderBattle(); }
+    },
     onCancel: () => { ui.selectedSkillId = null; ui.hoverCell = null; ui.pickedCells = []; renderBattle(); },
     onSkip: () => { if (busy) return; ui.selectedSkillId = null; void step("run_battle_step", { action: { type: "skip" } as Action }); },
     onToggleDetail: () => { ui.sheetDetail = !ui.sheetDetail; renderBattle(); },
