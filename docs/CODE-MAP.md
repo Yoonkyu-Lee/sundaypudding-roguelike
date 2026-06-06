@@ -117,10 +117,10 @@ rust/                Cargo workspace (크레이트 의존그래프 = 레이어 �
   Cargo.toml         workspace (members: spr-types, spr-data, spr-core)
   spr-types/         타입·프리미티브: rng.rs(mulberry32 u32 바이트동일) · canonical.rs(정렬키 직렬화=TS canonicalJson, ?Sized) · map.rs · data.rs(Pos/Character/StatusDef/FormationLayout) · skills.rs(Skill/SkillEffect/AreaShape) · passives.rs(Trigger/Condition/Effect/PassiveRule/TraitDef) · combat.rs(Unit/GameState/GameEvent/Action/CompiledRule)
   spr-data/          (→types) data.generated.json include_str 로드 + canonical 라운드트립 게이트 + 접근자(characters/skills/statuses/traits/standard_formation/demo_encounter)
-  spr-core/          (→types,data) 전투 엔진: util · graph · battle(생성+턴흐름+checkWin) · damage · status · formation · targeting · skills · interrupt · passives/(ctx·compile·conditions·effects·dispatch) · flow(step) · observation(뷰) · session(StepResult). tests/differential.rs(40벡터 재생)
-app/                 Tauri2 데스크톱 셸 (P1-13, 워크스페이스 밖 — 게이트 영향 0). main.rs #[command] create_session/battle_step/observation → spr_core::session::Session 래핑. 빌드: cargo tauri dev (tauri-cli 필요)
+  spr-core/          (→types,data) 게임 엔진 전체: util·graph · 전투(battle·damage·status·formation·targeting·skills·interrupt·passives/·flow·observation·session) · ai(choose_action) · run/(types·data[RunData]·helpers·passives[run스코프]·rewards·items·layers[시퀀서]·shop·encounter·run[orchestration]·view[RunView]·session[RunSession]). tests: differential(40벡터)·ai-corpus·full-run·rewards·grown-battle
+app/                 Tauri2 데스크톱 셸 (워크스페이스 밖 — 게이트 영향 0). main.rs #[command]: 전투(create_session/battle_step/observation) + **풀게임 14종(run_create/view/enter_node/choose_reward/leave_shop/buy/encounter/move/set_active/equip/unequip/battle_step/ai_step/obs)** → spr_core Session/RunSession 래핑. 구동: 터미널1 npm run dev + 터미널2 `cd app && npx tauri dev`. `?core=rust`(전투)·`?core=rust&full=1`(풀게임)
 ```
-> `npm run check`가 rust/ 존재 시 `cargo test` 게이트 실행(app/ 제외 — 독립 워크스페이스). 전투코어 전체 TS↔Rust **바이트 동일**(differential 40벡터/679스텝). 상세: PORTING.md §7.
+> `npm run check`가 rust/ 존재 시 `cargo test` 게이트 실행(app/ 제외 — 독립 워크스페이스). **전 게임로직(전투+AI+런) TS↔Rust 바이트동일** — 풀 런 differential(맵·전투·보상·상점·인카운터·런패시브·성장·층전환). 상세: PORTING.md §7.
 
 ## data / view 파일
 
@@ -166,6 +166,7 @@ app/                 Tauri2 데스크톱 셸 (P1-13, 워크스페이스 밖 — 
 | `src/web/drag.ts` | web | **공용 포인터 드래그**(`beginPointerDrag`) — 네이티브 HTML5 DnD 대체. 커서 따라오는 `.drag-avatar`·`elementFromPoint` 드롭 라우팅·클릭 폴백. 에디터·파티편성 공용 | `beginPointerDrag` |
 | `src/web/partyView.ts` | web | **파티 편성(통합 파티뷰, 모달)** — 3칼럼: 좌 4×4 진형 보드(포인터 드래그 배치/교대) / 중 선택 캐릭 상세(charSheet 인라인) / 우 장착 인벤토리. 드래그=`drag.ts` 포인터(고스트 없음). 맵 전용 | `renderPartyView` · `PartyViewData` |
 | `src/web/rustBattle.ts` | web | **전투 엔진 검증 하네스(P1-13)** — `?core=rust\|ts` 부팅 진입(main.ts 분기, 기존 게임 무수정). `selectBattleBackend`로 데모 전투를 **실제 `unitCard`** 로 렌더 + 관측 `legalActions` 버튼 행동 + 자동플레이(first-legal). 관측이 TS와 바이트 동일이라 카드 UI 그대로 재사용 | `mountRustBattle` |
+| `src/web/rustRun.ts` | web | **풀 게임 Rust 하네스(P2-7)** — `?core=rust&full=1` 진입. 전체 로그라이크를 Rust `RunSession`(IPC `run_*` 커맨드)으로 구동: 맵(reachable 노드)·보상·상점·인카운터·전투(unitCard 그리드, 적턴 AI 자동). getRunView 렌더 | `mountRustRun` |
 | `src/web/coreAdapter.ts` | web | **코어 백엔드 어댑터(P1-13 피처플래그)** — `selectBattleBackend()`: `?core=rust`+Tauri 런타임=Rust(IPC invoke `create_session`/`battle_step`), 아니면 TS(인메모리). 두 백엔드 `{create(seed),step(action)}→{eventDelta,observation}` 동형(spr-core Session과 동일). 전투(데모) 육안 differential 검증용 | `selectBattleBackend` · `BattleBackend` |
 | `src/web/style.css` | web | 다크 테마 스타일 + **게임셸 리셋**(상단: 브라우저 제스처/크롬 제거 — overscroll·touch-action·tap-highlight·`:focus-visible`·커스텀 스크롤바·number 스피너. CLAUDE "웹 렌더링 티 금지" B) | — |
 | `index.html` · `vite.config.ts` | web | Vite 진입/설정 (`npm run dev`). **F3 dev-write 미들웨어**(`apply:"serve"` 전용 — `POST /api/save-run` → `src/data/runs/{fileId}.json` 기록 + `runs.generated.ts` 재생성, 빌드 무영향) | `devWriteRuns` |

@@ -127,7 +127,8 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
   > 3. 검증: `tauri dev`로 앱 구동 → 데모 전투를 **TS 모드와 Rust 모드 양쪽 플레이**, 동일 시드 동일 진행/연출 확인(델타 = 엔진 differential이 이미 보장). 필요시 WebView2/`tauri-cli` 설치.
   > **선결 결정**: (a) Tauri 툴체인을 이 머신/레포에 추가할지, (b) 프론트 피처플래그 방식(쿼리파라미터 vs 빌드분기).
 
-### Phase 2 — 완전 마이그레이션 (런/AI/허브 → Rust, 같은 differential 패턴)
+### Phase 2 — 완전 마이그레이션 (런/AI → Rust, 같은 differential 패턴)
+> **✅ 전 게임로직 마이그레이션 완료 (2026-06).** 전투+AI+런 오케스트레이션이 모두 Rust로 이식·**바이트 검증**(풀 런 differential: 맵·전투·보상RNG·상점·인카운터·런패시브·성장·층전환). 풀 게임 세션 API(`RunSession`) + Tauri 커맨드 14종 + `?core=rust&full=1` 하네스로 **전체 로그라이크가 Rust 코어로 플레이됨**. 남은 것 = save 왕복(영속화, 전 GameState serde — 게임로직 아님)뿐.
 - [x] **P2-1 AI** — `spr-types/ai.rs`(AiProfile/AiRule/AiCondition) + `spr-data ai_profiles()` + `spr-core/ai.rs`(choose_action·apply_profile·greedy, **f64 스코어 TS 동일 연산**) + Character/Unit `aiProfileId`. **AI 구동 풀 전투 differential**(`tests/ai-corpus.generated.json`, `npm run ai:corpus`): demo(그리디)+profiled(4 프로파일) × 5시드 → 전체 로그 바이트 동일. AI는 순수·결정론 → Rust 자가구동 재현(AI+전투 동시 검증)
 - [x] P2-2 런 타입/헬퍼/생성 — 데이터번들 runs 추가(P2-2a) + spr-types(party.rs·map.rs 확장: RunDef roster/useMastery·EncounterEvent) + spr-data runs()/default_run() + spr-core/run/(types: RunState/RewardOption/ShopOffer·helpers: cur_floor/node/heal_party/upgrade_owned/learn_owned·run: create_run/move_party_member/set_active_skill). **create_run TS 바이트동일**(초기상태+party+**RNG 시드초기화 seed^0x9e3779b9=481316**) + heal/편성 변이 검증
 - [x] P2-3 create_battle 성장 변종 — `battle.rs`(make_unit_grown·equip_bonus·**create_battle_grown**) + spr-types ItemDef·NodeRule·PendingStatus + spr-data items()/node_rosters(). 파티 HP/성장/장착(dmgFlat·스탯)/계승상태/노드룰 주입. **성장 파티 AI 풀전투 differential**(kim 무기+스킬보너스+regen계승+battleStart대사룰) TS 바이트동일
