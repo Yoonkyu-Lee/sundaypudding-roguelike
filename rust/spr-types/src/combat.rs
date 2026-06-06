@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// 컴파일된 패시브 룰 — 발동 카운터 포함(턴/전투당 캡). TS CompiledRule.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompiledRule {
     pub rule: crate::passives::PassiveRule,
     pub via_kind: String, // "skill" | "trait" | "node"
@@ -16,7 +16,7 @@ pub struct CompiledRule {
 }
 
 /// 상태이상 인스턴스 (원장 1건).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StatusInstance {
     pub def_id: String,
     pub stacks: i64,
@@ -26,7 +26,7 @@ pub struct StatusInstance {
 }
 
 /// 전투 중 유닛. (rules/statMods 등은 패시브 슬라이스서 확장)
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Unit {
     pub uid: String,
     pub side: String, // "ally" | "enemy"
@@ -57,14 +57,14 @@ pub struct Unit {
 
 pub type TurnKind = &'static str; // "normal" | "interrupt"
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueueEntry {
     pub uid: String,
     pub kind: String,
     pub speed: i64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpeedRoll {
     pub uid: String,
     #[serde(rename = "speedMin")]
@@ -195,6 +195,8 @@ pub enum GameEvent {
     Skip { uid: String, reason: String },
 }
 
+/// 전투 상태. 세이브 직렬화 대상 — `log`은 append-only(프로덕션 로직 미참조)라 skip(GameEvent serde 트리 회피, 복원 시 빈 벡터).
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GameState {
     pub rng: Rng,
     pub round: i64,
@@ -203,6 +205,7 @@ pub struct GameState {
     pub cursor: i64,
     pub current: Option<QueueEntry>,
     pub phase: String, // "inProgress" | "allyWin" | "enemyWin"
+    #[serde(skip)]
     pub log: Vec<GameEvent>,
     pub ally_formation: Option<crate::data::FormationLayout>,
     pub enemy_formation: Option<crate::data::FormationLayout>,

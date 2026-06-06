@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// 포메이션 = 열별 보너스 총량(인덱스=열). ColumnBonus = {attackPower?,defensePower?} → HashMap. TS FormationLayout.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct FormationLayout {
     pub id: String,
     pub columns: Vec<HashMap<String, i64>>,
@@ -15,7 +15,7 @@ pub struct Pos {
     pub col: i64,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Placement {
     #[serde(rename = "charId")]
     pub char_id: String,

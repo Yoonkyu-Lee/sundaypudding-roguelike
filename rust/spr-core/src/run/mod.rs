@@ -8,6 +8,7 @@ pub mod layers;
 pub mod passives;
 pub mod rewards;
 pub mod run;
+pub mod save;
 pub mod session;
 pub mod shop;
 pub mod types;

@@ -1,10 +1,10 @@
 //! 런 맵 타입 (TS `types/map.ts`의 그래프 부분). 레이어/core 본문은 시퀀서 슬라이스(P2-4)서 도입(현재 serde 무시).
 use crate::data::Placement;
 use crate::passives::PassiveRule;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// 노드 트리거 룰 소유자(화자/기준).
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct RuleOwner {
     pub side: String, // ally|enemy
     #[serde(rename = "charId")]
@@ -12,7 +12,7 @@ pub struct RuleOwner {
 }
 
 /// 노드 트리거 룰 = PassiveRule + owner. owner의 side+charId 유닛에 주입(self=그 개체). TS NodeRule.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct NodeRule {
     #[serde(flatten)]
     pub rule: PassiveRule,
@@ -21,7 +21,7 @@ pub struct NodeRule {
 }
 
 /// 상점 진열 저작(판별 `kind`). TS ShopOfferDef.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(tag = "kind")]
 pub enum ShopOfferDef {
     #[serde(rename = "buyItem")]
@@ -33,7 +33,7 @@ pub enum ShopOfferDef {
 }
 
 /// 노드 레이어(판별 `kind`) — 데코(즉시) + 상호작용(블록). TS Layer.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(tag = "kind")]
 pub enum Layer {
     // 데코레이터(즉시)
@@ -57,7 +57,7 @@ pub enum Layer {
 }
 
 /// 노드 부착 레이어 슬롯(onEnter/onResolve=데코). TS NodeLayers.
-#[derive(Debug, Clone, Deserialize, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct NodeLayers {
     #[serde(rename = "onEnter", default)]
     pub on_enter: Option<Vec<Layer>>,
@@ -65,7 +65,7 @@ pub struct NodeLayers {
     pub on_resolve: Option<Vec<Layer>>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct MapNode {
     pub id: String,
     #[serde(rename = "type")]
@@ -131,7 +131,7 @@ pub struct EncounterEvent {
     pub choices: Vec<EncounterChoice>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct FloorDef {
     pub id: String,
     #[serde(default)]
@@ -142,7 +142,7 @@ pub struct FloorDef {
     pub edges: Vec<MapEdge>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct RunDef {
     pub id: String,
     pub name: String,

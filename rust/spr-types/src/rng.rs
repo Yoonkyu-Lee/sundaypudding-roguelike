@@ -2,7 +2,7 @@
 //! state는 `u32`(TS는 `|0` signed 저장·`>>>0` unsigned 방출 — Rust는 u32 단일, SERIALIZATION-CONTRACT RNG 부호계약).
 //! 정수 코어(`next_u32`)는 전부 u32 wrapping; `next()`만 `/2^32` f64(IEEE754 결정론).
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Rng {
     pub state: u32,
 }

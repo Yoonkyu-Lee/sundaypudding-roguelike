@@ -1,5 +1,5 @@
 //! 런 도메인 런타임 타입 (TS `core/run/types.ts`). RunState = 전투 위 레이어 상태.
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use spr_types::combat::GameState;
 use spr_types::map::{EncounterEvent, RunDef};
 use spr_types::party::{PartyMemberState, PendingStatus};
@@ -7,7 +7,7 @@ use spr_types::rng::Rng;
 use std::collections::HashMap;
 
 /// 보상 선택지(런타임 생성). 판별 `kind`.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "kind")]
 pub enum RewardOption {
     #[serde(rename = "upgradeSkill")]
@@ -21,7 +21,7 @@ pub enum RewardOption {
 }
 
 /// 상점 진열(런타임). 판별 `kind`.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "kind")]
 pub enum ShopOffer {
     #[serde(rename = "upgrade")]
@@ -34,7 +34,8 @@ pub enum ShopOffer {
     Heal { id: String, cost: i64, pct: i64, label: String },
 }
 
-/// 런 상태. battle/rewards/shop/encounter는 진행 중에만 Some. (save 직렬화는 P2-7)
+/// 런 상태. battle/rewards/shop/encounter는 진행 중에만 Some. 세이브/이어하기 직렬화 대상(전 트리 serde).
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RunState {
     pub rng: Rng,
     pub seed: u32,

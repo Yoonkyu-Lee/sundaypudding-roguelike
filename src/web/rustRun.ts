@@ -25,6 +25,8 @@ function invoker(): Invoke | null {
   return t?.core?.invoke ?? null;
 }
 
+const SAVE_KEY = "spr_rust_save_v1";
+
 export function mountRustRun(app: HTMLElement, startSeed: number): void {
   const invoke = invoker();
   if (!invoke) { app.innerHTML = `<div class="rb-root"><p style="color:var(--enemy)">Rust 코어(Tauri) 런타임이 아님 — 앱에서 ?core=rust&full=1 로 실행하세요.</p></div>`; return; }
@@ -61,7 +63,16 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
     if (busy) return; busy = true;
     try { view = await callView(cmd, args); } catch (e) { showErr(cmd, e); return; } finally { busy = false; }
     if (view.phase === "battle") { await enterBattle(); } else { render(); }
+    persist();
   }
+
+  // ── 세이브/이어하기 영속화 (localStorage, Rust 세션 직렬화 IPC) ──
+  // TS 경로(spr_save_v1)와 포맷 비호환 → 전용 키. run_save=JSON 문자열, run_load=복원 후 RunView(또는 null=폐기).
+  function persist(): void {
+    if (!(appState === "run" && runActive)) return;
+    void (async () => { try { const json = (await invoke!("run_save")) as string; if (json) localStorage.setItem(SAVE_KEY, json); } catch { /* 용량/비활성 무시 */ } })();
+  }
+  function clearSave(): void { try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } }
 
   // ── 시트/편성 오버레이(Rust 백킹) ──
   async function refreshBundle(): Promise<void> { try { bundle = (await invoke!("run_sheet_data")) as SheetBundle; } catch (e) { showErr("run_sheet_data", e); } }
@@ -70,7 +81,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
     app, ui, invoke: invoke!,
     getBundle: () => bundle,
     // 변이(장착/활성/진형) → 뷰·번들 재조회 → 재렌더(맵 진형/오버레이 동기).
-    mutate: (fn) => { void (async () => { try { await fn(); view = await callView("run_view"); await refreshBundle(); } catch (e) { showErr("overlay", e); return; } render(); })(); },
+    mutate: (fn) => { void (async () => { try { await fn(); view = await callView("run_view"); await refreshBundle(); } catch (e) { showErr("overlay", e); return; } render(); persist(); })(); },
     rerender: render,
   });
 
@@ -78,19 +89,19 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
   const shell: ShellHandlers = {
     onStart: () => { appState = "hub"; render(); },
     onEditor: () => { appState = "editor"; render(); },
-    onNewRun: async () => { view = await callView("run_create_roster", { seed: ++seed, charIds: selectedIds() }); runActive = true; pauseOpen = false; appState = "run"; cur = null; if (view.phase === "battle") await enterBattle(); else render(); },
-    onResumeRun: () => { appState = "run"; pauseOpen = false; render(); },
-    onAbandonRun: () => { runActive = false; render(); },
-    onToHub: () => { appState = "hub"; pauseOpen = false; if (view && (view.phase === "won" || view.phase === "lost")) runActive = false; render(); },
+    onNewRun: async () => { clearSave(); view = await callView("run_create_roster", { seed: ++seed, charIds: selectedIds() }); runActive = true; pauseOpen = false; appState = "run"; cur = null; if (view.phase === "battle") await enterBattle(); else render(); persist(); },
+    onResumeRun: () => { appState = "run"; pauseOpen = false; if (view?.phase === "battle") void enterBattle(); else render(); },
+    onAbandonRun: () => { runActive = false; clearSave(); render(); },
+    onToHub: () => { appState = "hub"; pauseOpen = false; if (view && (view.phase === "won" || view.phase === "lost")) { runActive = false; clearSave(); } render(); },
     onResume: () => { pauseOpen = false; render(); },
-    onToTitle: () => { appState = "title"; runActive = false; pauseOpen = false; render(); },
+    onToTitle: () => { appState = "title"; runActive = false; pauseOpen = false; clearSave(); render(); },
     onSelectRun: (id) => { if (runActive) return; hub.setRun(id); render(); },
     onToggleChar: (charId) => { if (runActive) return; hub.toggle(charId); render(); },
   };
 
   // ── 에디터(저작) — testRun=Rust 런 생성 ──
   const editor = createEditor({
-    testRun: async (def: RunDef) => { view = await callView("run_create_def", { seed: ++seed, runDef: def }); runActive = true; pauseOpen = false; appState = "run"; cur = null; if (view.phase === "battle") await enterBattle(); else render(); },
+    testRun: async (def: RunDef) => { clearSave(); view = await callView("run_create_def", { seed: ++seed, runDef: def }); runActive = true; pauseOpen = false; appState = "run"; cur = null; if (view.phase === "battle") await enterBattle(); else render(); persist(); },
     rerender: render,
     toTitle: () => { appState = "title"; render(); },
   });
@@ -162,6 +173,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
       grantWin((res.view.party ?? view?.party ?? []).filter((p) => p.alive).map((p) => p.charId));
     }
     view = res.view; busy = false;
+    persist(); // 매 행동 후 영속(전투 중 포함 — GameState.log skip이라 안전)
     if (view.phase !== "battle") {
       // 전투 종료 — 막타·승패를 잠깐 보여준 뒤 런(보상/패배)으로 복귀(TS driveBattle 1.1s 대응).
       if (res.observation) { cur = { obs: res.observation, bar: [] }; renderBattle(); }
@@ -234,5 +246,12 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
   });
   window.addEventListener("contextmenu", (e) => { if (appState !== "editor" && !(e.target as HTMLElement)?.closest("input,textarea")) e.preventDefault(); });
 
-  render();
+  // 부팅: 세이브 있으면 복원(이어하기 활성) 후 렌더. 손상/비호환이면 run_load=null → 폐기.
+  void (async () => {
+    try {
+      const json = localStorage.getItem(SAVE_KEY);
+      if (json) { const v = (await invoke!("run_load", { json })) as RunView | null; if (v) { view = v; runActive = true; } else clearSave(); }
+    } catch { /* 무시 */ }
+    render();
+  })();
 }

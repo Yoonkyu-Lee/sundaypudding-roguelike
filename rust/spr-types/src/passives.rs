@@ -1,9 +1,9 @@
 //! 특성/패시브 DSL 스키마 (TS `types/passives.ts`). when/if/then 합성 언어. 엔진이 해석만.
 //! 판별자: Trigger=`on`, Condition=`c`, Effect=`do` (DATA-SERIALIZATION-CONTRACT). who/as 등은 String.
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// 발동 시점(when). 판별 `on`. who/as/result/dir 등은 Option<String>(TS 문자열 비교 그대로).
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(tag = "on")]
 pub enum Trigger {
     #[serde(rename = "battleStart")]
@@ -130,7 +130,7 @@ impl Trigger {
 }
 
 /// 조건(if). 판별 `c`. cmp는 Comparator 문자열.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(tag = "c")]
 pub enum Condition {
     #[serde(rename = "hpPct")]
@@ -197,7 +197,7 @@ pub enum Condition {
 }
 
 /// 효과(then). 판별 `do`. target은 EffTarget 문자열.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(tag = "do")]
 pub enum Effect {
     #[serde(rename = "damage")]
@@ -269,7 +269,7 @@ pub enum Effect {
 }
 
 /// 디자이너 룰: when 시점에 if 모두 참이면 then 순서대로. TS PassiveRule.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct PassiveRule {
     #[serde(default)]
     pub id: Option<String>,

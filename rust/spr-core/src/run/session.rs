@@ -163,6 +163,21 @@ impl RunSession {
     pub fn phase(&self) -> &str {
         &self.run.phase
     }
+
+    /// 세이브 — RunState 전 트리 JSON. 프론트가 localStorage 영속(TS saveRun 대응).
+    pub fn save_json(&self) -> String {
+        super::save::serialize_run(&self.run)
+    }
+    /// 이어하기 — JSON → 세션 복원. 손상/비호환(파티 빔·삭제 charId 참조)이면 None(폐기 후 새로 시작, TS loadable).
+    /// 데이터맵은 재로드(저장 안 함), delivered=0(battle.log은 skip되어 빈 벡터 → 델타 재생 없음).
+    pub fn load_json(json: &str) -> Option<RunSession> {
+        let run = super::save::deserialize_run(json)?;
+        let d = RunData::load();
+        if run.party.is_empty() || !run.party.iter().all(|m| d.chars.contains_key(&m.char_id)) {
+            return None;
+        }
+        Some(RunSession { run, d, delivered: 0 })
+    }
     /// 현재 런 뷰(맵/파티/보상/상점/인카운터).
     pub fn view(&self) -> RunView {
         get_run_view(&self.run, &self.d)
@@ -458,6 +473,41 @@ mod tests {
         let res = s.battle_step(&action);
         // 행동이 적용돼 로그가 늘고(skillUsed 등) 델타 비어있지 않음.
         assert!(!res.event_delta.is_empty(), "targetCell 행동 → 이벤트 발생해야(시전됨). skill={} pos={:?} before={}", skill_id, enemy_pos, before);
+    }
+
+    #[test]
+    fn save_load_round_trip_deterministic() {
+        use spr_types::canonical::canonical_json;
+        // mid-battle 상태에서 세이브→로드 후, 양쪽을 동일하게 끝까지 구동 → 이어진 이벤트 델타 바이트 동일.
+        // RNG state·유닛·상태이상·룰 카운터·큐가 전부 복원돼야 통과(전투 중 세이브 안전성 증명).
+        let mut s = RunSession::new(42);
+        let mut g0 = 0;
+        while s.phase() == "map" && g0 < 50 {
+            g0 += 1;
+            let n = s.run.reachable[0].clone();
+            s.enter_node(&n);
+        }
+        assert_eq!(s.phase(), "battle", "전투 진입");
+        for _ in 0..2 {
+            if s.run.battle.as_ref().map(|b| b.phase == "inProgress").unwrap_or(false) {
+                s.battle_ai_step();
+            }
+        }
+        let json = s.save_json();
+        let mut s2 = RunSession::load_json(&json).expect("로드 성공");
+        let mut drive = |sess: &mut RunSession| -> (String, String, i64) {
+            let mut log: Vec<GameEvent> = Vec::new();
+            let mut g = 0;
+            while sess.run.battle.as_ref().map(|b| b.phase == "inProgress").unwrap_or(false) && g < 300 {
+                g += 1;
+                log.extend(sess.battle_ai_step().event_delta);
+            }
+            (canonical_json(&log), sess.run.phase.clone(), sess.run.gold)
+        };
+        let a = drive(&mut s);
+        let b = drive(&mut s2);
+        assert_eq!(a.0, b.0, "세이브/로드 후 이어진 전투 이벤트 델타 바이트 동일");
+        assert_eq!((a.1.as_str(), a.2), (b.1.as_str(), b.2), "최종 phase/gold 동일");
     }
 
     #[test]

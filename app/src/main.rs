@@ -129,6 +129,25 @@ fn run_battle_init(state: tauri::State<RunAppState>) -> Result<Value, String> {
 fn run_sheet_data(state: tauri::State<RunAppState>) -> Result<Value, String> {
     with_run(&state, |s| s.sheet_data())
 }
+/// 세이브 — 현재 런을 JSON 문자열로. 프론트가 localStorage 영속.
+#[tauri::command]
+fn run_save(state: tauri::State<RunAppState>) -> Result<String, String> {
+    let guard = state.0.lock().unwrap();
+    let s = guard.as_ref().ok_or("런 세션 없음")?;
+    Ok(s.save_json())
+}
+/// 이어하기 — JSON 세이브 → 세션 복원. 손상/비호환이면 null(폐기 후 새로 시작). 성공 시 RunView.
+#[tauri::command]
+fn run_load(json: String, state: tauri::State<RunAppState>) -> Option<Value> {
+    match RunSession::load_json(&json) {
+        Some(s) => {
+            let v = serde_json::to_value(s.view()).ok();
+            *state.0.lock().unwrap() = Some(s);
+            v
+        }
+        None => None,
+    }
+}
 #[tauri::command]
 fn run_battle_view(state: tauri::State<RunAppState>) -> Result<Value, String> {
     with_run(&state, |s| s.battle_view())
@@ -146,7 +165,7 @@ fn main() {
             create_session, battle_step, observation,
             run_create, run_create_roster, run_create_def, run_view, run_enter_node, run_choose_reward, run_leave_shop, run_buy,
             run_encounter, run_move, run_set_active, run_equip, run_unequip,
-            run_battle_step, run_battle_ai_step, run_battle_obs, run_battle_init, run_battle_view, run_battle_targeting, run_sheet_data
+            run_battle_step, run_battle_ai_step, run_battle_obs, run_battle_init, run_battle_view, run_battle_targeting, run_sheet_data, run_save, run_load
         ])
         .run(tauri::generate_context!())
         .expect("Tauri 앱 구동 실패");
