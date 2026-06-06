@@ -16,6 +16,8 @@
 
 ## 1. 워크스페이스 레이아웃
 
+> **최종 구조(재구조 후)**: `engine/`(옛 rust/) · `desktop/`(옛 app/) · `web/`(옛 루트 TS — src/{ui,content,contract}). 아래는 마이그레이션 당시 계획 레이아웃.
+
 ```
 src/        ← TS 코어(골든 오라클 — 포팅 끝까지 유지, 검증 후 은퇴)
 rust/       ← Cargo workspace (크레이트 의존그래프가 data→types←core→views 단방향을 컴파일 강제)

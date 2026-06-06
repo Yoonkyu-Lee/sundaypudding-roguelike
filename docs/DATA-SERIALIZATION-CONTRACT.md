@@ -4,8 +4,7 @@
 > 위한 계약. 이벤트 로그 계약([`SERIALIZATION-CONTRACT.md`](SERIALIZATION-CONTRACT.md))의 **데이터 판**.
 > serde 왕복만으론 부족 — 판별자·정수 스케일·배열 순서·ID 참조를 명문화한다(Codex 적대검토 (c)).
 >
-> **진실원**: TS data 모듈(타입 authoring). **파생**: `src/data/data.generated.json`(`npm run data:export`,
-> 드리프트 게이트 `data-export.test`). **런 그래프**는 별도(`src/data/runs/*.json`).
+> **진실원**: TS 콘텐츠 모듈(`web/src/content/*`, 타입 authoring). **파생**: `web/src/content/data.generated.json`(`npm run data:export` → 엔진 serde 로드). **런 그래프**는 별도(`web/src/content/runs/*.json`).
 
 ---
 

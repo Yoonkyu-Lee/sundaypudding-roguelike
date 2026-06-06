@@ -1,10 +1,10 @@
 # 불변식 카탈로그 (INVARIANTS) — 게임 로직 스펙
 
-> **무엇**: 게임 엔진(현 `rust/spr-core`)이 **항상 지켜야 하는 규칙**의 카탈로그. 8개 도메인 정독으로 도출(근거=파일:함수). 옛 TS 코드리뷰 산출(`INVARIANTS-FROM-CLAUDE-CODE` + 교차검증용 `INVARIANTS-FROM-REPO`)을 **여기로 통합**.
+> **무엇**: 게임 엔진(현 `engine/spr-core`)이 **항상 지켜야 하는 규칙**의 카탈로그. 8개 도메인 정독으로 도출(근거=파일:함수). 옛 TS 코드리뷰 산출(`INVARIANTS-FROM-CLAUDE-CODE` + 교차검증용 `INVARIANTS-FROM-REPO`)을 **여기로 통합**.
 >
 > **검증**: 이 불변식들은 이제 **Rust 엔진**이 지키고, `cargo test`(differential 회귀 — 동결 골든 벡터 재생)가 회귀를 막는다. (옛 TS 불변식 assertion 하네스 `src/core/tests/invariants/`·스트레스 런은 엔진 은퇴로 제거 — 재실행은 `archive/ts-core` 체크아웃.)
 >
-> **경로 주의**: 본문의 `src/core/...`·`combat/`·`run/` 경로는 **TS 시절 기준**. 현 엔진 모듈 매핑은 [`CODE-MAP.md`](CODE-MAP.md)의 `rust/spr-core` 트리 참조(대부분 동일 이름: `damage.rs`·`flow.rs`·`run/run.rs`). 규칙 자체는 언어 무관하게 유효.
+> **경로 주의**: 본문의 `src/core/...`·`src/web/...`·`combat/`·`run/` 경로는 **TS 시절 기준**. 현 엔진 모듈 매핑은 [`CODE-MAP.md`](CODE-MAP.md)의 `engine/spr-core` 트리 참조(대부분 동일 이름: `damage.rs`·`flow.rs`·`run/run.rs`). 규칙 자체는 언어 무관하게 유효.
 >
 > **경계 정의(무엇을 보고 무엇을 안 보나)** — 설계 8.2 "결정 정보는 전부 observation에":
 > - ✅ **비교/검사 대상**: 이벤트 로그 시퀀스(`GameEvent[]` 종류·순서·필드), Observation 노출값

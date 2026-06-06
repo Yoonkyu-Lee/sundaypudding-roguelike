@@ -1,6 +1,6 @@
 # 디자이너 가이드 — `src/data/`
 
-이 폴더가 **콘텐츠**다. 엔진(`rust/spr-core`)은 여기 적힌 값을 **해석만** 한다(`npm run data:export` → JSON → Rust 로드).
+이 폴더가 **콘텐츠**다. 엔진(`engine/spr-core`)은 여기 적힌 값을 **해석만** 한다(`npm run data:export` → JSON → Rust 로드).
 핵심 원칙: **메커니즘 = 엔진, 값 = 데이터.** 아래 "할 수 있는 것"에 해당하면 **이 폴더 파일만 고치면** 된다(엔진 코드 안 건드림).
 
 > 작성 스키마(타입)의 진실은 [`src/contract/types/content.ts`](../contract/types/content.ts) — 각 필드의 정확한 의미가 주석으로 달려 있다. 규칙·수치 맥락은 [`docs/GAME-DESIGN.md`](../../docs/GAME-DESIGN.md).

@@ -12,39 +12,39 @@
 이 프로젝트는 **두 언어**가 한 데스크톱 앱을 이룬다 — 네이티브 그래픽 엔진이 없어 GUI는 웹으로 두고, 게임 로직만 Rust로.
 
 ```
-┌─ rust/ ──────────────────┐        ┌─ src/ (웹 — 브라우저/웹뷰가 실행) ─┐
-│ ★ 게임 엔진 (결정론 코어) │        │  web/      플레이어 GUI (렌더)        │
-│   spr-types ← 타입·RNG    │        │  data/     콘텐츠(스킬·캐릭·런…)       │
-│   spr-data  ← 콘텐츠 로더  │        │  contract/ 프론트↔엔진 계약 타입+유틸  │
-│   spr-core  ← 전투·AI·런   │        └───────────────────────────────────┘
+┌─ engine/ ──────────────────┐        ┌─ web/ (TS — 브라우저/웹뷰가 실행) ──┐
+│ ★ 게임 엔진 (결정론 코어) │        │  src/ui/       플레이어 GUI (렌더)   │
+│   spr-types ← 타입·RNG    │        │  src/content/  콘텐츠(스킬·캐릭·런…) │
+│   spr-data  ← 콘텐츠 로더  │        │  src/contract/ 프론트↔엔진 계약     │
+│   spr-core  ← 전투·AI·런   │        └────────────────────────────────────┘
 └───────────┬──────────────┘                         ▲
             │                                         │ 렌더(이벤트 델타·뷰)
-   IPC 커맨드 │ ┌─ app/ (Tauri2 데스크톱 셸) ─┐  invoke │
-            └▶│  main.rs = 세션 API 다리      │◀────────┘
-              │  (run_create·battle_step …)  │
-              └──────────────────────────────┘
+   IPC 커맨드 │ ┌─ desktop/ (Tauri2 데스크톱 셸) ─┐ invoke│
+            └▶│  src/main.rs = 세션 API 다리     │◀───────┘
+              │  (run_create·battle_step …)     │
+              └─────────────────────────────────┘
 ```
 
-**한 판의 흐름**: 플레이어 입력 → `src/web`(GUI) → `invoke("run_…")` → `app/main.rs`(IPC) → `rust/spr-core`(엔진이 상태 변이) → **이벤트 델타 + 뷰** 반환 → `src/web`가 렌더. **전체 게임 상태·로직은 Rust가 소유**, 웹은 그리기만.
+**한 판의 흐름**: 플레이어 입력 → `web/src/ui`(GUI) → `invoke("run_…")` → `desktop/src/main.rs`(IPC) → `engine/spr-core`(엔진이 상태 변이) → **이벤트 델타 + 뷰** 반환 → `web/src/ui`가 렌더. **전체 게임 상태·로직은 Rust가 소유**, 웹은 그리기만.
 
 | 디렉터리 | 언어 | 역할 | 빌드/툴체인 |
 |---|---|---|---|
-| **`rust/`** | Rust | **★ 게임 엔진** — 전투·AI·런 오케스트레이션·세이브. 결정론·순수(IO 0). | Cargo workspace (`spr-types ← spr-data ← spr-core`) |
-| **`app/`** | Rust | **Tauri2 셸** — 엔진을 IPC 커맨드로 노출(세션 API). 프론트↔엔진 다리. | 별도 Cargo 패키지(워크스페이스 밖 → `cargo test` 게이트 가벼움) |
-| **`src/web/`** | TS | **플레이어 GUI** — 타이틀·허브·맵·전투·오버레이·에디터. Rust를 IPC로 구동. | Vite (`tsconfig.web.json`, DOM) |
-| **`src/data/`** | TS | **콘텐츠** — 스킬·캐릭·아이템·특성·런. `npm run data:export` → JSON → Rust 로드. | `tsconfig.json` (no-DOM) |
-| **`src/contract/`** | TS | **계약** — 프론트↔엔진 공유 타입 스키마 + 순수 유틸(hex graph). 엔진 아님. | `tsconfig.json` (no-DOM) |
+| **`engine/`** | Rust | **★ 게임 엔진** — 전투·AI·런 오케스트레이션·세이브. 결정론·순수(IO 0). | Cargo workspace (`spr-types ← spr-data ← spr-core`) |
+| **`desktop/`** | Rust | **Tauri2 셸** — 엔진을 IPC 커맨드로 노출(세션 API). 프론트↔엔진 다리. | 별도 Cargo 패키지(워크스페이스 밖 → `cargo test` 게이트 가벼움) |
+| **`web/src/ui/`** | TS | **플레이어 GUI** — 타이틀·허브·맵·전투·오버레이·에디터. Rust를 IPC로 구동. | Vite (`tsconfig.web.json`, DOM) |
+| **`web/src/content/`** | TS | **콘텐츠** — 스킬·캐릭·아이템·특성·런. `npm run data:export` → JSON → Rust 로드. | `tsconfig.json` (no-DOM) |
+| **`web/src/contract/`** | TS | **계약** — 프론트↔엔진 공유 타입 스키마 + 순수 유틸(hex graph). 엔진 아님. | `tsconfig.json` (no-DOM) |
 
-> **왜 Rust가 `src/`에 없나**: `src/`는 TS/웹 툴체인(vite·tsc) 소유, `rust/`는 Cargo 소유 — 한 트리에 `.ts`와 `.rs`를 섞으면 빌드 루트·`target/`·language server가 충돌. Tauri 표준(프론트 `src/` + 백엔드 별도)도 동일. **"core"는 하나 = `rust/spr-core`**. (`src/contract`는 옛 `src/core`가 엔진 은퇴 후 개명된 계약 레이어, 엔진 아님.)
+> **왜 둘로 갈리나 (engine/ vs web/)**: `web/`은 TS/웹 툴체인(vite·tsc·npm) 소유, `engine/`는 Cargo 소유 — 한 트리에 `.ts`와 `.rs`를 섞으면 빌드 루트·`target/`·language server가 충돌. 그래서 **언어/툴체인별로 최상위 분리**(역할명: engine·desktop·web). **"core"는 하나 = `engine/spr-core`**. (`web/src/contract`는 옛 `src/core`가 엔진 은퇴 후 개명된 계약 레이어, 엔진 아님.)
 >
 > **단방향 의존**: Rust = `spr-data → spr-types ← spr-core`(Cargo가 순환 금지 = 컴파일 강제). TS = `data → contract ← web`. 프론트는 엔진을 **IPC로만** 호출(직접 import 불가 — 언어가 다름).
 
 ---
 
-## 1. `rust/` — 게임 엔진 (★ 게임 로직 전부 여기)
+## 1. `engine/` — 게임 엔진 (★ 게임 로직 전부 여기)
 
 ```
-rust/                Cargo workspace. cargo test = differential 회귀 게이트(npm run check가 구동)
+engine/                Cargo workspace. cargo test = differential 회귀 게이트(npm run check가 구동)
   spr-types/src/     타입·프리미티브 (serde derive 허용)
     rng.rs             시드 PRNG(mulberry32, u32 — TS 바이트동일) + serde(세이브)
     canonical.rs       정렬키 직렬화(=TS canonicalJson, ?Sized) — 이벤트 로그 바이트계약
@@ -84,24 +84,24 @@ rust/                Cargo workspace. cargo test = differential 회귀 게이트
       passives.rs        fireRunTrigger (모험 스코프: nodeEnter/nodeClear/goldGain/partyHpChange)
       view.rs            getRunView (RunState → RunView DTO)
       save.rs            serialize_run/deserialize_run (RunState 전 트리 serde — 세이브/이어하기)
-      session.rs         ★ RunSession (풀 게임 세션 API — app/이 IPC로 래핑하는 진입점)
+      session.rs         ★ RunSession (풀 게임 세션 API — desktop/이 IPC로 래핑하는 진입점)
     tests/             differential(40벡터)·ai-corpus·full-run(yain 3시드)·rewards·grown-battle·save-roundtrip — 전부 TS 골든과 바이트동일
 ```
 > **결정론 하드룰**(CLAUDE 🦀): 정수전용(f64 금지 — hpPct·AI스코어만 deferred)·`IndexMap`/`Vec`(삽입순서, BTreeMap 금지)·`std::time`/`thread_rng` 금지·모듈 전역 가변상태 금지. **TS 골든 엔진은 `archive/ts-core`+tag `ts-golden-oracle`에 보관** — 골든 재생성·differential은 거기 체크아웃 필요.
 
-## 2. `app/` — Tauri2 셸 (IPC = 세션 API)
+## 2. `desktop/` — Tauri2 셸 (IPC = 세션 API)
 
 ```
-app/src/main.rs   #[tauri::command]: 전투 데모(create_session·battle_step·observation)
+desktop/src/main.rs   #[tauri::command]: 전투 데모(create_session·battle_step·observation)
                   + 풀게임 RunSession 커맨드 — run_create[/roster/def]·view·enter_node·choose_reward·leave_shop·buy·
                     encounter·move·set_active·equip·unequip·battle_step·ai_step·battle_obs·battle_init·battle_view·
                     battle_targeting·sheet_data·save·load → spr_core::RunSession 래핑(상태=Mutex)
 ```
-> 구동: 터미널1 `npm run dev`(vite) + 터미널2 `cd app && cargo build && ./target/debug/spr-app.exe`(또는 `npx tauri dev`). 기본 부팅 = Rust 풀게임(Tauri 감지). `app/`은 워크스페이스 밖이라 `cargo test`(rust/) 게이트에 영향 0.
+> 구동: 터미널1 `npm run dev`(vite) + 터미널2 `cd desktop && cargo build && ./target/debug/spr-app.exe`(또는 `npx tauri dev`). 기본 부팅 = Rust 풀게임(Tauri 감지). `desktop/`은 워크스페이스 밖이라 `cargo test`(engine/) 게이트에 영향 0.
 
 ---
 
-## 3. `src/web/` — 프론트엔드 GUI (Rust를 IPC로 구동)
+## 3. `web/src/ui/` — 프론트엔드 GUI (Rust를 IPC로 구동)
 
 | 파일 | 책임 | 핵심 export |
 |---|---|---|
@@ -132,7 +132,7 @@ app/src/main.rs   #[tauri::command]: 전투 데모(create_session·battle_step·
 | `style.css` | 다크 테마 + **게임셸 리셋**(브라우저 제스처/크롬 제거 — CLAUDE 웹-티 금지 B) | — |
 | `index.html` · `vite.config.ts` | Vite 진입/설정. **F3 dev-write 미들웨어**(`POST /api/save-run` → `data/runs/{id}.json` + `runs.generated.ts` 재생성) | `devWriteRuns` |
 
-## 4. `src/data/` — 콘텐츠 (디자이너 영역, → JSON export → Rust 로드)
+## 4. `web/src/content/` — 콘텐츠 (디자이너 영역, → JSON export → Rust 로드)
 
 | 파일 | 책임 | 핵심 export |
 |---|---|---|
@@ -149,10 +149,10 @@ app/src/main.rs   #[tauri::command]: 전투 데모(create_session·battle_step·
 | `runs/index.ts` | 런 레지스트리 파사드 — `RUNS` + `DEFAULT_RUN` + `rosterFromIds` | `RUNS` · `DEFAULT_RUN` |
 | `data.generated.json` | **데이터 JSON 번들(파생)** — `npm run data:export`가 TS data를 canonical JSON으로 방출 → Rust serde 로드. 직접 편집 금지 | (JSON) |
 
-## 5. `src/contract/` — 프론트↔엔진 계약 (타입 + 순수 유틸, 엔진 아님)
+## 5. `web/src/contract/` — 프론트↔엔진 계약 (타입 + 순수 유틸, 엔진 아님)
 
 ```
-src/contract/         옛 src/core, TS 엔진 은퇴로 개명. 프론트·데이터·Rust(export)가 공유.
+web/src/contract/         옛 src/core, TS 엔진 은퇴로 개명. 프론트·데이터·Rust(export)가 공유.
   types.ts            ▸배럴: export type * from types/{content,passives,ai,map,runtime}
   types/
     content.ts          디자이너 스키마: Side·Pos·StatusDef·SkillEffect·AreaShape·Skill·FormationLayout·Character
@@ -170,7 +170,7 @@ src/contract/         옛 src/core, TS 엔진 은퇴로 개명. 프론트·데�
 
 ---
 
-## 기능 → 위치 색인 (게임 로직 = `rust/spr-core`)
+## 기능 → 위치 색인 (게임 로직 = `engine/spr-core`)
 
 | 게임 기능 (GAME-DESIGN 참조) | 위치 (`spr-core/src/…`) |
 |---|---|
@@ -208,8 +208,8 @@ src/contract/         옛 src/core, TS 엔진 은퇴로 개명. 프론트·데�
 
 | 기능 | 예정 위치 |
 |---|---|
-| 런 에디터 F-시리즈 — 완료(`src/web/editor/`). 후속: 웨이브·노드 보상 override 등 | 필요 시 신규 슬라이스 |
+| 런 에디터 F-시리즈 — 완료(`web/src/ui/editor/`). 후속: 웨이브·노드 보상 override 등 | 필요 시 신규 슬라이스 |
 | 메타/본산 영구성장 (5장, ROADMAP #1) | 신규 `spr-core/src/meta/` (런 위 레이어) + 웹 본산 화면. 메타 재화·해금 스키마 |
 | 연출/스토리텔링 엔진 (ROADMAP #2) | `spr-core` 시퀀스 프리미티브 + 웹 연출 레이어(`web/battle/*`·`runRender`) |
 | 지닌물건(held 슬롯) (ROADMAP #3) | 기존 패시브 엔진으로 표현 가능성 먼저 판정(`/slice-plan`) |
-| 아이템/스킬/패시브 에디터 (ROADMAP #4) | `src/web/editor/` (콘텐츠 저작 형식 JSON 이주 선결) |
+| 아이템/스킬/패시브 에디터 (ROADMAP #4) | `web/src/ui/editor/` (콘텐츠 저작 형식 JSON 이주 선결) |

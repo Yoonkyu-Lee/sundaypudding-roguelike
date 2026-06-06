@@ -1,60 +1,47 @@
-# Sundaypudding Roguelike — 엔진
+# Sundaypudding Roguelike
 
-육성형 로그라이크의 **결정론 전투 코어 + 웹 GUI + CLI**. 자체 엔진(빌드 스텝 없는 네이티브 TypeScript).
+육성형 로그라이크. **게임 엔진 = Rust(`engine/spr-core`)** · **GUI = 웹 프론트(Tauri 데스크톱 앱)**. 결정론·differential 검증.
 
 - 설계 진실의 원천(SoT): [`docs/GAME-DESIGN.md`](docs/GAME-DESIGN.md)
 - 코드 지도: [`docs/CODE-MAP.md`](docs/CODE-MAP.md)
-- **디자이너 가이드**(스킬·캐릭터 등 콘텐츠 제작): [`src/data/README.md`](src/data/README.md)
+- **디자이너 가이드**(스킬·캐릭터 등 콘텐츠 제작): [`web/src/content/README.md`](web/src/content/README.md)
 
 ## 요구사항
 - **Node ≥ 24** (네이티브 TypeScript 실행 — 빌드 스텝 없음). 외부 런타임 의존성 0.
 
 ## 실행
-**엔진 = Rust(`rust/spr-core`), 프론트 = 웹(Tauri IPC).** 제품 셸은 Tauri 데스크톱 앱(`app/`).
+**엔진 = Rust(`engine/spr-core`), 프론트 = 웹(Tauri IPC).** 제품 셸은 Tauri 데스크톱 앱(`desktop/`).
 ```bash
 npm install           # 최초 1회 (devDeps: typescript, vite — 타입체크·웹 전용)
 # 게임 구동(데스크톱): 터미널1 = vite, 터미널2 = Tauri 앱
 npm run dev           # 웹 프론트 dev 서버 → http://localhost:5173
-cd app && cargo build && ./target/debug/spr-app.exe   # Rust 풀게임 부팅(기본 = Rust)
+cd desktop && cargo build && ./target/debug/spr-app.exe   # Rust 풀게임 부팅(기본 = Rust)
 npm test              # 웹/에디터 단위 테스트 (node --test)
-cargo test --manifest-path rust/Cargo.toml   # Rust 엔진 — differential 회귀 벡터·save-roundtrip
-npm run data:export   # 데이터 JSON 번들 재생성(src/data 변경 시) → data.generated.json (Rust 로드용)
+cargo test --manifest-path engine/Cargo.toml   # Rust 엔진 — differential 회귀 벡터·save-roundtrip
+npm run data:export   # 데이터 JSON 번들 재생성(web/src/content 변경 시) → data.generated.json (Rust 로드용)
 npm run typecheck     # 계약타입(코어) + 웹 타입체크
 npm run check         # 통합 게이트 (타입·web test·cargo test·줄수·코어순수성·배럴)
 
 # 배포(단일 데스크톱 앱): 프론트 빌드 → Tauri 번들
-cd app && npx tauri build   # beforeBuildCommand가 `npm run build`(dist/) 자동 실행 → 설치본 산출
+cd desktop && npx tauri build   # beforeBuildCommand가 `npm run build`(dist/) 자동 실행 → 설치본 산출
 ```
 
 > **TS 엔진은 은퇴**(Rust로 마이그레이션 완료). TS 골든 엔진 + differential 하네스는 `archive/ts-core` 브랜치 + `tag ts-golden-oracle`에 보관. 상세: [`docs/PORTING.md`](docs/PORTING.md).
 
-## 아키텍처 (상세: GAME-DESIGN.md 8장)
+## 아키텍처 (상세: [`docs/CODE-MAP.md`](docs/CODE-MAP.md))
+**폴리글랏 Tauri 앱** — 언어/역할별 최상위 분리:
 ```
-src/
-  core/        순수·결정론 엔진 (렌더링/IO 의존 0)
-    rng.ts          시드 PRNG (mulberry32) — 모든 무작위의 단일 출처
-    types/          타입 스키마 (content=데이터 스키마 · runtime=런타임 상태)
-    combat/         전투 엔진 (createBattle · getLegalActions · step · 끼어들기 · 포메이션…)
-    run/            런 진행 (헥스 맵 · 노드 · 보상 · 상점 · 세이브 · 파티 편성)
-    ai/             결정론 휴리스틱 정책 (적 조종 / 데모)
-    observation.ts  buildObservation(JSON) — 결정에 필요한 정보 노출
-    *.test.ts       결정론 · 기능 단위 테스트
-  data/        데이터 주도 — 엔진은 이걸 '해석'만 한다  ← ★ 디자이너 영역 (src/data/README.md)
-    skills.ts · statuses.ts · characters.ts · items.ts
-    formations.ts · maps.ts · modes.ts · encounters.ts · events.ts
-  cli/         터미널 드라이버 (개발·검증용; play.ts · ascii.ts)
-  web/         웹 GUI (Vite) — 같은 core 구독 + 이벤트 로그 재생
-    main.ts · render.ts · runRender.ts · shell.ts · partyView.ts · charSheet.ts · battle/ · style.css
+engine/    Rust 게임 엔진 (Cargo workspace: spr-types ← spr-data ← spr-core). 전투·AI·런·세이브. 결정론·IO 0.
+desktop/   Tauri2 셸 — 엔진을 IPC 커맨드(세션 API)로 노출. 프론트↔엔진 다리.
+web/       TS 웹 프론트 (vite/npm 자족). 
+  src/ui/        플레이어 GUI (타이틀·맵·전투·에디터…). Rust를 IPC로 구동.
+  src/content/   게임 콘텐츠 데이터 (→ npm run data:export → JSON → 엔진 로드). ← ★ 디자이너 영역
+  src/contract/  프론트↔엔진 계약 타입 + 순수 유틸(hex graph).
+docs/ · web/scripts/(빌드·검증)
 ```
-
-**원칙**: 단방향 의존 `data → types ← core → views(cli/web)`. 메커니즘은 엔진(`core/`), 값·콘텐츠는 데이터(`data/`).
-새 콘텐츠가 기존 엔진 프리미티브 조합으로 표현되면 **데이터만** 추가하면 되고, 그렇지 않으면 엔진 확장이 필요하다 — 경계와 작업 분담은 [`src/data/README.md`](src/data/README.md) 참고.
+**흐름**: 플레이어 → `web/src/ui`(GUI) → invoke → `desktop`(IPC) → `engine/spr-core`(상태 변이) → 이벤트 델타·뷰 → 렌더.
+**원칙**: 메커니즘=엔진(`engine`), 값·콘텐츠=데이터(`web/src/content`). 새 콘텐츠가 기존 프리미티브 조합으로 되면 **데이터만**, 아니면 엔진 확장 — 경계는 [`web/src/content/README.md`](web/src/content/README.md).
 
 ## 로드맵
-- 스킬 편성 GUI 개편
-- `main.ts` 분리 및 리팩토링
-- 적 전용 AI / 패턴, 적 스탯 액트 스케일링
-- 추가 모드(캠페인 / 챌린지) + 모드 선택 UI
-- 본산 메타 재화 · 추가 해금
-- 웹 렌더러 고도화(스프라이트 / 애니메이션) · 사운드
+다음 작업 우선순위 = [`docs/ROADMAP.md`](docs/ROADMAP.md) (본산 메타 육성 · 연출 엔진 · 지닌물건 · 콘텐츠 에디터).
 - 콘텐츠 확장 · 밸런싱
