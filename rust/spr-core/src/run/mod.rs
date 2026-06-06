@@ -10,6 +10,7 @@ pub mod rewards;
 pub mod run;
 pub mod shop;
 pub mod types;
+pub mod view;
 
 pub use data::RunData;
 pub use encounter::choose_encounter_option;

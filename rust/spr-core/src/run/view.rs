@@ -1,0 +1,175 @@
+//! 런 관측 (TS `core/run/view.ts`) — RunState → RunView(프론트 맵/파티/보상 뷰). 전투는 run.battle 직접.
+use super::data::RunData;
+use super::helpers::cur_floor;
+use super::types::{RewardOption, RunState, ShopOffer};
+use serde::Serialize;
+use spr_types::data::Pos;
+use spr_types::map::MapEdge;
+
+#[derive(Serialize)]
+pub struct NodeView {
+    pub id: String,
+    pub q: i64,
+    pub r: i64,
+    #[serde(rename = "type")]
+    pub node_type: String,
+    pub status: String, // current|visited|active|reachable|locked
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
+}
+
+#[derive(Serialize)]
+pub struct SkillView {
+    pub id: String,
+    pub name: String,
+    pub tier: i64,
+    pub active: bool,
+    #[serde(rename = "canUpgrade")]
+    pub can_upgrade: bool,
+    pub signature: bool,
+}
+
+#[derive(Serialize)]
+pub struct PartyView {
+    pub name: String,
+    #[serde(rename = "charId")]
+    pub char_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub avatar: Option<String>,
+    pub pos: Pos,
+    pub hp: i64,
+    #[serde(rename = "maxHp")]
+    pub max_hp: i64,
+    pub alive: bool,
+    pub skills: Vec<SkillView>,
+    #[serde(rename = "activeCount")]
+    pub active_count: usize,
+}
+
+#[derive(Serialize)]
+pub struct ChoiceView {
+    pub id: String,
+    pub label: String,
+}
+
+#[derive(Serialize)]
+pub struct EncounterView {
+    pub id: String,
+    pub title: String,
+    pub text: String,
+    pub choices: Vec<ChoiceView>,
+}
+
+#[derive(Serialize)]
+pub struct RunView {
+    pub phase: String,
+    pub floor: usize,
+    #[serde(rename = "totalFloors")]
+    pub total_floors: usize,
+    pub nodes: Vec<NodeView>,
+    pub edges: Vec<MapEdge>,
+    pub party: Vec<PartyView>,
+    pub rewards: Option<Vec<RewardOption>>,
+    pub gold: i64,
+    pub shop: Option<Vec<ShopOffer>>,
+    pub encounter: Option<EncounterView>,
+    pub log: Vec<String>,
+}
+
+/// RunState → RunView. TS getRunView.
+pub fn get_run_view(run: &RunState, d: &RunData) -> RunView {
+    let floor = cur_floor(run);
+    let nodes = floor
+        .nodes
+        .iter()
+        .map(|n| {
+            let status = if run.current_node_id == n.id {
+                "current"
+            } else if run.reachable.iter().any(|x| x == &n.id) {
+                "reachable"
+            } else if run.active_node_id.as_deref() == Some(n.id.as_str()) {
+                "active"
+            } else if run.visited.iter().any(|x| x == &n.id) {
+                "visited"
+            } else {
+                "locked"
+            };
+            NodeView { id: n.id.clone(), q: n.q, r: n.r, node_type: n.node_type.clone(), status: status.to_string(), label: n.label.clone() }
+        })
+        .collect();
+    let party = run
+        .party
+        .iter()
+        .map(|m| {
+            let c = &d.chars[&m.char_id];
+            let skills = m
+                .owned_skill_ids
+                .iter()
+                .map(|sid| {
+                    let sk = d.skills.get(sid);
+                    SkillView {
+                        id: sid.clone(),
+                        name: sk.map(|s| s.name.clone()).unwrap_or_else(|| sid.clone()),
+                        tier: sk.and_then(|s| s.tier).unwrap_or(1),
+                        active: m.active_skill_ids.iter().any(|a| a == sid),
+                        can_upgrade: sk.map(|s| s.next_tier_id.is_some()).unwrap_or(false),
+                        signature: sk.map(|s| s.exclusive_to.is_some()).unwrap_or(false),
+                    }
+                })
+                .collect();
+            PartyView {
+                name: c.name.clone(),
+                char_id: m.char_id.clone(),
+                avatar: c.avatar.clone(),
+                pos: m.pos,
+                hp: m.hp,
+                max_hp: m.max_hp,
+                alive: m.hp > 0,
+                skills,
+                active_count: m.active_skill_ids.len(),
+            }
+        })
+        .collect();
+    let encounter = if run.phase == "encounter" {
+        run.encounter.as_ref().map(|ev| EncounterView {
+            id: ev.id.clone(),
+            title: ev.title.clone(),
+            text: ev.text.clone(),
+            choices: ev.choices.iter().map(|c| ChoiceView { id: c.id.clone(), label: c.label.clone() }).collect(),
+        })
+    } else {
+        None
+    };
+    let log_tail: Vec<String> = run.log.iter().rev().take(12).rev().cloned().collect();
+    RunView {
+        phase: run.phase.clone(),
+        floor: run.floor + 1,
+        total_floors: run.run_def.floors.len(),
+        nodes,
+        edges: floor.edges.clone(),
+        party,
+        rewards: run.rewards.clone(),
+        gold: run.gold,
+        shop: run.shop.clone(),
+        encounter,
+        log: log_tail,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::run::{create_run, RunData};
+    use spr_types::canonical::canonical_json;
+    use std::collections::HashMap;
+
+    #[test]
+    fn get_run_view_parity() {
+        let d = RunData::load();
+        let rd = spr_data::default_run();
+        let r = create_run(42, &rd.roster.clone(), &rd, &HashMap::new(), false, &d.chars);
+        let view = get_run_view(&r, &d);
+        let reference = include_str!("../../tests/run-view.generated.json").trim_end();
+        assert_eq!(canonical_json(&view), reference, "getRunView TS 바이트동일");
+    }
+}

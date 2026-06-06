@@ -82,7 +82,7 @@ pub struct MapNode {
     pub core: Option<Vec<Layer>>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, serde::Serialize)]
 pub struct MapEdge {
     pub from: String,
     pub to: String,
