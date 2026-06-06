@@ -168,6 +168,14 @@ web/src/contract/         옛 src/core, TS 엔진 은퇴로 개명. 프론트·�
     index.ts            ▸배럴(graph + 타입만)
 ```
 
+## 6. `web/scripts/` — 빌드·검증 도구 (Node, 런타임 아님)
+
+| 파일 | 역할 |
+|---|---|
+| `check.ts` | **통합 게이트**(`npm run check`, pre-commit 훅) — typecheck + web test(`node --test`) + engine `cargo test`(`../engine`) + 줄수캡·계약순수성·배럴·웹-티 가드·**스키마 드리프트**·문서동기 |
+| `export-data.ts` + `canonical.ts` | 콘텐츠 빌드 — `web/src/content/*` → canonical JSON(`data.generated.json`) → 엔진 로드. `npm run data:export` |
+| `schema-drift.ts` | **스키마 드리프트 가드** — `data.generated.json` 콘텐츠 필드가 대응 Rust `spr-types` 구조체에 선언됐는지 검사(serde 무시 방지). 규약=Rust가 저작 콘텐츠 필드 전체 선언. 상세 DATA-SERIALIZATION-CONTRACT §7.5 |
+
 ---
 
 ## 기능 → 위치 색인 (게임 로직 = `engine/spr-core`)
