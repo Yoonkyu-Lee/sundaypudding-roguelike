@@ -54,4 +54,9 @@ pub struct AiRule {
 pub struct AiProfile {
     pub id: String,
     pub rules: Vec<AiRule>,
+    // 프론트 표시 전용. 엔진 미사용 — 콘텐츠 필드 전체 선언 규약(드리프트 가드).
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub desc: Option<String>,
 }

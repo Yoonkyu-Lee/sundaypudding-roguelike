@@ -63,6 +63,12 @@ canonical JSON 객체. 최상위 키(정렬순) = 데이터 맵:
 
 optional 필드(`?`)는 **부재**(키 없음)로 직렬화(③). `null`은 명시적 값일 때만(현 데이터엔 거의 없음). Rust: `Option<T>` + `skip_serializing_if`.
 
+## 7.5. 스키마 드리프트 가드 (게이트: `web/scripts/schema-drift.ts`)
+
+TS·Rust 스키마는 **둘 다 손글씨**(TS `contract/types/*` ↔ Rust `spr-types/*`). 두 언어 간 자동 단일소스(코드젠)는 ts-rs 마찰(bigint·import 확장자·유니온 약화)로 비용 과다 → **드리프트를 자동 검출**하는 가드로 갈음.
+- **규약**: Rust 구조체는 **저작되는 모든 콘텐츠 필드를 선언**한다 — 엔진이 안 써도(프론트 전용 `playable`/`icon`/`name`/`desc` 등도 `#[serde(default)]`로 선언). 미선언 = serde가 말없이 무시 = 엔진이 그 필드를 영영 못 봄.
+- **가드**: `npm run check`가 `data.generated.json`의 각 콘텐츠 필드가 대응 Rust 구조체에 선언됐는지 검사(없으면 FAIL). 필수 필드·태그 enum 변종은 이미 engine `cargo test`가 타입 역직렬화로 잡으므로, 이 가드는 **조용히 무시되는 optional 필드**를 보완.
+
 ## 8. 비범위
 
 - **런 그래프**(`runs/*.json`)는 자체 검증(`validateRun`) — 이 계약과 별도.

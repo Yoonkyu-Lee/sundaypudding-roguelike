@@ -289,4 +289,9 @@ pub struct TraitDef {
     pub id: String,
     pub name: String,
     pub rules: Vec<PassiveRule>,
+    // 프론트 표시 전용. 엔진 미사용 — 콘텐츠 필드 전체 선언 규약(드리프트 가드).
+    #[serde(default)]
+    pub icon: Option<String>,
+    #[serde(default)]
+    pub desc: Option<String>,
 }

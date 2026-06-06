@@ -4,6 +4,7 @@
 import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { join, relative, dirname, resolve, basename } from "node:path";
+import { checkSchemaDrift } from "./schema-drift.ts";
 
 const ROOT = resolve(import.meta.dirname, "..");  // web/ (TS 프로젝트 루트 — npm 실행 위치)
 const REPO = resolve(ROOT, "..");                  // 레포 루트 (docs/·engine/ 는 여기)
@@ -95,6 +96,9 @@ for (const f of srcFiles) {
     warn(`배럴 우회 import: ${rf} → ${target} (배럴/파사드 경유 권장)`);
   }
 }
+
+// ── 3.5) 스키마 드리프트 가드 (TS 콘텐츠 data.generated ↔ Rust spr-types 구조체 필드 일치) ──
+for (const m of checkSchemaDrift()) fail(m);
 
 // ── 4) tsc ────────────────────────────────────────────────────────────────
 function run(cmd: string): { ok: boolean; out: string } {

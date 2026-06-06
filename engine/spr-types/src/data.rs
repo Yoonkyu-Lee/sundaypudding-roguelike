@@ -56,6 +56,9 @@ pub struct Character {
     pub trait_ids: Vec<String>,
     #[serde(rename = "aiProfileId", default)]
     pub ai_profile_id: Option<String>,
+    // 프론트 전용(허브 편성 풀). 엔진 미사용 — 콘텐츠 필드 전체 선언 규약(드리프트 가드).
+    #[serde(default)]
+    pub playable: bool,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -139,6 +142,13 @@ pub struct ItemDef {
     pub dmg_flat: i64,
     #[serde(rename = "shieldGainAdd", default)]
     pub shield_gain_add: i64,
+    // 프론트/콘텐츠 필드(아이콘·업그레이드 체인). 엔진 미사용 — 전체 선언 규약(드리프트 가드).
+    #[serde(default)]
+    pub icon: Option<String>,
+    #[serde(default)]
+    pub tier: Option<i64>,
+    #[serde(rename = "nextTierId", default)]
+    pub next_tier_id: Option<String>,
 }
 
 impl StatusDef {
