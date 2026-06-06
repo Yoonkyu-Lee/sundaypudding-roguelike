@@ -37,6 +37,14 @@ export interface Handlers {
   onPause: () => void; // 일시정지 메뉴 열기
 }
 
+// ── 스킬 바 (현재 행동자의 활성 4 — 순서·쿨·피해미리보기). GameState 비의존(TS=state, Rust=battle_view IPC) ──
+export interface SkillBarEntry {
+  skillId: string;
+  cooldown: number;
+  effDmg?: number; // 데미지 스킬 실피해(없으면 미표시)
+  parts?: { total: number; parts: { label: string; amount: number }[] }; // 자세히 분해
+}
+
 // ── 타겟팅 컨텍스트 (셀 기반) ──
 export interface TgtCtx {
   active: boolean;

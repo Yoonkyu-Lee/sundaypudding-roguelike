@@ -7,11 +7,33 @@ use super::{buy_shop_offer, choose_encounter_option, choose_reward, create_run, 
 use crate::ai::choose_action;
 use crate::flow::step;
 use crate::observation::{build_observation, Observation};
+use crate::preview::{preview_damage, preview_damage_parts, DmgParts};
 use crate::run::items::{equip_item, unequip_item};
 use serde::Serialize;
 use spr_types::combat::{Action, GameEvent};
 use spr_types::data::Pos;
+use spr_types::skills::SkillEffect;
 use std::collections::HashMap;
+
+/// 현재 행동자 활성 스킬 바 1칸(쿨·피해미리보기). 프론트 actionPanel용.
+#[derive(Serialize)]
+pub struct SkillBarEntry {
+    #[serde(rename = "skillId")]
+    pub skill_id: String,
+    pub cooldown: i64,
+    #[serde(rename = "effDmg", skip_serializing_if = "Option::is_none")]
+    pub eff_dmg: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parts: Option<DmgParts>,
+}
+
+/// 전투 뷰 — 관측 + 현재 행동자 스킬 바(GameState 비의존 프론트 렌더용).
+#[derive(Serialize)]
+pub struct BattleView {
+    pub observation: Option<Observation>,
+    #[serde(rename = "skillBar")]
+    pub skill_bar: Vec<SkillBarEntry>,
+}
 
 /// 전투 step 결과(런 세션) — 이벤트 델타 + 전투 관측 + 갱신된 런 뷰.
 #[derive(Serialize)]
@@ -47,6 +69,28 @@ impl RunSession {
     /// 전투 관측(전투 phase일 때).
     pub fn battle_observation(&self) -> Option<Observation> {
         self.run.battle.as_ref().map(|b| build_observation(b, &self.d.chars, &self.d.skills, &self.d.defs))
+    }
+
+    /// 전투 뷰 = 관측 + 현재 행동자 스킬 바(actionPanel용). TS render.ts buildSkillBar 대응.
+    pub fn battle_view(&self) -> BattleView {
+        let observation = self.battle_observation();
+        let mut skill_bar = Vec::new();
+        if let Some(b) = &self.run.battle {
+            if let Some(cur) = &b.current {
+                if let Some(actor) = b.units.iter().find(|u| u.uid == cur.uid) {
+                    for id in &actor.active_skill_ids {
+                        let (eff_dmg, parts) = match self.d.skills.get(id) {
+                            Some(sk) if sk.effects.iter().any(|e| matches!(e, SkillEffect::Damage { .. })) => {
+                                (Some(preview_damage(b, actor, sk, &self.d.defs)), preview_damage_parts(b, actor, sk, &self.d.defs))
+                            }
+                            _ => (None, None),
+                        };
+                        skill_bar.push(SkillBarEntry { skill_id: id.clone(), cooldown: *actor.cooldowns.get(id).unwrap_or(&0), eff_dmg, parts });
+                    }
+                }
+            }
+        }
+        BattleView { observation, skill_bar }
     }
 
     // ── 맵/노드 액션 ──

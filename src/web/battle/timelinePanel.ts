@@ -1,7 +1,7 @@
 // 행동서열 패널 (영속·모드-aware). 주사위 연출(rolling)과 전투 타임라인(live)이 한 컴포넌트.
 // rolling: 중앙 확장해 주사위 굴림→±→서열 확정 → dock(): 같은 행이 좌측 레일로 FLIP 슬라이드 → live.
 // roundIntro.ts + timeline.ts 통합. 연속성 = 같은 root DOM이 모드만 전환(별개 오버레이 없음).
-import type { GameState, Observation, SpeedRoll } from "../../core/types.ts";
+import type { Observation, SpeedRoll } from "../../core/types.ts";
 import { avatarHtml, esc } from "./shared.ts";
 
 export interface RollView extends SpeedRoll {
@@ -14,7 +14,7 @@ export interface TimelinePanel {
   root: HTMLElement; // .battleleft 안에 영속 마운트
   rolling: () => boolean;
   playRoll: (round: number, rolls: RollView[], orderUids: string[], onDone: () => void) => void;
-  update: (obs: Observation, state: GameState, ghostNames: string[]) => void;
+  update: (obs: Observation, ghostNames: string[]) => void;
 }
 
 const TRIG = 60; // 주사위 회전 간격(ms)
@@ -29,11 +29,12 @@ export function createTimelinePanel(): TimelinePanel {
   const rowOf = (uid: string) => root.querySelector<HTMLElement>(`.trow[data-uid="${uid}"]`);
 
   // ── live: 전투 타임라인 행 (완료✓/현재▶/끼어들기 유령) ──
-  function update(obs: Observation, state: GameState, ghostNames: string[]): void {
+  function update(obs: Observation, ghostNames: string[]): void {
     if (mode === "rolling") return; // 굴림 중엔 갱신 보류
     const rows: string[] = [];
+    const all = [...obs.allies, ...obs.enemies];
     obs.order.forEach((e, i) => {
-      const u = state.units.find((x) => x.uid === e.uid);
+      const u = all.find((x) => x.uid === e.uid);
       const nm = u?.name ?? e.uid;
       const dead = u ? !u.alive : false;
       const done = i < obs.cursorIndex;
