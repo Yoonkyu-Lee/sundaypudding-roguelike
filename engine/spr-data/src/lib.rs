@@ -10,7 +10,7 @@ use spr_types::skills::Skill;
 use std::collections::HashMap;
 
 /// 커밋된 데이터 번들 JSON(컴파일 시 임베드 — 런타임 경로 불요). TS `npm run data:export` 산출.
-pub const DATA_JSON: &str = include_str!("../../../src/data/data.generated.json");
+pub const DATA_JSON: &str = include_str!("../../../web/src/data/data.generated.json");
 
 /// 데이터 번들을 serde_json::Value로 로드.
 pub fn data_value() -> Value {

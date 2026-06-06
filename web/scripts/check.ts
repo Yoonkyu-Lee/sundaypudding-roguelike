@@ -5,7 +5,8 @@ import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { join, relative, dirname, resolve, basename } from "node:path";
 
-const ROOT = resolve(import.meta.dirname, "..");
+const ROOT = resolve(import.meta.dirname, "..");  // web/ (TS 프로젝트 루트 — npm 실행 위치)
+const REPO = resolve(ROOT, "..");                  // 레포 루트 (docs/·engine/ 는 여기)
 const SRC = join(ROOT, "src");
 const fails: string[] = [];
 const warns: string[] = [];
@@ -36,7 +37,7 @@ for (const f of srcFiles) {
 // 문서 길이(#6) — 경고만. 스펙(GAME-DESIGN)은 길 수 있으니 관대하게.
 const DOC_WARN = 700;
 for (const d of ["CLAUDE.md", "README.md", "docs/GAME-DESIGN.md", "docs/CODE-MAP.md"]) {
-  const p = join(ROOT, d);
+  const p = join(REPO, d);
   if (!existsSync(p)) continue;
   const n = readFileSync(p, "utf8").split("\n").length;
   const cap = d === "CLAUDE.md" ? 200 : DOC_WARN;
@@ -112,10 +113,10 @@ const passed = /pass (\d+)/.exec(test.out)?.[1];
 console.log(test.ok ? `ok (${passed} pass)` : "FAIL");
 if (!test.ok) fail(`테스트 실패:\n${test.out.trim().split("\n").slice(-15).join("\n")}`);
 
-// ── 5.5) Rust 게이트 (rust/ 존재 시 — 포팅 Phase 1, PORTING.md) ──────────────
-if (existsSync(join(ROOT, "rust", "Cargo.toml"))) {
+// ── 5.5) Rust 엔진 게이트 (engine/ 결정론·differential 회귀) ──────────────────
+if (existsSync(join(REPO, "engine", "Cargo.toml"))) {
   process.stdout.write("cargo test… ");
-  const cargo = run("cargo test --manifest-path rust/Cargo.toml -q");
+  const cargo = run("cargo test --manifest-path ../engine/Cargo.toml -q"); // cwd=web/
   console.log(cargo.ok ? "ok" : "FAIL");
   if (!cargo.ok) fail(`cargo test 실패:\n${cargo.out.trim().split("\n").slice(-15).join("\n")}`);
 }
@@ -126,7 +127,7 @@ if (existsSync(join(ROOT, "rust", "Cargo.toml"))) {
 const staged = run("git diff --cached --name-only");
 if (staged.ok && staged.out.trim()) {
   const names = staged.out.trim().split("\n");
-  const srcChanged = names.some((n) => n.startsWith("src/") && n.endsWith(".ts") && !n.endsWith(".test.ts"));
+  const srcChanged = names.some((n) => n.startsWith("web/src/") && n.endsWith(".ts") && !n.endsWith(".test.ts"));
   const mapChanged = names.includes("docs/CODE-MAP.md");
   if (srcChanged && !mapChanged) warn("src 변경됨 — docs/CODE-MAP.md 갱신 확인(새 파일/함수 매핑)");
 }

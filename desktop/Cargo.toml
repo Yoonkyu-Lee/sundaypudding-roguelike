@@ -15,8 +15,8 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = [] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-spr-core = { path = "../rust/spr-core" }
-spr-types = { path = "../rust/spr-types" }
+spr-core = { path = "../engine/spr-core" }
+spr-types = { path = "../engine/spr-types" }
 
 [features]
 # 기본 prod 빌드시 개발용 자산서버 비활성(Tauri 관례).

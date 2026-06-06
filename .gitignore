@@ -3,7 +3,8 @@ node_modules/
 dist/
 .DS_Store
 .gstack/
-rust/target/
+engine/target/
+desktop/target/
 
 # 로컬 데모 에셋 (머신 절대경로 훅이 참조)
 Yainsidae_Gap_Boon_Sa.wav

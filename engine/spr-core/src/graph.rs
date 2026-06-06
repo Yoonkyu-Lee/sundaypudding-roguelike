@@ -160,7 +160,7 @@ pub fn validate_run(run: &RunDef) -> Validation {
 mod tests {
     use super::*;
 
-    const YAIN: &str = include_str!("../../../src/data/runs/yain.json");
+    const YAIN: &str = include_str!("../../../web/src/data/runs/yain.json");
     fn yain() -> RunDef {
         serde_json::from_str(YAIN).expect("yain 파싱")
     }

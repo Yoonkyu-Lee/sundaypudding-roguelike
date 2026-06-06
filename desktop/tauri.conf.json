@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "identifier": "com.sundaypudding.roguelike",
   "build": {
-    "frontendDist": "../dist",
+    "frontendDist": "../web/dist",
     "devUrl": "http://localhost:5173/",
     "beforeDevCommand": "",
     "beforeBuildCommand": "npm run build"
