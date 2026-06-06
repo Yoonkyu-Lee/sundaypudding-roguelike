@@ -13,6 +13,7 @@ import { renderTitle, renderHub, renderPause, type ShellHandlers } from "./shell
 import { createHub } from "./hub.ts";
 import { renderEditor } from "./editor/editorRender.ts";
 import { createEditor } from "./editor/controller.ts";
+import { grantWin } from "./meta.ts";
 
 interface BattleView { observation: Observation | null; skillBar: SkillBarEntry[] }
 interface BattleStepResult { eventDelta: GameEvent[]; observation: Observation | null; view: RunView }
@@ -105,6 +106,10 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
     ui.moved = new Set(res.eventDelta.flatMap((e) => (e.t === "move" ? [e.uid] : [])));
     const dlg = [...res.eventDelta].reverse().find((e) => e.t === "dialog");
     ui.dialog = dlg && dlg.t === "dialog" ? { speaker: dlg.speaker, text: dlg.text } : null;
+    // 전투 승리 시 생존 아군 숙련도 XP(5.3) — DEFAULT_RUN.useMastery일 때만(TS driveBattle 대응).
+    if (res.eventDelta.some((e) => e.t === "battleEnd" && e.phase === "allyWin") && DEFAULT_RUN.useMastery) {
+      grantWin((res.view.party ?? view?.party ?? []).filter((p) => p.alive).map((p) => p.charId));
+    }
     view = res.view; busy = false;
     if (view.phase !== "battle") { cur = null; render(); return; }
     await refreshBattle(); renderBattle(); await maybeAuto();
