@@ -10,21 +10,21 @@
 - **Node ≥ 24** (네이티브 TypeScript 실행 — 빌드 스텝 없음). 외부 런타임 의존성 0.
 
 ## 실행
+**엔진 = Rust(`rust/spr-core`), 프론트 = 웹(Tauri IPC).** 제품 셸은 Tauri 데스크톱 앱(`app/`).
 ```bash
 npm install           # 최초 1회 (devDeps: typescript, vite — 타입체크·웹 전용)
-npm run dev           # 웹 GUI (브라우저로 플레이) → http://localhost:5173
-npm run demo          # 터미널 자동플레이 1판 (양측 AI), seed 42
-npm run play          # 터미널 대화형: 아군=당신, 적=AI
-npm test              # 결정론 + 기능 단위 테스트 + 불변식/스트레스 런/세이브 harness
-npm run stress        # 대량 무작위 스트레스 런 스윕(기본 6만판) — 크래시·교착·불변식 위반 검출 (docs/MIGRATION-VERIFICATION-PLAN)
-npm run golden:update # 골든 이벤트 로그 코퍼스 재생성(의도된 동작변경 시) — manifest.json 갱신 후 diff 리뷰
-npm run data:export   # 데이터 JSON 번들 재생성(TS data 변경 시) — data.generated.json (포팅 Rust 로드용, 드리프트 게이트)
-npm run typecheck     # 코어 + 웹 타입체크
-npm run check         # 통합 게이트 (타입·테스트·줄수·코어순수성·데모회귀)
-npm run build:app     # 단일 HTML 빌드 → dist/index.html (오프라인 실행 가능한 한 파일)
+# 게임 구동(데스크톱): 터미널1 = vite, 터미널2 = Tauri 앱
+npm run dev           # 웹 프론트 dev 서버 → http://localhost:5173
+cd app && cargo build && ./target/debug/spr-app.exe   # Rust 풀게임 부팅(기본 = Rust)
+npm test              # 웹/에디터 단위 테스트 (node --test)
+cargo test --manifest-path rust/Cargo.toml   # Rust 엔진 — differential 회귀 벡터·save-roundtrip
+npm run data:export   # 데이터 JSON 번들 재생성(src/data 변경 시) → data.generated.json (Rust 로드용)
+npm run typecheck     # 계약타입(코어) + 웹 타입체크
+npm run check         # 통합 게이트 (타입·web test·cargo test·줄수·코어순수성·배럴)
+npm run build:app     # 단일 HTML 빌드 → dist/index.html
 ```
 
-> `npm run build:app`이 만든 `dist/index.html`은 더블클릭하면 브라우저에서 바로 실행(서버 불필요). 그 파일만 공유하면 됨.
+> **TS 엔진은 은퇴**(Rust로 마이그레이션 완료). TS 골든 엔진 + differential 하네스는 `archive/ts-core` 브랜치 + `tag ts-golden-oracle`에 보관. 상세: [`docs/PORTING.md`](docs/PORTING.md).
 
 ## 아키텍처 (상세: GAME-DESIGN.md 8장)
 ```

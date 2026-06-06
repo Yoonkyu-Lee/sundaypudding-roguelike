@@ -1,11 +1,9 @@
 // 자동 게이트 — 슬라이스 드리프트를 "행동하는 순간"에 잡는다. (CLAUDE.md 모듈/경계 규칙의 기계적 강제)
 // 실행: `npm run check` (수동) 또는 git pre-commit 훅(.githooks/pre-commit).
 // FAIL 하나라도 있으면 exit 1. WARN은 통과(시야 확보용). `--update`로 골든 데모 해시 재생성.
-import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { execSync } from "node:child_process";
-import { createHash } from "node:crypto";
 import { join, relative, dirname, resolve, basename } from "node:path";
-import { validateCastSkill } from "../src/core/combat/passives/validate.ts";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const SRC = join(ROOT, "src");
@@ -98,9 +96,6 @@ for (const f of srcFiles) {
   }
 }
 
-// ── 3.5) castSkill leaf 검증 (재귀 방지: passives 가진 스킬은 castSkill 대상 불가) ──
-for (const m of validateCastSkill()) fail(`castSkill 검증: ${m}`);
-
 // ── 4) tsc ────────────────────────────────────────────────────────────────
 function run(cmd: string): { ok: boolean; out: string } {
   try { return { ok: true, out: execSync(cmd, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }) }; }
@@ -126,28 +121,7 @@ if (existsSync(join(ROOT, "rust", "Cargo.toml"))) {
   if (!cargo.ok) fail(`cargo test 실패:\n${cargo.out.trim().split("\n").slice(-15).join("\n")}`);
 }
 
-// ── 6) 데모 해시 회귀 (결정론 = 순수 리팩토링 안전망) ─────────────────────────
-const GOLD = join(ROOT, "scripts", "golden-hashes.json");
-const SEEDS = [1, 42, 7];
-const md5 = (s: string) => createHash("md5").update(s).digest("hex");
-const hashes: Record<string, string> = {};
-process.stdout.write("demo regression… ");
-for (const seed of SEEDS) {
-  const r = run(`node src/cli/play.ts --demo --seed ${seed}`);
-  hashes[seed] = r.ok ? md5(r.out) : "ERR";
-}
-if (process.argv.includes("--update")) {
-  writeFileSync(GOLD, JSON.stringify(hashes, null, 2) + "\n");
-  console.log("골든 해시 갱신됨:", GOLD);
-} else if (existsSync(GOLD)) {
-  const gold = JSON.parse(readFileSync(GOLD, "utf8")) as Record<string, string>;
-  const drift = SEEDS.filter((s) => gold[s] !== hashes[s]);
-  console.log(drift.length ? "DRIFT" : "ok");
-  for (const s of drift) fail(`데모 회귀(seed ${s}): ${gold[s]} → ${hashes[s]} — 의도한 동작변경이면 'npm run check -- --update'`);
-} else {
-  console.log("골든 없음");
-  warn(`골든 해시 없음 — 'npm run check -- --update'로 생성`);
-}
+// (구 §6 데모 해시 회귀 = TS CLI 골든 — TS 엔진 은퇴로 제거. 결정론 회귀 게이트 = 위 cargo test[differential·save-roundtrip 등].)
 
 // ── 7) 문서 동기화(#5) — staged src 변경 시 CODE-MAP 갱신 확인 ────────────────
 const staged = run("git diff --cached --name-only");

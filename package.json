@@ -3,19 +3,13 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "육성형 로그라이크 자체 엔진 — 헤드리스 결정론 전투 코어 + CLI. 설계 SoT: docs/GAME-DESIGN.md",
+  "description": "육성형 로그라이크 자체 엔진 — Rust 결정론 코어(rust/spr-core) + 웹 프론트(Tauri). 설계 SoT: docs/GAME-DESIGN.md",
   "engines": {
     "node": ">=24"
   },
   "scripts": {
-    "play": "node src/cli/play.ts",
-    "demo": "node src/cli/play.ts --demo --seed 42",
     "test": "node --test",
-    "stress": "node scripts/stress-sweep.ts",
-    "golden:update": "node scripts/golden-update.ts",
     "data:export": "node scripts/export-data.ts",
-    "diff:corpus": "node scripts/export-diff-corpus.ts",
-    "ai:corpus": "node scripts/export-ai-corpus.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.web.json",
     "check": "node scripts/check.ts",
     "dev": "vite",

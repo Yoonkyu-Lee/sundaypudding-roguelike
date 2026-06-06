@@ -22,11 +22,9 @@ src/
 ## 모듈 트리 (배럴 = 공개 API, 소비자는 배럴만 import)
 
 ```
-src/core/
-  rng.ts            시드 PRNG. 모든 무작위의 유일 출처(결정론, 8.3) → Rng
-  util.ts           cross-cutting 소도구 + 상태 QUERY(사이클 방지 leaf): clamp·roundDiv(정수 반올림 나눗셈, zero-f64)·samePos·unitById·
-                    aliveUnits·hasStatus·totalStacks·statusNumSum·statusFlag·critPctOf·isFrozen
-  types.ts          ▸배럴: export * from types/{content,runtime}
+src/core/             ← **TS 엔진 은퇴 완료.** 남은 것 = IPC/데이터 계약 타입 + 순수 유틸만. 엔진은 rust/spr-core.
+  rng.ts            시드 PRNG 타입(RunState.rng 참조용 — 런타임 무작위는 Rust) → Rng
+  types.ts          ▸배럴: export type * from types/{content,passives,ai,map,runtime} — 프론트·데이터·Rust(export)가 공유하는 계약 스키마
   types/
     content.ts      디자이너 스키마(데이터 계약): Side·Pos·StatusDef(+거동필드)·SkillEffect·
                     AreaShape·SkillTarget·Skill(+active/passives)·FormationLayout·Character(+traitIds/aiProfileId)
@@ -35,80 +33,13 @@ src/core/
     map.ts          헥스 인접 무방향그래프 맵 스키마: RunDef·FloorDef·MapNode(q,r·toFloor?·roster?·label?·**layers?·core?**)·MapEdge. **combat 레이어가 rules?(NodeRule=PassiveRule+owner) 소유 — 페이즈별 대사, owner(side+charId)로 self=배치 개체 지정**. **DecoratorLayer(gold/heal/grantStatus/text)·InteractiveLayer(combat[roster/rosterPreset/boss]/reward/shop/event)·Layer·NodeLayers(onEnter/onResolve)**. NodeType는 content(+clear). yain 전 노드=core 이전 완료(type=표시용 잔존)
     runtime.ts      엔진 상태: StatusInstance·Unit·PartyMemberState·TurnKind·QueueEntry·
                     Action·Phase·GameEvent·GameState·UnitView·LegalAction·Observation
-  engine.ts         ▸배럴(파사드): export * from combat/index
-  combat/
-    state.ts        makeUnit · createBattle
-    winCheck.ts     checkWin (leaf — turnOrder·flow 공용, 사이클 방지)
-    formation.ts    getFormationBonus (열보너스·총량보존)
-    status.ts       applyStatusInstance · tickPeriodic (적용/틱; QUERY는 util)
-    damage.ts       computeDamage · dealRawDamage · previewDamage · previewHpLoss
-    targeting.ts    validTargets · reachableColumns(동적 근접 도달 열) · sideDims ·
-                    computeAreaCells · areaTargets · computeHitChance · getLegalActions
-    skills.ts       resolveSkill · resolveAnchorUid · applySelfEffects · applyTargetEffects · moveUnit
-    interrupt.ts    predictInterruptSubjects · insertInterrupts
-    turnOrder.ts    startRound · advance · onNormalTurnStart · onNormalTurnEnd (ACTION_CONST)
-    flow.ts         step (행동 1회 처리 오케스트레이터)
-    observation.ts  buildObservation · viewUnit · viewStatuses
-    passives/       특성·패시브 룰 디스패처 (when/if/then) — 각 전투 훅이 fireTrigger 호출
-      compile.ts      compileRules (보유 스킬 passives + 캐릭 traitIds → Unit.rules)
-      dispatch.ts     fireTrigger(매칭·결정론 정렬·재진입 가드) · onUnitTurnStart · applySpeedRollPassives
-      conditions.ts   evalConditions (if 평가) · effects.ts applyEffect (then; castSkill=resolveSkill 경유)
-      validate.ts     validateCastSkill (castSkill 대상=leaf 스킬만 — check 게이트가 강제, 재귀 방지)
-      ctx.ts          TriggerCtx · RuleCtx · cmp · isFrontline    index.ts ▸배럴
-    index.ts        ▸배럴
-  observation.ts    ▸배럴(파사드): export { buildObservation } from combat/observation
   run.ts            ▸배럴(파사드): export * from run/index
   run/
-    graph.ts        헥스 인접 무방향그래프 엔진(메커니즘): hexAdjacent(6방향) · neighborIds(무방향) · canReachClear/liveReachable(방문지 회피·재방문 불가) · reachableFromEntry · validateFloor/validateRun(인접 변 검증·고립노드). 순수·결정론. (구 genMap 폐기)
-    types.ts        런 도메인 타입(leaf): RunPhase·RewardOption·RunState·NodeStatus·RunView
-    rewards.ts      genRewards(강화/학습 3택1) · damagingSkills (순수 생성; 적용은 run.ts)
-    run.ts          오케스트레이터: createRun(seed,roster,runDef) · enterNode(clear→completeFloor) · completeFloor(층종료/다음층, 구 advanceAct) · resolveBattleEnd · chooseReward · setActiveSkill · movePartyMember
-    helpers.ts      공유 변이(leaf): curFloor · node · healParty(+partyHpChange) · completeNode(미방문 이웃·재방문 불가·막힌노드 비활성; **onResolve 레이어 발동**) · upgradeOwned · learnOwned · **runInstantLayers(즉시 데코 레이어 gold/heal/grantStatus/text — Phase A, enterNode=onEnter·completeNode=onResolve)**
-    layers.ts       ▸코어 레이어 시퀀서(Phase A/B): startCore/stepCore/advanceCore/finishCore — core[] 순서 실행(데코 즉시, combat/reward/shop/event 블록). 복귀: combat→resolveBattleEnd·reward→chooseReward·shop→leaveShop·event→chooseEncounterOption이 advanceCore. **스타터 DI 레지스트리(registerLayerStarter)** — shop/event 시작은 run.ts가 주입(사이클 차단). run 미import. yain 전 노드 core화
-    shop.ts         상점(7.2): generateShop(레이어 offers 저작 진열 구체화 ?? 절차생성, keepGenerated 병행) · buyShopOffer · leaveShop
-    encounter.ts    인카운터(7.2): applyOutcome · chooseEncounterOption
-    items.ts        장착(4.3): equipItem/unequipItem(maxHp 재계산) · genItemOffers(상점)/itemRewardOptions(보상) · 인벤토리 왕복
-    save.ts         런 이어하기 직렬화(순수): serializeRun/deserializeRun (Rng→{__rng:state} 치환·복원)
-    passives.ts     모험(run) 스코프 특성/패시브 디스패처: fireRunTrigger(노드/골드/파티HP 트리거·재진입 가드). compileRules 재사용
-    view.ts         getRunView (RunState → RunView; party[].pos 노출)
-    index.ts        ▸배럴
-  ai.ts             ▸배럴(파사드): export * from ai/index
-  ai/
-    policy.ts       chooseAction (프로파일 우선 → 공유 그리디 fallback; 결정론, rng 미사용)
-    profile.ts      applyProfile (AiProfile 우선순위 룰 해석: skillKinds·evalCond·baseScore·weightBonus)
-    index.ts        ▸배럴
-  tests/            ▸코어 결정론 테스트 모음(파사드 경유 공개 API). 루트엔 파사드+프리미티브만 남김
-    testutil.ts       테스트 공용 헬퍼(playToEnd·forceTurn)
-    invariants/       ▸불변식 assertion 모듈(INVARIANTS-FROM-CLAUDE-CODE.md). 순수·무throw, 위반 목록 반환.
-                      types.ts(Violation·Violations·summarize) · combat.ts(checkCombatInvariants A~K/J 관측충실) ·
-                      run.ts(checkRunInvariants L~P) · index.ts 배럴
-    harness/          ▸검증 harness. stressRun.ts(stressRun — 시드결정 무작위 합법행동으로 런 전체 구동·매 step 불변식 검사·
-                      크래시/교착 가드·정책 random|ai-allies|ai·richActions·rngTrace(매 step rng상태 기록, 포팅 differential 보조) 옵션·phase 커버리지. "stress run"=검증용 무작위 한 판, 게임 캠페인 모드와 무관) ·
-                      richActions.ts(enumerateRichActions — getLegalActions(targetUid)이 못 내는 targetCell·빈칸 AoE 앵커·free-cell(cells) 형태까지 열거, 명령공간 확대) ·
-                      selfConsistency.ts(stressTrace·tracesMatch·battleTrace — 같은 시드 2회=동일 로그) · canonical.ts(canonicalJson/canonicalLog — 정렬키·정수·undefined생략 직렬화, TS↔Rust 바이트동일 계약 [`SERIALIZATION-CONTRACT.md`]) · vector.ts(recordVector/replayVector — 행동열 RunAction[] 기록·재생, record→replay 바이트동일 = Rust differential 오라클 [`PORTING.md`]) · index.ts 배럴
-    golden/           ▸골든 이벤트 로그 코퍼스. corpus.ts(computeManifest — run×정책×시드×rich + 전투 픽스처의 canonical 트레이스 SHA 매니페스트) · manifest.json(동결 골든, 커밋됨)
-    stress.test.ts    무작위 스트레스 런(전 런×정책×시드 크래시·교착·위반 0 + rich 행동 자극 + phase 커버리지)
-    golden.test.ts    골든 코퍼스 회귀(동결 manifest와 SHA 비교 — 침묵 로그 드리프트 검출. 갱신=npm run golden:update)
-    self-consistency.test.ts 결정론 자기일치(스트레스 런/전투 트레이스 동일 + 시드 의존성)
-    port-vector.test.ts  행동 벡터 record→replay 바이트동일(differential 오라클, P0-1)
-    data-export.test.ts  data.generated.json ↔ TS data 드리프트 게이트(P0-4)
-    data-refs.test.ts    데이터 ID 참조 무결성(dangling 금지, DATA-SERIALIZATION-CONTRACT §6, P0-5)
-    save-roundtrip.test.ts 세이브 왕복 항등(O1/O2 — serialize∘deserialize·Rng 보존·복원 후 동일 전개)
-    invariants.test.ts 불변식 검사기 직접 검증 + L8 회귀(종료 시 reachable=[])
-    engine.test.ts    전투 흐름(결정론·종료·명중·합법·SPD·대기)
-    interrupt.test.ts 끼어들기(연격·버프출처·대상끼어들기·웹 경로)
-    status.test.ts    상태이상(빙결·공포·관통·불사·재생)
-    formation.test.ts 포메이션 총량보존·보스전 적용·데미지 미리보기
-    area.test.ts      면적/타겟팅(재배치·AoE 모양·자유선택·빈칸앵커·쉴드→HP)
-    ai.test.ts        AI 우선순위 룰 정책(prefer/target/조건·동점 결정론)
-    passives.test.ts  특성/패시브 룰 엔진(트리거·조건·효과·모험 스코프)
-    map.test.ts       층-그래프 검증(도달성·분기·toFloor 무결성)
-    run.test.ts       런 맵/흐름/진형(결정론·연결성·완주 루프·진형 편성·노드 적override)
-    run-progression.test.ts 육성/상점(보상 강화·학습 다운그레이드·구매·RunView·인카운터)
-    run-meta.test.ts  영속/메타/다층(세이브 왕복·숙련도 게이팅·액트 진행)
-    equip.test.ts     장착(스탯/데미지/쉴드 보정·equip 왕복)
+    graph.ts        헥스 인접 무방향그래프 유틸(순수): hexAdjacent(6방향) · neighborIds · canReachClear/liveReachable · reachableFromEntry · validateFloor/validateRun(인접 변 검증·고립노드). **에디터·런화면이 소비**(그래프 검증/렌더). 엔진 무관 순수 기하
+    types.ts        런 도메인 DTO 타입(leaf): RunPhase·RewardOption·ShopOffer·RunState·NodeStatus·RunView
+    index.ts        ▸배럴(graph + 타입만)
 ```
-> 테스트 배치: **코어=`core/tests/`에 모음**(파사드 경유 통합), **단일 모듈 단위테스트는 코로케이트**(`web/hexgeo.test.ts`·`web/editor/ops.test.ts`·`web/editor/editor-data.test.ts`[템플릿/store/스키마 정합성 W]). `node --test` 자동 디스커버리(`*.test.ts`) — 새 파일은 목록 갱신 불필요. 에디터 정합성 불변식(U/V/W)은 ops·hexgeo·editor-data 테스트가 커버.
+> **TS 엔진은 Rust 마이그레이션 완료 후 은퇴** — 전투·AI·런 오케스트레이션·골든/differential 하네스·CLI 전부 제거. `archive/ts-core` 브랜치 + `tag ts-golden-oracle`에 **재실행 가능 상태로 보관**(신규 메커니즘을 TS-선구현→differential로 검증하려면 체크아웃). 현 엔진 = `rust/spr-core`. 단위테스트는 `web/`에 코로케이트(hexgeo·editor).
 
 ## rust/ (TS→Rust 포팅, Phase 1 — PORTING.md)
 
@@ -140,17 +71,14 @@ app/                 Tauri2 데스크톱 셸 (워크스페이스 밖 — 게이�
 | `src/data/formations.ts` | data | 포메이션 열보너스 배치(총량보존, 6장) | `STANDARD_FORMATION` |
 | `src/web/meta.ts` | web | **영구 메타**(레벨/XP + 편성 로스터, 별도 세이브 `spr_meta_v1`) — `grantWin`(전투 승리 XP)·`masteryMap`/`masteryInfo`(허브)·`getRoster`/`setRoster`(편성 선택 영구) | `grantWin` · `masteryMap` · `masteryInfo` · `getRoster` · `setRoster` |
 | `src/data/items.ts` | data | 장착 아이템(4.3) — 무기(dmgFlat·crit) / 방어구(hp·쉴드획득). `ItemDef`는 content.ts | `ITEMS` · `ITEM_POOL` |
-| `src/cli/play.ts` | cli | 대화형/`--demo` 터미널 드라이버 | (엔트리) |
-| `src/cli/ascii.ts` | cli | ASCII 보드 렌더(뷰 — core 아님) | `renderAscii` |
-| `src/web/main.ts` | web | 웹 엔트리·**앱 상태기계**(title↔hub↔editor↔run, `appState`/`runActive`/`pauseOpen`)+런 컨트롤러·전투 루프(`render`/`renderBattle`/`driveBattle`/`battleStep`)·앱 액션(`restart`/`openPause`)·`AppCtx` 조립·부팅·keydown. 입력 핸들러는 `handlers/`로 분리. 편성=`hub.ts`·영속=`save.ts`·오버레이=`overlay.ts`·에디터=`editor/`·테스트플레이=`testRun` | (엔트리) |
-| `src/web/handlers/` | web | **입력 핸들러 그룹(글루 분리)** — `ctx.ts`(`AppCtx`: 공유 가변상태 getter[`getRun`/`isBusy`]+앱 액션 주입) · `battle.ts`(`makeBattleHandlers` — 스킬·타겟팅·취소·스킵·시트·일시정지) · `run.ts`(`makeRunHandlers` — 노드·보상·스킬출전·상점·인카운터·파티·집) · `index.ts` 배럴. 핸들러는 ctx로만 상태 접근(재할당은 main), 상호참조는 앱 액션으로 평탄화. shell 핸들러는 main 잔류 | `makeBattleHandlers` · `makeRunHandlers` · `AppCtx` |
+| `src/web/main.ts` | web | 웹 엔트리(부팅) — `mountRustRun(app, 42)`만. 게임/에디터/허브/전투/일시정지/세이브 전체는 `rustRun`이 Rust 세션(IPC)으로 구동. 제품 셸=Tauri | (엔트리) |
 | `src/web/nodeMeta.ts` | web | 노드 종류 표시(아이콘/이름) — 런렌더·에디터 공용 | `TYPE_ICON` · `TYPE_NAME` · `CATALOG_TYPES` |
 | `src/web/editor/` | web | **런 에디터 GUI**(구조 에디터) — 헥스 기하는 `../hexgeo.ts`(web 공용 SoT, 아래 행) 사용 · `store.ts`(드래프트 localStorage·repo 병합·blankRun·JSON 내보내기·**F3 `saveToRepo`**=dev fetch POST→실패 시 다운로드 폴백) · `ops.ts`(노드/변/층 순수 변이·`addNode`/`addNodeFromTemplate`(템플릿 복제 배치)/`moveNode`·`autoConnectAdjacent`·`adjacentPairs`·**F2: `setNodeLabel`**) · **`templates.ts`(노드 템플릿 라이브러리 localStorage — `saveTemplate`/`listTemplates`/`deleteTemplate`/`getTemplate`. 저작 노드(타입+라벨+core: 적 배치·레이어·룰) 스냅샷을 런 경계 넘어 재사용)** · `controller.ts`(목록↔편집 상태·핸들러) · `editorRender.ts`(목록) · `editView.ts`(SVG 단일 렌더: 격자 path·노드 폴리곤·벽이 hexgeo 공유 → 완벽 벌집. 테두리=별도 하이라이트 레이어(시작 파랑/클리어 초록 z2·선택 노랑 군집외곽 z5, 클리핑 없음). **포인터 기반 드래그**(공용 `drag.ts`)·다중선택(Ctrl·Ctrl+A·빈칸 해제)·일괄 이동/삭제·고정 뷰포트 카메라·벽 호버/클릭. **사이드바 카탈로그 2종: 노드 타입(`data-nt`→`onPlaceNode`) + "📋 내 템플릿"(`data-tpl`→`onPlaceTemplate` 복제 배치, ✕→`onDeleteTemplate`).** **F1: clear 노드 "다음 층" 드롭다운(toFloor) · 층 그래프 뷰포트(블럭 다이어그램 — 층=박스, clear→toFloor=방향 화살표, 입장 ★, 박스 클릭=편집·입장 지정·추가/삭제; BFS 레벨 좌→우 배치; **고정 크기 뷰포트=휠 줌·빈배경 드래그 팬·줌버튼**) · 선택 clear→대응 화살표 노랑 하이라이트**) · `nodePanel.ts`(**F2: 노드 메타 사이드바 — 라벨 입력만**, 적 배치·레이어는 노드 에디터) · **`nodeEditView.ts`+`layerSchema.ts`(Phase E: 노드 더블클릭[onUp 직접 감지]→전용 화면, **3슬롯(onEnter/core/onResolve) 레이어 리스트 추가/삭제/순서** + 스키마 구동 폼. FieldSpec 타입 number/text/bool/select(optionsFrom chars·statuses)/roster. onEnter/onResolve=DECO_KINDS. **헤더 "📋 템플릿으로 저장"→`onSaveTemplate`**)** · **`battlefieldEditor.ts`(combat 레이어 전장 그리드 — 적 4×4 카탈로그 드래그 배치/이동/제거 + 아군 읽기전용, `drag.ts` 재사용)** · **`ruleEditor.ts`+`ruleSchema.ts`(Phase E4: 트리거 룰 when/if/then 조립 GUI, 화자/기준 owner 픽커)** · **`eventEditor.ts`(Phase D: event 레이어 인라인 인카운터 저작 — 제목·본문·선택지(라벨 + 확정/🎲도박 모드: 도박=성공률+성공/실패 outcome))** · **`shopEditor.ts`(shop 레이어 진열 저작 — 품목 아이템/회복/스킬학습 + 비용, keepGenerated 토글, `ShopOfferDef`)**. **헤더 런/현재층 제목 인라인 편집(`onSetRunName`/`onSetFloorName` — 기존 name 필드) · 두 뷰포트 사이 드래그 스플리터(`ed-vsplit`→`onSplit`, 노드 맵 높이 조절·층 영역 flex-fill, 편집 중 보존).** **F3: "💾 repo에 저장" 버튼(목록 카드 + 편집 헤더) → `onSaveToRepo`(파일명 prompt → `saveToRepo`).** `validateRun`/`hexAdjacent` 재사용 | `createEditor` · `renderEditor` |
 | `src/web/hub.ts` | web | **본거지 편성 컨트롤러**(`createHub`) — playable 풀에서 1~4명 선택(영구) 캡슐화 + 선택 로스터로 런 생성. `makeRun`·`data`·`toggle` | `createHub` |
 | `src/web/save.ts` | web | **런 이어하기 영속화**(`spr_save_v1`) — 순수(run 인자). `saveRun`·`loadRun`·`clearSave` | `saveRun` · `loadRun` · `clearSave` |
 | `src/web/shell.ts` | web | **게임 흐름 셸** — 타이틀·본거지(집)·일시정지 화면. 본거지=캐릭터 편성 선택 그리드(playable 풀 1~4명 토글, 숙련도 표시) / 런 중=현재 파티+이어하기. 런 바깥 | `renderTitle` · `renderHub` · `renderPause` · `ShellHandlers` |
-| `src/web/overlay.ts` | web | **오버레이 컨트롤러**(`createOverlay`) — 맵=파티 편성 / 전투=단독 캐릭터 시트. `buildSheetData`·`buildBattleSheet`·`renderOverlay` + 시트/파티뷰 핸들러. main이 `{app,ui,getRun,render}` 주입 | `createOverlay` |
-| `src/web/render.ts` | web | **전투 렌더** — 영속 셸(svg·header·battlelayout) 1회 생성 후 **존 갱신**(.battlemain/.battleside). **.battleleft는 TimelinePanel이 소유**(통짜 재렌더서 분리). 셀 타겟팅·SVG 화살표. renderApp(…, panel) | `renderApp` · `avatarHtml` |
+| `src/web/render.ts` | web | **전투 렌더(Rust 경로)** — 영속 셸(svg·header·battlelayout) 1회 생성 후 **존 갱신**(.battlemain/.battleside). .battleleft=TimelinePanel 소유. `renderAppObs`(관측+스킬바+로그)·`renderBattleZones`(GameState 비의존)·`computeTgtFromObs`(타겟팅, IPC `prev`로 미리보기 주입). 면적기하=`battle/areaGeo.ts` | `renderAppObs` · `renderBattleZones` |
+| `src/web/battle/areaGeo.ts` | web | 면적 스킬 기하(순수): `computeAreaCells`(앵커+AreaShape→칸). 타겟팅 풋프린트 하이라이트용(구 core/combat/targeting, 코어 은퇴로 이주) | `computeAreaCells` |
 | `src/web/battle/shared.ts` | web | 공용 소도구(esc·r1·ck·avatarHtml) + UI 타입(Ui·Handlers·TgtCtx) | — |
 | `src/web/battle/unitCard.ts` | web | 그리드 캐릭터 카드(아바타·쉴드바(체력바 위 좌측정렬)·HP바·HP·상태칩) | `unitCard` |
 | `src/web/battle/status.ts` | web | 상태이상 칩 + 펼침 팝오버(거동설명·스택·지속·다음변화·**출처**, 호버/포커스) | `statusChips` · `describeStatus` |
@@ -165,10 +93,8 @@ app/                 Tauri2 데스크톱 셸 (워크스페이스 밖 — 게이�
 | `src/web/charSheet.ts` | web | **캐릭터 시트** — 능력치표(원본→현재 델타)·3 장착칸(장착·교체·해제+인벤토리 픽커)·보유 스킬(맵=활성4 토글, 전투=읽기전용). `sheetBody`+`wireSheet`로 분리 → 전투 단독 모달(`renderCharSheet`)·파티뷰 상세 pane 공용 | `renderCharSheet` · `sheetBody` · `wireSheet` · `SheetData` |
 | `src/web/drag.ts` | web | **공용 포인터 드래그**(`beginPointerDrag`) — 네이티브 HTML5 DnD 대체. 커서 따라오는 `.drag-avatar`·`elementFromPoint` 드롭 라우팅·클릭 폴백. 에디터·파티편성 공용 | `beginPointerDrag` |
 | `src/web/partyView.ts` | web | **파티 편성(통합 파티뷰, 모달)** — 3칼럼: 좌 4×4 진형 보드(포인터 드래그 배치/교대) / 중 선택 캐릭 상세(charSheet 인라인) / 우 장착 인벤토리. 드래그=`drag.ts` 포인터(고스트 없음). 맵 전용 | `renderPartyView` · `PartyViewData` |
-| `src/web/rustBattle.ts` | web | **전투 엔진 검증 하네스(P1-13)** — `?core=rust\|ts` 부팅 진입(main.ts 분기, 기존 게임 무수정). `selectBattleBackend`로 데모 전투를 **실제 `unitCard`** 로 렌더 + 관측 `legalActions` 버튼 행동 + 자동플레이(first-legal). 관측이 TS와 바이트 동일이라 카드 UI 그대로 재사용 | `mountRustBattle` |
 | `src/web/rustRun.ts` | web | **풀 게임 Rust 컨트롤러(P2-7/P3)** — `?core=rust&full=1` 진입. **전체 프로그램**(타이틀·허브·에디터·런·전투·일시정지)을 Rust `RunSession`(IPC `run_*`)으로 구동, **원래 렌더러 그대로 재사용**. 전투: 2단계 타겟팅+HP손실 예고(`run_battle_targeting`)+끼어들기 고스트+라운드 주사위 연출(`playDice`/`run_battle_init`). 오버레이(시트/편성)=`rustOverlay` 위임. **세이브/이어하기**=`run_save`/`run_load` IPC + localStorage(`spr_rust_save_v1`, 부팅 복원·전투중 포함 영속). 메타(숙련도)·에디터 저작은 프론트 영속 | `mountRustRun` · `playDice` · `persist` · `openOverlay` |
 | `src/web/rustOverlay.ts` | web | **Rust 경로 오버레이 컨트롤러(P3-3)** — overlay.ts의 Rust판. 맵=파티 편성(`renderPartyView`) / 전투=단독 캐릭터 시트(`renderCharSheet`). 원시 데이터=IPC `run_sheet_data`(SheetBundle: members·inventory·battleUnits), 정적 보강(base/특성/패시브 설명)은 프론트. 변이(장착/활성/진형)=`run_equip/unequip/set_active/move` → 번들·뷰 재조회 | `createRustOverlay` · `SheetBundle` |
-| `src/web/coreAdapter.ts` | web | **코어 백엔드 어댑터(P1-13 피처플래그)** — `selectBattleBackend()`: `?core=rust`+Tauri 런타임=Rust(IPC invoke `create_session`/`battle_step`), 아니면 TS(인메모리). 두 백엔드 `{create(seed),step(action)}→{eventDelta,observation}` 동형(spr-core Session과 동일). 전투(데모) 육안 differential 검증용 | `selectBattleBackend` · `BattleBackend` |
 | `src/web/style.css` | web | 다크 테마 스타일 + **게임셸 리셋**(상단: 브라우저 제스처/크롬 제거 — overscroll·touch-action·tap-highlight·`:focus-visible`·커스텀 스크롤바·number 스피너. CLAUDE "웹 렌더링 티 금지" B) | — |
 | `index.html` · `vite.config.ts` | web | Vite 진입/설정 (`npm run dev`). **F3 dev-write 미들웨어**(`apply:"serve"` 전용 — `POST /api/save-run` → `src/data/runs/{fileId}.json` 기록 + `runs.generated.ts` 재생성, 빌드 무영향) | `devWriteRuns` |
 

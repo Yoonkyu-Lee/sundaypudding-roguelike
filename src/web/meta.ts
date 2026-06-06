@@ -1,6 +1,12 @@
 // 영구 메타 — 숙련도(캐릭별 레벨/XP). 런 세이브와 분리(spr_meta_v1) → 런 포기·실패해도 유지(5.1).
-// XP는 전투 승리마다 소량(5.3 "소량") → 레벨↑ → 보상 스킬 tier 해금(4.4, unlockedTier는 코어).
-import { unlockedTier } from "../core/run.ts";
+// XP는 전투 승리마다 소량(5.3 "소량") → 레벨↑ → 보상 스킬 tier 해금(4.4).
+
+/** 숙련도 레벨 → 보상 출현 가능 최대 스킬 tier (4.4). 디자이너 튜닝 곡선. (구 core/run/rewards.unlockedTier — 코어 은퇴로 프론트 인라인) */
+function unlockedTier(level: number): number {
+  if (level >= 5) return 3;
+  if (level >= 2) return 2;
+  return 1;
+}
 
 const META_KEY = "spr_meta_v1";
 const XP_PER_WIN = 2; // 전투 승리당 생존 아군 1인 XP

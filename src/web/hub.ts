@@ -1,17 +1,16 @@
-// 본거지 편성 컨트롤러 — 플레이 가능 풀에서 1~4명 선택(영구 저장), 선택 로스터로 런 생성.
-// selectedRoster 상태를 캡슐화. main은 makeRun/data/toggle만 호출. (메커니즘=엔진, 선택=플레이어 런타임)
-import { createRun, type RunState } from "../core/run.ts";
+// 본거지 편성 컨트롤러 — 플레이 가능 풀에서 1~4명 선택(영구 저장). 런 생성은 Rust IPC(run_create_roster)가 담당.
+// selectedRoster 상태를 캡슐화. 소비자(rustRun)는 data/toggle/setRun만 호출. (메커니즘=엔진, 선택=플레이어 런타임)
+import type { RunState } from "../core/run.ts";
 import type { RunDef } from "../core/types.ts";
 import { CHARACTERS } from "../data/characters.ts";
-import { DEFAULT_RUN, rosterFromIds } from "../data/runs/index.ts";
+import { DEFAULT_RUN } from "../data/runs/index.ts";
 import { listRuns, getRun } from "./editor/store.ts";
-import { masteryMap, masteryInfo, getRoster, setRoster } from "./meta.ts";
+import { masteryInfo, getRoster, setRoster } from "./meta.ts";
 import type { HubData } from "./shell.ts";
 
 const MAX_ROSTER = 4;
 
 export interface Hub {
-  makeRun(seed: number): RunState;
   data(run: RunState, runActive: boolean): HubData;
   toggle(charId: string): void; // 편성 선택 토글(최소1·최대4). 런 잠금은 호출자가 판단
   setRun(id: string): void; // 플레이할 런 선택(repo/드래프트). 비전투에서만
@@ -24,9 +23,6 @@ export function createHub(initial: RunDef = DEFAULT_RUN): Hub {
   if (selected.length === 0) selected = runDef.roster.map((m) => m.charId).slice(0, MAX_ROSTER);
 
   return {
-    makeRun(seed) {
-      return createRun(seed, rosterFromIds(selected), runDef, { mastery: masteryMap(), useMastery: runDef.useMastery });
-    },
     data(run, runActive) {
       return {
         pool: playable.map((c) => ({ charId: c.id, name: c.name, avatar: c.avatar, mastery: masteryInfo(c.id), selected: selected.includes(c.id) })),
