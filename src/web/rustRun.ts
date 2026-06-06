@@ -162,7 +162,13 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
       grantWin((res.view.party ?? view?.party ?? []).filter((p) => p.alive).map((p) => p.charId));
     }
     view = res.view; busy = false;
-    if (view.phase !== "battle") { cur = null; render(); return; }
+    if (view.phase !== "battle") {
+      // 전투 종료 — 막타·승패를 잠깐 보여준 뒤 런(보상/패배)으로 복귀(TS driveBattle 1.1s 대응).
+      if (res.observation) { cur = { obs: res.observation, bar: [] }; renderBattle(); }
+      busy = true;
+      setTimeout(() => { busy = false; cur = null; render(); }, 1100);
+      return;
+    }
     await refreshBattle();
     if (playDice(res.eventDelta)) return; // 새 라운드 주사위 → onDone에서 렌더+진행
     renderBattle(); await maybeAuto();

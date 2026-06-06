@@ -317,6 +317,7 @@ impl RunSession {
     }
 
     /// 플레이어 행동 1회 적용 → 종료 시 자동 resolveBattleEnd. 델타+관측+뷰.
+    /// 델타·관측은 종료 직후(아직 battle Some) 캡처해 막타/승패 연출 보존, **뷰는 resolve 후**(phase 전이 반영 → 프론트가 보상/패배로 전환).
     pub fn battle_step(&mut self, action: &Action) -> BattleStepResult {
         if let Some(b) = self.run.battle.as_mut() {
             if b.phase == "inProgress" {
@@ -324,11 +325,15 @@ impl RunSession {
             }
         }
         let ended = self.run.battle.as_ref().map(|b| b.phase != "inProgress").unwrap_or(false);
-        let r = self.collect();
+        let event_delta: Vec<GameEvent> = self.run.battle.as_ref().map(|b| b.log[self.delivered.min(b.log.len())..].to_vec()).unwrap_or_default();
+        if let Some(b) = &self.run.battle {
+            self.delivered = b.log.len();
+        }
+        let observation = self.battle_observation();
         if ended {
             resolve_battle_end(&mut self.run, &self.d);
         }
-        r
+        BattleStepResult { event_delta, observation, view: self.view() }
     }
 
     /// 타겟팅 미리보기(앵커 칸 기준) — 영향 유닛 HP 손실 + 끼어들기 고스트. TS computeTgt의 previewLoss/ghostNames.
@@ -453,5 +458,26 @@ mod tests {
         let res = s.battle_step(&action);
         // 행동이 적용돼 로그가 늘고(skillUsed 등) 델타 비어있지 않음.
         assert!(!res.event_delta.is_empty(), "targetCell 행동 → 이벤트 발생해야(시전됨). skill={} pos={:?} before={}", skill_id, enemy_pos, before);
+    }
+
+    #[test]
+    fn battle_step_returns_post_resolve_view() {
+        // 회귀: 막타(전투 종료) step의 반환 뷰 phase는 resolveBattleEnd 후 전이를 반영해야(battle 아님).
+        // 프리즈 버그(반환 뷰가 stale "battle" → 프론트가 보상화면으로 못 넘어감) 방지.
+        let mut s = RunSession::new(42);
+        let mut guard = 0;
+        while s.phase() == "map" && guard < 50 {
+            guard += 1;
+            let n = s.run.reachable[0].clone();
+            s.enter_node(&n);
+        }
+        assert_eq!(s.phase(), "battle", "전투 진입");
+        let mut last = String::from("battle");
+        let mut g2 = 0;
+        while s.run.battle.as_ref().map(|b| b.phase == "inProgress").unwrap_or(false) && g2 < 300 {
+            g2 += 1;
+            last = s.battle_ai_step().view.phase.clone();
+        }
+        assert_ne!(last, "battle", "전투 종료 step의 반환 뷰 phase는 전이돼야(프리즈 방지). 실제={}", last);
     }
 }

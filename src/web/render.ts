@@ -37,16 +37,13 @@ function grid(title: string, units: Observation["allies"], side: "ally" | "enemy
 /** 전투 셸(svg·header·3존)을 1회 생성하고 패널을 .battleleft에 마운트. 헤더 버튼은 1회 와이어링. */
 function ensureShell(app: HTMLElement, ui: Ui, h: Handlers, panel: TimelinePanel): void {
   if (app.querySelector(".battlelayout")) return;
+  // 플레이어 전투 헤더 = 타이틀 + ⏸(런 제어는 일시정지 메뉴). seed 입력/'새 전투'는 샌드박스(개발) 잔재 → 제거(웹-티 number 스피너·중복 제어).
   app.innerHTML = `<svg class="arrows"></svg>
     <header><h1>🍮 Sundaypudding Roguelike</h1>
-      <div class="meta"><span id="roundmeta"></span> seed <input id="seed" type="number" value="${ui.seed}" /> <button id="newb">새 전투</button> <button class="hdr-menu" id="pausebtn" aria-label="메뉴 (Esc)">⏸</button></div>
+      <div class="meta"><span id="roundmeta"></span> <button class="hdr-menu" id="pausebtn" aria-label="메뉴 (Esc)">⏸</button></div>
     </header>
     <div class="battlelayout"><aside class="battleleft"></aside><div class="battlemain"></div><aside class="battleside"></aside></div>`;
   app.querySelector(".battleleft")!.appendChild(panel.root);
-  app.querySelector<HTMLButtonElement>("#newb")!.addEventListener("click", () => {
-    const v = app.querySelector<HTMLInputElement>("#seed");
-    h.onNewBattle(Number(v?.value ?? ui.seed));
-  });
   app.querySelector<HTMLButtonElement>("#pausebtn")!.addEventListener("click", () => h.onPause());
 }
 
