@@ -14,7 +14,7 @@ import { NODE_ROSTERS, DEMO_ENCOUNTER } from "../src/data/encounters.ts";
 import { STANDARD_FORMATION } from "../src/data/formations.ts";
 import { ENCOUNTER_EVENTS } from "../src/data/events.ts";
 import { RUNS } from "../src/data/runs/index.ts";
-import { canonicalJson } from "../src/core/tests/harness/canonical.ts";
+import { canonicalJson } from "./canonical.ts";
 
 /** 디자이너 저작 데이터 전체 — Rust가 로드할 단일 번들(런 그래프 포함, P2 런 레이어 포팅용). */
 export function dataBundle(): Record<string, unknown> {
