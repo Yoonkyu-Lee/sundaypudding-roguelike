@@ -108,6 +108,38 @@ pub struct StatusDef {
     pub speed_mod: Option<i64>,
 }
 
+/// 장착 아이템 스탯 보정(4.3) — 비면 0. HP는 maxHp 재계산(런)서 처리, 여기 stat은 전투 유닛 보정.
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct ItemMods {
+    #[serde(default)]
+    pub hp: i64,
+    #[serde(default)]
+    pub evasion: i64,
+    #[serde(default)]
+    pub accuracy: i64,
+    #[serde(rename = "critChance", default)]
+    pub crit_chance: i64,
+    #[serde(rename = "critMultiplier", default)]
+    pub crit_multiplier: i64,
+    #[serde(rename = "speedMin", default)]
+    pub speed_min: i64,
+    #[serde(rename = "speedMax", default)]
+    pub speed_max: i64,
+}
+
+/// 장착 아이템(4.3). 무기=dmgFlat, 방어구=shieldGainAdd, mods=스탯 보정.
+#[derive(Debug, Clone, Deserialize)]
+pub struct ItemDef {
+    pub id: String,
+    pub slot: String, // weapon|armor|held
+    #[serde(default)]
+    pub mods: Option<ItemMods>,
+    #[serde(rename = "dmgFlat", default)]
+    pub dmg_flat: i64,
+    #[serde(rename = "shieldGainAdd", default)]
+    pub shield_gain_add: i64,
+}
+
 impl StatusDef {
     /// statusNumSum용 수치 필드 조회(없으면 0).
     pub fn num_field(&self, key: &str) -> i64 {

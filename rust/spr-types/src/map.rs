@@ -1,6 +1,24 @@
-//! 런 맵 타입 (TS `types/map.ts`의 그래프 부분). 레이어/core 본문은 시퀀서 슬라이스(P2-3)서 도입(현재 serde 무시).
+//! 런 맵 타입 (TS `types/map.ts`의 그래프 부분). 레이어/core 본문은 시퀀서 슬라이스(P2-4)서 도입(현재 serde 무시).
 use crate::data::Placement;
+use crate::passives::PassiveRule;
 use serde::Deserialize;
+
+/// 노드 트리거 룰 소유자(화자/기준).
+#[derive(Debug, Clone, Deserialize)]
+pub struct RuleOwner {
+    pub side: String, // ally|enemy
+    #[serde(rename = "charId")]
+    pub char_id: String,
+}
+
+/// 노드 트리거 룰 = PassiveRule + owner. owner의 side+charId 유닛에 주입(self=그 개체). TS NodeRule.
+#[derive(Debug, Clone, Deserialize)]
+pub struct NodeRule {
+    #[serde(flatten)]
+    pub rule: PassiveRule,
+    #[serde(default)]
+    pub owner: Option<RuleOwner>,
+}
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct MapNode {

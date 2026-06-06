@@ -1,15 +1,49 @@
 //! 전투 생성 + 턴 서열 (TS `combat/state.ts` + `turnOrder.ts` + `winCheck.ts`).
 //! createBattle→battleStart→startRound(speedRoll패시브·roundStart)→advance(turnStart·tick·turnStart/everyNTurns 패시브).
-use crate::passives::compile::compile_rules;
+use crate::passives::compile::{compile_inline, compile_rules};
 use crate::passives::{apply_speed_roll_passives, fire_trigger, on_unit_turn_start, TriggerCtx};
 use crate::status::tick_periodic;
 use crate::util::{stat_mod, status_num_sum, StatusDefs};
-use spr_types::combat::{GameEvent, GameState, QueueEntry, SpeedRoll, Unit};
-use spr_types::data::{Character, Encounter, Pos};
+use spr_types::combat::{GameEvent, GameState, QueueEntry, SpeedRoll, StatusInstance, Unit};
+use spr_types::data::{Character, Encounter, ItemDef, Pos};
+use spr_types::map::NodeRule;
+use spr_types::party::{Equipped, PartyMemberState, PendingStatus};
 use spr_types::passives::TraitDef;
 use spr_types::rng::Rng;
 use spr_types::skills::Skill;
 use std::collections::HashMap;
+
+/// 장착 3칸 비-HP 스탯 보정 + 무기 dmgFlat·방어구 쉴드획득 합산(4.3). TS equipBonus.
+#[derive(Default)]
+struct EquipBonus {
+    evasion: i64,
+    accuracy: i64,
+    crit_chance: i64,
+    crit_multiplier: i64,
+    speed_min: i64,
+    speed_max: i64,
+    dmg_flat: i64,
+    shield_gain_add: i64,
+}
+
+fn equip_bonus(eq: &Equipped, items: &HashMap<String, ItemDef>) -> EquipBonus {
+    let mut b = EquipBonus::default();
+    for id in [&eq.weapon, &eq.armor, &eq.held].into_iter().flatten() {
+        if let Some(it) = items.get(id) {
+            if let Some(m) = &it.mods {
+                b.evasion += m.evasion;
+                b.accuracy += m.accuracy;
+                b.crit_chance += m.crit_chance;
+                b.crit_multiplier += m.crit_multiplier;
+                b.speed_min += m.speed_min;
+                b.speed_max += m.speed_max;
+            }
+            b.dmg_flat += it.dmg_flat;
+            b.shield_gain_add += it.shield_gain_add;
+        }
+    }
+    b
+}
 
 /// 캐릭터 → 전투 유닛(기본 — growth/장착 없음). uid = `${side[0]}${idx}_${charId}` (TS makeUnit). 룰 컴파일 포함.
 pub fn make_unit(
@@ -90,6 +124,112 @@ pub fn create_battle_with(
         fire_depth: 0,
         fire_active_keys: Vec::new(),
     };
+    fire_trigger(&mut state, TriggerCtx::new("battleStart"), defs, skills);
+    start_round(&mut state, defs, skills);
+    state
+}
+
+/// 파티원 성장상태 → 전투 유닛(장착·성장·계승상태). TS makeUnit(growth). uid는 호출측 idx.
+#[allow(clippy::too_many_arguments)]
+fn make_unit_grown(
+    m: &PartyMemberState,
+    idx: usize,
+    start_statuses: &[PendingStatus],
+    chars: &HashMap<String, Character>,
+    skills: &HashMap<String, Skill>,
+    traits: &HashMap<String, TraitDef>,
+    items: &HashMap<String, ItemDef>,
+) -> Unit {
+    let c = &chars[&m.char_id];
+    let eb = equip_bonus(&m.equipped, items);
+    let uid = format!("a{}_{}", idx, c.id);
+    let statuses: Vec<StatusInstance> = start_statuses
+        .iter()
+        .map(|s| StatusInstance { def_id: s.status_id.clone(), stacks: s.stacks, duration: s.duration, source_uid: uid.clone(), source_skill_id: None })
+        .collect();
+    let active: Vec<String> = m.active_skill_ids.clone();
+    let rules = compile_rules(&c.id, &active, chars, skills, traits);
+    Unit {
+        uid,
+        side: "ally".to_string(),
+        char_id: c.id.clone(),
+        name: c.name.clone(),
+        pos: m.pos,
+        hp_max: m.max_hp,
+        hp: m.hp,
+        shield: 0,
+        speed_min: c.speed_min + eb.speed_min,
+        speed_max: c.speed_max + eb.speed_max,
+        evasion: c.evasion + eb.evasion,
+        accuracy: c.accuracy + eb.accuracy,
+        crit_chance: c.crit_chance + eb.crit_chance,
+        crit_multiplier: c.crit_multiplier + eb.crit_multiplier,
+        active_skill_ids: active,
+        cooldowns: HashMap::new(),
+        statuses,
+        alive: true,
+        stat_mods: HashMap::new(),
+        turn_count: 0,
+        skill_dmg_bonus: m.skill_dmg_bonus.clone(),
+        rules,
+        ai_profile_id: c.ai_profile_id.clone(),
+        equip_dmg_flat: eb.dmg_flat,
+        equip_shield_gain_add: eb.shield_gain_add,
+    }
+}
+
+/// 런 전투 생성 — 성장 파티(생존자) + 적 인코딩 + 노드 트리거 룰 주입. TS createBattle(seed,enc,allyStates,nodeRules).
+#[allow(clippy::too_many_arguments)]
+pub fn create_battle_grown(
+    seed: u32,
+    enc: &Encounter,
+    party: &[PartyMemberState],
+    pending: &HashMap<String, Vec<PendingStatus>>,
+    node_rules: &[NodeRule],
+    chars: &HashMap<String, Character>,
+    skills: &HashMap<String, Skill>,
+    traits: &HashMap<String, TraitDef>,
+    items: &HashMap<String, ItemDef>,
+    defs: &StatusDefs,
+) -> GameState {
+    let mut units = Vec::new();
+    let empty: Vec<PendingStatus> = Vec::new();
+    for m in party.iter().filter(|m| m.hp > 0) {
+        let ss = pending.get(&m.char_id).unwrap_or(&empty);
+        units.push(make_unit_grown(m, units.len(), ss, chars, skills, traits, items));
+    }
+    for (i, p) in enc.enemies.iter().enumerate() {
+        units.push(make_unit(&chars[&p.char_id], "enemy", i, p.pos, chars, skills, traits));
+    }
+    let std = spr_data::standard_formation();
+    let mut state = GameState {
+        rng: Rng::new(seed),
+        round: 0,
+        units,
+        round_order: Vec::new(),
+        cursor: -1,
+        current: None,
+        phase: "inProgress".to_string(),
+        log: Vec::new(),
+        ally_formation: Some(std.clone()),
+        enemy_formation: if enc.boss { Some(std) } else { None },
+        fire_depth: 0,
+        fire_active_keys: Vec::new(),
+    };
+    // 노드 트리거 룰 주입 — 룰마다 owner(side+charId) 유닛에, 없으면 첫 적. battleStart 전.
+    if !node_rules.is_empty() {
+        let first_enemy = state.units.iter().position(|u| u.side == "enemy").unwrap_or(0);
+        for nr in node_rules {
+            let owner = match &nr.owner {
+                Some(o) => state.units.iter().position(|u| u.side == o.side && u.char_id == o.char_id),
+                None => Some(first_enemy),
+            };
+            if let Some(oi) = owner {
+                let compiled = compile_inline(std::slice::from_ref(&nr.rule));
+                state.units[oi].rules.extend(compiled);
+            }
+        }
+    }
     fire_trigger(&mut state, TriggerCtx::new("battleStart"), defs, skills);
     start_round(&mut state, defs, skills);
     state
@@ -255,5 +395,42 @@ mod tests {
         // kim은 특성 룰 컴파일됨(bloodlust/warspirit + kim_punch passive).
         let kim = state.units.iter().find(|u| u.uid == "a0_kim").unwrap();
         assert!(!kim.rules.is_empty(), "kim 룰 컴파일");
+    }
+
+    #[test]
+    fn create_battle_grown_differential() {
+        // 성장 파티(kim 장착+스킬보너스+계승상태) + 노드룰(battleStart 대사) → AI 풀 전투 TS 바이트동일.
+        use crate::ai::choose_action;
+        use crate::flow::step;
+        use spr_types::party::Equipped;
+        let chars = spr_data::characters();
+        let skills = spr_data::skills();
+        let traits = spr_data::traits();
+        let defs = spr_data::status_defs();
+        let items = spr_data::items();
+        let profiles = spr_data::ai_profiles();
+        let rosters = spr_data::node_rosters();
+        let rd = spr_data::default_run();
+
+        let mut run = crate::run::create_run(42, &rd.roster.clone(), &rd, &HashMap::new(), false, &chars);
+        let ki = run.party.iter().position(|m| m.char_id == "kim").unwrap();
+        run.party[ki].equipped = Equipped { weapon: Some("wood_bat".into()), ..Default::default() };
+        run.party[ki].skill_dmg_bonus.insert("kim_punch".into(), 5);
+        let mut pending: HashMap<String, Vec<PendingStatus>> = HashMap::new();
+        pending.insert("kim".into(), vec![PendingStatus { status_id: "regen".into(), stacks: 1, duration: 3 }]);
+        let enc = Encounter { id: "combat".into(), name: "전투".into(), allies: vec![], enemies: rosters["battle"].clone(), boss: false };
+        let node_rules: Vec<NodeRule> =
+            serde_json::from_str(r#"[{"when":{"on":"battleStart"},"then":[{"do":"showDialog","text":"두목이 노려본다"}]}]"#).unwrap();
+
+        let mut b = create_battle_grown(7, &enc, &run.party, &pending, &node_rules, &chars, &skills, &traits, &items, &defs);
+        let mut g = 0;
+        while b.phase == "inProgress" && g < 2000 {
+            g += 1;
+            let a = choose_action(&b, &skills, &defs, &profiles);
+            step(&mut b, &a, &defs, &skills);
+        }
+        let reference: serde_json::Value = serde_json::from_str(include_str!("../tests/grown-battle.generated.json")).unwrap();
+        assert_eq!(b.phase, reference["phase"].as_str().unwrap());
+        assert_eq!(canonical_json(&b.log), reference["log"].as_str().unwrap(), "성장 전투 로그 TS 바이트동일");
     }
 }

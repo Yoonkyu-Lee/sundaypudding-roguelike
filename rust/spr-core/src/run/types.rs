@@ -1,19 +1,10 @@
 //! 런 도메인 런타임 타입 (TS `core/run/types.ts`). RunState = 전투 위 레이어 상태.
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use spr_types::combat::GameState;
 use spr_types::map::{EncounterEvent, RunDef};
-use spr_types::party::PartyMemberState;
+use spr_types::party::{PartyMemberState, PendingStatus};
 use spr_types::rng::Rng;
 use std::collections::HashMap;
-
-/// 계승 대기 상태(grantRunStatus → 다음 전투 시작 주입).
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct PendingStatus {
-    #[serde(rename = "statusId")]
-    pub status_id: String,
-    pub stacks: i64,
-    pub duration: i64,
-}
 
 /// 보상 선택지(런타임 생성). 판별 `kind`.
 #[derive(Debug, Clone, Serialize)]

@@ -3,7 +3,7 @@
 //! → 로더 + canonical 직렬화 계약을 *전 실데이터*(Korean/emoji 포함)로 검증. 타입 구조체는 엔진 슬라이스(P1-9)에서 도입.
 use serde_json::Value;
 use spr_types::ai::AiProfile;
-use spr_types::data::{Character, Encounter, FormationLayout, StatusDef};
+use spr_types::data::{Character, Encounter, FormationLayout, ItemDef, Placement, StatusDef};
 use spr_types::map::RunDef;
 use spr_types::passives::TraitDef;
 use spr_types::skills::Skill;
@@ -35,6 +35,16 @@ pub fn status_defs() -> HashMap<String, StatusDef> {
 /// 스킬 맵(id→Skill). 타겟팅·스킬해소 엔진이 소비.
 pub fn skills() -> HashMap<String, Skill> {
     serde_json::from_value(data_value()["skills"].clone()).expect("skills 역직렬화")
+}
+
+/// 장착 아이템 맵(id→ItemDef). 전투 생성 시 장비 보정 합산.
+pub fn items() -> HashMap<String, ItemDef> {
+    serde_json::from_value(data_value()["items"].clone()).expect("items 역직렬화")
+}
+
+/// 노드 적 구성 맵(key→Placement[]). 전투 레이어 fallback 적 배치.
+pub fn node_rosters() -> HashMap<String, Vec<Placement>> {
+    serde_json::from_value(data_value()["nodeRosters"].clone()).expect("nodeRosters 역직렬화")
 }
 
 /// 표준 포메이션(6.3). 아군 기본·보스전 적용.

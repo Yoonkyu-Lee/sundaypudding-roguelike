@@ -4,6 +4,15 @@ use crate::data::Pos;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// 계승 대기 상태(grantRunStatus → 다음 전투 시작 주입). TS pendingStatuses 값.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct PendingStatus {
+    #[serde(rename = "statusId")]
+    pub status_id: String,
+    pub stacks: i64,
+    pub duration: i64,
+}
+
 /// 장착 슬롯별 아이템 id (4.3). 비면 None(직렬화 생략).
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct Equipped {
