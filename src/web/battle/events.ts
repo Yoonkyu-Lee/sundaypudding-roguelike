@@ -1,6 +1,6 @@
 // 이벤트 → 사람 가독 한 줄 (8.5 로그 재생). render에서 분리(1모듈=1책임).
 // 이름 해소만 필요 → {uid,name}[] 받음(GameState 비의존 — TS는 state.units, Rust 모드는 관측 유닛).
-import type { GameEvent } from "../../core/types.ts";
+import type { GameEvent } from "../../contract/types.ts";
 
 export function formatEvent(units: { uid: string; name: string }[], e: GameEvent): string | null {
   const nm = (uid?: string) => units.find((u) => u.uid === uid)?.name ?? uid ?? "?";

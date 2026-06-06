@@ -1,5 +1,5 @@
 // 전투 구성(배치) 데이터. 아군/적 그리드 좌표 배치. (2.1)
-import type { FormationLayout, Pos } from "../core/types.ts";
+import type { FormationLayout, Pos } from "../contract/types.ts";
 
 export interface Placement {
   charId: string;

@@ -1,5 +1,5 @@
 // 패시브/특성 룰 → 사람이 읽는 한 줄 (when · if → then). core 순수성 위해 web 전용.
-import type { Condition, Effect, EffTarget, PassiveRule, Skill, Trigger } from "../../core/types.ts";
+import type { Condition, Effect, EffTarget, PassiveRule, Skill, Trigger } from "../../contract/types.ts";
 import { STATUS_DEFS } from "../../data/statuses.ts";
 import { SKILLS } from "../../data/skills.ts";
 

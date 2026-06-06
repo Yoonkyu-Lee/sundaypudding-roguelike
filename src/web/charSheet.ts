@@ -1,7 +1,7 @@
 // 캐릭터 시트 (모달 오버레이). 맵·전투 공용 — 능력치·장착·보유 스킬을 펼쳐서 조회/관리.
 // 호출자가 baseStats·현재 HP·equipped·inventory·skills를 조립 → 시트는 장착 보정(현재값)·델타·픽커 렌더.
 // 장착 메커니즘(슬라이스2): 맵 editable이면 슬롯에 장착/교체/해제, 전투는 읽기전용.
-import type { EquipSlot, ItemDef, UnitView } from "../core/types.ts";
+import type { EquipSlot, ItemDef, UnitView } from "../contract/types.ts";
 import { ITEMS } from "../data/items.ts";
 import { SKILLS } from "../data/skills.ts";
 import { statusChipsList } from "./battle/status.ts";

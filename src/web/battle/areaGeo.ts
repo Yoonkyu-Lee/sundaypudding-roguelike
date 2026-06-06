@@ -1,7 +1,7 @@
 // 면적 스킬 기하 — 앵커칸 + AreaShape → 영향 칸들(순수 기하, 엔진 상태 무관).
 // 프론트 타겟팅 풋프린트 하이라이트용(구 core/combat/targeting.computeAreaCells — 코어 은퇴로 프론트 이주).
 // 결정/판정은 Rust 엔진(compute_area_cells)이 진실원; 이건 호버 미리보기 표시 기하만.
-import type { AreaShape, Pos } from "../../core/types.ts";
+import type { AreaShape, Pos } from "../../contract/types.ts";
 
 export function computeAreaCells(anchor: Pos, area: AreaShape | undefined, rows: number, cols: number): Pos[] {
   const a = area ?? { kind: "single" as const };

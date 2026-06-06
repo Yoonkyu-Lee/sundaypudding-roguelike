@@ -1,6 +1,6 @@
 // 노드 템플릿 영속 (localStorage) — 저작한 노드(타입+라벨+core: 적 배치·레이어·룰)를 스냅샷 저장 후
 // 카탈로그에서 복제 배치. 드래프트(store.ts)와 분리: 템플릿은 런 경계를 넘는 전역 재사용 라이브러리.
-import type { Layer, MapNode, NodeType } from "../../core/types.ts";
+import type { Layer, MapNode, NodeType } from "../../contract/types.ts";
 
 const KEY = "spr_node_templates_v1";
 

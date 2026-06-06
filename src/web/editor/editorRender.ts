@@ -1,6 +1,6 @@
 // 런 에디터 렌더 — 런 목록(E1) ↔ 단일 층 편집(E2) 디스패치. 층 그래프 패널 = E3.
 import { esc } from "../battle/shared.ts";
-import type { NodeType } from "../../core/types.ts";
+import type { NodeType } from "../../contract/types.ts";
 import type { RunSource } from "./store.ts";
 import { renderEditView } from "./editView.ts";
 import { renderNodeEditView } from "./nodeEditView.ts";
@@ -38,15 +38,15 @@ export interface NodeEditData {
   mode: "nodeEdit";
   nodeId: string;
   nodeName: string;
-  onEnter: import("../../core/types.ts").Layer[];
-  core: import("../../core/types.ts").Layer[];
-  onResolve: import("../../core/types.ts").Layer[];
+  onEnter: import("../../contract/types.ts").Layer[];
+  core: import("../../contract/types.ts").Layer[];
+  onResolve: import("../../contract/types.ts").Layer[];
   sel: { slot: LayerSlot; idx: number } | null; // 선택 레이어
-  rules: import("../../core/types.ts").NodeRule[]; // 노드 트리거 룰(Phase C/E4) — owner 포함
+  rules: import("../../contract/types.ts").NodeRule[]; // 노드 트리거 룰(Phase C/E4) — owner 포함
   selRule: number | null; // 편집 중 룰 인덱스
   allies: RosterEntry[]; // RunDef.roster — 전장 아군(읽기전용 표시·룰 소유자 후보)
   combatRoster: RosterEntry[]; // 선택 combat 레이어의 적(룰 소유자 후보)
-  eventLayer: import("../../core/types.ts").EncounterEvent | null; // 선택 event 레이어의 인라인 이벤트(없으면 null)
+  eventLayer: import("../../contract/types.ts").EncounterEvent | null; // 선택 event 레이어의 인라인 이벤트(없으면 null)
 }
 export type EditorData = ListData | EditData | NodeEditData;
 

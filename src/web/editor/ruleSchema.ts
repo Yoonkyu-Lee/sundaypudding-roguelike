@@ -1,6 +1,6 @@
 // 트리거 룰 에디터 스키마 (Phase E4) — when/if/then의 큐레이트 카탈로그 + 폼 필드 스펙.
 // 엔진은 모든 변형을 해석하나, GUI는 자주 쓰는 부분집합만 노출(스키마라 행 추가로 확장 쉬움).
-import type { Trigger, Condition, Effect } from "../../core/types.ts";
+import type { Trigger, Condition, Effect } from "../../contract/types.ts";
 import type { FieldSpec } from "./layerSchema.ts";
 
 export interface SpecRow { label: string; fields: FieldSpec[]; make: () => object; }

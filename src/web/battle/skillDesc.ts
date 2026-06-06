@@ -1,6 +1,6 @@
 // 스킬 데이터 → 게임다운 정돈된 설명 (정보 비대칭 해소). 쿨·명중·피해·사정권·면적규칙·특징.
 // 모든 값은 기존 Skill/AreaShape/STATUS_DEFS 데이터에서 생성 (데이터-온리).
-import type { AreaShape, Skill } from "../../core/types.ts";
+import type { AreaShape, Skill } from "../../contract/types.ts";
 import { STATUS_DEFS } from "../../data/statuses.ts";
 import { describeStatus } from "./status.ts";
 import { esc } from "./shared.ts";

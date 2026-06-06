@@ -1,5 +1,5 @@
 // 상태이상 정의 레지스트리 (데이터 주도). 거동=엔진, 값=여기. (3.5, 8.6)
-import type { StatusDef, StatusDefId } from "../core/types.ts";
+import type { StatusDef, StatusDefId } from "../contract/types.ts";
 
 export const STATUS_DEFS: Record<StatusDefId, StatusDef> = {
   burn: {

@@ -1,6 +1,6 @@
 // 노드 에디터 폼의 진실원 (Phase E) — 레이어 kind별 편집 필드 스펙(선언적) + 카탈로그 + 요약/기본값.
 // 단순 필드(숫자/텍스트/토글/select)는 폼 제너레이터가 자동 렌더. 리치 위젯(roster 4×4·선택지)은 E3.
-import type { Layer } from "../../core/types.ts";
+import type { Layer } from "../../contract/types.ts";
 import { NODE_ROSTERS } from "../../data/encounters.ts";
 
 export interface FieldSpec { key: string; label: string; type: "number" | "text" | "bool" | "select" | "roster"; options?: string[]; optionsFrom?: "chars" | "statuses"; allowEmpty?: boolean; step?: number; }

@@ -1,7 +1,7 @@
 // 인카운터 이벤트 (7.2) — 생존 보장 + 성장/저해 도박. 데이터 주도(디자이너 편집). 구매(골드)는 상점 전담.
 // 스키마(EncounterEvent/Choice/Outcome)는 core/types로 이전(event 레이어가 인라인 소유하려면 types 필요). 여기선 풀 상수만.
-import type { EncounterEvent } from "../core/types.ts";
-export type { EncounterOutcome, EncounterChoice, EncounterEvent } from "../core/types.ts";
+import type { EncounterEvent } from "../contract/types.ts";
+export type { EncounterOutcome, EncounterChoice, EncounterEvent } from "../contract/types.ts";
 
 export const ENCOUNTER_EVENTS: EncounterEvent[] = [
   {

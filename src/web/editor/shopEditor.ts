@@ -1,7 +1,7 @@
 // 상점 진열 에디터 (슬라이스: 상점 진열 노드별 저작) — shop 레이어의 offers[] 저작.
 // 품목 = 종류(아이템/회복/스킬학습) + 파라미터 + 비용. keepGenerated=절차생성 진열 병행. 스키마 구동.
 import { esc } from "../battle/shared.ts";
-import type { ShopOfferDef } from "../../core/types.ts";
+import type { ShopOfferDef } from "../../contract/types.ts";
 import type { EditorHandlers } from "./editorRender.ts";
 import { ITEMS } from "../../data/items.ts";
 import { CHARACTERS } from "../../data/characters.ts";

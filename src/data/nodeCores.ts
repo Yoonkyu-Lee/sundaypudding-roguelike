@@ -1,6 +1,6 @@
 // 노드 타입별 기본 core 시드 — 레거시 type 동작 분기를 대체(레이어 일원화).
 // 에디터 노드 배치 시 시드(편집 가능), 엔진은 core 없는 노드의 fallback으로 사용. 콘텐츠라 data에 둠.
-import type { Layer, NodeType } from "../core/types.ts";
+import type { Layer, NodeType } from "../contract/types.ts";
 import { NODE_ROSTERS } from "./encounters.ts";
 
 const copyRoster = (key: string) => (NODE_ROSTERS[key] ?? NODE_ROSTERS.battle).map((e) => ({ charId: e.charId, pos: { ...e.pos } }));

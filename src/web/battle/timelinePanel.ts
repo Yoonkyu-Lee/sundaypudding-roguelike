@@ -1,7 +1,7 @@
 // 행동서열 패널 (영속·모드-aware). 주사위 연출(rolling)과 전투 타임라인(live)이 한 컴포넌트.
 // rolling: 중앙 확장해 주사위 굴림→±→서열 확정 → dock(): 같은 행이 좌측 레일로 FLIP 슬라이드 → live.
 // roundIntro.ts + timeline.ts 통합. 연속성 = 같은 root DOM이 모드만 전환(별개 오버레이 없음).
-import type { Observation, SpeedRoll } from "../../core/types.ts";
+import type { Observation, SpeedRoll } from "../../contract/types.ts";
 import { avatarHtml, esc } from "./shared.ts";
 
 export interface RollView extends SpeedRoll {

@@ -1,5 +1,5 @@
 // 캐릭터 데이터 (포켓몬式 고유 디자인, 4.1). 스탯=기본값(보정 가능).
-import type { Character } from "../core/types.ts";
+import type { Character } from "../contract/types.ts";
 
 export const CHARACTERS: Record<string, Character> = {
   // ══ 우익(대한민청) — 플레이어 파티 ══

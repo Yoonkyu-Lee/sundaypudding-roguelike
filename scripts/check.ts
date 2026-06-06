@@ -43,8 +43,8 @@ for (const d of ["CLAUDE.md", "README.md", "docs/GAME-DESIGN.md", "docs/CODE-MAP
   if (n >= cap) warn(`문서 김(${n}≥${cap}줄): ${d} — 분리/축약 고려`);
 }
 
-// ── 2) 코어 순수성 (8.1/8.3) ─────────────────────────────────────────────────
-const coreFiles = srcFiles.filter((f) => rel(f).startsWith("src/core/"));
+// ── 2) 계약 레이어 순수성 (8.1/8.3) — src/contract = 타입+순수유틸, IO/뷰의존 금지 ──
+const coreFiles = srcFiles.filter((f) => rel(f).startsWith("src/contract/"));
 for (const f of coreFiles) {
   const txt = readFileSync(f, "utf8");
   // 결정론: 테스트 포함 전부 금지
@@ -78,20 +78,19 @@ for (const f of playerWeb) {
 }
 
 // ── 3) 배럴 규율 (서브시스템 내부 파일은 배럴/파사드로만 접근) ──────────────────
-const SUBSYS = ["combat", "run", "types", "ai"]; // src/core/<S>/
-const isCoreFacade = (f: string) => /^src\/core\/[^/]+\.ts$/.test(rel(f)); // src/core 바로 밑 파일 = 파사드 허용
+const isCoreFacade = (f: string) => /^src\/contract\/[^/]+\.ts$/.test(rel(f)); // src/contract 바로 밑 파일 = 파사드 허용
 for (const f of srcFiles) {
   const rf = rel(f);
   const txt = readFileSync(f, "utf8");
   for (const m of txt.matchAll(/from\s+["'](\.[^"']+)["']/g)) {
     const target = rel(resolve(dirname(f), m[1]));
-    const seg = target.match(/^src\/core\/(combat|run|types|ai)\/(.+)$/);
+    const seg = target.match(/^src\/contract\/(run|types)\/(.+)$/);
     if (!seg) continue;
     const [, sub, inner] = seg;
     if (basename(inner) === "index.ts") continue; // 배럴은 OK
-    const importerInSub = rf.startsWith(`src/core/${sub}/`);
+    const importerInSub = rf.startsWith(`src/contract/${sub}/`);
     if (importerInSub) continue; // 같은 서브시스템 내부 = OK
-    if (isCoreFacade(f)) continue; // 파사드(engine.ts 등) = OK
+    if (isCoreFacade(f)) continue; // 파사드(run.ts/types.ts) = OK
     warn(`배럴 우회 import: ${rf} → ${target} (배럴/파사드 경유 권장)`);
   }
 }

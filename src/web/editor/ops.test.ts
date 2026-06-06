@@ -2,8 +2,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { addNode, addNodeFromTemplate, moveNode, moveNodes, deleteNode, toggleEdge, nodeAt, adjacentPairs, autoConnectAdjacent, addFloor, deleteFloor, moveFloor, setNodeLabel } from "./ops.ts";
-import { hexAdjacent } from "../../core/run.ts";
-import type { FloorDef, RunDef } from "../../core/types.ts";
+import { hexAdjacent } from "../../contract/run.ts";
+import type { FloorDef, RunDef } from "../../contract/types.ts";
 
 const pairKey = (a: string, b: string) => [a, b].sort().join("|");
 const edgeSet = (f: FloorDef) => new Set(f.edges.map((e) => pairKey(e.from, e.to)));

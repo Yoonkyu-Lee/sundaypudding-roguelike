@@ -1,6 +1,6 @@
 // 런 에디터 드래프트 영속 (localStorage) + 런 목록 병합. (meta.ts/save.ts 패턴)
 // 진실 = repo JSON(RUNS). 드래프트는 브라우저 작업본 — 즉시 편집·테스트, 내보내기로 repo 커밋.
-import type { RunDef } from "../../core/types.ts";
+import type { RunDef } from "../../contract/types.ts";
 import { RUNS } from "../../data/runs/index.ts";
 
 const KEY = "spr_editor_drafts_v1";

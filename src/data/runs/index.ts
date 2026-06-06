@@ -1,7 +1,7 @@
 // 런 레지스트리 파사드 (7장) — 디자이너가 저작한 RunDef 모음. 진실 = 레포 JSON(에디터가 편집·내보내기).
 // 코어는 RunDef 객체를 인자로 받음(순수); JSON 로딩은 데이터 경계에서.
 // 레지스트리 본체 = runs.generated.ts — dev-write 미들웨어가 *.json을 스캔해 자동 재생성(F3).
-import type { RunDef } from "../../core/types.ts";
+import type { RunDef } from "../../contract/types.ts";
 import { RUNS } from "./runs.generated.ts";
 
 export { RUNS };

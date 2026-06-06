@@ -1,5 +1,5 @@
 // 노드 종류 표시(아이콘/이름) — 런 렌더와 런 에디터 공용. (도메인 명칭: UI-GLOSSARY)
-import type { NodeType } from "../core/types.ts";
+import type { NodeType } from "../contract/types.ts";
 
 export const TYPE_ICON: Record<NodeType, string> = {
   start: "📍", battle: "⚔️", elite: "💀", shop: "🛒", encounter: "❓", rest: "🏕️", boss: "👑", clear: "🚩",

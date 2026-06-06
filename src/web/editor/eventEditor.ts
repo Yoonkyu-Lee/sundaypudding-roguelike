@@ -1,7 +1,7 @@
 // 인카운터 이벤트 에디터 (Phase D) — event 레이어의 인라인 event(title/text/choices) 저작.
 // 선택지 = 라벨 + 모드(확정 결과 / 도박 확률 win·lose). 스키마 구동.
 import { esc } from "../battle/shared.ts";
-import type { EncounterEvent, EncounterOutcome } from "../../core/types.ts";
+import type { EncounterEvent, EncounterOutcome } from "../../contract/types.ts";
 import type { EditorHandlers } from "./editorRender.ts";
 
 export interface OutcomeField { key: string; label: string; step?: number; }

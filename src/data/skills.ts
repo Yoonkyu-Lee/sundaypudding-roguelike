@@ -1,6 +1,6 @@
 // 스킬 데이터 (데이터 주도). 위치 마스크·쿨타임·명중·효과 전부 데이터로. (2.4~2.10)
 // 근접 스킬은 `reach`(동적 도달 열) 사용 — 정적 전방 마스크(FRONT2) 폐지(후열만 남는 교착 방지, 2.4).
-import type { Skill } from "../core/types.ts";
+import type { Skill } from "../contract/types.ts";
 
 export const SKILLS: Record<string, Skill> = {
   // ══ 우익(대한민청) — 플레이어 ══

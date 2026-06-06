@@ -1,8 +1,8 @@
 // 풀 게임 Rust 하네스 (P2-7/P3) — `?core=rust&full=1`. **전체 프로그램**(타이틀·허브·에디터·런·전투·일시정지)을 Rust 코어로.
 // 원래 프론트(실제 렌더러) 그대로 재사용, 엔진/상태/로직만 Rust(IPC). 메타(숙련도)·에디터 저작은 프론트 영속 유지.
-import type { Action, GameEvent, Observation } from "../core/types.ts";
-import type { RunDef } from "../core/types.ts";
-import type { RunState, RunView } from "../core/run.ts";
+import type { Action, GameEvent, Observation } from "../contract/types.ts";
+import type { RunDef } from "../contract/types.ts";
+import type { RunState, RunView } from "../contract/run.ts";
 import { SKILLS } from "../data/skills.ts";
 import { DEFAULT_RUN } from "../data/runs/index.ts";
 import { renderRunScreen, type RunHandlers } from "./runRender.ts";

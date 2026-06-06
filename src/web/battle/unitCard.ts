@@ -1,6 +1,6 @@
 // 그리드 캐릭터 카드 — 아바타·이름·포메이션·쉴드바(체력바 위 좌측정렬)·HP바·HP텍스트·상태칩.
 // 칸 규격 통일: 카드는 칸을 꽉 채우고 내부 구조는 정보량과 무관하게 고정 (item 2/3/6).
-import type { UnitView } from "../../core/types.ts";
+import type { UnitView } from "../../contract/types.ts";
 import { avatarHtml, esc, r1, ck, type TgtCtx } from "./shared.ts";
 import { statusChips } from "./status.ts";
 

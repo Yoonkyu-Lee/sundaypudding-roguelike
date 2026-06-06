@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { saveTemplate, listTemplates, getTemplate, deleteTemplate, type NodeTemplateContent } from "./templates.ts";
 import { blankRun, cloneAsDraft } from "./store.ts";
 import { LAYER_SPECS, LAYER_KINDS, DECO_KINDS } from "./layerSchema.ts";
-import { validateRun } from "../../core/run.ts";
+import { validateRun } from "../../contract/run.ts";
 
 // ── W1/W3 템플릿: deep-clone 격리 + id 유일 + list/get/delete ──
 test("W1 saveTemplate: content deep-clone 저장 — 이후 원본 변경이 저장본 오염 안 함", () => {

@@ -1,6 +1,6 @@
 // 전투 렌더 — 영속 셸(svg·header·battlelayout)을 1회 만들고, 매 step **배틀 존만** 갱신.
 // .battleleft(행동서열 패널)는 TimelinePanel이 소유 → 통짜 재렌더에서 분리(주사위↔타임라인 연속성).
-import type { GameEvent, Observation, Skill } from "../core/types.ts";
+import type { GameEvent, Observation, Skill } from "../contract/types.ts";
 import { computeAreaCells } from "./battle/areaGeo.ts";
 import { SKILLS } from "../data/skills.ts";
 import { ck, esc, type Handlers, type SkillBarEntry, type TgtCtx, type Ui } from "./battle/shared.ts";

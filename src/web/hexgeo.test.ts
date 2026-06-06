@@ -2,8 +2,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { hexCorners, pixelToAxial, ccx, ccy, cornerOffsets, edgeDirIndex, EDGE_DIRS } from "./hexgeo.ts";
-import { hexAdjacent } from "../core/run.ts";
-import type { MapNode } from "../core/types.ts";
+import { hexAdjacent } from "../contract/run.ts";
+import type { MapNode } from "../contract/types.ts";
 
 const hx = (q: number, r: number): MapNode => ({ id: `${q},${r}`, type: "battle", q, r });
 

@@ -1,7 +1,7 @@
 // 특성(trait) 데이터 — 캐릭터를 정의하는 상시 패시브 룰 묶음 (디자이너 작성).
 // 캐릭터가 characters.ts의 traitIds로 참조. 룰 = when/if/then (core/types/passives.ts 스키마).
 // 작성법·카탈로그: src/data/README.md "특성/패시브" 절.
-import type { TraitDef } from "../core/types.ts";
+import type { TraitDef } from "../contract/types.ts";
 
 export const TRAITS: Record<string, TraitDef> = {
   // 전투 시작 시 최전열이면 명중 +10 (battleStart 1회 → statMod 안전).

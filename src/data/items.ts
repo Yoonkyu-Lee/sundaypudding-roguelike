@@ -1,7 +1,7 @@
 // 장착 아이템 (4.3) — 데이터 주도. 스탯은 오직 장착으로만 변동(4.2).
 // 무기 = 공격 측(dmgFlat·crit%), 방어구 = 생존 측(hp·쉴드획득). 지닌물건 = 후속(데이터 없음).
 // 메커니즘(스탯 합산·equip)은 엔진(core), 값은 여기.
-import type { ItemDef } from "../core/types.ts";
+import type { ItemDef } from "../contract/types.ts";
 
 export const ITEMS: Record<string, ItemDef> = {
   // ── 무기 (공격 상수 +N, 일부 치명) ──

@@ -1,6 +1,6 @@
 // 전용 노드 에디터 화면 (Phase E1) — 노드 core[] 레이어를 리스트(추가/삭제/순서) + 스키마 구동 폼으로 편집.
 import { esc } from "../battle/shared.ts";
-import type { Layer } from "../../core/types.ts";
+import type { Layer } from "../../contract/types.ts";
 import type { NodeEditData, EditorHandlers, RosterEntry, LayerSlot } from "./editorRender.ts";
 import { LAYER_SPECS, LAYER_KINDS, DECO_KINDS, layerSummary, type FieldSpec } from "./layerSchema.ts";
 import { battlefieldHtml, wireBattlefield } from "./battlefieldEditor.ts";
@@ -59,7 +59,7 @@ export function renderNodeEditView(app: HTMLElement, d: NodeEditData, h: EditorH
   const eff = sel?.kind === "combat" ? effectiveRoster(sel as { roster?: RosterEntry[] }) : null;
   const combatExtra = sel?.kind === "combat" && eff ? `${battlefieldHtml(eff, d.allies)}${ruleEditorHtml(d)}` : "";
   const eventExtra = sel?.kind === "event" ? eventEditorHtml(d.eventLayer) : "";
-  const shopExtra = sel?.kind === "shop" ? shopEditorHtml(sel as { offers?: import("../../core/types.ts").ShopOfferDef[]; keepGenerated?: boolean }) : "";
+  const shopExtra = sel?.kind === "shop" ? shopEditorHtml(sel as { offers?: import("../../contract/types.ts").ShopOfferDef[]; keepGenerated?: boolean }) : "";
   const form = sel ? `<h3>${esc(LAYER_SPECS[sel.kind].label)} 편집</h3>${fieldInput(sel, d.sel!.idx)}${combatExtra}${eventExtra}${shopExtra}` : `<div class="hint">왼쪽에서 레이어를 선택하세요.</div>`;
   const sections = SLOTS.map((s) => slotSection(s.slot, s.title, s.hint, s.kinds, arr(s.slot), d.sel)).join("");
 

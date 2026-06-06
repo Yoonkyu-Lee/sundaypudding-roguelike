@@ -1,7 +1,7 @@
 // 본거지 편성 컨트롤러 — 플레이 가능 풀에서 1~4명 선택(영구 저장). 런 생성은 Rust IPC(run_create_roster)가 담당.
 // selectedRoster 상태를 캡슐화. 소비자(rustRun)는 data/toggle/setRun만 호출. (메커니즘=엔진, 선택=플레이어 런타임)
-import type { RunState } from "../core/run.ts";
-import type { RunDef } from "../core/types.ts";
+import type { RunState } from "../contract/run.ts";
+import type { RunDef } from "../contract/types.ts";
 import { CHARACTERS } from "../data/characters.ts";
 import { DEFAULT_RUN } from "../data/runs/index.ts";
 import { listRuns, getRun } from "./editor/store.ts";

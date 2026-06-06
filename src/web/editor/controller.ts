@@ -1,6 +1,6 @@
 // 런 에디터 컨트롤러 — 목록↔편집 모드 상태 + 핸들러. main은 run 수명주기 콜백만 주입.
-import { validateRun } from "../../core/run.ts";
-import type { Condition, Effect, EncounterEvent, EncounterOutcome, FloorDef, Layer, MapNode, RunDef, ShopOfferDef, Trigger } from "../../core/types.ts";
+import { validateRun } from "../../contract/run.ts";
+import type { Condition, Effect, EncounterEvent, EncounterOutcome, FloorDef, Layer, MapNode, RunDef, ShopOfferDef, Trigger } from "../../contract/types.ts";
 import { defaultShopOffer } from "./shopEditor.ts";
 import { listRuns, getRun, saveDraft, deleteDraft, blankRun, exportRun, isDraft, cloneAsDraft, saveToRepo } from "./store.ts";
 import { addNode, addNodeFromTemplate, moveNode, moveNodes, deleteNode, toggleEdge, adjacentPairs, addFloor, deleteFloor, moveFloor, setNodeLabel } from "./ops.ts";

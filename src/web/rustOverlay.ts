@@ -9,7 +9,7 @@ import { renderCharSheet, type SheetData, type SheetHandlers, type SheetSkill, t
 import { describeRule, describeSkillPassives } from "./battle/passiveDesc.ts";
 import { renderPartyView, type PartyBoardMember, type PartyViewHandlers } from "./partyView.ts";
 import type { Ui } from "./battle/shared.ts";
-import type { Equipped, UnitView } from "../core/types.ts";
+import type { Equipped, UnitView } from "../contract/types.ts";
 
 interface SheetMemberRaw { charId: string; name: string; avatar?: string; pos: { row: number; col: number }; hp: number; hpMax: number; alive: boolean; equipped: Equipped; skills: SheetSkill[]; activeCount: number }
 interface SheetBattleUnitRaw { uid: string; charId: string; name: string; avatar?: string; side: string; hp: number; hpMax: number; shield: number; statuses: UnitView["statuses"]; skills: SheetSkill[]; activeCount: number; equipped: Equipped }

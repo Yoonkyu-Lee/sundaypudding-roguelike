@@ -1,6 +1,6 @@
 // 런 화면 렌더 (맵/보상/결과). 전투 화면은 render.ts(renderApp)가 담당.
-import type { RunView } from "../core/run.ts";
-import { hexAdjacent } from "../core/run.ts";
+import type { RunView } from "../contract/run.ts";
+import { hexAdjacent } from "../contract/run.ts";
 import { avatarHtml } from "./render.ts";
 import { TYPE_ICON, TYPE_NAME } from "./nodeMeta.ts";
 import { attachCamera } from "./camera.ts";

@@ -9,20 +9,21 @@
 
 ```
 src/
-  core/   ← 순수·결정론 게임 로직(전투 combat + 런 run + ai). 렌더링/IO 의존 0. (GAME-DESIGN 8.1)
-  data/   ← 데이터 주도 콘텐츠. 엔진은 이걸 "해석"만. (8.6/8.8) — 디자이너 가이드: src/data/README.md
-  cli/    ← 터미널 드라이버(사람/AI용 IO). core를 소비.
-  web/    ← 웹 렌더러(사람용 뷰). 같은 core 상태를 구독 + 이벤트 로그 재생 (8.5)
+  contract/ ← 프론트↔엔진 계약(타입 스키마) + 순수 유틸(graph). 엔진 아님. (옛 core, TS 엔진 은퇴로 개명)
+  data/     ← 데이터 주도 콘텐츠. 엔진은 이걸 "해석"만. (8.6/8.8) — 디자이너 가이드: src/data/README.md
+  web/      ← 웹 렌더러(플레이어 GUI). Rust 엔진을 Tauri IPC로 구동 + 이벤트 로그 재생 (8.5)
+rust/       ← ★ 게임 엔진(spr-types←spr-data←spr-core). 결정론·순수. 무작위=state.rng만.
+app/        ← Tauri2 셸(IPC 커맨드 = 세션 API).
 ```
 
-**단방향 의존:** `data → types ← core → views(cli/web)`. core는 view를 import하지 않고, view는 core를 읽기만.
-**core는 절대 console/DOM/readline을 직접 만지지 않는다.** IO는 cli/·web/에서만.
-타입 레벨 강제: `tsconfig.json`(코어/CLI, DOM lib 없음) vs `tsconfig.web.json`(웹, DOM lib).
+**단방향 의존:** `data → contract(types) ← web(프론트)` (TS측) / `spr-data → spr-types ← spr-core`(Rust 엔진). 프론트는 엔진을 **IPC로만** 호출.
+**엔진(rust/spr-core)·contract는 console/DOM/IO 0.** IO는 web/(프론트)·app/(Tauri)에서만.
+타입 레벨: `tsconfig.json`(contract/data, DOM lib 없음) vs `tsconfig.web.json`(웹, DOM lib).
 
 ## 모듈 트리 (배럴 = 공개 API, 소비자는 배럴만 import)
 
 ```
-src/core/             ← **TS 엔진 은퇴 완료.** 남은 것 = IPC/데이터 계약 타입 + 순수 유틸만. 엔진은 rust/spr-core.
+src/contract/         ← **프론트↔Rust 엔진 계약**(옛 src/core, TS 엔진 은퇴로 개명). IPC/데이터 타입 + 순수 유틸만. 엔진=rust/spr-core.
   rng.ts            시드 PRNG 타입(RunState.rng 참조용 — 런타임 무작위는 Rust) → Rng
   types.ts          ▸배럴: export type * from types/{content,passives,ai,map,runtime} — 프론트·데이터·Rust(export)가 공유하는 계약 스키마
   types/
