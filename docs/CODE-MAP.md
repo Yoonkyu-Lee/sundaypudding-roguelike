@@ -97,7 +97,8 @@ desktop/src/main.rs   #[tauri::command]: 전투 데모(create_session·battle_st
                     encounter·move·set_active·equip·unequip·battle_step·ai_step·battle_obs·battle_init·battle_view·
                     battle_targeting·sheet_data·save·load → spr_core::RunSession 래핑(상태=Mutex)
 ```
-> 구동: 터미널1 `npm run dev`(vite) + 터미널2 `cd desktop && cargo build && ./target/debug/spr-app.exe`(또는 `npx tauri dev`). 기본 부팅 = Rust 풀게임(Tauri 감지). `desktop/`은 워크스페이스 밖이라 `cargo test`(engine/) 게이트에 영향 0.
+> **개발 구동**: 터미널1 `npm run dev`(vite, web/) + 터미널2 `cd desktop && cargo build && ./target/debug/spr-app.exe`(debug=dev모드, devUrl=localhost:5173). `desktop/`은 워크스페이스 밖이라 `cargo test`(engine/) 게이트에 영향 0.
+> **프로덕션 단일 exe**: `cd web && npm run build`(→web/dist) → `cd ../desktop && ../web/node_modules/.bin/tauri build --no-bundle`(→`target/release/spr-app.exe`, 프론트 임베드, 서버 불필요). ⚠️ `cargo build --release`는 dev모드(localhost)로 빌드됨 — prod는 **`tauri build` CLI만**. `beforeBuildCommand`는 cwd 이슈로 비활성(프론트 선행 빌드).
 
 ---
 

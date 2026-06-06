@@ -22,10 +22,13 @@ npm run data:export   # 데이터 JSON 번들 재생성(web/src/content 변경 �
 npm run typecheck     # 계약타입(코어) + 웹 타입체크
 npm run check         # 통합 게이트 (타입·web test·cargo test·줄수·코어순수성·배럴)
 
-# 배포(단일 데스크톱 앱): 프론트 빌드 → Tauri 번들
-cd desktop && npx tauri build   # beforeBuildCommand가 `npm run build`(dist/) 자동 실행 → 설치본 산출
+# 배포(단일 실행 파일 — 인스톨러 불필요): 프론트 빌드 → Tauri 프로덕션 빌드
+cd web && npm run build                                            # 프론트 → web/dist
+cd ../desktop && ../web/node_modules/.bin/tauri build --no-bundle  # → desktop/target/release/spr-app.exe (프론트 임베드 단일 exe ~12MB)
 ```
 
+> ⚠️ **`cargo build --release`는 프로덕션이 아니다.** Tauri의 dev/prod 전환은 cargo 프로필이 아니라 **`tauri build` CLI**가 설정한다 — cargo로 빌드한 release exe는 *dev 모드*(devUrl=`localhost:5173`)로 동작해 단독 실행 시 "연결 거부". 프로덕션 단일 exe는 반드시 위 `tauri build`로. (실행엔 시스템 **WebView2** 런타임 필요 — Win11 기본 내장. 자동 프론트 빌드는 `beforeBuildCommand` cwd 이슈로 비활성 → 위처럼 `npm run build` 선행.)
+>
 > **TS 엔진은 은퇴**(Rust로 마이그레이션 완료). TS 골든 엔진 + differential 하네스는 `archive/ts-core` 브랜치 + `tag ts-golden-oracle`에 보관. 상세: [`docs/PORTING.md`](docs/PORTING.md).
 
 ## 아키텍처 (상세: [`docs/CODE-MAP.md`](docs/CODE-MAP.md))
