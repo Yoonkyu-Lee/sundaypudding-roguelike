@@ -136,5 +136,6 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 - [x] P2-6 오케스트레이션 (시퀀서+노드해소+상점+인카운터) — spr-types Layer/ShopOfferDef/NodeLayers·node core/layers·Skill.exclusiveTo + `run/layers.rs`(default_core·node_core·start/step/advance_core·start_combat) + `run/shop.rs`(generate_shop·buy·leave) + `run/encounter.rs`(apply_outcome·choose_option) + `run/run.rs`(enter_node·complete_floor·resolve_battle_end·choose_reward). **풀 런 differential** — yain 전체 런(맵네비·AI전투·보상RNG·상점·인카운터·런패시브·성장·층전환) 3시드 최종상태(phase/gold/floor/inventory/log/party) **바이트동일**
 - [~] P2-7 view + save:
   - [x] **view** — `run/view.rs`(get_run_view → RunView: nodes/status·party/skills·rewards·shop·encounter·log). createRun(42) getRunView TS 바이트동일(한글명·아바타·스킬tier/signature)
+  - [x] **풀 게임 세션 API** — `run/session.rs`(RunSession: new·view·enter_node·choose_reward·leave_shop·buy_offer·choose_encounter·move_party·set_active·equip/unequip·battle_step·battle_ai_step). 세션 구동 풀 런 = differential과 동일(lost·gold49). **세션 구동이 잠복 버그 발견·수정**(get_formation_bonus 죽은 actor rank=-1, TS findIndex 패리티 — unwrap 패닉 제거)
   - [ ] save 왕복 — RunState(전투포함) serde 직렬화. **전 GameState serde 표면 필요**(저차등가치=영속화, 게임로직 아님). TS 웹이 현재 영속 담당 → Rust 백엔드 영속 도입 시 포팅
 - [x] P2-8 풀 런 differential — P2-6서 달성(`tests/full-run.generated.json`, `npm run run:corpus` 없이 인라인 추출). yain 전체 런 3시드 바이트동일. (하네스 풀게임 Rust 백엔드 확장은 후속 — 세션 API에 run 노출 필요)

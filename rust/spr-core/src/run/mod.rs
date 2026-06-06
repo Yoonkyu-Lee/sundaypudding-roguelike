@@ -8,9 +8,12 @@ pub mod layers;
 pub mod passives;
 pub mod rewards;
 pub mod run;
+pub mod session;
 pub mod shop;
 pub mod types;
 pub mod view;
+
+pub use session::RunSession;
 
 pub use data::RunData;
 pub use encounter::choose_encounter_option;

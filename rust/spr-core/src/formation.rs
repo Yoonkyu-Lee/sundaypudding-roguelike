@@ -26,7 +26,8 @@ pub fn get_formation_bonus(state: &GameState, unit: &Unit, kind: &str) -> i64 {
     }
     let base = total.div_euclid(count); // floor (음수 total도 나머지 0..count-1)
     let rem = total - base * count;
-    let rank = peers.iter().position(|&u| u == unit.uid).unwrap() as i64;
+    // TS findIndex: 미발견(예: 죽은 actor) = -1 → -1 < rem → base+1. unwrap 금지(패리티).
+    let rank = peers.iter().position(|&u| u == unit.uid).map(|i| i as i64).unwrap_or(-1);
     base + if rank < rem { 1 } else { 0 }
 }
 
