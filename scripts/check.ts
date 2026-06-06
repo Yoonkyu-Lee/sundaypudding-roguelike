@@ -1,6 +1,6 @@
 // 자동 게이트 — 슬라이스 드리프트를 "행동하는 순간"에 잡는다. (CLAUDE.md 모듈/경계 규칙의 기계적 강제)
 // 실행: `npm run check` (수동) 또는 git pre-commit 훅(.githooks/pre-commit).
-// FAIL 하나라도 있으면 exit 1. WARN은 통과(시야 확보용). `--update`로 골든 데모 해시 재생성.
+// FAIL 하나라도 있으면 exit 1. WARN은 통과(시야 확보용). 결정론 회귀 게이트 = cargo test(differential·save-roundtrip).
 import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { join, relative, dirname, resolve, basename } from "node:path";

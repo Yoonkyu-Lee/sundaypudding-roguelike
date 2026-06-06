@@ -1,13 +1,11 @@
 /// <reference types="node" />
 import { defineConfig, type Plugin } from "vite";
-import { viteSingleFile } from "vite-plugin-singlefile";
 import { writeFileSync, readdirSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// 웹 렌더러. dev: 코어(src/core) 무수정 import. build: JS/CSS를 index.html 한 파일로 인라인
-// (viteSingleFile). 아바타(public/)는 빌드 후 scripts/inline-avatars.mjs가 base64로 박아넣음
-// → 친구에게 보내는 완전 단일 HTML (더블클릭 → 브라우저, 오프라인).
+// 웹 프론트(플레이어 GUI). dev: vite 서버(localhost:5173), Rust 엔진은 Tauri IPC로 호출.
+// build: 일반 multi-file dist/(index.html + assets/ + avatars/) → Tauri가 frontendDist로 통째 번들(단일 데스크톱 앱).
 
 const RUNS_DIR = join(dirname(fileURLToPath(import.meta.url)), "src", "data", "runs");
 const SAFE_ID = /^[a-zA-Z0-9_-]{1,40}$/;
@@ -28,13 +26,13 @@ function regenerateRegistry(): void {
   }
   const out = `// AUTO-GENERATED — 에디터 'repo에 저장'(dev-write 미들웨어, F3)이 src/data/runs/*.json을\n`
     + `// 스캔해 통째로 재생성한다. 직접 편집 금지(다음 저장 때 덮어써짐). 키 = 각 json의 id.\n`
-    + `import type { RunDef } from "../../core/types.ts";\n`
+    + `import type { RunDef } from "../../contract/types.ts";\n`
     + `${lines.join("\n")}\n\n`
     + `export const RUNS: Record<string, RunDef> = {\n${entries.join("\n")}\n};\n`;
   writeFileSync(join(RUNS_DIR, "runs.generated.ts"), out, "utf8");
 }
 
-// dev 전용: 브라우저 에디터 → repo JSON 자동 기록 + 레지스트리 재생성. 빌드 단일 HTML엔 영향 0.
+// dev 전용: 브라우저 에디터 → repo JSON 자동 기록 + 레지스트리 재생성. 프로덕션 빌드엔 영향 0.
 function devWriteRuns(): Plugin {
   return {
     name: "spr-dev-write-runs",
@@ -61,6 +59,7 @@ function devWriteRuns(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [devWriteRuns(), viteSingleFile()],
+  base: "./", // Tauri 웹뷰는 frontendDist를 루트로 서빙 — 상대경로 에셋이 안전
+  plugins: [devWriteRuns()],
   server: { port: 5173, strictPort: false },
 });

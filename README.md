@@ -21,7 +21,9 @@ cargo test --manifest-path rust/Cargo.toml   # Rust 엔진 — differential 회�
 npm run data:export   # 데이터 JSON 번들 재생성(src/data 변경 시) → data.generated.json (Rust 로드용)
 npm run typecheck     # 계약타입(코어) + 웹 타입체크
 npm run check         # 통합 게이트 (타입·web test·cargo test·줄수·코어순수성·배럴)
-npm run build:app     # 단일 HTML 빌드 → dist/index.html
+
+# 배포(단일 데스크톱 앱): 프론트 빌드 → Tauri 번들
+cd app && npx tauri build   # beforeBuildCommand가 `npm run build`(dist/) 자동 실행 → 설치본 산출
 ```
 
 > **TS 엔진은 은퇴**(Rust로 마이그레이션 완료). TS 골든 엔진 + differential 하네스는 `archive/ts-core` 브랜치 + `tag ts-golden-oracle`에 보관. 상세: [`docs/PORTING.md`](docs/PORTING.md).
