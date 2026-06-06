@@ -4,6 +4,7 @@
 use serde_json::Value;
 use spr_types::ai::AiProfile;
 use spr_types::data::{Character, Encounter, FormationLayout, StatusDef};
+use spr_types::map::RunDef;
 use spr_types::passives::TraitDef;
 use spr_types::skills::Skill;
 use std::collections::HashMap;
@@ -49,6 +50,17 @@ pub fn traits() -> HashMap<String, TraitDef> {
 /// AI 프로파일 맵(id→AiProfile). chooseAction이 actor.aiProfileId로 조회.
 pub fn ai_profiles() -> HashMap<String, AiProfile> {
     serde_json::from_value(data_value()["aiProfiles"].clone()).expect("aiProfiles 역직렬화")
+}
+
+/// 저작 런 맵(id→RunDef). 런 오케스트레이션이 소비. (레이어/core 본문은 시퀀서 슬라이스서 확장)
+pub fn runs() -> HashMap<String, RunDef> {
+    serde_json::from_value(data_value()["runs"].clone()).expect("runs 역직렬화")
+}
+
+/// 기본 런(yain, 없으면 첫 런). TS DEFAULT_RUN.
+pub fn default_run() -> RunDef {
+    let all = runs();
+    all.get("yain").cloned().unwrap_or_else(|| all.into_values().next().expect("런 0개"))
 }
 
 #[cfg(test)]

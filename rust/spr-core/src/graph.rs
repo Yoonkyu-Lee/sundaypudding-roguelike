@@ -165,7 +165,7 @@ mod tests {
         serde_json::from_str(YAIN).expect("yain 파싱")
     }
     fn node(q: i64, r: i64) -> MapNode {
-        MapNode { id: "x".into(), node_type: "battle".into(), q, r, to_floor: None }
+        MapNode { id: "x".into(), node_type: "battle".into(), q, r, to_floor: None, label: None }
     }
 
     #[test]

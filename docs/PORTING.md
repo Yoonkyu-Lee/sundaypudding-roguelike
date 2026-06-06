@@ -129,7 +129,7 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 
 ### Phase 2 — 완전 마이그레이션 (런/AI/허브 → Rust, 같은 differential 패턴)
 - [x] **P2-1 AI** — `spr-types/ai.rs`(AiProfile/AiRule/AiCondition) + `spr-data ai_profiles()` + `spr-core/ai.rs`(choose_action·apply_profile·greedy, **f64 스코어 TS 동일 연산**) + Character/Unit `aiProfileId`. **AI 구동 풀 전투 differential**(`tests/ai-corpus.generated.json`, `npm run ai:corpus`): demo(그리디)+profiled(4 프로파일) × 5시드 → 전체 로그 바이트 동일. AI는 순수·결정론 → Rust 자가구동 재현(AI+전투 동시 검증)
-- [ ] P2-2 런 타입/헬퍼 (RunState·party·item 헬퍼) — 골든: 세이브 왕복
+- [x] P2-2 런 타입/헬퍼/생성 — 데이터번들 runs 추가(P2-2a) + spr-types(party.rs·map.rs 확장: RunDef roster/useMastery·EncounterEvent) + spr-data runs()/default_run() + spr-core/run/(types: RunState/RewardOption/ShopOffer·helpers: cur_floor/node/heal_party/upgrade_owned/learn_owned·run: create_run/move_party_member/set_active_skill). **create_run TS 바이트동일**(초기상태+party+**RNG 시드초기화 seed^0x9e3779b9=481316**) + heal/편성 변이 검증
 - [ ] P2-3 encounter + layers (노드→인코딩, 레이어 해소)
 - [ ] P2-4 rewards + shop + items (보상생성·상점진열)
 - [ ] P2-5 run passives (run 스코프 트리거)
