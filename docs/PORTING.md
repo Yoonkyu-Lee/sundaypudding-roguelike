@@ -127,6 +127,13 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
   > 3. 검증: `tauri dev`로 앱 구동 → 데모 전투를 **TS 모드와 Rust 모드 양쪽 플레이**, 동일 시드 동일 진행/연출 확인(델타 = 엔진 differential이 이미 보장). 필요시 WebView2/`tauri-cli` 설치.
   > **선결 결정**: (a) Tauri 툴체인을 이 머신/레포에 추가할지, (b) 프론트 피처플래그 방식(쿼리파라미터 vs 빌드분기).
 
+### Phase 3 — 실제 프론트를 Rust 코어로 (똑같은 경험, 엔진만 Rust)
+> 목표: TS+웹렌더 프로그램 **전부와 똑같은 경험** — 실제 렌더러(맵·전투UI·타임라인) 그대로, 엔진만 Rust. 정공법(프론트 재설계).
+- [x] P3-1 실제 런 화면 — `rustRun.ts` 비전투(맵/보상/상점/인카운터/결과)를 **실제 `renderRunScreen`**(RunView 기반, TS 바이트동일)에 직결. 헥스맵·카메라·파티패널 그대로, 핸들러 Rust IPC.
+- [x] P3-2 실제 전투 UI — `renderApp`→`renderBattleZones`(GameState 비의존)+`renderAppObs` 분리, `actionPanel`/`timeline`/`formatEvent`를 SkillBarEntry/관측 기반. preview 프리미티브(P3-2a) + `RunSession.battle_view`(obs+skillBar) + `run_battle_view`. 실제 셸·그리드·스킬카드(피해)·타임라인·로그·타겟팅 = Rust IPC. TS 게임 경로 무변.
+- [ ] P3-2c 타겟팅 미리보기 IPC — hp-loss 오버레이·끼어들기 고스트·빈칸AoE 앵커(현재 Rust 모드 생략; preview_hp_loss/predict_interrupt는 포팅됨, IPC 노출만)
+- [ ] P3-3 캐릭터 시트/파티 편성 오버레이(onOpenSheet/onOpenParty) Rust 백엔드 + 라운드 주사위 연출(playRoll, roundStart 델타)
+
 ### Phase 2 — 완전 마이그레이션 (런/AI → Rust, 같은 differential 패턴)
 > **✅ 전 게임로직 마이그레이션 완료 (2026-06).** 전투+AI+런 오케스트레이션이 모두 Rust로 이식·**바이트 검증**(풀 런 differential: 맵·전투·보상RNG·상점·인카운터·런패시브·성장·층전환). 풀 게임 세션 API(`RunSession`) + Tauri 커맨드 14종 + `?core=rust&full=1` 하네스로 **전체 로그라이크가 Rust 코어로 플레이됨**. 남은 것 = save 왕복(영속화, 전 GameState serde — 게임로직 아님)뿐.
 - [x] **P2-1 AI** — `spr-types/ai.rs`(AiProfile/AiRule/AiCondition) + `spr-data ai_profiles()` + `spr-core/ai.rs`(choose_action·apply_profile·greedy, **f64 스코어 TS 동일 연산**) + Character/Unit `aiProfileId`. **AI 구동 풀 전투 differential**(`tests/ai-corpus.generated.json`, `npm run ai:corpus`): demo(그리디)+profiled(4 프로파일) × 5시드 → 전체 로그 바이트 동일. AI는 순수·결정론 → Rust 자가구동 재현(AI+전투 동시 검증)
