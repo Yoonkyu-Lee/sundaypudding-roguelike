@@ -113,7 +113,9 @@ app/        ← Tauri2 (기존 src/web 프론트 + Rust 코어를 IPC 세션 API
 - [~] P1-13 프론트 피처플래그 → 최종 Tauri2 검증 — **스캐폴드 완료(미빌드), 육안 검증은 사용자 `cargo tauri dev`**
   - [x] `app/`(워크스페이스 밖 독립 크레이트 — 게이트 영향 0) Tauri2 셸: `main.rs` `#[tauri::command] create_session/battle_step/observation`가 `spr_core::session::Session` 래핑(`State<Mutex<Option<Session>>>`) + `Cargo.toml`/`build.rs`/`tauri.conf.json`(withGlobalTauri)/`README.md`(구동·검증 체크리스트)
   - [x] `src/web/coreAdapter.ts` 피처플래그: `selectBattleBackend()` — `?core=rust`+Tauri 런타임=Rust(invoke), 아니면 TS. 두 백엔드 `{create(seed),step(action)}→{eventDelta,observation}` 동형. typecheck/배럴 통과
-  - [ ] **남은 사용자 작업**: `cargo install tauri-cli --version "^2"` + `cargo tauri dev` → `?core=rust`로 데모전투 플레이, 동일시드 TS/Rust 전개 일치 육안 확인. `app/icons/icon.png` 추가. `main.ts` 전투루프를 어댑터 경유로 전환(현재 어댑터만 제공)
+  - [x] **빌드·구동 확인** — `@tauri-apps/cli` 설치 + tauri icon 세트 + `app/` 컴파일·`spr-app.exe` 실행 확인(WebView2 OK). 2-스텝 구동(vite + `app/` tauri dev), devUrl=`?core=rust`
+  - [x] **하네스 와이어링** — `rustBattle.ts`(`mountRustBattle`) + `main.ts` 부팅 분기. 데모 전투를 실제 `unitCard`로 렌더, 관측 legalActions로 플레이, first-legal 자동(코퍼스로 TS↔Rust 동일 입증). 앱=Rust(IPC), 브라우저 `?core=ts`=TS → A/B 육안 비교
+  - [ ] **남은(선택) 후속**: 런/AI 레이어 포팅 시 IPC 확장 → 풀 게임 Rust 백엔드. 타겟팅 미리보기(previewHpLoss·끼어들기고스트·AoE 하이라이트)는 GameState 필요 → Rust 프리뷰 API 포팅 시 풀 전투 UI 패리티
   > 범위: 전투(데모)만 — run/hub 레이어 미포팅. 엔진 이벤트는 differential로 이미 바이트 동일, 이 단계는 *육안* 확인.
   > P0~P1-12로 **결정론 엔진 + 세션 경계가 전부 바이트-검증 완료**. P1-13은 본질적으로 "데스크톱 앱을 띄워 플레이가 맞는지 눈으로 확인"하는 단계라 자동 검증 불가 — 사용자가 직접 구동. Tauri 툴체인을 레포에 추가하는 결정도 사용자 몫. 기본 워크스페이스(`cargo test`/`npm run check`)는 가볍게 유지하려 Tauri를 멤버에서 제외.
   > **실행 계획(사용자 확인 후 스캐폴드):**
