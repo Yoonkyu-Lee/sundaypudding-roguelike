@@ -20,6 +20,51 @@ pub struct NodeRule {
     pub owner: Option<RuleOwner>,
 }
 
+/// 상점 진열 저작(판별 `kind`). TS ShopOfferDef.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(tag = "kind")]
+pub enum ShopOfferDef {
+    #[serde(rename = "buyItem")]
+    BuyItem { #[serde(rename = "itemId")] item_id: String, cost: i64 },
+    #[serde(rename = "heal")]
+    Heal { pct: i64, cost: i64 },
+    #[serde(rename = "learn")]
+    Learn { #[serde(rename = "charId")] char_id: String, #[serde(rename = "skillId")] skill_id: String, cost: i64 },
+}
+
+/// 노드 레이어(판별 `kind`) — 데코(즉시) + 상호작용(블록). TS Layer.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(tag = "kind")]
+pub enum Layer {
+    // 데코레이터(즉시)
+    #[serde(rename = "gold")]
+    Gold { amount: i64 },
+    #[serde(rename = "heal")]
+    Heal { pct: i64, #[serde(default)] revive: Option<bool> },
+    #[serde(rename = "grantStatus")]
+    GrantStatus { #[serde(rename = "charId", default)] char_id: Option<String>, #[serde(rename = "statusId")] status_id: String, stacks: i64, duration: i64 },
+    #[serde(rename = "text")]
+    Text { text: String },
+    // 상호작용(블록)
+    #[serde(rename = "combat")]
+    Combat { #[serde(default)] roster: Option<Vec<Placement>>, #[serde(default)] boss: bool, #[serde(default)] rules: Option<Vec<NodeRule>> },
+    #[serde(rename = "reward")]
+    Reward { #[serde(default)] tier: Option<i64> },
+    #[serde(rename = "shop")]
+    Shop { #[serde(default)] offers: Option<Vec<ShopOfferDef>>, #[serde(rename = "keepGenerated", default)] keep_generated: Option<bool> },
+    #[serde(rename = "event")]
+    Event { #[serde(default)] event: Option<EncounterEvent> },
+}
+
+/// 노드 부착 레이어 슬롯(onEnter/onResolve=데코). TS NodeLayers.
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct NodeLayers {
+    #[serde(rename = "onEnter", default)]
+    pub on_enter: Option<Vec<Layer>>,
+    #[serde(rename = "onResolve", default)]
+    pub on_resolve: Option<Vec<Layer>>,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct MapNode {
     pub id: String,
@@ -31,6 +76,10 @@ pub struct MapNode {
     pub to_floor: Option<String>, // clear 노드의 다음 층(분기). 없으면 승리 클리어
     #[serde(default)]
     pub label: Option<String>,
+    #[serde(default)]
+    pub layers: Option<NodeLayers>,
+    #[serde(default)]
+    pub core: Option<Vec<Layer>>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

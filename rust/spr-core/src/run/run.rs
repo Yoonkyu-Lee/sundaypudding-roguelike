@@ -1,5 +1,10 @@
-//! 런 흐름 — 생성 + 비전투 파티 편성 (TS `core/run/run.ts` 일부). 노드 진입/시퀀서/보상은 P2-3+.
-use super::types::RunState;
+//! 런 흐름 — 생성·편성·노드 진입·층 완료·전투종료·보상 (TS `core/run/run.ts`).
+use super::data::RunData;
+use super::helpers::{complete_node, cur_floor, heal_party, learn_owned, node, run_instant_layers, upgrade_owned};
+use super::layers::{advance_core, node_core, start_core};
+use super::passives::{fire_run_trigger, RunTriggerCtx};
+use super::rewards::gen_rewards;
+use super::types::{RewardOption, RunState};
 use crate::graph::{live_reachable, validate_run};
 use spr_types::data::{Character, Placement, Pos};
 use spr_types::map::RunDef;
@@ -111,6 +116,156 @@ pub fn set_active_skill(run: &mut RunState, char_id: &str, skill_id: &str) {
     }
 }
 
+/// reachable 노드 진입. 전투면 시퀀서, clear면 층 완료, 콘텐츠 없으면 즉시 통과. TS enterNode.
+pub fn enter_node(run: &mut RunState, node_id: &str, d: &RunData) {
+    if run.phase != "map" || !run.reachable.iter().any(|x| x == node_id) {
+        return;
+    }
+    let (ntype, to_floor, on_enter, has_core) = {
+        let n = node(run, node_id);
+        let on_enter = n.layers.as_ref().and_then(|l| l.on_enter.clone()).unwrap_or_default();
+        (n.node_type.clone(), n.to_floor.clone(), on_enter, !node_core(n, d).is_empty())
+    };
+    run.active_node_id = Some(node_id.to_string());
+    let mut ctx = RunTriggerCtx::new("nodeEnter");
+    ctx.node_type = Some(ntype.clone());
+    fire_run_trigger(run, &ctx, d);
+    run_instant_layers(run, &on_enter, d);
+
+    if ntype == "clear" {
+        if !run.visited.iter().any(|v| v == node_id) {
+            run.visited.push(node_id.to_string());
+        }
+        run.log.push("클리어 노드 도달 — 층 완료".to_string());
+        complete_floor(run, to_floor, d);
+        return;
+    }
+    if has_core {
+        start_core(run, node_id, d);
+        return;
+    }
+    complete_node(run, node_id, d);
+}
+
+/// 층 완료(clear 진입) — toFloor 분기(부활·50% 회복) 또는 게임 클리어. TS completeFloor.
+fn complete_floor(run: &mut RunState, to_floor: Option<String>, d: &RunData) {
+    let mut ctx = RunTriggerCtx::new("nodeClear");
+    ctx.node_type = Some("clear".to_string());
+    fire_run_trigger(run, &ctx, d);
+    let next_idx = to_floor.as_ref().and_then(|id| run.run_def.floors.iter().position(|f| &f.id == id));
+    let next_idx = match next_idx {
+        Some(i) => i,
+        None => {
+            run.phase = "won".to_string();
+            run.active_node_id = None;
+            run.reachable.clear();
+            run.log.push("클리어 노드(종료) 도달 — 게임 클리어!".to_string());
+            return;
+        }
+    };
+    run.floor = next_idx;
+    let (entry, fname) = {
+        let f = cur_floor(run);
+        (f.entry_node_id.clone(), f.name.clone())
+    };
+    run.visited = vec![entry.clone()];
+    let set: HashSet<String> = std::iter::once(entry.clone()).collect();
+    run.reachable = {
+        let f = cur_floor(run);
+        live_reachable(f, &entry, &set)
+    };
+    run.current_node_id = entry;
+    run.active_node_id = None;
+    run.battle = None;
+    heal_party(run, 50, true, d);
+    run.phase = "map".to_string();
+    run.log.push(format!("{} 진입 — 전투불능 부활 + 파티 50% 회복", fname.unwrap_or_else(|| format!("층 {}", run.floor + 1))));
+    fire_run_trigger(run, &RunTriggerCtx::new("actStart"), d);
+}
+
+/// 전투 종료 처리 — HP 반영, 승=시퀀서 복귀/보상, 패=실패. TS resolveBattleEnd.
+pub fn resolve_battle_end(run: &mut RunState, d: &RunData) {
+    let result = match &run.battle {
+        Some(b) if run.phase == "battle" && b.phase != "inProgress" => b.phase.clone(),
+        _ => return,
+    };
+    // 파티 HP 반영
+    let hp_map: HashMap<String, i64> = run.battle.as_ref().unwrap().units.iter().filter(|u| u.side == "ally").map(|u| (u.char_id.clone(), u.hp.max(0))).collect();
+    for m in &mut run.party {
+        if let Some(hp) = hp_map.get(&m.char_id) {
+            m.hp = *hp;
+        }
+    }
+    if result == "enemyWin" {
+        run.phase = "lost".to_string();
+        run.reachable.clear();
+        run.log.push("전멸 — 런 실패".to_string());
+        return;
+    }
+    if run.core_cursor.is_some() {
+        advance_core(run, d);
+        return;
+    }
+    // 레거시 타입 노드(코어 없음) — 골드 + 보상.
+    let aid = run.active_node_id.clone().unwrap();
+    let ntype = node(run, &aid).node_type.clone();
+    let gold_gain = if ntype == "boss" { 24 } else if ntype == "elite" { 16 } else { 8 };
+    run.gold += gold_gain;
+    fire_run_trigger(run, &RunTriggerCtx::new("goldGain"), d);
+    let rewards = gen_rewards(run, 1, &d.chars, &d.skills, &d.items, &d.item_pool);
+    run.rewards = Some(rewards);
+    run.phase = "reward".to_string();
+    run.log.push(format!("{} (+{}G) — 보상 선택", if ntype == "boss" { "보스 격파" } else { "전투 승리" }, gold_gain));
+}
+
+/// 보상 선택 적용. TS chooseReward.
+pub fn choose_reward(run: &mut RunState, option_id: &str, d: &RunData) {
+    if run.phase != "reward" {
+        return;
+    }
+    let opt = match &run.rewards {
+        Some(rs) => match rs.iter().find(|o| reward_id(o) == option_id) {
+            Some(o) => o.clone(),
+            None => return,
+        },
+        None => return,
+    };
+    match &opt {
+        RewardOption::UpgradeSkill { char_id, from_skill_id, to_skill_id, .. } => {
+            if let Some(mi) = run.party.iter().position(|p| &p.char_id == char_id) {
+                upgrade_owned(&mut run.party[mi], from_skill_id, to_skill_id);
+            }
+        }
+        RewardOption::LearnSkill { char_id, skill_id, .. } => {
+            if let Some(mi) = run.party.iter().position(|p| &p.char_id == char_id) {
+                learn_owned(&mut run.party[mi], skill_id);
+            }
+        }
+        RewardOption::Item { item_id, .. } => run.inventory.push(item_id.clone()),
+        RewardOption::Heal { pct, .. } => heal_party(run, *pct, false, d),
+    }
+    run.log.push(format!("보상: {}", reward_label(&opt)));
+    run.rewards = None;
+    run.battle = None;
+    if run.core_cursor.is_some() {
+        advance_core(run, d);
+        return;
+    }
+    let aid = run.active_node_id.clone().unwrap();
+    complete_node(run, &aid, d);
+}
+
+fn reward_id(o: &RewardOption) -> &str {
+    match o {
+        RewardOption::UpgradeSkill { id, .. } | RewardOption::LearnSkill { id, .. } | RewardOption::Item { id, .. } | RewardOption::Heal { id, .. } => id,
+    }
+}
+fn reward_label(o: &RewardOption) -> &str {
+    match o {
+        RewardOption::UpgradeSkill { label, .. } | RewardOption::LearnSkill { label, .. } | RewardOption::Item { label, .. } | RewardOption::Heal { label, .. } => label,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -170,5 +325,60 @@ mod tests {
         assert!(r.party[0].owned_skill_ids.contains(&"kim_punch_2".to_string()));
         learn_owned(&mut r.party[0], "kim_punch_2"); // 이미 보유 → 무변
         assert_eq!(r.party[0].owned_skill_ids.iter().filter(|s| *s == "kim_punch_2").count(), 1);
+    }
+
+    #[test]
+    fn full_run_differential() {
+        // 전체 yain 런(맵 reachable[0] → AI 전투 → 보상[0] → 상점 나가기 → 인카운터[0])을 TS와 동일 정책으로 구동.
+        // 최종 상태(phase/gold/floor/inventory/log/party) 바이트동일 = 네비·전투AI·보상RNG·상점·인카운터·런패시브 일괄 검증.
+        use crate::ai::choose_action;
+        use crate::flow::step;
+        use crate::run::{buy_shop_offer, choose_encounter_option, leave_shop, resolve_battle_end};
+        use spr_types::canonical::canonical_json;
+        let _ = buy_shop_offer;
+        let d = crate::run::RunData::load();
+        let rd = spr_data::default_run();
+        let reference: serde_json::Value = serde_json::from_str(include_str!("../../tests/full-run.generated.json")).unwrap();
+
+        for seed in [42u32, 7, 123] {
+            let mut run = create_run(seed, &rd.roster.clone(), &rd, &HashMap::new(), false, &d.chars);
+            let mut guard = 0;
+            while run.phase != "won" && run.phase != "lost" && guard < 5000 {
+                guard += 1;
+                match run.phase.as_str() {
+                    "map" => {
+                        let n = run.reachable[0].clone();
+                        enter_node(&mut run, &n, &d);
+                    }
+                    "battle" => {
+                        while run.battle.as_ref().map(|b| b.phase == "inProgress").unwrap_or(false) {
+                            let a = { let b = run.battle.as_ref().unwrap(); choose_action(b, &d.skills, &d.defs, &d.ai_profiles) };
+                            step(run.battle.as_mut().unwrap(), &a, &d.defs, &d.skills);
+                        }
+                        resolve_battle_end(&mut run, &d);
+                    }
+                    "reward" => {
+                        let id = super::reward_id(&run.rewards.as_ref().unwrap()[0]).to_string();
+                        choose_reward(&mut run, &id, &d);
+                    }
+                    "shop" => leave_shop(&mut run, &d),
+                    "encounter" => {
+                        let id = run.encounter.as_ref().unwrap().choices[0].id.clone();
+                        choose_encounter_option(&mut run, &id, &d);
+                    }
+                    _ => break,
+                }
+            }
+            let summary = serde_json::json!({
+                "phase": run.phase, "gold": run.gold, "floor": run.floor,
+                "inventory": run.inventory, "log": run.log,
+                "party": run.party.iter().map(|m| serde_json::json!({
+                    "c": m.char_id, "hp": m.hp, "mhp": m.max_hp,
+                    "o": m.owned_skill_ids, "a": m.active_skill_ids,
+                    "eq": serde_json::to_value(&m.equipped).unwrap()
+                })).collect::<Vec<_>>()
+            });
+            assert_eq!(canonical_json(&summary), reference[seed.to_string()].as_str().unwrap(), "seed {} 풀 런 최종상태 TS 바이트동일", seed);
+        }
     }
 }

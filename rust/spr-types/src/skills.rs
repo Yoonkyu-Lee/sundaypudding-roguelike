@@ -90,6 +90,9 @@ pub struct Skill {
     /// 다음 티어 스킬 id(강화 체인). 없으면 최종.
     #[serde(rename = "nextTierId", default)]
     pub next_tier_id: Option<String>,
+    /// 전용기 소유 charId(있으면 고유기 — 절차 상점/인카운터 범용학습서 제외).
+    #[serde(rename = "exclusiveTo", default)]
+    pub exclusive_to: Option<String>,
 }
 
 fn default_true() -> bool {
