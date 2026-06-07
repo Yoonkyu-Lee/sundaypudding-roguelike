@@ -9,6 +9,9 @@ desktop/target/
 # 로컬 데모 에셋 (머신 절대경로 훅이 참조)
 Yainsidae_Gap_Boon_Sa.wav
 
+# 야인시대 대본 추출물(파생 — xlsx + _tools/parse-script.mjs로 재생성). 요약/챕터/게임데이터는 커밋.
+docs/Yainsidae/_raw/
+
 # 개발 지침 — 로컬 전용(공개 리포에서 제외). 기능성 빌드/테스트 인프라(scripts/)는 공개 유지.
 .claude/
 .githooks/
