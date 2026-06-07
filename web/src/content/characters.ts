@@ -4,7 +4,7 @@ import type { Character } from "../contract/types.ts";
 export const CHARACTERS: Record<string, Character> = {
   // ══ 우익(대한민청) — 플레이어 파티 ══
   // learnset = 전용기(앞 4, 시작 보유) + 배정된 범용기(u_*, 학습으로 습득). u_guard는 kim·shin·cho 공유(범용 예시)
-  kim: { id: "kim", name: "김두한", avatar: "/avatars/kim.webp", playable: true, traitIds: ["bloodlust", "warspirit"], hp: 46, speedMin: 4, speedMax: 7, evasion: 8, accuracy: 0, critChance: 25, critMultiplier: 160, skillIds: ["kim_punch", "kim_kick", "kim_oyabun", "kim_4dollar", "u_guard", "u_war_cry"] },
+  kim: { id: "kim", name: "김두한", avatar: "/avatars/kim.webp", playable: true, rootJobId: "kim_job_brawler", traitIds: ["bloodlust", "warspirit"], hp: 46, speedMin: 4, speedMax: 7, evasion: 8, accuracy: 0, critChance: 25, critMultiplier: 160, skillIds: ["kim_punch", "kim_kick", "kim_oyabun", "kim_4dollar", "u_guard", "u_war_cry"] },
   shanghai: { id: "shanghai", name: "상하이 조", avatar: "/avatars/shanghai.webp", playable: true, traitIds: ["frontliner"], hp: 28, speedMin: 6, speedMax: 9, evasion: 12, accuracy: 5, critChance: 15, critMultiplier: 150, skillIds: ["sh_pistol", "sh_leg", "sh_grenade", "sh_ult", "u_aimed_shot", "u_snare"] },
   shin: { id: "shin", name: "신영균", avatar: "/avatars/shin.webp", playable: true, traitIds: ["thorns"], hp: 50, speedMin: 3, speedMax: 6, evasion: 6, accuracy: 0, critChance: 10, critMultiplier: 150, skillIds: ["shin_axe", "shin_charge", "shin_awaken", "shin_ult", "u_guard", "u_war_cry"] },
   cho: { id: "cho", name: "조병옥", avatar: "/avatars/cho.webp", playable: true, traitIds: ["vindictive", "miser"], hp: 34, speedMin: 5, speedMax: 8, evasion: 9, accuracy: 0, critChance: 5, critMultiplier: 150, skillIds: ["cho_warn", "cho_martial", "cho_police", "cho_ult", "u_first_aid", "u_guard"] },

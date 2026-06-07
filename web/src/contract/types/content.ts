@@ -116,6 +116,10 @@ export interface Skill {
   nextTierId?: string;
   /** 전용기 소유 charId(4.6). 있으면 그 캐릭 고유기, 없으면 범용기(여러 learnset 공유). 학습 가능 여부는 learnset이 결정 — 이 필드는 UI/의미용(전투 엔진 무관) */
   exclusiveTo?: string;
+  /** 숙련도 해금레벨(4.4). 본체 숙련도 ≥ 이 값이어야 보상 풀 출현. 강화 `tier`와 별개 축. 미지정=게이트 없음. (전직 슬라이스서 엔진 적용) */
+  masteryReq?: number;
+  /** 전직 차수 해금(4.7). 도달 전직 차수 ≥ 이 값이어야 보상 풀 출현. 보통 `exclusiveTo`와 함께(전직 전용기). 미지정=게이트 없음. (전직 슬라이스서 엔진 적용) */
+  classReq?: number;
   /** 능동기 여부. 기본 true(=플레이어가 전투 스킬창에서 발동). false=순수 패시브 → 스킬창 비노출, passives만 작동 */
   active?: boolean;
   /** 출전(활성 4)해야 작동하는 패시브 룰. 능동 effects와 공존 가능(하이브리드). 특성(traits)은 편성 무관 항상 */
@@ -158,6 +162,27 @@ export interface Character {
   traitIds?: string[];
   /** 적/자동플레이 시 행동결정 정책. data/ai.ts의 AiProfile id 참조. 없으면 공유 그리디 fallback */
   aiProfileId?: string;
+  /** 전직(4.7) 직업 트리의 루트(0차) JobDef id. 없으면 전직 없는 캐릭(고정 스킬 세트). 런 시작 시 이 직업 = 최초 상태 */
+  rootJobId?: string;
+}
+
+// ── 전직(전직 시스템) (4.7) — 캐릭터 전속 직업 트리 ──────────────────────────
+
+/**
+ * 직업 노드 = 캐릭터 전속 전직 트리의 한 칸. (4.7)
+ * 전직 = ① 이 직업의 패시브(`grantsTraitIds`)를 캐릭에 부여(런 한정) ② 차수(`classReq`) 전용 스킬을 보상 풀에 해금.
+ * **분기의 차이는 패시브뿐** — 같은 차수 분기는 보상 스킬 풀을 공유(스킬 게이트는 `classReq`만 봄, 분기 무관).
+ * 런 한정(끝나면 리셋). 엔진 해석은 전직 슬라이스(S2~) — 현재는 데이터 스키마만(휴면).
+ */
+export interface JobDef {
+  id: string;
+  name: string;
+  /** 전직 차수(0=기본/루트). 이 직업 도달 시 `classReq ≤ 차수`인 전용 스킬이 보상 풀에 편입 */
+  classReq: number;
+  /** 전직 시 캐릭터에 부여되는 패시브(런 한정). traits.ts `TraitDef` id 참조. 직업의 기계적 정체성(루트는 보통 없음) */
+  grantsTraitIds?: string[];
+  /** 전직 가능한 다음 직업 id(트리 간선). 없으면 말단 */
+  advancesTo?: string[];
 }
 
 // ── 장착 아이템 (4.3) ──────────────────────────────────────────────────────

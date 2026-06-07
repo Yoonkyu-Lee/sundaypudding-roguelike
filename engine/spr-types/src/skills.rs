@@ -93,6 +93,12 @@ pub struct Skill {
     /// 전용기 소유 charId(있으면 고유기 — 절차 상점/인카운터 범용학습서 제외).
     #[serde(rename = "exclusiveTo", default)]
     pub exclusive_to: Option<String>,
+    /// 숙련도 해금레벨(4.4) — 본체 숙련도 ≥ 값이어야 보상 출현. 강화 tier와 별개. 엔진 적용은 전직 슬라이스(S4) — 현재 휴면.
+    #[serde(rename = "masteryReq", default)]
+    pub mastery_req: Option<i64>,
+    /// 전직 차수 해금(4.7) — 도달 차수 ≥ 값이어야 보상 출현. 엔진 적용은 전직 슬라이스(S4) — 현재 휴면.
+    #[serde(rename = "classReq", default)]
+    pub class_req: Option<i64>,
 }
 
 fn default_true() -> bool {

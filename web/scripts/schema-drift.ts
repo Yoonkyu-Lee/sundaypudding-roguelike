@@ -14,6 +14,7 @@ interface Pair { dataKey: string; rustFile: string; rustType: string; kind: "rec
 // 최상위 콘텐츠 맵 ↔ Rust 구조체. (runs/encounterEvents/nodeRosters/demoEncounter=중첩 다수 → 엔진 타입로드가 커버, 후속)
 const PAIRS: Pair[] = [
   { dataKey: "characters", rustFile: "data.rs", rustType: "Character", kind: "record" },
+  { dataKey: "jobs", rustFile: "data.rs", rustType: "JobDef", kind: "record" },
   { dataKey: "skills", rustFile: "skills.rs", rustType: "Skill", kind: "record" },
   { dataKey: "statuses", rustFile: "data.rs", rustType: "StatusDef", kind: "record" },
   { dataKey: "items", rustFile: "data.rs", rustType: "ItemDef", kind: "record" },

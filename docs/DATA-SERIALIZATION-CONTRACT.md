@@ -11,7 +11,7 @@
 ## 1. 번들 구조 (`data.generated.json`)
 
 canonical JSON 객체. 최상위 키(정렬순) = 데이터 맵:
-`aiProfiles · characters · demoEncounter · encounterEvents · items · nodeRosters · skills · standardFormation · statuses · traits`.
+`aiProfiles · characters · demoEncounter · encounterEvents · items · jobs · nodeRosters · skills · standardFormation · statuses · traits`. (`jobs`=전직 직업 트리, 4.7)
 각 맵은 `{ [id]: Def }`(또는 배열). 스키마는 TS `web/src/contract/types/{content,passives,ai,map}.ts` ↔ Rust `engine/spr-types/src/{data,skills,passives,ai,map}.rs`(둘 다 손글씨, 일치는 §7.5 드리프트 가드).
 
 ## 2. canonical 규칙 (이벤트 계약과 동일)

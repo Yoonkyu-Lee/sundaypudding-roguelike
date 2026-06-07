@@ -56,4 +56,15 @@ export const TRAITS: Record<string, TraitDef> = {
     id: "reflexes", name: "반사신경", icon: "🥊", desc: "매 턴 자동으로 잽(근접 3·명중 90)을 날린다.",
     rules: [{ when: { on: "turnStart", who: "self" }, then: [{ do: "castSkill", skillId: "u_jab" }], maxPerTurn: 1 }],
   },
+  // ── 전직(전직) 직업 패시브 (4.7) — 전직 시 부여(런 한정). 직업의 기계적 정체성. (엔진 적용=전직 슬라이스 S2) ──
+  // 우미관 두목: 전투 시작 시 아군 전체 공위증(두목의 통솔). 팀/서포트 빌드와 시너지.
+  kim_oyabun_will: {
+    id: "kim_oyabun_will", name: "두목의 의리", icon: "🎖", desc: "전투 시작 시 아군 전체에 공위증.",
+    rules: [{ when: { on: "battleStart" }, then: [{ do: "applyStatus", statusId: "might", stacks: 1, duration: 99, target: "allAllies" }] }],
+  },
+  // 협객: 적 처치 시 자신에게 예리(맹타). 단독 캐리·치명 빌드와 시너지.
+  kim_relentless: {
+    id: "kim_relentless", name: "맹타", icon: "🥊", desc: "적을 쓰러뜨리면 예리 1을 얻는다.",
+    rules: [{ when: { on: "kill" }, then: [{ do: "applyStatus", statusId: "edge", stacks: 1, duration: 3, target: "self" }] }],
+  },
 };

@@ -79,4 +79,11 @@ export const SKILLS: Record<string, Skill> = {
 
   // ══ 순수 패시브 스킬 (active:false) — 보유 시 상시 효과, 전투 스킬창엔 안 뜸 ══
   u_toughness: { id: "u_toughness", name: "강인함", active: false, target: "self", cooldown: 0, accuracy: 0, effects: [], passives: [{ when: { on: "battleStart" }, then: [{ do: "shield", amount: 6, target: "self" }] }] },
+
+  // ══ 전직 보상 스킬 (4.7) — 1차 전직 후 보상 풀 편입(classReq 1, exclusiveTo kim). masteryReq=숙련도 게이트. ══
+  // learnset/보유 풀엔 없음(보상으로만 획득). 두 분기(두목/협객) 모두에게 출현 가능 — 배제 없음(운이 정함). 엔진 게이트=전직 슬라이스(S4, 현재 휴면).
+  // 박치기: 큰 단타 + 약한 공포. 단독 딜(협객 "맹타") 의도 — 단, 두목이 뽑아도 됨.
+  kim_headbutt: { id: "kim_headbutt", name: "박치기", exclusiveTo: "kim", masteryReq: 1, classReq: 1, target: "enemy", cooldown: 2, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 20 }, { kind: "applyStatus", statusId: "fear", stacks: 1, duration: 1 }] },
+  // 종로 호령: 아군 전체 강화(공위증+쉴드). 팀(두목 "의리") 의도 — 단, 협객이 뽑아도 됨.
+  kim_command: { id: "kim_command", name: "종로 호령", exclusiveTo: "kim", masteryReq: 1, classReq: 1, target: "ally", area: { kind: "all" }, cooldown: 4, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 2 }, { kind: "shield", amount: 8 }] },
 };

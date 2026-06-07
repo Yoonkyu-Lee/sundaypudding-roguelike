@@ -100,9 +100,9 @@ mod tests {
     #[test]
     fn top_level_maps_present() {
         let v = data_value();
-        for key in ["aiProfiles", "characters", "items", "skills", "statuses", "traits", "nodeRosters", "demoEncounter", "standardFormation", "encounterEvents"] {
+        for key in ["aiProfiles", "characters", "jobs", "items", "skills", "statuses", "traits", "nodeRosters", "demoEncounter", "standardFormation", "encounterEvents"] {
             assert!(v.get(key).is_some(), "번들에 '{}' 누락", key);
         }
-        assert_eq!(v["skills"].as_object().unwrap().len(), 50, "skills 50개");
+        assert_eq!(v["skills"].as_object().unwrap().len(), 52, "skills 52개"); // +전직 보상 2(kim_headbutt·kim_command)
     }
 }

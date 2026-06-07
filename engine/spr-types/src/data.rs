@@ -59,6 +59,24 @@ pub struct Character {
     // 프론트 전용(허브 편성 풀). 엔진 미사용 — 콘텐츠 필드 전체 선언 규약(드리프트 가드).
     #[serde(default)]
     pub playable: bool,
+    /// 전직(4.7) 직업 트리 루트(0차) JobDef id. 엔진 적용은 전직 슬라이스(S2~) — 현재 미사용(전체 선언 규약).
+    #[serde(rename = "rootJobId", default)]
+    pub root_job_id: Option<String>,
+}
+
+/// 직업 노드 — 캐릭터 전속 전직 트리의 한 칸. (TS content.ts JobDef, GAME-DESIGN 4.7)
+/// 전직 = 패시브(grantsTraitIds) 부여 + 차수(classReq) 스킬 보상 해금. 분기 차이는 패시브뿐(보상 풀은 차수 공유).
+/// 엔진 해석은 전직 슬라이스(S2~). 현재 미사용 — 드리프트 가드용 전체 선언.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct JobDef {
+    pub id: String,
+    pub name: String,
+    #[serde(rename = "classReq", default)]
+    pub class_req: i64,
+    #[serde(rename = "grantsTraitIds", default)]
+    pub grants_trait_ids: Vec<String>,
+    #[serde(rename = "advancesTo", default)]
+    pub advances_to: Vec<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

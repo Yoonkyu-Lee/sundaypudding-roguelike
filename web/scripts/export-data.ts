@@ -7,6 +7,7 @@ import { resolve } from "node:path";
 import { ITEMS, ITEM_POOL } from "../src/content/items.ts";
 import { SKILLS } from "../src/content/skills.ts";
 import { CHARACTERS } from "../src/content/characters.ts";
+import { JOBS } from "../src/content/jobs.ts";
 import { TRAITS } from "../src/content/traits.ts";
 import { AI_PROFILES } from "../src/content/ai.ts";
 import { STATUS_DEFS } from "../src/content/statuses.ts";
@@ -23,6 +24,7 @@ export function dataBundle(): Record<string, unknown> {
     itemPool: ITEM_POOL, // 보상/상점 추첨 풀(아이템 id 리스트)
     skills: SKILLS,
     characters: CHARACTERS,
+    jobs: JOBS, // 전직 직업 트리(id→JobDef). 4.7 — 전직 슬라이스가 소비(현재 휴면).
     traits: TRAITS,
     aiProfiles: AI_PROFILES,
     statuses: STATUS_DEFS,

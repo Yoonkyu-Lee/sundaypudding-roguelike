@@ -139,8 +139,9 @@ desktop/src/main.rs   #[tauri::command]: 전투 데모(create_session·battle_st
 |---|---|---|
 | `statuses.ts` | 상태이상 정의(거동 데이터) | `STATUS_DEFS` |
 | `skills.ts` | 스킬(위치마스크·쿨·명중·효과) | `SKILLS` |
-| `characters.ts` | 캐릭터(고유 스탯 + learnset + `traitIds`) | `CHARACTERS` |
-| `traits.ts` | 특성(상시 패시브 룰 묶음) — 캐릭터가 traitIds 참조 | `TRAITS` |
+| `characters.ts` | 캐릭터(고유 스탯 + learnset + `traitIds` + `rootJobId`) | `CHARACTERS` |
+| `jobs.ts` | **전직 직업 트리**(4.7) — 캐릭 전속. 전직=패시브 부여+차수 스킬해금. 분기 차이=패시브뿐 | `JOBS` |
+| `traits.ts` | 특성(상시 패시브 룰 묶음) — 캐릭터가 traitIds 참조(전직 패시브 포함) | `TRAITS` |
 | `ai.ts` | AI 행동결정 정책(우선순위 룰) — 캐릭터가 aiProfileId 참조 | `AI_PROFILES` |
 | `items.ts` | 장착 아이템(무기 dmgFlat·crit / 방어구 hp·쉴드) | `ITEMS` · `ITEM_POOL` |
 | `encounters.ts` | 전투 배치 + 노드 타입별 적 구성(`NODE_ROSTERS`) | `DEMO_ENCOUNTER` · `NODE_ROSTERS` |
