@@ -330,7 +330,8 @@
 | 항목 | 결정 | 상태 |
 |---|---|---|
 | 본체 레벨(숙련도) 역할 | **스탯을 올리지 않는다.** 그 캐릭이 **습득 가능한 기술의 폭(tier)을 넓힌다** | ✓ |
-| 메커니즘 | 스킬마다 **해금레벨(tier)** 이 할당됨. 본체 경험치가 해당 해금레벨에 도달해야 그 tier 스킬이 **보상 선택지에 출현 가능** | ✓ |
+| 메커니즘 | 스킬마다 **숙련도 해금레벨(`masteryReq`)**. 본체 경험치가 그 레벨에 도달해야 그 스킬이 **보상 선택지에 출현 가능**. 강화 `tier`·전직 `classReq`와 **별개 축**(4.6/4.7) | ✓ |
+| 필드 분리(2026-06) | 옛 구현은 `Skill.tier`를 숙련도 게이트로 겸용 → **`masteryReq`로 분리**(강화 tier와 독립). 전직축 `classReq` 추가 시 동시 정리(전직 S1) | ☐ S1 |
 | 경험치/레벨 | 영구(본체). 판 중 캐릭 레벨업 없음. 5.3대로 천천히 상승 | ✓ |
 | 효과 | 낮은 숙련도 = 기본 기술만 등장 / 높을수록 더 강하고 다양한 기술이 보상 풀에 진입 | ✓ |
 
@@ -342,19 +343,51 @@
 |---|---|---|
 | **기술 보상** | **항상 등장. 기본 선택지 3개 중 1개 선택(택1).** 노드 보상 등급(`reward.tier`)으로 가산 — 1→3·2(엘리트)→4·3(보스)→5택1 + 아이템 후보↑ | ✓ |
 | 기술 선택지의 정체 | (a) **새 스킬 획득**(보유 풀 `x`에 추가) 또는 (b) **이미 보유한 스킬 강화(중첩=티어 업)** | ✓ |
-| 출현 범위 | 본체 숙련도(4.4)가 해금한 tier 내에서 추첨 | ✓ |
+| 출현 범위 | 스킬의 게이트를 **모두** 통과한 것만 추첨: 숙련도 `masteryReq`(4.4) + 전직 `classReq`(4.7) + `exclusiveTo`(소유 캐릭). **배제 조건 없음** | ✓ |
 | **장신구(=장착 아이템)** | 보상으로 **나올 수도, 안 나올 수도** 있음 | ✓ |
 
 ### 4.6 스킬 강화 구조 — "설계된 티어"
 
 | 항목 | 결정 | 상태 |
 |---|---|---|
-| 방식 | **작가가 스킬마다 설계한 티어 경로.** Lv1→2→3… 단계마다 데미지 상수↑ 또는 효과 추가 | ✓ |
+| 방식 | **작가가 스킬마다 설계한 티어 경로.** Lv1→2→3… 단계마다 데미지 상수↑ 또는 효과 추가. `tier`/`nextTierId` = **강화 전용 축**(보상 출현 게이트 아님 — 그건 `masteryReq`/`classReq`, 4.4/4.7) | ✓ |
 | 강화 출처 1 | **전투 보상 화면의 "기술 강화" 선택지**(특정 스킬 지정, 중첩) | ✓ |
 | 강화 출처 2 | **범용 강화권** = **상점 노드에서만** 획득 (일반 전투 보상으로는 안 나옴). 임의 스킬에 사용 | ✓ |
 
 > 도메인 메모: 런은 **노드형 맵**(전투 노드·상점 노드 등)으로 구성됨 → 7장에서 정의.
 > 미정 ☐: `x`(보유 스킬 상한) 값 — 숙련도(4.4)와 연동될 가능성.
+
+### 4.7 전직(전직 시스템) — 런 한정 빌드 분기 (2026-06 디자이너 확정)
+
+> 런 중심 로그라이크의 **1순위 동력**(ROADMAP #1, 레퍼런스=슬레이 더 스파이어). **런 한정** 빌드 축 — 끝나면 리셋. 유일한 영구 축은 숙련도(4.4)뿐(전직은 영구 아님).
+
+**구조**
+
+| 항목 | 결정 | 상태 |
+|---|---|---|
+| 직업 트리 | 캐릭터 **전속**(재사용 0 — 자유도 우선). 0차(기본)→1차 분기→2차… `JobDef`(노드) + `advancesTo`(간선) + `Character.rootJobId`(루트) | ☐ S1 |
+| 전직 효과 | ① 캐릭에 **패시브(`TraitDef`) 추가**(런 한정) ② 그 차수(`classReq`) **전용 스킬이 보상 풀에 편입**(해금) | ☐ |
+| **분기의 차이 = 패시브뿐** | 같은 차수 분기는 보상 스킬 풀 **동일**(`classReq` 공유). 예: 마검사·물리검사 — 풀 동일, **전직 시 붙는 패시브만 다름**(어떤 스킬과 시너지인지 결정 = 디자이너 영역). 마검사가 물리 의도 스킬을 뽑으면 상대적 손해 | ☐ |
+| 발생 위치 | **전직 노드**(2~3명) + **쉼터**(체력 회복 우호 노드, 1명). 편도·무상. **노드당 전직 인원 캡** | ☐ S3 |
+| 영구성 | **런 한정**(끝나면 리셋, 로그라이크다움) | ✓ |
+
+**스킬 보상 게이트 — 3축 독립 (옵션2 확정)**
+
+| 필드 | 축 | 게이트 의미 |
+|---|---|---|
+| `tier` / `nextTierId` | 강화(4.6) | 업그레이드 단계. **게이트 아님** |
+| `masteryReq` | 숙련도(영구, 4.4) | 본체 숙련도 ≥ 값이어야 출현 |
+| `classReq` | 전직(런 한정) | 도달 전직 차수 ≥ 값이어야 출현 |
+| `exclusiveTo` | 소유 | 그 캐릭터에게만 출현 |
+
+- 보상 후보(캐릭 C) = `(exclusiveTo 없음 || ==C) && mastery ≥ masteryReq && 전직차수 ≥ classReq && 미보유`.
+- **배제 조건 없음** — 동급기를 이미 가져도 다른 동급기는 계속 출현(랜덤 추첨). 운에 따라 둘 다·하나·끝까지 못 봄.
+- 전직 전용기는 보통 `masteryReq`(숙련도)와 `classReq`(전직) **둘 다** 단다(전용기도 숙련도 조건 있음).
+
+**데이터 ↔ 엔진 분류** (`[엔진 프리미티브 추가]` — 8.8 프로토콜):
+- **데이터**(디자이너): `JobDef{name, classReq, grantsTraitIds, advancesTo}` · `Character.rootJobId` · 스킬 `masteryReq`/`classReq`. → `web/src/content` + `types/content.ts`.
+- **엔진 프리미티브(신규)**: ① `classChange` 상호작용 레이어(인원 캡) ② `RunState` 캐릭별 전직상태(현 직업·도달 차수·런-부여 trait, 세이브 왕복) ③ 보상 게이트에 `masteryReq`/`classReq` 적용 ④ 유닛 빌드에 런-부여 trait 반영. 슬라이스 S1~S5 = ROADMAP #1.
+- **구현 메모**: 현재 `rewards.rs`/`shop.rs`는 숙련도 게이트에 `tier`를 재사용 → **S1에서 `masteryReq`로 분리**(강화 tier와 독립).
 
 ---
 
@@ -597,6 +630,7 @@
 - **런 노드 해소(레이어 시퀀서)**: 모든 콘텐츠 노드 = 레이어 시퀀스(`MapNode.core: Layer[]`, 없으면 타입 기본 `data/nodeCores.ts defaultCore(type)`)를 순서 실행. start/clear만 구조 노드. `core/run/{layers,run,shop,encounter,rewards}.ts`. **레이어 종류**(InteractiveLayer): `combat`(인라인 `roster` 적 구성 + `boss` + 트리거 `rules`(owner)) · `reward`(`tier`로 선택지·아이템 가산) · `shop`(아래) · `event`(인라인 `EncounterEvent` 또는 전역 풀). 데코(DecoratorLayer): `gold`/`heal`/`grantStatus`/`text`. **상점 진열 저작**(`shop` 레이어 `offers?: ShopOfferDef[]` + `keepGenerated?`): 지정 시 디자이너 진열(`buyItem`/`heal`/`learn`)을 ShopOffer로 구체화(`generateShop`), 없으면 파티 기반 절차생성. `keepGenerated`=저작+절차 병행. learn은 편성 파티원 대상일 때만. **인카운터 선택지 `gamble {chance,win,lose}`**=확률 분기 결과(`encounter.ts rng.chance`).
 - **맵 그래프(헥스 인접 무방향그래프 + 층 그래프)**: `RunDef = { entryFloorId, floors: FloorDef[] }`(층 그래프 — clear `toFloor`로 연결, 없으면 승리, 분기 가능), `FloorDef = { entryNodeId, nodes: MapNode[], edges: MapEdge[] }`, `MapNode = { id, type, q, r, toFloor?, label?, layers?, core? }`(**`label`**=표시 라벨, **`core`**=레이어 시퀀스, **`layers`**=onEnter/onResolve 데코), **무방향 변**(맞닿은 헥스끼리만). 엔진 `run/graph.ts`: `hexAdjacent`·`neighborIds`·`liveReachable`(재방문 불가·막힌노드 비활성)·`validateRun`(인접 변·도달성). 클리어 노드 진입=층 종료, 보스=길목. 저작=`data/runs/*.json`(레포 JSON, 에디터 출력). 스키마=`types/map.ts`. (구 `genMap`/`MapGenConfig`/`GameMode` 폐기)
 - **AI 행동결정 정책(우선순위 룰)**: "턴이 왔을 때 합법 행동 중 무엇을 고를지"의 디자이너 언어(반응형 패시브와 별개의 *능동* 결정). `AiProfile = { rules: AiRule[] }`, `AiRule = {if?:AiCondition[], prefer?:SkillKindPref, target?:TargetPref, weight?}`. 위→아래 첫 적용가능(조건 참 AND 합법행동 존재) 룰이 결정, 없으면 **공유 그리디 fallback**(도발 우선·최저 HP·최고 명중). **prefer**(damage/heal/shield/applyStatus/cleanse/any) · **target**(lowest/highestHpEnemy·lowestHpAlly·front/backmostEnemy·self·anyEnemy/Ally) · **AiCondition**(selfHpPct·ally/enemyHpPctBelow·self/enemy HasStatus·selfMissingStatus·round·outnumbered·allyCount) · **weight**(backline/frontlineTarget·lowHpTarget·hitChance·critChance, 보조 정렬). 캐릭터가 `aiProfileId`로 참조(없으면 그리디=기존 동작). 결정론(rng 미사용, 동점=인덱스). 스키마=`core/types/ai.ts`, 해석=`ai/profile.ts`, 콘텐츠=`data/ai.ts`. 작성법=`src/data/README.md`.
+- **전직(전직 시스템) [설계 확정·미구현 — ROADMAP #1]**: 캐릭터 전속 직업 트리(`JobDef`+`advancesTo`+`Character.rootJobId`)로 **런 한정 빌드 분기.** 전직 = 패시브(`TraitDef`) 부여 + 차수(`classReq`) 전용 스킬 보상 해금. 분기 차이=패시브뿐(스킬 풀은 차수 공유). 스킬 게이트 3축 독립: `tier`(강화)·`masteryReq`(숙련도)·`classReq`(전직). 신규 프리미티브: `classChange` 레이어(인원 캡)·`RunState` 전직상태·보상 게이트·런-trait 반영. 데이터=`web/src/content`, 엔진=`engine/spr-core`. 상세 4.7.
 
 **프리미티브-갭 결정 프로토콜 (필수·사용자에게 명시):**
 새 기능 요청 → ① 기존 프리미티브 **조합으로 원자적으로 표현 가능한가?** → ② **가능 = 데이터-온리**(`web/src/content`만 수정, 엔진 불변) → ③ **불가 = 프리미티브 갭**: 엔진 변경 필요. 이때 **구현 전 사용자에게 정해진 형식으로 보고하고 승인받는다**:
