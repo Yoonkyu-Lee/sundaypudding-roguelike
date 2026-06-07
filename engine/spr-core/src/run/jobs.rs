@@ -175,6 +175,26 @@ mod tests {
     }
 
     #[test]
+    fn job_passive_fires_in_battle_after_class_change() {
+        // 끝-끝: 전직 → 부여 패시브(두목의 의리: battleStart 아군 공위증)가 실제 전투에서 발동하는지.
+        use crate::battle::create_battle_grown;
+        use spr_types::data::Encounter;
+        let data = RunData::load();
+        let rd = spr_data::default_run();
+        let mut run = crate::run::create_run(7, &rd.roster.clone(), &rd, &HashMap::new(), false, &data.chars);
+        let enc = Encounter { id: "c".into(), name: "전투".into(), allies: vec![], enemies: data.node_rosters["battle"].clone(), boss: false };
+        // 기준: 전직 전엔 battleStart에 kim에게 might 없음.
+        let b0 = create_battle_grown(7, &enc, &run.party, &run.pending_statuses, &[], &data.chars, &data.skills, &data.traits, &data.items, &data.defs);
+        let kim0 = b0.units.iter().find(|u| u.char_id == "kim").unwrap();
+        assert!(!kim0.statuses.iter().any(|s| s.def_id == "might"), "전직 전 kim에 might 없음");
+        // 우미관 두목 전직 → 두목의 의리(battleStart allAllies might) 부여.
+        assert!(class_change(&mut run, "kim", "kim_job_boss", &data));
+        let b1 = create_battle_grown(7, &enc, &run.party, &run.pending_statuses, &[], &data.chars, &data.skills, &data.traits, &data.items, &data.defs);
+        let kim1 = b1.units.iter().find(|u| u.char_id == "kim").unwrap();
+        assert!(kim1.statuses.iter().any(|s| s.def_id == "might"), "전직 후 battleStart에 아군 공위증 발동(두목의 의리)");
+    }
+
+    #[test]
     fn class_change_survives_save_roundtrip() {
         let (mut run, data) = setup();
         assert!(class_change(&mut run, "kim", "kim_job_fist", &data));

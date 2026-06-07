@@ -67,6 +67,31 @@ pub fn gen_rewards(run: &mut RunState, tier: i64, chars: &HashMap<String, Charac
         s
     };
 
+    let mut pool = build_reward_pool(run, &mut mk, item_count, chars, skills, items, item_pool);
+
+    // 결정론 추첨
+    let mut chosen: Vec<RewardOption> = Vec::new();
+    while (chosen.len() as i64) < choice_count && !pool.is_empty() {
+        let idx = run.rng.int(0, pool.len() as i64 - 1) as usize;
+        chosen.push(pool.remove(idx));
+    }
+    while (chosen.len() as i64) < choice_count {
+        chosen.push(RewardOption::Heal { id: mk(), pct: 30, label: "파티 30% 회복".to_string() });
+    }
+    chosen
+}
+
+/// 보상 후보 풀(추첨 전). 순서 = 파티순 × (강화 → learnset 새 스킬 → 전직 전용기 → 장신구). RNG는 장신구 추첨에만.
+/// gen_rewards가 이걸 만든 뒤 추첨. 분리 이유: 풀 구성(특히 전직 게이트)을 추첨과 독립으로 검증 가능.
+pub fn build_reward_pool(
+    run: &mut RunState,
+    mk: &mut dyn FnMut() -> String,
+    item_count: i64,
+    chars: &HashMap<String, Character>,
+    skills: &HashMap<String, Skill>,
+    items: &HashMap<String, ItemDef>,
+    item_pool: &[String],
+) -> Vec<RewardOption> {
     let living: Vec<PartyMemberState> = run.party.iter().filter(|m| m.hp > 0).cloned().collect();
     let mut pool: Vec<RewardOption> = Vec::new();
     for m in &living {
@@ -108,18 +133,8 @@ pub fn gen_rewards(run: &mut RunState, tier: i64, chars: &HashMap<String, Charac
         }
     }
     // (c) 장신구
-    pool.extend(item_reward_options(run, &mut mk, item_count, items, item_pool));
-
-    // 결정론 추첨
-    let mut chosen: Vec<RewardOption> = Vec::new();
-    while (chosen.len() as i64) < choice_count && !pool.is_empty() {
-        let idx = run.rng.int(0, pool.len() as i64 - 1) as usize;
-        chosen.push(pool.remove(idx));
-    }
-    while (chosen.len() as i64) < choice_count {
-        chosen.push(RewardOption::Heal { id: mk(), pct: 30, label: "파티 30% 회복".to_string() });
-    }
-    chosen
+    pool.extend(item_reward_options(run, mk, item_count, items, item_pool));
+    pool
 }
 
 #[cfg(test)]
@@ -127,6 +142,31 @@ mod tests {
     use super::*;
     use crate::run::create_run;
     use spr_types::canonical::canonical_json;
+
+    fn pool_has_skill(pool: &[RewardOption], sid: &str) -> bool {
+        pool.iter().any(|r| matches!(r, RewardOption::LearnSkill { skill_id, .. } if skill_id == sid))
+    }
+
+    #[test]
+    fn class_reward_pool_surfaces_at_tier() {
+        // 전직 전용기(kim_headbutt·kim_command)가 차수 0엔 풀에 없고, 차수 1에 도달하면 편입되는지(b2 통합).
+        let chars = spr_data::characters();
+        let skills = spr_data::skills();
+        let items = spr_data::items();
+        let item_pool = spr_data::item_pool();
+        let rd = spr_data::default_run();
+        let mut run = create_run(1, &rd.roster.clone(), &rd, &HashMap::new(), false, &chars);
+        let mut mk = { let mut k = 0i64; move || { let s = format!("t{}", k); k += 1; s } };
+        let pool0 = build_reward_pool(&mut run, &mut mk, 1, &chars, &skills, &items, &item_pool);
+        assert!(!pool_has_skill(&pool0, "kim_headbutt"), "차수 0엔 전직기 미출현");
+        assert!(!pool_has_skill(&pool0, "kim_command"), "차수 0엔 전직기 미출현");
+        // kim 전직 차수 1로 → 두 전직기 모두 풀 편입(배제 없음).
+        let ki = run.party.iter().position(|m| m.char_id == "kim").unwrap();
+        run.party[ki].class_tier = 1;
+        let pool1 = build_reward_pool(&mut run, &mut mk, 1, &chars, &skills, &items, &item_pool);
+        assert!(pool_has_skill(&pool1, "kim_headbutt"), "차수 1엔 박치기 출현");
+        assert!(pool_has_skill(&pool1, "kim_command"), "차수 1엔 종로 호령 출현");
+    }
 
     #[test]
     fn reward_gate_class_and_mastery() {
