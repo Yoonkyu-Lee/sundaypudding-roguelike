@@ -1,6 +1,7 @@
 //! 런 관측 (TS `core/run/view.ts`) — RunState → RunView(프론트 맵/파티/보상 뷰). 전투는 run.battle 직접.
 use super::data::RunData;
 use super::helpers::cur_floor;
+use super::jobs::class_options;
 use super::types::{RewardOption, RunState, ShopOffer};
 use serde::Serialize;
 use spr_types::data::Pos;
@@ -60,6 +61,31 @@ pub struct EncounterView {
     pub choices: Vec<ChoiceView>,
 }
 
+/// 전직(4.7) 선택지 — 한 전직 가능 캐릭의 갈래. classChange phase에서만 노출.
+#[derive(Serialize)]
+pub struct JobOptionView {
+    pub id: String,
+    pub name: String,
+    #[serde(rename = "classReq")]
+    pub class_req: i64,
+}
+
+#[derive(Serialize)]
+pub struct ClassCandidateView {
+    #[serde(rename = "charId")]
+    pub char_id: String,
+    pub name: String,
+    #[serde(rename = "jobName", skip_serializing_if = "Option::is_none")]
+    pub job_name: Option<String>,
+    pub options: Vec<JobOptionView>,
+}
+
+#[derive(Serialize)]
+pub struct ClassChangeView {
+    pub remaining: i64,
+    pub candidates: Vec<ClassCandidateView>,
+}
+
 #[derive(Serialize)]
 pub struct RunView {
     pub phase: String,
@@ -73,6 +99,8 @@ pub struct RunView {
     pub gold: i64,
     pub shop: Option<Vec<ShopOffer>>,
     pub encounter: Option<EncounterView>,
+    #[serde(rename = "classChange", skip_serializing_if = "Option::is_none")]
+    pub class_change: Option<ClassChangeView>,
     pub log: Vec<String>,
 }
 
@@ -140,6 +168,32 @@ pub fn get_run_view(run: &RunState, d: &RunData) -> RunView {
     } else {
         None
     };
+    let class_change = if run.phase == "classChange" {
+        let candidates: Vec<ClassCandidateView> = run
+            .party
+            .iter()
+            .filter(|m| m.hp > 0)
+            .filter_map(|m| {
+                let opts = class_options(run, &m.char_id, d);
+                if opts.is_empty() {
+                    return None;
+                }
+                let options = opts
+                    .iter()
+                    .filter_map(|jid| d.jobs.get(jid).map(|j| JobOptionView { id: jid.clone(), name: j.name.clone(), class_req: j.class_req }))
+                    .collect();
+                Some(ClassCandidateView {
+                    char_id: m.char_id.clone(),
+                    name: d.chars.get(&m.char_id).map(|c| c.name.clone()).unwrap_or_else(|| m.char_id.clone()),
+                    job_name: m.job_id.as_deref().and_then(|id| d.jobs.get(id)).map(|j| j.name.clone()),
+                    options,
+                })
+            })
+            .collect();
+        Some(ClassChangeView { remaining: run.class_change_remaining.unwrap_or(0), candidates })
+    } else {
+        None
+    };
     let log_tail: Vec<String> = run.log.iter().rev().take(12).rev().cloned().collect();
     RunView {
         phase: run.phase.clone(),
@@ -152,6 +206,7 @@ pub fn get_run_view(run: &RunState, d: &RunData) -> RunView {
         gold: run.gold,
         shop: run.shop.clone(),
         encounter,
+        class_change,
         log: log_tail,
     }
 }

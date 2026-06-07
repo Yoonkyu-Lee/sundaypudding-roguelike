@@ -74,6 +74,12 @@ pub fn step_core(run: &mut RunState, node_id: &str, d: &RunData) {
                 start_encounter_layer(run, event.clone(), d);
                 return;
             }
+            Layer::ClassChange { max } => {
+                run.class_change_remaining = Some(*max);
+                run.phase = "classChange".to_string();
+                run.log.push("전직 기회".to_string());
+                return;
+            }
             other => {
                 run_instant_layers(run, std::slice::from_ref(other), d);
                 run.core_cursor = Some(cursor as i64 + 1);

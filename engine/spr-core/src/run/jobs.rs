@@ -3,6 +3,7 @@
 //! 부여 패시브는 유닛 빌드(`make_unit_grown`)·run-스코프(`fire_run_trigger`)서 `job_trait_ids`로 적용.
 //! 노드/레이어 배선은 S3, 보상 게이트는 S4. 여기선 순수 상태 전이 + 조회.
 use super::data::RunData;
+use super::layers::advance_core;
 use super::types::RunState;
 
 /// 전직: `char_id`를 `to_job_id`로 전환. **현재 직업의 advancesTo에 있어야**(트리 간선) 성공.
@@ -49,6 +50,42 @@ pub fn class_options(run: &RunState, char_id: &str, data: &RunData) -> Vec<Strin
         .and_then(|id| data.jobs.get(id))
         .map(|j| j.advances_to.clone())
         .unwrap_or_default()
+}
+
+// ── classChange 상호작용 레이어 해소(S3) — step_core가 phase="classChange"로 블록한 것을 처리 ──
+
+/// 전직 레이어 중 한 명 전직. phase=="classChange" + 남은 인원>0 + 유효 전직(트리 간선)일 때만.
+/// 적용 후 남은 인원 -1; 0 도달 시 레이어 종료(advance_core로 다음 core 스텝). 성공 여부 반환.
+pub fn choose_class_change(run: &mut RunState, char_id: &str, to_job_id: &str, d: &RunData) -> bool {
+    if run.phase != "classChange" {
+        return false;
+    }
+    let remaining = run.class_change_remaining.unwrap_or(0);
+    if remaining <= 0 {
+        return false;
+    }
+    if !class_change(run, char_id, to_job_id, d) {
+        return false;
+    }
+    let left = remaining - 1;
+    run.class_change_remaining = Some(left);
+    if left <= 0 {
+        finish_class_change(run, d);
+    }
+    true
+}
+
+/// 전직 레이어 건너뛰기(더 이상 전직 안 함) → 레이어 종료(다음 core 스텝).
+pub fn skip_class_change(run: &mut RunState, d: &RunData) {
+    if run.phase != "classChange" {
+        return;
+    }
+    finish_class_change(run, d);
+}
+
+fn finish_class_change(run: &mut RunState, d: &RunData) {
+    run.class_change_remaining = None;
+    advance_core(run, d);
 }
 
 #[cfg(test)]
@@ -105,6 +142,36 @@ mod tests {
         let base = compile_rules("kim", &[], &[], &chars, &skills, &traits).len();
         let with_job = compile_rules("kim", &[], &["kim_oyabun_will".to_string()], &chars, &skills, &traits).len();
         assert_eq!(with_job, base + 1, "전직 부여 패시브 1룰 추가");
+    }
+
+    #[test]
+    fn class_change_layer_blocks_resolves_and_advances() {
+        let data = RunData::load();
+        // 전직 노드(core=[classChange max2]) 1개를 가진 최소 런.
+        let rd: spr_types::map::RunDef = serde_json::from_str(
+            r#"{"id":"t","name":"t","useMastery":false,"entryFloorId":"f",
+                "roster":[{"charId":"kim","pos":{"row":1,"col":0}}],
+                "floors":[{"id":"f","entryNodeId":"s","nodes":[
+                    {"id":"s","type":"start","q":0,"r":0},
+                    {"id":"jc","type":"rest","q":1,"r":0,"core":[{"kind":"classChange","max":2}]},
+                    {"id":"c","type":"clear","q":2,"r":0}
+                ],"edges":[{"from":"s","to":"jc"},{"from":"jc","to":"c"}]}]}"#,
+        )
+        .expect("runDef 파싱");
+        let mut run = crate::run::create_run(1, &rd.roster.clone(), &rd, &HashMap::new(), false, &data.chars);
+        // 전직 노드 진입 → classChange phase 블록.
+        crate::run::enter_node(&mut run, "jc", &data);
+        assert_eq!(run.phase, "classChange");
+        assert_eq!(run.class_change_remaining, Some(2));
+        // 한 명 전직(루트→두목): 남은 인원 1, 아직 블록.
+        assert!(choose_class_change(&mut run, "kim", "kim_job_boss", &data));
+        assert_eq!(run.class_change_remaining, Some(1));
+        assert_eq!(run.phase, "classChange");
+        assert_eq!(run.party[0].job_id.as_deref(), Some("kim_job_boss"));
+        // 두목은 말단(advancesTo 없음) → 더 전직 불가. skip으로 레이어 종료 → advance_core → 노드 완료 → 맵 복귀.
+        skip_class_change(&mut run, &data);
+        assert_eq!(run.class_change_remaining, None);
+        assert_ne!(run.phase, "classChange");
     }
 
     #[test]

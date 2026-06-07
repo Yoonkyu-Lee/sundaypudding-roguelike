@@ -3,7 +3,7 @@
 //! 뷰 = RunView(맵/파티), 전투 중에는 battle 관측 + 이벤트 델타. Tauri 커맨드는 이 API를 얇게 감쌈.
 use super::data::RunData;
 use super::view::{get_run_view, RunView, SkillView};
-use super::{buy_shop_offer, choose_encounter_option, choose_reward, create_run, enter_node, leave_shop, move_party_member, resolve_battle_end, set_active_skill, RunState};
+use super::{buy_shop_offer, choose_class_change, choose_encounter_option, choose_reward, create_run, enter_node, leave_shop, move_party_member, resolve_battle_end, set_active_skill, skip_class_change, RunState};
 use crate::ai::choose_action;
 use crate::flow::step;
 use crate::interrupt::predict_interrupt_subjects;
@@ -301,6 +301,14 @@ impl RunSession {
     }
     pub fn choose_encounter(&mut self, choice_id: &str) {
         choose_encounter_option(&mut self.run, choice_id, &self.d);
+    }
+    /// 전직(4.7) — 한 명 전직(char_id를 to_job_id로). 남은 인원 0이면 레이어 종료.
+    pub fn choose_class_change(&mut self, char_id: &str, to_job_id: &str) -> bool {
+        choose_class_change(&mut self.run, char_id, to_job_id, &self.d)
+    }
+    /// 전직 레이어 건너뛰기(더 이상 전직 안 함).
+    pub fn skip_class_change(&mut self) {
+        skip_class_change(&mut self.run, &self.d);
     }
 
     // ── 비전투 편성 ──

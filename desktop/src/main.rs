@@ -93,6 +93,16 @@ fn run_buy(offer_id: String, state: tauri::State<RunAppState>) -> Result<Value, 
 fn run_encounter(choice_id: String, state: tauri::State<RunAppState>) -> Result<Value, String> {
     with_run(&state, |s| { s.choose_encounter(&choice_id); s.view() })
 }
+/// 전직(4.7) — 한 명 전직(char_id → to_job_id). 남은 인원 0이면 레이어 종료.
+#[tauri::command]
+fn run_class_change(char_id: String, to_job_id: String, state: tauri::State<RunAppState>) -> Result<Value, String> {
+    with_run(&state, |s| { s.choose_class_change(&char_id, &to_job_id); s.view() })
+}
+/// 전직 레이어 건너뛰기(더 이상 전직 안 함).
+#[tauri::command]
+fn run_class_change_skip(state: tauri::State<RunAppState>) -> Result<Value, String> {
+    with_run(&state, |s| { s.skip_class_change(); s.view() })
+}
 #[tauri::command]
 fn run_move(char_id: String, row: i64, col: i64, state: tauri::State<RunAppState>) -> Result<Value, String> {
     with_run(&state, |s| { s.move_party(&char_id, Pos { row, col }); s.view() })
@@ -164,7 +174,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             create_session, battle_step, observation,
             run_create, run_create_roster, run_create_def, run_view, run_enter_node, run_choose_reward, run_leave_shop, run_buy,
-            run_encounter, run_move, run_set_active, run_equip, run_unequip,
+            run_encounter, run_class_change, run_class_change_skip, run_move, run_set_active, run_equip, run_unequip,
             run_battle_step, run_battle_ai_step, run_battle_obs, run_battle_init, run_battle_view, run_battle_targeting, run_sheet_data, run_save, run_load
         ])
         .run(tauri::generate_context!())

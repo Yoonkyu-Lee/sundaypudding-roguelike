@@ -55,6 +55,9 @@ pub struct RunState {
     pub inventory: Vec<String>,
     pub shop: Option<Vec<ShopOffer>>,
     pub encounter: Option<EncounterEvent>,
+    /// 전직(4.7) 레이어 진행 중 남은 전직 인원 수(phase=="classChange"일 때 Some). 0 도달/스킵 시 advance_core.
+    #[serde(default)]
+    pub class_change_remaining: Option<i64>,
     pub pending_statuses: HashMap<String, Vec<PendingStatus>>,
     pub firing: bool,
     pub log: Vec<String>,

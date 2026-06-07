@@ -53,7 +53,8 @@ export type InteractiveLayer =
   | { kind: "combat"; roster?: { charId: string; pos: Pos }[]; boss?: boolean; rules?: NodeRule[] } // 적=인라인 roster(노드 소유, 단일 소스). 비면 엔진 fallback=NODE_ROSTERS.battle. 보스=진형보너스. rules=이 전투의 트리거 룰(Phase C/E4)
   | { kind: "reward"; tier?: number } // 보상(genRewards) — 등급↑(2~3)=선택지·아이템 가산. 기본 1=3택1. treasure 노드 = core:[reward]
   | { kind: "shop"; offers?: ShopOfferDef[]; keepGenerated?: boolean } // 상점 진열 — offers 있으면 그 저작 진열, 없으면 절차생성(generateShop). keepGenerated=저작+절차 병행. leaveShop까지 블록. 스타터 DI(run.ts)
-  | { kind: "event"; event?: EncounterEvent }; // 인카운터 — event 인라인(노드 저작) 우선, 없으면 전역 풀 랜덤. chooseEncounterOption까지 블록
+  | { kind: "event"; event?: EncounterEvent } // 인카운터 — event 인라인(노드 저작) 우선, 없으면 전역 풀 랜덤. chooseEncounterOption까지 블록
+  | { kind: "classChange"; max?: number }; // 전직(4.7) — 전직 가능 파티원 중 최대 max명 전직. 전직노드(2~3)·쉼터(heal+classChange 1). chooseClassChange/skip까지 블록
 /** 노드 레이어 — onEnter/onResolve는 데코만(즉시), core는 데코+상호작용 혼합(순서 실행). */
 export type Layer = DecoratorLayer | InteractiveLayer;
 export type LayerKind = Layer["kind"];

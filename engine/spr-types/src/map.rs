@@ -54,6 +54,16 @@ pub enum Layer {
     Shop { #[serde(default)] offers: Option<Vec<ShopOfferDef>>, #[serde(rename = "keepGenerated", default)] keep_generated: Option<bool> },
     #[serde(rename = "event")]
     Event { #[serde(default)] event: Option<EncounterEvent> },
+    /// 전직(4.7) 상호작용 레이어 — 전직 가능 파티원 중 최대 `max`명 전직. 전직노드(2~3)·쉼터(1) 작곡용.
+    #[serde(rename = "classChange")]
+    ClassChange {
+        #[serde(default = "default_one")]
+        max: i64,
+    },
+}
+
+fn default_one() -> i64 {
+    1
 }
 
 /// 노드 부착 레이어 슬롯(onEnter/onResolve=데코). TS NodeLayers.

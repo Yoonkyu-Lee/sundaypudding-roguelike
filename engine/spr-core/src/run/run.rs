@@ -72,6 +72,7 @@ pub fn create_run(
         inventory: vec!["wood_bat".to_string(), "leather_vest".to_string()],
         shop: None,
         encounter: None,
+        class_change_remaining: None,
         pending_statuses: HashMap::new(),
         firing: false,
         log: vec![format!("런 시작 (seed {})", seed)],

@@ -11,6 +11,8 @@ export const LAYER_SPECS: Record<string, LayerSpec> = {
   reward: { label: "🎁 보상", fields: [{ key: "tier", label: "등급(1~3, 높을수록 선택지·아이템↑)", type: "number" }], make: () => ({ kind: "reward", tier: 1 }) },
   shop: { label: "🏪 상점", fields: [], make: () => ({ kind: "shop" }) },
   event: { label: "❓ 인카운터", fields: [], make: () => ({ kind: "event" }) },
+  classChange: { label: "🔀 전직", fields: [{ key: "max", label: "전직 가능 인원", type: "number" }], make: () => ({ kind: "classChange", max: 1 }) }, // 4.7 — 전직노드(2~3)·쉼터(1)
+
   gold: { label: "💰 골드 ±", fields: [{ key: "amount", label: "양", type: "number" }], make: () => ({ kind: "gold", amount: 10 }) },
   heal: { label: "❤ 회복", fields: [{ key: "pct", label: "퍼센트(0~100)", type: "number" }, { key: "revive", label: "전투불능 부활", type: "bool" }], make: () => ({ kind: "heal", pct: 50 }) },
   grantStatus: { label: "✨ 상태 부여(다음 전투)", fields: [{ key: "charId", label: "대상(비움=전원)", type: "select", optionsFrom: "chars", allowEmpty: true }, { key: "statusId", label: "상태", type: "select", optionsFrom: "statuses" }, { key: "stacks", label: "스택", type: "number" }, { key: "duration", label: "지속", type: "number" }], make: () => ({ kind: "grantStatus", statusId: "", stacks: 1, duration: 2 }) },
@@ -18,7 +20,7 @@ export const LAYER_SPECS: Record<string, LayerSpec> = {
 };
 
 /** core 슬롯 추가 카탈로그(상호작용 먼저, 데코 뒤). */
-export const LAYER_KINDS: string[] = ["combat", "reward", "shop", "event", "gold", "heal", "grantStatus", "text"];
+export const LAYER_KINDS: string[] = ["combat", "reward", "shop", "event", "classChange", "gold", "heal", "grantStatus", "text"];
 /** onEnter/onResolve 슬롯 카탈로그 — 데코레이터만(즉시 실행). */
 export const DECO_KINDS: string[] = ["gold", "heal", "grantStatus", "text"];
 
@@ -29,6 +31,7 @@ export function layerSummary(L: Layer): string {
     case "reward": return "보상 3택1";
     case "shop": return "상점";
     case "event": return "인카운터(랜덤)";
+    case "classChange": return `전직 (최대 ${L.max ?? 1}명)`;
     case "gold": return `골드 ${L.amount >= 0 ? "+" : ""}${L.amount}`;
     case "heal": return `회복 ${Math.round(L.pct * 100)}%${L.revive ? " · 부활" : ""}`;
     case "grantStatus": return `상태 ${L.statusId || "?"}×${L.stacks} (${L.charId || "전원"})`;

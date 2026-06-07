@@ -75,8 +75,8 @@ engine/                Cargo workspace. cargo test = differential 회귀 게이�
       types.rs           RunState·RewardOption·ShopOffer (런 상태)
       data.rs            RunData (데이터맵 1회 로드 번들)
       run.rs             createRun·enterNode·completeFloor·resolveBattleEnd·chooseReward·setActive·moveParty
-      jobs.rs            전직(4.7): class_change(트리 간선·차수·패시브 누적)·class_options. 상태=PartyMemberState.{job_id,class_tier,job_trait_ids}
-      layers.rs          코어 레이어 시퀀서(데코 즉시·combat/reward/shop/event 블록)
+      jobs.rs            전직(4.7): class_change(트리 간선·차수·패시브 누적)·class_options · choose/skip_class_change(classChange 레이어 해소→advance_core). 상태=PartyMemberState.{job_id,class_tier,job_trait_ids}·RunState.class_change_remaining. 뷰=RunView.classChange
+      layers.rs          코어 레이어 시퀀서(데코 즉시·combat/reward/shop/event/classChange 블록)
       helpers.rs         curFloor·healParty·completeNode·upgradeOwned·learnOwned·runInstantLayers
       rewards.rs         genRewards·unlockedTier·ownsUpgradeLine
       items.rs           equipItem·unequipItem·genItemOffers (장착)
