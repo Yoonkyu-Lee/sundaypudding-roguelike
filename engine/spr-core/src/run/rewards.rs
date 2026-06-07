@@ -17,11 +17,25 @@ pub fn unlocked_tier(level: i64) -> i64 {
     }
 }
 
-fn tier_ok(run: &RunState, m: &PartyMemberState, skill_id: &str, skills: &HashMap<String, Skill>) -> bool {
-    if !run.use_mastery {
-        return true;
+/// 보상/상점 출현 게이트(4.4/4.7): 숙련도(`masteryReq`, use_mastery 시) **AND** 전직 차수(`classReq`).
+/// 숙련도 = `masteryReq` 우선(없으면 강화 `tier` 폴백 — 미마이그레이션 콘텐츠 호환). 전직 = `classReq` 있으면 도달 차수 이상.
+pub fn reward_gate_ok(sk: &Skill, use_mastery: bool, mastery_level: i64, class_tier: i64) -> bool {
+    if use_mastery {
+        let req = sk.mastery_req.or(sk.tier).unwrap_or(1);
+        if req > unlocked_tier(mastery_level) {
+            return false;
+        }
     }
-    skills.get(skill_id).and_then(|s| s.tier).unwrap_or(1) <= unlocked_tier(m.mastery_level)
+    if let Some(cr) = sk.class_req {
+        if cr > class_tier {
+            return false;
+        }
+    }
+    true
+}
+
+fn tier_ok(run: &RunState, m: &PartyMemberState, skill_id: &str, skills: &HashMap<String, Skill>) -> bool {
+    skills.get(skill_id).map(|sk| reward_gate_ok(sk, run.use_mastery, m.mastery_level, m.class_tier)).unwrap_or(false)
 }
 
 /// 베이스 스킬의 강화 라인 중 하나라도 보유 중인가(다운그레이드 재출현 방지). TS ownsUpgradeLine.
@@ -69,12 +83,27 @@ pub fn gen_rewards(run: &mut RunState, tier: i64, chars: &HashMap<String, Charac
                 }
             }
         }
-        // (b) 새 스킬
+        // (b) 새 스킬 — learnset
         for sid in &c.skill_ids {
             if !owns_upgrade_line(&m.owned_skill_ids, sid, skills) && tier_ok(run, m, sid, skills) {
                 if let Some(sk) = skills.get(sid) {
                     pool.push(RewardOption::LearnSkill { id: mk(), char_id: m.char_id.clone(), skill_id: sid.clone(), label: format!("{}: 새 스킬 「{}」 습득", c.name, sk.name) });
                 }
+            }
+        }
+        // (b2) 전직 전용 풀(4.7) — exclusiveTo==본인 + classReq 설정 + learnset 밖. 도달 차수·숙련도 게이트 통과 시 편입.
+        // 분기 무관(차수만 게이트) — 배제 조건 없음. 결정론: id 정렬 순회(HashMap 순서 비결정성 회피).
+        let mut job_skills: Vec<String> = skills
+            .iter()
+            .filter(|(_, sk)| sk.exclusive_to.as_deref() == Some(m.char_id.as_str()) && sk.class_req.is_some())
+            .map(|(sid, _)| sid.clone())
+            .filter(|sid| !c.skill_ids.contains(sid))
+            .collect();
+        job_skills.sort();
+        for sid in &job_skills {
+            if !owns_upgrade_line(&m.owned_skill_ids, sid, skills) && tier_ok(run, m, sid, skills) {
+                let sk = &skills[sid];
+                pool.push(RewardOption::LearnSkill { id: mk(), char_id: m.char_id.clone(), skill_id: sid.clone(), label: format!("{}: 전직기 「{}」 습득", c.name, sk.name) });
             }
         }
     }
@@ -98,6 +127,20 @@ mod tests {
     use super::*;
     use crate::run::create_run;
     use spr_types::canonical::canonical_json;
+
+    #[test]
+    fn reward_gate_class_and_mastery() {
+        let skills = spr_data::skills();
+        let headbutt = &skills["kim_headbutt"]; // classReq 1, masteryReq 1 (전직 전용)
+        // 전직 차수 0 → classReq 1에 막힘(use_mastery 무관).
+        assert!(!reward_gate_ok(headbutt, false, 9, 0));
+        // 차수 1 도달 → 통과(use_mastery=false, 숙련도 무시).
+        assert!(reward_gate_ok(headbutt, false, 0, 1));
+        // use_mastery=true: masteryReq 1 → unlocked_tier(mastery 0)=1 충족 + 차수 1 → 통과.
+        assert!(reward_gate_ok(headbutt, true, 0, 1));
+        // 일반 스킬(classReq 없음) → 차수 0서도 통과.
+        assert!(reward_gate_ok(&skills["kim_punch"], false, 0, 0));
+    }
 
     #[test]
     fn gen_rewards_differential() {

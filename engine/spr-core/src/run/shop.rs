@@ -3,16 +3,13 @@ use super::data::RunData;
 use super::helpers::{complete_node, heal_party, learn_owned, upgrade_owned};
 use super::items::gen_item_offers;
 use super::layers::advance_core;
-use super::rewards::{owns_upgrade_line, unlocked_tier};
+use super::rewards::{owns_upgrade_line, reward_gate_ok};
 use super::types::{RunState, ShopOffer};
 use spr_types::map::ShopOfferDef;
 use spr_types::party::PartyMemberState;
 
 fn tier_ok(run: &RunState, m: &PartyMemberState, sid: &str, d: &RunData) -> bool {
-    if !run.use_mastery {
-        return true;
-    }
-    d.skills.get(sid).and_then(|s| s.tier).unwrap_or(1) <= unlocked_tier(m.mastery_level)
+    d.skills.get(sid).map(|sk| reward_gate_ok(sk, run.use_mastery, m.mastery_level, m.class_tier)).unwrap_or(false)
 }
 
 fn materialize_offers(run: &RunState, defs: &[ShopOfferDef], mk: &mut dyn FnMut() -> String, d: &RunData) -> Vec<ShopOffer> {
