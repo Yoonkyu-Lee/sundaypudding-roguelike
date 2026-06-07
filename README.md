@@ -11,16 +11,21 @@
 
 ## 실행
 **엔진 = Rust(`engine/spr-core`), 프론트 = 웹(Tauri IPC).** 제품 셸은 Tauri 데스크톱 앱(`desktop/`).
+> ⚠️ **`package.json`은 `web/`에 있다(루트 아님).** 모든 `npm` 스크립트는 **`web/`에서** 실행 — 루트에서 `npm run dev`는 ENOENT. 루트에서 쓰려면 `npm --prefix web run <script>`.
+
 ```bash
-npm install           # 최초 1회 (devDeps: typescript, vite — 타입체크·웹 전용)
-# 게임 구동(데스크톱): 터미널1 = vite, 터미널2 = Tauri 앱
-npm run dev           # 웹 프론트 dev 서버 → http://localhost:5173
-cd desktop && cargo build && ./target/debug/spr-app.exe   # Rust 풀게임 부팅(기본 = Rust)
-npm test              # 웹/에디터 단위 테스트 (node --test)
-cargo test --manifest-path engine/Cargo.toml   # Rust 엔진 — differential 회귀 벡터·save-roundtrip
-npm run data:export   # 데이터 JSON 번들 재생성(web/src/content 변경 시) → data.generated.json (Rust 로드용)
-npm run typecheck     # 계약타입(코어) + 웹 타입체크
-npm run check         # 통합 게이트 (타입·web test·cargo test·줄수·코어순수성·배럴)
+npm install --prefix web   # 최초 1회 (devDeps: typescript, vite — 타입체크·웹 전용)
+
+# ── 게임 구동(데스크톱): 터미널 2개 ──
+cd web && npm run dev      # 터미널1: 웹 프론트 dev 서버 → http://localhost:5173
+cd desktop && cargo build && ./target/debug/spr-app.exe   # 터미널2: Rust 풀게임 부팅(기본 = Rust)
+
+# ── 검증/빌드 (npm = web/에서) ──
+cd web && npm run check         # ★ 통합 게이트 (typecheck·web test·cargo test·줄수·코어순수성·배럴)
+cd web && npm test              # 웹/에디터 단위 테스트만 (node --test)
+cd web && npm run typecheck     # 계약타입(코어) + 웹 타입체크
+cd web && npm run data:export   # 데이터 JSON 번들 재생성(web/src/content 변경 시) → data.generated.json (Rust 로드용)
+cargo test --manifest-path engine/Cargo.toml   # (루트) Rust 엔진 — differential 회귀 벡터·save-roundtrip
 
 # 배포(단일 실행 파일 — 인스톨러 불필요): 프론트 빌드 → Tauri 프로덕션 빌드
 cd web && npm run build                                            # 프론트 → web/dist
