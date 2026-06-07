@@ -111,7 +111,7 @@ desktop/src/main.rs   #[tauri::command]: 전투 데모(create_session·battle_st
 | `rustRun.ts` | **풀 게임 컨트롤러** — 전체 프로그램(타이틀·허브·에디터·런·전투·일시정지) 상태기계를 Rust `RunSession`(IPC `run_*`)으로. 전투: 2단계 타겟팅+HP예고(`run_battle_targeting`)+끼어들기 고스트+주사위 연출(`playDice`/`run_battle_init`). 오버레이=`rustOverlay` 위임. 세이브=`run_save`/`run_load`+localStorage(`spr_rust_save_v1`) | `mountRustRun` · `playDice` · `persist` |
 | `rustOverlay.ts` | **시트/편성 오버레이** — 맵=파티편성(`renderPartyView`)/전투=캐릭터시트(`renderCharSheet`). 원시데이터=IPC `run_sheet_data`(SheetBundle), 정적보강(base/특성/패시브설명)은 프론트. 변이=`run_equip/unequip/set_active/move` | `createRustOverlay` · `SheetBundle` |
 | `render.ts` | **전투 렌더** — 영속 셸(svg·header·battlelayout) 1회 생성 후 존 갱신. `renderAppObs`(관측+스킬바+로그)·`renderBattleZones`(GameState 비의존)·`computeTgtFromObs`(타겟팅, IPC `prev`로 미리보기 주입) | `renderAppObs` · `renderBattleZones` |
-| `runRender.ts` | **맵/보상/상점/인카운터/결과** 렌더 + 헥스 노드 + 파티 요약. 맵=고정 뷰포트(`attachCamera` 줌·팬)·벽(`hexgeo` 기하 공유) | `renderRunScreen` |
+| `runRender.ts` | **맵/보상/상점/인카운터/전직(4.7)/결과** 렌더 + 헥스 노드 + 파티 요약. 전직=`classChangeScreen`(파티원·갈래 카드 + 건너뛰기, 인게임 모달 스타일). 맵=고정 뷰포트(`attachCamera` 줌·팬)·벽(`hexgeo` 기하 공유) | `renderRunScreen` |
 | `shell.ts` | **게임 흐름 셸** — 타이틀·본거지(편성 그리드)·일시정지. 런 바깥 | `renderTitle` · `renderHub` · `renderPause` · `ShellHandlers` |
 | `hub.ts` | **본거지 편성 컨트롤러** — playable 풀 1~4명 선택(영구) 캡슐화. 런 생성은 Rust IPC(`run_create_roster`)가 담당 | `createHub` |
 | `meta.ts` | **영구 메타**(레벨/XP + 편성 로스터, 별도 세이브 `spr_meta_v1`) — `grantWin`·`masteryInfo`·`getRoster`/`setRoster` + `unlockedTier`(tier 곡선, 인라인) | `grantWin` · `masteryInfo` · `getRoster` |

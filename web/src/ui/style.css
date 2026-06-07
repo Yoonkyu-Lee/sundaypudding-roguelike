@@ -298,6 +298,12 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .rwcard { width: 200px; min-height: 80px; background: var(--panel2); border: 1px solid var(--accent); border-radius: 10px; color: var(--txt); cursor: pointer; padding: 14px; font-size: 13px; line-height: 1.4; }
 .rwcard:hover { background: #2b3142; box-shadow: 0 0 12px rgba(255,209,102,.3); }
 
+/* ── 전직 (4.7) ── */
+.classchange .ccgroup { margin: 16px auto 0; max-width: 460px; }
+.ccwho { font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 6px; }
+.ccnow { font-size: 11px; font-weight: 400; color: var(--muted, #9aa3b2); margin-left: 6px; }
+.classchange #ccskip { margin-top: 18px; }
+
 /* ── 골드 / 상점 / 인카운터 (7.2) ── */
 .goldtag { color: var(--accent); font-size: 12px; font-weight: 600; margin-left: 6px; }
 .shop, .encounter { text-align: center; max-width: 520px; margin: 0 auto; }

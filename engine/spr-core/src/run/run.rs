@@ -339,12 +339,15 @@ mod tests {
         // 최종 상태(phase/gold/floor/inventory/log/party) 바이트동일 = 네비·전투AI·보상RNG·상점·인카운터·런패시브 일괄 검증.
         use crate::ai::choose_action;
         use crate::flow::step;
-        use crate::run::{buy_shop_offer, choose_encounter_option, leave_shop, resolve_battle_end};
+        use crate::run::{buy_shop_offer, choose_encounter_option, leave_shop, resolve_battle_end, skip_class_change};
         use spr_types::canonical::canonical_json;
         let _ = buy_shop_offer;
         let d = crate::run::RunData::load();
         let rd = spr_data::default_run();
         let reference: serde_json::Value = serde_json::from_str(include_str!("../../tests/full-run.generated.json")).unwrap();
+        // SPR_UPDATE_GOLDEN=1 → 골든 재생성(의도적 콘텐츠 변경 시). 없으면 비교 검증.
+        let update = std::env::var("SPR_UPDATE_GOLDEN").is_ok();
+        let mut out = serde_json::Map::new();
 
         for seed in [42u32, 7, 123] {
             let mut run = create_run(seed, &rd.roster.clone(), &rd, &HashMap::new(), false, &d.chars);
@@ -372,6 +375,7 @@ mod tests {
                         let id = run.encounter.as_ref().unwrap().choices[0].id.clone();
                         choose_encounter_option(&mut run, &id, &d);
                     }
+                    "classChange" => skip_class_change(&mut run, &d), // 자동 네비=전직 건너뜀(결정론 유지)
                     _ => break,
                 }
             }
@@ -384,7 +388,15 @@ mod tests {
                     "eq": serde_json::to_value(&m.equipped).unwrap()
                 })).collect::<Vec<_>>()
             });
-            assert_eq!(canonical_json(&summary), reference[seed.to_string()].as_str().unwrap(), "seed {} 풀 런 최종상태 TS 바이트동일", seed);
+            if update {
+                out.insert(seed.to_string(), serde_json::Value::String(canonical_json(&summary)));
+            } else {
+                assert_eq!(canonical_json(&summary), reference[seed.to_string()].as_str().unwrap(), "seed {} 풀 런 최종상태 TS 바이트동일", seed);
+            }
+        }
+        if update {
+            let path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/full-run.generated.json");
+            std::fs::write(path, canonical_json(&serde_json::Value::Object(out)) + "\n").unwrap();
         }
     }
 }

@@ -2,7 +2,24 @@
 import type { EncounterEvent, GameState, MapEdge, MapNode, NodeType, PartyMemberState, RunDef } from "../types.ts";
 import type { Rng } from "../rng.ts";
 
-export type RunPhase = "map" | "battle" | "reward" | "shop" | "encounter" | "won" | "lost";
+export type RunPhase = "map" | "battle" | "reward" | "shop" | "encounter" | "classChange" | "won" | "lost";
+
+/** 전직(4.7) 선택지 뷰 — classChange phase에서만 노출. */
+export interface JobOptionView {
+  id: string;
+  name: string;
+  classReq: number;
+}
+export interface ClassCandidateView {
+  charId: string;
+  name: string;
+  jobName?: string; // 현재 직업명
+  options: JobOptionView[]; // 전직 가능한 다음 직업들
+}
+export interface ClassChangeView {
+  remaining: number; // 이 노드에서 더 전직 가능한 인원
+  candidates: ClassCandidateView[];
+}
 
 export type RewardOption =
   | { id: string; kind: "upgradeSkill"; charId: string; fromSkillId: string; toSkillId: string; label: string }
@@ -67,5 +84,6 @@ export interface RunView {
   gold: number;
   shop: ShopOffer[] | null;
   encounter: { id: string; title: string; text: string; choices: { id: string; label: string }[] } | null;
+  classChange?: ClassChangeView; // 전직 phase에서만(4.7)
   log: string[];
 }

@@ -113,6 +113,8 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
     onBuy: (id) => act("run_buy", { offerId: id }),
     onLeaveShop: () => act("run_leave_shop"),
     onEncounterChoice: (id) => act("run_encounter", { choiceId: id }),
+    onClassChange: (charId, toJobId) => act("run_class_change", { charId, toJobId }),
+    onClassChangeSkip: () => act("run_class_change_skip"),
     onToggleSkill: (charId, skillId) => act("run_set_active", { charId, skillId }),
     onRestart: () => shell.onNewRun(),
     onToHub: () => shell.onToHub(),

@@ -20,6 +20,8 @@ export interface RunHandlers {
   onBuy: (offerId: string) => void; // 상점 구매
   onLeaveShop: () => void; // 상점 나가기
   onEncounterChoice: (choiceId: string) => void; // 인카운터 선택
+  onClassChange: (charId: string, toJobId: string) => void; // 전직(4.7) — 한 명 전직
+  onClassChangeSkip: () => void; // 전직 건너뛰기
   onOpenParty: (charId: string) => void; // 파티 편성(통합 파티뷰) 열기 — 해당 캐릭 선택
   onToHub: () => void; // 승패 화면 → 집으로
   onPause: () => void; // 일시정지 메뉴 열기
@@ -145,6 +147,21 @@ function rewardScreen(view: RunView, h: RunHandlers): string {
   return `<div class="reward"><h2>🎁 보상 선택 (1개)</h2><div class="rwcards">${cards}</div></div>`;
 }
 
+function classChangeScreen(view: RunView): string {
+  const cc = view.classChange;
+  if (!cc) return "";
+  const groups = cc.candidates
+    .map((c) => {
+      const opts = c.options
+        .map((o) => `<button class="rwcard" data-cc-char="${esc(c.charId)}" data-cc-job="${esc(o.id)}">${esc(c.name)} → 「${esc(o.name)}」</button>`)
+        .join("");
+      return `<div class="ccgroup"><div class="ccwho">${esc(c.name)}${c.jobName ? ` <span class="ccnow">현재: ${esc(c.jobName)}</span>` : ""}</div><div class="rwcards">${opts}</div></div>`;
+    })
+    .join("");
+  const body = cc.candidates.length ? groups : "<div class='hint'>전직 가능한 인원이 없다.</div>";
+  return `<div class="reward classchange"><h2>🔀 전직 <span class="goldtag">남은 인원 ${cc.remaining}</span></h2>${body}<button class="act" id="ccskip">건너뛰기 →</button></div>`;
+}
+
 function endScreen(view: RunView): string {
   const won = view.phase === "won";
   return `<div class="endscreen ${won ? "won" : "lost"}">
@@ -159,12 +176,13 @@ export function renderRunScreen(app: HTMLElement, view: RunView, h: RunHandlers)
   else if (view.phase === "reward") body = rewardScreen(view, h);
   else if (view.phase === "shop") body = shopScreen(view);
   else if (view.phase === "encounter") body = encounterScreen(view);
+  else if (view.phase === "classChange") body = classChangeScreen(view);
   else body = mapScreen(view, h);
 
   app.innerHTML = `
     <header>
       <h1>🍮 Sundaypudding Roguelike</h1>
-      <div class="meta">${view.phase === "won" || view.phase === "lost" ? "" : `층 ${view.floor}/${view.totalFloors} · `}${view.phase === "map" ? "맵 — 경로 선택" : view.phase}${view.phase === "won" || view.phase === "lost" ? "" : ` <button class="hdr-menu" id="pausebtn" aria-label="메뉴 (Esc)">⏸</button>`}</div>
+      <div class="meta">${view.phase === "won" || view.phase === "lost" ? "" : `층 ${view.floor}/${view.totalFloors} · `}${view.phase === "map" ? "맵 — 경로 선택" : view.phase === "classChange" ? "전직" : view.phase}${view.phase === "won" || view.phase === "lost" ? "" : ` <button class="hdr-menu" id="pausebtn" aria-label="메뉴 (Esc)">⏸</button>`}</div>
     </header>
     <div class="runlayout">
       <div class="runmain">${body}</div>
@@ -191,6 +209,10 @@ export function renderRunScreen(app: HTMLElement, view: RunView, h: RunHandlers)
   app.querySelectorAll<HTMLButtonElement>("[data-choice]").forEach((b) =>
     b.addEventListener("click", () => h.onEncounterChoice(b.dataset.choice!)),
   );
+  app.querySelectorAll<HTMLButtonElement>("[data-cc-job]").forEach((b) =>
+    b.addEventListener("click", () => h.onClassChange(b.dataset.ccChar!, b.dataset.ccJob!)),
+  );
+  app.querySelector("#ccskip")?.addEventListener("click", () => h.onClassChangeSkip());
   app.querySelector("#tohub")?.addEventListener("click", () => h.onToHub());
   app.querySelector("#pausebtn")?.addEventListener("click", () => h.onPause());
 

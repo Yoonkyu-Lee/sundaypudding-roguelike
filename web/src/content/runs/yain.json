@@ -20,7 +20,7 @@
         { "id": "f1_b1", "type": "battle", "q": 1, "r": 0, "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 8 }, { "kind": "reward" }] },
         { "id": "f1_b2", "type": "battle", "q": 0, "r": 1, "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 8 }, { "kind": "reward" }] },
         { "id": "f1_shop", "type": "shop", "q": 2, "r": 0, "core": [{ "kind": "shop", "offers": [{ "kind": "buyItem", "itemId": "nailed_bat", "cost": 35 }, { "kind": "heal", "pct": 50, "cost": 15 }], "keepGenerated": true }] },
-        { "id": "f1_rest", "type": "rest", "q": 0, "r": 2, "core": [{ "kind": "heal", "pct": 50, "revive": true }] },
+        { "id": "f1_rest", "type": "rest", "q": 0, "r": 2, "core": [{ "kind": "heal", "pct": 50, "revive": true }, { "kind": "classChange", "max": 1 }] },
         { "id": "f1_boss", "type": "boss", "q": 1, "r": 1, "label": "종로 결전",
           "layers": {
             "onEnter": [{ "kind": "text", "text": "종로 한복판 — 좌익 패거리가 길을 막아선다." }],
