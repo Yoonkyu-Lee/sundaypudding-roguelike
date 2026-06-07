@@ -2,8 +2,8 @@
 
 육성형 로그라이크. **게임 엔진 = Rust(`engine/spr-core`)** · **GUI = 웹 프론트(Tauri 데스크톱 앱)**. 결정론·differential 검증.
 
-- 설계 진실의 원천(SoT): [`docs/GAME-DESIGN.md`](docs/GAME-DESIGN.md)
-- 코드 지도: [`docs/CODE-MAP.md`](docs/CODE-MAP.md)
+- 설계 진실의 원천(SoT): [`docs/GAME-DESIGN.md`](docs/GAME-DESIGN.md) (인덱스 — 장별 본문은 `docs/game-design/`)
+- 코드 지도: [`docs/CODE-MAP.md`](docs/CODE-MAP.md) · 테스트 카탈로그: [`docs/TEST-MAP.md`](docs/TEST-MAP.md)
 - **디자이너 가이드**(스킬·캐릭터 등 콘텐츠 제작): [`web/src/content/README.md`](web/src/content/README.md)
 
 ## 요구사항
