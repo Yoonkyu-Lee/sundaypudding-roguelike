@@ -37,7 +37,7 @@ for (const f of srcFiles) {
 }
 // 문서 길이(#6) — 경고만. 스펙(GAME-DESIGN)은 길 수 있으니 관대하게.
 const DOC_WARN = 700;
-for (const d of ["CLAUDE.md", "README.md", "docs/GAME-DESIGN.md", "docs/CODE-MAP.md"]) {
+for (const d of ["CLAUDE.md", "README.md", "docs/DOC-INDEX.md", "docs/CODE-MAP.md"]) {
   const p = join(REPO, d);
   if (!existsSync(p)) continue;
   const n = readFileSync(p, "utf8").split("\n").length;

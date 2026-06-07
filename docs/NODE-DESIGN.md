@@ -2,7 +2,7 @@
 
 > **목적**: 맵 노드의 "내부 내용물"을 상세 설계한다. 게임 아이디어 회의를 위에 기록하고, 결론이
 > 나오면 **하단에 개발 구현 플랜(슬라이스)**을 적는다. 실제 구현은 `/slice-plan`으로 진행.
-> **상태**: 브레인스토밍 중(미확정 다수). 확정된 규칙은 추후 `docs/GAME-DESIGN.md`로 승격, 코드 매핑은 `docs/CODE-MAP.md`.
+> **상태**: 브레인스토밍 중(미확정 다수). 확정된 규칙은 추후 `docs/DOC-INDEX.md`로 승격, 코드 매핑은 `docs/CODE-MAP.md`.
 >
 > 회의 주제 3개: ① 어떤 노드를 추가할지 ② 각 노드의 정형화된 내용물(전역 vs exclusive) ③ 디자이너용 노드 내용물 GUI.
 
@@ -160,7 +160,7 @@ registerLayer("combat", { schema:[{roster:'rosterGrid'},{formationBonus:'bool'},
 - **✅ 노드 복사 카탈로그 (완료)** `[웹 기능]`: 저작한 노드(타입+라벨+`core`: 적 배치·레이어·트리거 룰 전체)를 **템플릿으로 저장**(`templates.ts` localStorage 전역 라이브러리, 런 경계 넘어 재사용) 후 런 에디터 사이드바 "📋 내 템플릿" 카탈로그에서 **드래그로 복제 배치**(`addNodeFromTemplate` deep-clone). 노드 에디터 헤더 "📋 템플릿으로 저장". 엔진/데이터 스키마 불변 — 배치 결과 = 인라인 `core` 노드와 동일. 인라인 단일 소스의 재사용 메커니즘.
 
 ### 권장 순서
-A(골격) → B(combat+데코, 즉시 가치: 엘리트 차별화·보물 노드) → E1~E2(GUI 기반, B와 평행) → C(스토리텔링) → D(event) → E3~E4(리치 폼). 각 단계 종료 시 `docs/GAME-DESIGN.md`(노드 모델)·`CODE-MAP` 승격.
+A(골격) → B(combat+데코, 즉시 가치: 엘리트 차별화·보물 노드) → E1~E2(GUI 기반, B와 평행) → C(스토리텔링) → D(event) → E3~E4(리치 폼). 각 단계 종료 시 `docs/DOC-INDEX.md`(노드 모델)·`CODE-MAP` 승격.
 
 ---
 

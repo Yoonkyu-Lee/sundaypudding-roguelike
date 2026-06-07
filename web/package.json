@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "육성형 로그라이크 자체 엔진 — Rust 결정론 코어(rust/spr-core) + 웹 프론트(Tauri). 설계 SoT: docs/GAME-DESIGN.md",
+  "description": "육성형 로그라이크 자체 엔진 — Rust 결정론 코어(rust/spr-core) + 웹 프론트(Tauri). 설계 SoT: docs/DOC-INDEX.md",
   "engines": {
     "node": ">=24"
   },

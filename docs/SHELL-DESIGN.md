@@ -1,7 +1,7 @@
 # SHELL-DESIGN.md — 게임 겉 구조 (런 중심 모델)
 
 > **목적**: 게임의 **바깥 틀**을 설계한다 — 타이틀 → Start → **런/모드 선택** → 런. 회의 기록을 위에, 결론은 결정 로그 + 구현 플랜에.
-> **상태**: 🔁 **재작성됨 (2026-06 디자이너 인터뷰 반영, [`DESIGNER-INTERVIEW.md`](DESIGNER-INTERVIEW.md)).** 본산/메타 재화 모델 폐기 → **런 중심**(슬레이 더 스파이어 레퍼런스). 🔸=제안/미확정. 확정 규칙은 `GAME-DESIGN.md`로 승격, 코드 위치는 `CODE-MAP.md`, 우선순위는 `ROADMAP.md`.
+> **상태**: 🔁 **재작성됨 (2026-06 디자이너 인터뷰 반영, [`DESIGNER-INTERVIEW.md`](DESIGNER-INTERVIEW.md)).** 본산/메타 재화 모델 폐기 → **런 중심**(슬레이 더 스파이어 레퍼런스). 🔸=제안/미확정. 확정 규칙은 `DOC-INDEX.md`로 승격, 코드 위치는 `CODE-MAP.md`, 우선순위는 `ROADMAP.md`.
 > **관련**: 노드 내부 설계 = [`NODE-DESIGN.md`](NODE-DESIGN.md). 다음 작업 우선순위 = [`ROADMAP.md`](ROADMAP.md) § 확정된 게임 모델.
 
 ---

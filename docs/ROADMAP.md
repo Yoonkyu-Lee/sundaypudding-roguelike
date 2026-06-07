@@ -1,6 +1,6 @@
 # ROADMAP — 다음 작업 우선순위
 
-이 문서 = **무엇을 다음에 만들지의 SoT.** 게임 규칙은 [`GAME-DESIGN.md`](GAME-DESIGN.md), 코드 위치는 [`CODE-MAP.md`](CODE-MAP.md). 각 항목은 진입 시 `/slice-plan`으로 분류하고, 끝나면 `/slice-wrap`이 이 문서의 상태를 갱신한다.
+이 문서 = **무엇을 다음에 만들지의 SoT.** 게임 규칙은 [`DOC-INDEX.md`](DOC-INDEX.md), 코드 위치는 [`CODE-MAP.md`](CODE-MAP.md). 각 항목은 진입 시 `/slice-plan`으로 분류하고, 끝나면 `/slice-wrap`이 이 문서의 상태를 갱신한다.
 
 > **2026-06 디자이너 인터뷰 반영 ([`DESIGNER-INTERVIEW.md`](DESIGNER-INTERVIEW.md))** — 장르 방향이 **"육성형(런 사이 영구 투자)"에서 "런 중심 로그라이크"로 재정렬**됐다. 핵심 결론 ↓. (옛 #1 "런 사이 메타 육성(본산)"은 **폐기** — 아래 § 폐기 참조. [`SHELL-DESIGN.md`](SHELL-DESIGN.md)는 이 모델로 **재작성 완료**.)
 
