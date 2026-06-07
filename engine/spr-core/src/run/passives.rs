@@ -86,7 +86,8 @@ pub fn fire_run_trigger(run: &mut super::types::RunState, ctx: &RunTriggerCtx, d
         }
         let char_id = run.party[pi].char_id.clone();
         let active = run.party[pi].active_skill_ids.clone();
-        let rules = compile_rules(&char_id, &active, &d.chars, &d.skills, &d.traits);
+        let job_traits = run.party[pi].job_trait_ids.clone();
+        let rules = compile_rules(&char_id, &active, &job_traits, &d.chars, &d.skills, &d.traits);
         for cr in &rules {
             let w = &cr.rule.when;
             if w.on() != ctx.on {

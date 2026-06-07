@@ -42,4 +42,14 @@ pub struct PartyMemberState {
     pub equipped: Equipped,
     #[serde(rename = "masteryLevel")]
     pub mastery_level: i64,
+    // ── 전직(4.7) 런 상태 — 런 한정(끝나면 리셋). 세이브 왕복. ──
+    /// 현재 직업 id(트리 노드). 런 시작 = Character.rootJobId. 전직 없는 캐릭이면 None.
+    #[serde(rename = "jobId", default)]
+    pub job_id: Option<String>,
+    /// 도달 전직 차수(0=루트). 스킬 보상 게이트(classReq ≤ 이 값)에 사용(S4).
+    #[serde(rename = "classTier", default)]
+    pub class_tier: i64,
+    /// 전직으로 누적 부여된 패시브(TraitDef id). 유닛 빌드 시 traitIds와 함께 적용. 런 한정.
+    #[serde(rename = "jobTraitIds", default)]
+    pub job_trait_ids: Vec<String>,
 }

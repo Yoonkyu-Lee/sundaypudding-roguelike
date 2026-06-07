@@ -4,6 +4,7 @@ pub mod data;
 pub mod encounter;
 pub mod helpers;
 pub mod items;
+pub mod jobs;
 pub mod layers;
 pub mod passives;
 pub mod rewards;
@@ -18,6 +19,7 @@ pub use session::RunSession;
 
 pub use data::RunData;
 pub use encounter::choose_encounter_option;
+pub use jobs::{class_change, class_options};
 pub use run::{choose_reward, create_run, enter_node, move_party_member, resolve_battle_end, set_active_skill};
 pub use shop::{buy_shop_offer, leave_shop};
 pub use types::{RewardOption, RunState, ShopOffer};

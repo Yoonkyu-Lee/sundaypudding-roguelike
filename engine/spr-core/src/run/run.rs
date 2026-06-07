@@ -43,6 +43,11 @@ pub fn create_run(
                 active_skill_ids: owned,
                 equipped: Equipped::default(),
                 mastery_level: *mastery.get(&m.char_id).unwrap_or(&0),
+                // 전직(4.7): 런 시작 = 루트 직업(0차), 차수 0, 부여 패시브 없음(루트=최초 상태).
+                // 루트 grantsTraitIds는 미적용(루트 정체성=Character.traitIds). 전직 노드서 차수↑·패시브 누적.
+                job_id: c.root_job_id.clone(),
+                class_tier: 0,
+                job_trait_ids: Vec::new(),
             }
         })
         .collect();

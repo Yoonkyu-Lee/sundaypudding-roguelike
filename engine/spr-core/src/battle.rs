@@ -56,7 +56,7 @@ pub fn make_unit(
     traits: &HashMap<String, TraitDef>,
 ) -> Unit {
     let active_skill_ids: Vec<String> = c.skill_ids.iter().take(4).cloned().collect();
-    let rules = compile_rules(&c.id, &active_skill_ids, chars, skills, traits);
+    let rules = compile_rules(&c.id, &active_skill_ids, &[], chars, skills, traits);
     Unit {
         uid: format!("{}{}_{}", &side[..1], idx, c.id),
         side: side.to_string(),
@@ -148,7 +148,7 @@ fn make_unit_grown(
         .map(|s| StatusInstance { def_id: s.status_id.clone(), stacks: s.stacks, duration: s.duration, source_uid: uid.clone(), source_skill_id: None })
         .collect();
     let active: Vec<String> = m.active_skill_ids.clone();
-    let rules = compile_rules(&c.id, &active, chars, skills, traits);
+    let rules = compile_rules(&c.id, &active, &m.job_trait_ids, chars, skills, traits); // +전직 부여 패시브(4.7)
     Unit {
         uid,
         side: "ally".to_string(),

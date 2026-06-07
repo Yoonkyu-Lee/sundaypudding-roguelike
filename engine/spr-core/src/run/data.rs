@@ -2,7 +2,7 @@
 //! 1회 로드(JSON 재파싱 회피) 후 run 함수들에 `&RunData`로 전달.
 use crate::util::StatusDefs;
 use spr_types::ai::AiProfile;
-use spr_types::data::{Character, ItemDef, Placement};
+use spr_types::data::{Character, ItemDef, JobDef, Placement};
 use spr_types::map::EncounterEvent;
 use spr_types::passives::TraitDef;
 use spr_types::skills::Skill;
@@ -18,6 +18,7 @@ pub struct RunData {
     pub node_rosters: HashMap<String, Vec<Placement>>,
     pub ai_profiles: HashMap<String, AiProfile>,
     pub encounter_events: Vec<EncounterEvent>,
+    pub jobs: HashMap<String, JobDef>, // 전직 직업 트리(4.7)
 }
 
 impl RunData {
@@ -32,6 +33,7 @@ impl RunData {
             node_rosters: spr_data::node_rosters(),
             ai_profiles: spr_data::ai_profiles(),
             encounter_events: spr_data::encounter_events(),
+            jobs: spr_data::jobs(),
         }
     }
 }

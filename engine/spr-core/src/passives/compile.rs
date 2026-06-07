@@ -9,10 +9,12 @@ fn mk(rule: PassiveRule, via_kind: &str, via_id: &str, idx: i64) -> CompiledRule
     CompiledRule { rule, via_kind: via_kind.to_string(), via_id: via_id.to_string(), idx, fired_this_turn: 0, fired_this_battle: 0 }
 }
 
-/// 스킬 패시브(활성 기준) + 특성(항상). TS compileRules.
+/// 스킬 패시브(활성 기준) + 특성(항상) + 전직 부여 패시브(extra_trait_ids, 4.7). TS compileRules.
+/// extra_trait_ids = 런 중 전직으로 부여된 trait id(`PartyMemberState.job_trait_ids`). 캐릭 traitIds 뒤에 이어 컴파일. 비전투/적은 &[].
 pub fn compile_rules(
     char_id: &str,
     skill_ids: &[String],
+    extra_trait_ids: &[String],
     chars: &HashMap<String, Character>,
     skills: &HashMap<String, Skill>,
     traits: &HashMap<String, TraitDef>,
@@ -36,6 +38,15 @@ pub fn compile_rules(
                     out.push(mk(rule.clone(), "trait", tid, idx));
                     idx += 1;
                 }
+            }
+        }
+    }
+    // 전직 부여 패시브(런 한정) — 캐릭 특성 뒤에 결정론적 순서로.
+    for tid in extra_trait_ids {
+        if let Some(t) = traits.get(tid) {
+            for rule in &t.rules {
+                out.push(mk(rule.clone(), "trait", tid, idx));
+                idx += 1;
             }
         }
     }

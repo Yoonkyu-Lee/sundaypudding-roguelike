@@ -3,7 +3,7 @@
 //! → 로더 + canonical 직렬화 계약을 *전 실데이터*(Korean/emoji 포함)로 검증. 타입 구조체는 엔진 슬라이스(P1-9)에서 도입.
 use serde_json::Value;
 use spr_types::ai::AiProfile;
-use spr_types::data::{Character, Encounter, FormationLayout, ItemDef, Placement, StatusDef};
+use spr_types::data::{Character, Encounter, FormationLayout, ItemDef, JobDef, Placement, StatusDef};
 use spr_types::map::{EncounterEvent, RunDef};
 use spr_types::passives::TraitDef;
 use spr_types::skills::Skill;
@@ -60,6 +60,11 @@ pub fn standard_formation() -> FormationLayout {
 /// 특성 맵(id→TraitDef). 룰 컴파일이 charId의 traitIds로 조회.
 pub fn traits() -> HashMap<String, TraitDef> {
     serde_json::from_value(data_value()["traits"].clone()).expect("traits 역직렬화")
+}
+
+/// 전직 직업 트리 맵(id→JobDef, 4.7). classChange가 advancesTo/grantsTraitIds로 조회.
+pub fn jobs() -> HashMap<String, JobDef> {
+    serde_json::from_value(data_value()["jobs"].clone()).expect("jobs 역직렬화")
 }
 
 /// AI 프로파일 맵(id→AiProfile). chooseAction이 actor.aiProfileId로 조회.
