@@ -108,6 +108,6 @@ mod tests {
         for key in ["aiProfiles", "characters", "jobs", "items", "skills", "statuses", "traits", "nodeRosters", "demoEncounter", "standardFormation", "encounterEvents"] {
             assert!(v.get(key).is_some(), "번들에 '{}' 누락", key);
         }
-        assert_eq!(v["skills"].as_object().unwrap().len(), 52, "skills 52개"); // +전직 보상 2(kim_headbutt·kim_command)
+        assert_eq!(v["skills"].as_object().unwrap().len(), 71, "skills 71개"); // +야인시대 런1 19(young/gaekko/jin/wangcho/jp/miwa/det/kane)
     }
 }

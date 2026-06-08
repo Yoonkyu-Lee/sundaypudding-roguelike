@@ -56,6 +56,18 @@ export const TRAITS: Record<string, TraitDef> = {
     id: "reflexes", name: "반사신경", icon: "🥊", desc: "매 턴 자동으로 잽(근접 3·명중 90)을 날린다.",
     rules: [{ when: { on: "turnStart", who: "self" }, then: [{ do: "castSkill", skillId: "u_jab" }], maxPerTurn: 1 }],
   },
+  // ── 야인시대 런1(유년·성장) 특성 — 데이터-온리. 설계: docs/Yainsidae/gamedata/run01-youth.md ──
+  // 불굴/근성 — 위기에 한 번 다시 일어선다(원작 왕초전 반복 기립). 1회 재기를 "치사 직전 1회 회복"으로 근사(전투당 1회).
+  indomitable: {
+    id: "indomitable", name: "불굴", icon: "🔥", desc: "위기(체력 30% 이하)에 피격되면 전투당 1회 체력 12 회복하며 다시 일어선다.",
+    rules: [{ when: { on: "damaged" }, if: [{ c: "hpPct", who: "self", cmp: "lte", v: 30 }], then: [{ do: "heal", amount: 12, target: "self" }], maxPerBattle: 1 }],
+  },
+  // 기 집중 — 무도가 전직(유태권 입문) 부여 패시브. 매 턴 예리가 쌓여 일격이 날카로워짐(단전 일격 시너지).
+  qi_focus: {
+    id: "qi_focus", name: "기 집중", icon: "🧘", desc: "매 턴 시작 시 예리 1을 얻는다(턴당 1회).",
+    rules: [{ when: { on: "turnStart", who: "self" }, then: [{ do: "applyStatus", statusId: "edge", stacks: 1, duration: 2, target: "self" }], maxPerTurn: 1 }],
+  },
+
   // ── 전직(전직) 직업 패시브 (4.7) — 전직 시 부여(런 한정). 직업의 기계적 정체성. (엔진 적용=전직 슬라이스 S2) ──
   // 우미관 두목: 전투 시작 시 아군 전체 공위증(두목의 통솔). 팀/서포트 빌드와 시너지.
   kim_oyabun_will: {

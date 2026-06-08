@@ -80,6 +80,43 @@ export const SKILLS: Record<string, Skill> = {
   // ══ 순수 패시브 스킬 (active:false) — 보유 시 상시 효과, 전투 스킬창엔 안 뜸 ══
   u_toughness: { id: "u_toughness", name: "강인함", active: false, target: "self", cooldown: 0, accuracy: 0, effects: [], passives: [{ when: { on: "battleStart" }, then: [{ do: "shield", amount: 6, target: "self" }] }] },
 
+  // ══ 야인시대 런1(유년·성장) — 데이터-온리. 설계: docs/Yainsidae/gamedata/run01-youth.md ══
+  // 소년두한(kim_young) — 맨주먹 깡다구 브루저. blind는 근사로 weaken 사용.
+  young_punch: { id: "young_punch", name: "종로의 주먹", exclusiveTo: "kim_young", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, tier: 1, nextTierId: "young_punch2", effects: [{ kind: "damage", amount: 10 }] },
+  young_punch2: { id: "young_punch2", name: "종로의 주먹+", exclusiveTo: "kim_young", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, tier: 2, effects: [{ kind: "damage", amount: 14 }] },
+  young_kick: { id: "young_kick", name: "발차기 역전", exclusiveTo: "kim_young", target: "enemy", cooldown: 2, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 14 }], passives: [{ when: { on: "onHit", as: "attacker", crit: true }, then: [{ do: "applyStatus", statusId: "might", stacks: 1, duration: 2, target: "self" }] }] }, // 크리 시 투지(역전 모티프)
+  // 전직 보상 스킬(무도가 1차 해금) — exclusiveTo + classReq 1. learnset 밖, 전직 후 보상 풀 편입(4.7).
+  young_dash_kick: { id: "young_dash_kick", name: "날라차기", exclusiveTo: "kim_young", classReq: 1, target: "enemy", cooldown: 3, accuracy: 90, reach: 1, effects: [{ kind: "move", who: "self", deltaCol: -3 }, { kind: "damage", amount: 13 }] },
+  young_dantian: { id: "young_dantian", name: "단전 일격", exclusiveTo: "kim_young", classReq: 1, target: "enemy", cooldown: 5, accuracy: 90, reach: 1, effects: [{ kind: "applyStatusSelf", statusId: "edge", stacks: 1, duration: 1 }, { kind: "damage", amount: 20 }] }, // 차징(예리 선행)→강타
+
+  // 개코(gaekko) — 후열 교란/디버퍼
+  gaekko_dung: { id: "gaekko_dung", name: "오물 투척", exclusiveTo: "gaekko", target: "enemy", cooldown: 1, accuracy: 90, effects: [{ kind: "damage", amount: 2 }, { kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }] }, // blind 근사=weaken
+  gaekko_taryeong: { id: "gaekko_taryeong", name: "장타령 기만", exclusiveTo: "gaekko", target: "self", cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatusSelf", statusId: "taunt", stacks: 1, duration: 2 }] }, // 어그로 분산=자기 도발
+
+  // 정진영 소년(jin) — 중열 보조딜(원작 좌익 정진영과 별개 id)
+  jin_stab: { id: "jin_stab", name: "침착한 일격", exclusiveTo: "jin", target: "enemy", cooldown: 0, accuracy: 95, reach: 1, effects: [{ kind: "damage", amount: 8 }] },
+  jin_aid: { id: "jin_aid", name: "응급 보조", exclusiveTo: "jin", target: "ally", cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "heal", amount: 10 }, { kind: "applyStatus", statusId: "regen", stacks: 1, duration: 2 }] },
+
+  // 왕초(wangcho) — 1층 보스(거지촌 두목)
+  wangcho_stone: { id: "wangcho_stone", name: "돌 던지기", exclusiveTo: "wangcho", target: "enemy", cooldown: 1, accuracy: 90, effects: [{ kind: "damage", amount: 9 }] },
+  wangcho_branch: { id: "wangcho_branch", name: "나뭇가지 후리기", exclusiveTo: "wangcho", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 8 }, { kind: "applyStatus", statusId: "bleed", stacks: 2, duration: 2 }] },
+  wangcho_rule: { id: "wangcho_rule", name: "군림", exclusiveTo: "wangcho", target: "self", cooldown: 4, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatusSelf", statusId: "might", stacks: 1, duration: 3 }] },
+
+  // 일본 학생(jp_student) — 떼거리 엘리트. 집단 구타=배틀시작 자버프(인원수↑ 위협, summon 미사용)
+  jp_gang_beat: { id: "jp_gang_beat", name: "집단 구타", exclusiveTo: "jp_student", target: "enemy", cooldown: 0, accuracy: 85, reach: 1, effects: [{ kind: "damage", amount: 5 }], passives: [{ when: { on: "battleStart" }, then: [{ do: "applyStatus", statusId: "might", stacks: 1, duration: 99, target: "self" }] }] },
+
+  // 미와(miwa) — 고등계, 추격/고문(런1은 엘리트·텍스트)
+  miwa_torture: { id: "miwa_torture", name: "고문", exclusiveTo: "miwa", target: "enemy", cooldown: 3, accuracy: 90, effects: [{ kind: "damage", amount: 12 }, { kind: "applyStatus", statusId: "paralyze", stacks: 2, duration: 2 }] },
+  miwa_pursuit: { id: "miwa_pursuit", name: "추격 명령", exclusiveTo: "miwa", target: "enemy", area: { kind: "all" }, cooldown: 4, accuracy: 90, effects: [{ kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }] },
+
+  // 형사(detective) — 미와 부하
+  det_cuff: { id: "det_cuff", name: "수갑", exclusiveTo: "detective", target: "enemy", cooldown: 2, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 4 }, { kind: "applyStatus", statusId: "paralyze", stacks: 1, duration: 2 }] },
+  det_baton: { id: "det_baton", name: "곤봉", exclusiveTo: "detective", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 7 }] },
+
+  // 가네야마(kaneyama) — 개성 악덕 지주(겁쟁이). 하인 호출=노드 로스터 사전배치로 근사(summon 미사용)
+  kane_greed: { id: "kane_greed", name: "탐욕", exclusiveTo: "kaneyama", target: "self", cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "shield", amount: 12 }] },
+  kane_slap: { id: "kane_slap", name: "손찌검", exclusiveTo: "kaneyama", target: "enemy", cooldown: 0, accuracy: 85, reach: 1, effects: [{ kind: "damage", amount: 5 }] },
+
   // ══ 전직 보상 스킬 (4.7) — 1차 전직 후 보상 풀 편입(classReq 1, exclusiveTo kim). masteryReq=숙련도 게이트. ══
   // learnset/보유 풀엔 없음(보상으로만 획득). 두 분기(두목/협객) 모두에게 출현 가능 — 배제 없음(운이 정함). 엔진 게이트=전직 슬라이스(S4, 현재 휴면).
   // 박치기: 큰 단타 + 약한 공포. 단독 딜(협객 "맹타") 의도 — 단, 두목이 뽑아도 됨.

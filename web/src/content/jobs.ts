@@ -10,4 +10,9 @@ export const JOBS: Record<string, JobDef> = {
   kim_job_boss: { id: "kim_job_boss", name: "우미관 두목", classReq: 1, grantsTraitIds: ["kim_oyabun_will"] },
   // 협객: 맹타(단독 캐리·치명). 단타 빌드(예: 박치기)와 시너지. 단, 두목이 박치기를 뽑아도 됨(배제 없음).
   kim_job_fist: { id: "kim_job_fist", name: "협객", classReq: 1, grantsTraitIds: ["kim_relentless"] },
+
+  // ══ 야인시대 런1: 소년두한 직업 트리 (유년·성장). 설계: gamedata/run01-youth.md ══
+  // 0차 소년두한 → 1차 무도가(유태권 입문, n9 classChange). 무도가 = 기 집중 + 1차 전용기(날라차기·단전 일격) 해금.
+  kim_young_job_boy: { id: "kim_young_job_boy", name: "종로 거지 소년", classReq: 0, advancesTo: ["kim_young_job_martial"] },
+  kim_young_job_martial: { id: "kim_young_job_martial", name: "무도가", classReq: 1, grantsTraitIds: ["qi_focus"] },
 };
