@@ -158,6 +158,9 @@ pub struct RunDef {
     pub name: String,
     #[serde(default)]
     pub desc: Option<String>,
+    /// 모드(8.8): campaign 등. 셸이 분류·노출. 엔진 미해석(전체 선언 규약).
+    #[serde(default)]
+    pub mode: Option<String>,
     #[serde(rename = "useMastery")]
     pub use_mastery: bool,
     #[serde(rename = "entryFloorId")]

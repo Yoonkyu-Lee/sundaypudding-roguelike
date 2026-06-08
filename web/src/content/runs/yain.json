@@ -2,6 +2,7 @@
   "id": "yain",
   "name": "야인시대",
   "desc": "우익 4인으로 좌익을 돌파. 헥스 인접 무방향 그래프 3개 층, 클리어 노드 도달로 다음 층(또는 승리).",
+  "mode": "campaign",
   "useMastery": true,
   "entryFloorId": "f1",
   "roster": [

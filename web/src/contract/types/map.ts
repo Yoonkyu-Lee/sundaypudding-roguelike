@@ -96,10 +96,13 @@ export interface FloorDef {
 }
 
 /** 런 = 층 그래프(floors 집합, clear.toFloor로 연결) + 시작 파티 + 모드 설정. (구 GameMode 흡수) */
+export type RunMode = "campaign"; // 향후: "standard" | "endless" 등. 셸이 모드별 런 필터·노출 (SHELL D8)
 export interface RunDef {
   id: string;
   name: string;
   desc?: string;
+  /** 모드(8.8). 셸이 이 값으로 런을 분류·노출. campaign=스토리(주인공 고정 로스터 강제). 미지정=campaign 취급 */
+  mode?: RunMode;
   useMastery: boolean;
   entryFloorId: string; // 시작 층 id
   roster: { charId: string; pos: Pos }[];
