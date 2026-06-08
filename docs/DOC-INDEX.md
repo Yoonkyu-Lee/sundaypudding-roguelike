@@ -11,6 +11,8 @@
 |---|---|---|
 | **게임 명세** = [`game-design/`](game-design/) (아래 § 장 색인) | **규칙·수치·설계 결정의 SoT.** 전투·상태이상·캐릭터·전직·런·엔진 | 게임 로직을 만들거나 바꿀 때 |
 | [`ROADMAP.md`](ROADMAP.md) | **다음 작업 우선순위 SoT** + 확정된 게임 모델(런 중심 로그라이크) | "다음에 뭐 만들지" 정할 때 |
+| [`BACKLOG.md`](BACKLOG.md) | **실행 슬라이스 백로그 (자동 루프 SoT).** 순서표 — `/slice-plan→구현→/slice-wrap` 반복. 현재=야인시대 런1 수직슬라이스 | 슬라이스 실행/자동 루프 |
+| [`Yainsidae/`](Yainsidae/) | 야인시대 대본 지식베이스(요약124·아크8·런설계8) — 콘텐츠 원천 | 캐릭/스킬/런 콘텐츠 설계 |
 | [`SHELL-DESIGN.md`](SHELL-DESIGN.md) | 게임 겉 구조(타이틀·모드·런 선택, 본산 폐기) | 화면 흐름·모드·메타 루프 |
 | [`NODE-DESIGN.md`](NODE-DESIGN.md) | 노드 내부 설계 회의(레이어 모델, 진행 중) | 노드 콘텐츠·레이어 |
 | [`DESIGNER-INTERVIEW.md`](DESIGNER-INTERVIEW.md) | 디자이너 인터뷰 원문(롱텀 동기·전직 모델) | 게임 방향 확인 |
