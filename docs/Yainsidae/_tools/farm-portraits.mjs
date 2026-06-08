@@ -45,7 +45,8 @@ for (const [id, ...titles] of LIST) {
       const sz = statSync(dest).size;
       // og:image는 보통 .webp 썸네일. 너무 작으면 에러 페이지, 너무 크면(>1.5MB) 원본 오선택 → 스킵.
       if (sz > 2000 && sz < 1_500_000) { console.log(`✅ ${id.padEnd(12)} ← ${title}  (${sz}b)`); ok++; done = true; break; }
-      console.log(`⚠️  ${id} ${title} 크기 이상 ${sz}b`);
+      try { (await import("node:fs")).unlinkSync(dest); } catch {} // 에러페이지/과대 garbage 즉시 제거
+      console.log(`⚠️  ${id} ${title} 크기 이상 ${sz}b (삭제)`);
     } catch (e) { console.log(`⚠️  ${id} ${title} 다운 실패`); }
   }
   if (!done) console.log(`❌ ${id.padEnd(12)} — 못 찾음 (후보: ${titles.join(", ")})`);
