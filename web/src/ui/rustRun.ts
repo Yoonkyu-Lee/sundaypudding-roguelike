@@ -14,7 +14,8 @@ import { createHub } from "./hub.ts";
 import { renderEditor } from "./editor/editorRender.ts";
 import { createEditor } from "./editor/controller.ts";
 import { createRustOverlay, type RustOverlay, type SheetBundle } from "./rustOverlay.ts";
-import { grantWin } from "./meta.ts";
+import { grantWin, markSkillsSeen, unlockChars } from "./meta.ts";
+import { CHARACTERS } from "../content/characters.ts";
 
 interface BattleView { observation: Observation | null; skillBar: SkillBarEntry[] }
 interface BattleStepResult { eventDelta: GameEvent[]; observation: Observation | null; view: RunView }
@@ -34,6 +35,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
   let appState: "title" | "hub" | "editor" | "run" = "title";
   let hubMode: "menu" | "campaign" = "menu"; // 허브 하위 뷰(진입점 메뉴 / 캠페인 런 목록)
   let lastError: string | null = null; // 셸(허브/에디터)에서 IPC 런 생성 실패 표시 — 죽은 클릭 방지
+  let startedDef: RunDef | null = null; // 시작한 런 정의(승리 시 출연진 해금용 — CDX)
   let runActive = false;
   let pauseOpen = false;
   let view: RunView | null = null;
@@ -53,6 +55,21 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
     return { party, floor: view ? view.floor - 1 : 0, runDef: { id: DEFAULT_RUN.id, name: DEFAULT_RUN.name, floors: new Array(view?.totalFloors ?? DEFAULT_RUN.floors.length) } } as unknown as RunState;
   }
 
+  // 런 출연진(roster + partyChange 합류) 중 playable — 클리어 시 해금 대상(CDX).
+  function playableRunCast(def: RunDef): string[] {
+    const ids = new Set<string>(def.roster.map((m) => m.charId));
+    for (const f of def.floors) for (const n of f.nodes)
+      for (const L of [...(n.core ?? []), ...(n.layers?.onEnter ?? []), ...(n.layers?.onResolve ?? [])])
+        if (L.kind === "partyChange") for (const id of L.add ?? []) ids.add(id);
+    return [...ids].filter((id) => CHARACTERS[id]?.playable);
+  }
+  // 진행 기록(CDX): 파티 보유 스킬을 도감에 공개, 런 승리 시 출연진 해금.
+  function noteProgress(): void {
+    if (!view) return;
+    markSkillsSeen(view.party.flatMap((p) => p.skills.map((s) => s.id)));
+    if (view.phase === "won" && startedDef) unlockChars(playableRunCast(startedDef));
+  }
+
   // ── IPC 호출 ──
   function showErr(where: string, err: unknown): void {
     ui.dialog = { speaker: `IPC오류(${where})`, text: String(err) };
@@ -63,6 +80,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
   async function act(cmd: string, args?: Record<string, unknown>): Promise<void> {
     if (busy) return; busy = true;
     try { view = await callView(cmd, args); } catch (e) { showErr(cmd, e); return; } finally { busy = false; }
+    noteProgress();
     if (view.phase === "battle") { await enterBattle(); } else { render(); }
     persist();
   }
@@ -95,9 +113,10 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
     // 캠페인 = 선택 런의 고정 로스터로 시작(run_create_def — 주인공 강제, 자유 편성 없음).
     onNewRun: async () => {
       clearSave();
-      try { view = await callView("run_create_def", { seed: ++seed, runDef: hub.selectedRunDef() }); }
+      const def = hub.selectedRunDef();
+      try { view = await callView("run_create_def", { seed: ++seed, runDef: def }); }
       catch (e) { lastError = `런을 시작할 수 없습니다 — ${String(e)} (데스크톱 엔진을 다시 빌드하세요: cd desktop && cargo build)`; render(); return; }
-      lastError = null; runActive = true; pauseOpen = false; appState = "run"; cur = null; if (view.phase === "battle") await enterBattle(); else render(); persist();
+      startedDef = def; lastError = null; runActive = true; pauseOpen = false; appState = "run"; cur = null; noteProgress(); if (view.phase === "battle") await enterBattle(); else render(); persist();
     },
     onResumeRun: () => { appState = "run"; pauseOpen = false; if (view?.phase === "battle") void enterBattle(); else render(); },
     onAbandonRun: () => { runActive = false; clearSave(); render(); },
@@ -114,7 +133,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
       clearSave();
       try { view = await callView("run_create_def", { seed: ++seed, runDef: def }); }
       catch (e) { lastError = `테스트 런 실패 — ${String(e)}`; render(); return; }
-      lastError = null; runActive = true; pauseOpen = false; appState = "run"; cur = null; if (view.phase === "battle") await enterBattle(); else render(); persist();
+      startedDef = def; lastError = null; runActive = true; pauseOpen = false; appState = "run"; cur = null; noteProgress(); if (view.phase === "battle") await enterBattle(); else render(); persist();
     },
     rerender: render,
     toTitle: () => { appState = "title"; render(); },

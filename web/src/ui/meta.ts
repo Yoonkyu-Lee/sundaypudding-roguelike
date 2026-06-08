@@ -13,7 +13,12 @@ const XP_PER_WIN = 2; // 전투 승리당 생존 아군 1인 XP
 const XP_PER_LEVEL = 8; // 레벨업당 누적 XP (≈ 4승/레벨, 천천히)
 
 export interface MasteryEntry { level: number; xp: number; }
-export interface MetaState { mastery: Record<string, MasteryEntry>; roster?: string[]; }
+export interface MetaState {
+  mastery: Record<string, MasteryEntry>;
+  roster?: string[];
+  unlocked?: string[]; // 해금 캐릭터 charId(관련 런 클리어로 해금) — 도감·일반모드 풀(CDX)
+  seenSkills?: string[]; // 런에서 보유/획득해본 스킬 id(도감 스킬트리 '?'→스펙 공개)
+}
 
 const levelOf = (xp: number) => Math.floor(xp / XP_PER_LEVEL);
 
@@ -56,3 +61,24 @@ export function getRoster(fallback: string[]): string[] {
   return meta.roster && meta.roster.length > 0 ? meta.roster : fallback;
 }
 export function setRoster(charIds: string[]): void { meta.roster = [...charIds]; saveMeta(); }
+
+// ── 캐릭터 해금 + 스킬 도감(CDX) — 런 클리어로 캐릭 해금, 런에서 본 스킬은 도감 공개 ──
+/** 해금 캐릭터 집합(도감 밝게 표시·일반모드 풀). */
+export function unlockedCharSet(): Set<string> { return new Set(meta.unlocked ?? []); }
+/** 캐릭터 해금(관련 런 클리어). 새로 해금된 게 있으면 true. */
+export function unlockChars(charIds: string[]): string[] {
+  const set = new Set(meta.unlocked ?? []);
+  const fresh: string[] = [];
+  for (const id of charIds) if (!set.has(id)) { set.add(id); fresh.push(id); }
+  if (fresh.length) { meta.unlocked = [...set]; saveMeta(); }
+  return fresh;
+}
+/** 도감에서 스펙 공개된 스킬 집합(런에서 보유/획득해봄). */
+export function seenSkillSet(): Set<string> { return new Set(meta.seenSkills ?? []); }
+/** 스킬을 '본 것'으로 기록(런 보유/획득) → 도감 '?'→스펙. */
+export function markSkillsSeen(skillIds: string[]): void {
+  const set = new Set(meta.seenSkills ?? []);
+  let changed = false;
+  for (const id of skillIds) if (id && !set.has(id)) { set.add(id); changed = true; }
+  if (changed) { meta.seenSkills = [...set]; saveMeta(); }
+}
