@@ -34,21 +34,21 @@
 ## E. 캠페인 모드 + 파티 변동 (엔진 — 런1 충실도, 사용자 승인)
 > 결정: ① **허브 = 진입점 메뉴**(런 목록·로스터는 **캠페인 모드 입장 후** 노출) ② **`RunDef.mode` 필드**(에디터에서 캠페인/기타 플래그, 모드별 런 필터) ③ **`partyChange` 레이어**(노드에 합류/이탈 심음).
 
-### E1a — RunDef.mode 필드 `[엔진 프리미티브 추가]`
+### E1a ✅ — RunDef.mode 필드 `[엔진 프리미티브 추가]` (커밋 64ec6e8)
 - **무엇**: `RunDef.mode: "campaign" | …`(향후 기본/종결). TS `types/map.ts` + Rust `spr-types/map.rs`(serde, #[serde(default)]). yain·run1 = `"campaign"`. 에디터 런 메타에 mode 셀렉트.
-- **수용**: 드리프트 가드·typecheck·cargo 통과. 모드별 런 필터 근거 확보.
+- **수용**: 드리프트 가드·typecheck·cargo 통과. 모드별 런 필터 근거 확보. *(동시에 김두한 아바타 골든 RED 복구.)*
 
-### E1b — 허브 재구성(진입점 → 캠페인 런 선택) `[웹 기능]`
-- **무엇**: `hub.ts`/`rustRun.ts` — 허브 = **진입점 메뉴**(▶ 캠페인 · 🗺 에디터 · (미구현 모드 회색)). 캠페인 진입 → `mode==="campaign"` 런 목록 → 선택 시 **그 런의 고정 로스터로 시작**(자유 편성 picker 제거, run_create_def로 런 자체 roster 사용). 게임-티 금지 준수.
-- **수용**: 허브에 캠페인 외 진입점 정리, 캠페인 들어가야 런목록 노출, 런 선택=주인공 강제 시작.
+### E1b ✅ — 허브 재구성(진입점 → 캠페인 런 선택) `[웹 기능]` (커밋 36a92ba)
+- **무엇**: `hub.ts`/`shell.ts`/`rustRun.ts` — 허브 = **진입점 메뉴**(📜 캠페인 · 🗺 에디터 · (일반/챌린지 회색)). 캠페인 진입 → `mode==="campaign"` 런 목록 → 선택 시 **그 런의 고정 로스터로 시작**(자유 편성 picker 제거, `run_create_def`로 런 자체 roster 사용). 게임-티 금지 준수.
+- **수용**: 허브에 캠페인 외 진입점 정리, 캠페인 들어가야 런목록 노출, 런 선택=주인공 강제 시작. ✅
 
-### E2 — partyChange 레이어 `[엔진 프리미티브 추가]`
-- **무엇**: `Layer::PartyChange { add?: charId[], remove?: charId[] }`(데코=즉시). `RunState.party` 동적 변경 — add=새 `PartyMemberState` 생성(skillIds·rootJob·mastery0·빈 진형 슬롯 배치), remove=charId 제외. 세이브 왕복. `create_run`의 멤버 생성 로직을 `build_party_member` 헬퍼로 추출·재사용. 에디터 `layerSchema`에 등록. 결정론 테스트(합류·이탈·세이브).
-- **수용**: 노드에서 파티 증감 동작, 진형 충돌 없음, 세이브 왕복 보존, cargo 테스트 green.
+### E2 ✅ — partyChange 레이어 `[엔진 프리미티브 추가]` (커밋 31921fd)
+- **무엇**: `Layer::PartyChange { add?: charId[], remove?: charId[] }`(데코=즉시). `RunState.party` 동적 변경 — add=새 `PartyMemberState` 생성(skillIds·rootJob·mastery0·빈 진형 슬롯 배치), remove=charId 제외. 세이브 왕복. `create_run`의 멤버 생성 로직을 `build_party_member` 헬퍼로 추출·재사용. 에디터 `layerSchema`에 등록(csv 필드). 결정론 테스트(합류·이탈·세이브).
+- **수용**: 노드에서 파티 증감 동작, 진형 충돌 없음, 세이브 왕복 보존, cargo 테스트 green. ✅
 
-### E3 — run1 재배선(단신→합류) `[데이터-온리]`
-- **무엇**: run1 `roster = [kim_young]`(단신) + `mode:"campaign"`. `f2_join`에 `partyChange add:[gaekko, jin]`. (유태권 한시 동료는 선택 — f3_master add + 후속 노드 remove, 또는 v1 생략.) 부팅 테스트가 동적 파티로 완주 확인.
-- **수용**: 런1이 소년두한 단신 시작 → 2층서 개코·정진영 합류로 플레이. `run1_youth_boots_and_completes` green.
+### E3 ✅ — run1 재배선(단신→합류) `[데이터-온리]` (커밋 90eda36)
+- **무엇**: run1 `roster = [kim_young]`(단신) + `mode:"campaign"`. `f2_join`에 `partyChange add:[gaekko, jin]`. (유태권 한시 동료는 선택 — v1 생략.) 부팅 테스트가 동적 파티로 완주 확인.
+- **수용**: 런1이 소년두한 단신 시작 → 2층서 개코·정진영 합류로 플레이. `run1_youth_boots_and_completes` green(단신 시작·캠페인 모드·합류 발화 검증). ✅
 
 ## 📋 슬라이스 순서 (런1 수직슬라이스)
 
