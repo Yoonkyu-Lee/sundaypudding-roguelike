@@ -10,6 +10,7 @@ import { renderAppObs, type ObsTargeting } from "./render.ts";
 import { createTimelinePanel, type RollView } from "./battle/timelinePanel.ts";
 import type { Handlers, SkillBarEntry, Ui } from "./battle/shared.ts";
 import { renderTitle, renderHub, renderPause, renderError, type ShellHandlers } from "./shell.ts";
+import { renderCodex, type CodexHandlers } from "./codex.ts";
 import { createHub } from "./hub.ts";
 import { renderEditor } from "./editor/editorRender.ts";
 import { createEditor } from "./editor/controller.ts";
@@ -32,8 +33,9 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
   const invoke = invoker();
   if (!invoke) { app.innerHTML = `<div class="rb-root"><p style="color:var(--enemy)">Rust 코어(Tauri) 런타임이 아님 — 앱에서 ?core=rust&full=1 로 실행하세요.</p></div>`; return; }
   let seed = startSeed;
-  let appState: "title" | "hub" | "editor" | "run" = "title";
+  let appState: "title" | "hub" | "editor" | "run" | "codex" = "title";
   let hubMode: "menu" | "campaign" = "menu"; // 허브 하위 뷰(진입점 메뉴 / 캠페인 런 목록)
+  let codexSel: string | null = null; // 도감 선택 캐릭 id
   let lastError: string | null = null; // 셸(허브/에디터)에서 IPC 런 생성 실패 표시 — 죽은 클릭 방지
   let startedDef: RunDef | null = null; // 시작한 런 정의(승리 시 출연진 해금용 — CDX)
   let runActive = false;
@@ -109,6 +111,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
     onStart: () => { appState = "hub"; hubMode = "menu"; render(); },
     onEditor: () => { appState = "editor"; render(); },
     onEnterCampaign: () => { hubMode = "campaign"; render(); },
+    onCodex: () => { appState = "codex"; render(); },
     onHubBack: () => { hubMode = "menu"; render(); },
     // 캠페인 = 선택 런의 고정 로스터로 시작(run_create_def — 주인공 강제, 자유 편성 없음).
     onNewRun: async () => {
@@ -138,6 +141,12 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
     rerender: render,
     toTitle: () => { appState = "title"; render(); },
   });
+
+  // ── 캐릭터 도감(CDX) ──
+  const codexHandlers: CodexHandlers = {
+    onSelect: (charId) => { codexSel = charId; render(); },
+    onBack: () => { appState = "hub"; hubMode = "menu"; render(); },
+  };
 
   // ── 런(비전투) ──
   const runHandlers: RunHandlers = {
@@ -257,6 +266,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
       app.querySelector(".pause-overlay")?.remove();
       if (appState === "title") renderTitle(app, shell);
       else if (appState === "editor") renderEditor(app, editor.data(), editor.handlers);
+      else if (appState === "codex") renderCodex(app, codexSel, codexHandlers);
       else renderHub(app, hub.data(stubRun(), runActive, hubMode), shell);
       if (lastError) renderError(app, lastError, () => { lastError = null; render(); });
       return;
@@ -275,6 +285,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
       else if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); editor.handlers.onDeleteSel(); }
       return;
     }
+    if (e.key === "Escape" && appState === "codex") { appState = "hub"; hubMode = "menu"; render(); return; }
     if (e.key !== "Escape" || appState !== "run") return;
     if (ui.sheetUid || ui.partyOpen) { ui.sheetUid = null; ui.partyOpen = false; ui.sheetCharId = null; render(); }
     else if (ui.selectedSkillId) battleHandlers.onCancel();
