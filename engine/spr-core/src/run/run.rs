@@ -399,4 +399,54 @@ mod tests {
             std::fs::write(path, canonical_json(&serde_json::Value::Object(out)) + "\n").unwrap();
         }
     }
+
+    #[test]
+    fn run1_youth_boots_and_completes() {
+        // 야인시대 런1: 부팅→자동전투→전직→완주 무오류(데이터 런타임 회귀). 골든 무관, 패닉 없이 종료만 검증.
+        use crate::ai::choose_action;
+        use crate::flow::step;
+        use crate::run::{choose_class_change, choose_encounter_option, leave_shop, resolve_battle_end, skip_class_change};
+        let d = RunData::load();
+        let rd = spr_data::runs().get("run1_youth").expect("run1_youth 런 존재").clone();
+        for seed in [1u32, 42] {
+            let mut run = create_run(seed, &rd.roster.clone(), &rd, &HashMap::new(), rd.use_mastery, &d.chars);
+            let mut guard = 0;
+            while run.phase != "won" && run.phase != "lost" && guard < 5000 {
+                guard += 1;
+                match run.phase.as_str() {
+                    "map" => {
+                        let n = run.reachable[0].clone();
+                        enter_node(&mut run, &n, &d);
+                    }
+                    "battle" => {
+                        while run.battle.as_ref().map(|b| b.phase == "inProgress").unwrap_or(false) {
+                            let a = {
+                                let b = run.battle.as_ref().unwrap();
+                                choose_action(b, &d.skills, &d.defs, &d.ai_profiles)
+                            };
+                            step(run.battle.as_mut().unwrap(), &a, &d.defs, &d.skills);
+                        }
+                        resolve_battle_end(&mut run, &d);
+                    }
+                    "reward" => {
+                        let id = super::reward_id(&run.rewards.as_ref().unwrap()[0]).to_string();
+                        choose_reward(&mut run, &id, &d);
+                    }
+                    "shop" => leave_shop(&mut run, &d),
+                    "encounter" => {
+                        let id = run.encounter.as_ref().unwrap().choices[0].id.clone();
+                        choose_encounter_option(&mut run, &id, &d);
+                    }
+                    "classChange" => {
+                        choose_class_change(&mut run, "kim_young", "kim_young_job_martial", &d);
+                        if run.phase == "classChange" {
+                            skip_class_change(&mut run, &d);
+                        }
+                    }
+                    _ => break,
+                }
+            }
+            assert!(run.phase == "won" || run.phase == "lost", "run1 seed {} 미종료(현재 {})", seed, run.phase);
+        }
+    }
 }

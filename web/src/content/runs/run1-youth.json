@@ -1,0 +1,80 @@
+{
+  "id": "run1_youth",
+  "name": "야인시대 1: 유년·성장",
+  "desc": "맨주먹 고아 소년두한이 개성 착취에서 벗어나 경성 거지촌을 평정하고, 유태권에게 무술을 전수받아 사나이로 빚어진다. 단신→파티→전직의 성장 곡선. (원작 1~8화)",
+  "useMastery": false,
+  "entryFloorId": "f1",
+  "roster": [
+    { "charId": "kim_young", "pos": { "row": 1, "col": 0 } },
+    { "charId": "gaekko", "pos": { "row": 1, "col": 2 } },
+    { "charId": "jin", "pos": { "row": 2, "col": 2 } }
+  ],
+  "floors": [
+    {
+      "id": "f1",
+      "name": "개성 — 착취와 탈출",
+      "entryNodeId": "f1_entry",
+      "nodes": [
+        { "id": "f1_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f1_manju", "type": "encounter", "q": 1, "r": 0, "label": "만주 상면", "core": [{ "kind": "grantStatus", "charId": "kim_young", "statusId": "might", "stacks": 1, "duration": 99 }, { "kind": "text", "text": "만주 설원에서 아버지 김좌진과 단 하루를 보내고 회중시계를 받다. \"강한 사나이가 되어 의를 위해 목숨을 버려라.\"" }] },
+        { "id": "f1_uncle", "type": "battle", "q": 2, "r": 0, "label": "외삼촌패", "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 6 }, { "kind": "reward", "tier": 1 }] },
+        { "id": "f1_kaneyama", "type": "encounter", "q": 3, "r": 0, "label": "가네야마 저택", "core": [{ "kind": "event", "event": { "id": "f1_kaneyama_ev", "title": "가네야마 저택", "text": "악덕 지주 가네야마의 집. 아버지의 시계와 빚 장부가 저 안에 있다. 훔친 것과 빼앗은 것은 다르다.", "choices": [{ "id": "threat", "label": "협박해 장부를 태우고 시계를 되찾는다 (골드 +20)", "result": { "kind": "gold", "amount": 20 } }, { "id": "burn", "label": "발각되면 불을 지르고 달아난다 (70%: 골드 +25 / 실패: HP 15%)", "gamble": { "chance": 70, "win": { "kind": "gold", "amount": 25 }, "lose": { "kind": "hurt", "pct": 15 } } }] } }] },
+        { "id": "f1_clear", "type": "clear", "q": 4, "r": 0, "toFloor": "f2" }
+      ],
+      "edges": [
+        { "from": "f1_entry", "to": "f1_manju" },
+        { "from": "f1_manju", "to": "f1_uncle" },
+        { "from": "f1_uncle", "to": "f1_kaneyama" },
+        { "from": "f1_kaneyama", "to": "f1_clear" }
+      ]
+    },
+    {
+      "id": "f2",
+      "name": "경성 거지촌 — 생존과 패권",
+      "entryNodeId": "f2_entry",
+      "nodes": [
+        { "id": "f2_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f2_join", "type": "encounter", "q": 1, "r": 0, "label": "거지패 합류", "core": [{ "kind": "text", "text": "경성역. 미와의 추격을 거지 아이들이 오물로 막아낸다. 익살꾼 개코와 독학파 정진영이 두한의 식구가 되다." }, { "kind": "heal", "pct": 30 }] },
+        { "id": "f2_beggars", "type": "battle", "q": 2, "r": 0, "label": "거지촌 텃세", "core": [{ "kind": "combat", "roster": [{ "charId": "beggar_thug", "pos": { "row": 1, "col": 0 } }, { "charId": "beggar_thug", "pos": { "row": 2, "col": 0 } }, { "charId": "beggar_thug", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 8 }, { "kind": "reward", "tier": 1 }] },
+        { "id": "f2_shop", "type": "shop", "q": 3, "r": 0, "label": "사동옥 보급", "core": [{ "kind": "shop" }] },
+        { "id": "f2_rest", "type": "rest", "q": 4, "r": 0, "label": "장타령 한 마당", "core": [{ "kind": "heal", "pct": 40 }] },
+        { "id": "f2_miwa", "type": "elite", "q": 5, "r": 0, "label": "미와 추격대", "core": [{ "kind": "combat", "roster": [{ "charId": "detective", "pos": { "row": 1, "col": 0 } }, { "charId": "detective", "pos": { "row": 2, "col": 0 } }, { "charId": "thug", "pos": { "row": 1, "col": 1 } }, { "charId": "thug", "pos": { "row": 2, "col": 1 } }] }, { "kind": "gold", "amount": 16 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f2_wangcho", "type": "boss", "q": 6, "r": 0, "label": "거지촌 왕초", "core": [{ "kind": "combat", "boss": true, "roster": [{ "charId": "wangcho", "pos": { "row": 1, "col": 0 } }, { "charId": "beggar_thug", "pos": { "row": 0, "col": 0 } }, { "charId": "beggar_thug", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 24 }, { "kind": "reward", "tier": 3 }] },
+        { "id": "f2_clear", "type": "clear", "q": 7, "r": 0, "toFloor": "f3" }
+      ],
+      "edges": [
+        { "from": "f2_entry", "to": "f2_join" },
+        { "from": "f2_join", "to": "f2_beggars" },
+        { "from": "f2_beggars", "to": "f2_shop" },
+        { "from": "f2_shop", "to": "f2_rest" },
+        { "from": "f2_rest", "to": "f2_miwa" },
+        { "from": "f2_miwa", "to": "f2_wangcho" },
+        { "from": "f2_wangcho", "to": "f2_clear" }
+      ]
+    },
+    {
+      "id": "f3",
+      "name": "사동옥 — 수련과 각성",
+      "entryNodeId": "f3_entry",
+      "nodes": [
+        { "id": "f3_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f3_master", "type": "rest", "q": 1, "r": 0, "label": "유태권 입문", "core": [{ "kind": "classChange", "max": 1 }, { "kind": "text", "text": "유태권의 제자가 되어 무도가의 길에 들어서다. 기(氣) 집중과 필살기의 기초를 익히다." }] },
+        { "id": "f3_train1", "type": "rest", "q": 2, "r": 0, "label": "새벽 수련", "core": [{ "kind": "grantStatus", "charId": "kim_young", "statusId": "edge", "stacks": 1, "duration": 99 }, { "kind": "text", "text": "삼각산 달리기·철봉·역도로 몸을 단련하다. 주먹이 날카로워진다." }] },
+        { "id": "f3_students", "type": "elite", "q": 3, "r": 0, "label": "일본 학생 4인", "core": [{ "kind": "combat", "roster": [{ "charId": "jp_student", "pos": { "row": 0, "col": 0 } }, { "charId": "jp_student", "pos": { "row": 1, "col": 0 } }, { "charId": "jp_student", "pos": { "row": 2, "col": 0 } }, { "charId": "jp_student", "pos": { "row": 1, "col": 1 } }] }, { "kind": "gold", "amount": 12 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f3_naseokju", "type": "encounter", "q": 4, "r": 0, "label": "나석주 의거", "core": [{ "kind": "text", "text": "나석주 의사가 동양척식·식산은행에 폭탄을 던지고 일경과 총격 끝에 순국하다. 미와가 아버지의 원수임을 알게 되다 — 가슴에 복수가 새겨진다." }, { "kind": "grantStatus", "charId": "kim_young", "statusId": "might", "stacks": 1, "duration": 99 }] },
+        { "id": "f3_train2", "type": "rest", "q": 5, "r": 0, "label": "필살기 완성", "core": [{ "kind": "text", "text": "통나무를 단전 일격으로 부수고 샌드백을 날라차기로 터뜨리다 — 마침내 필살기를 완성하다." }, { "kind": "heal", "pct": 30 }] },
+        { "id": "f3_end", "type": "encounter", "q": 6, "r": 0, "label": "부친 사망·복수 맹세", "core": [{ "kind": "text", "text": "김좌진 장군 급사 전보. 미와가 사동옥에 난입해 원노인을 위협한다. \"네 아비보다 더 큰 사람이 돼라.\" 소년두한이 복수를 맹세하며 종로로 향한다." }, { "kind": "grantStatus", "charId": "kim_young", "statusId": "might", "stacks": 1, "duration": 99 }] },
+        { "id": "f3_clear", "type": "clear", "q": 7, "r": 0 }
+      ],
+      "edges": [
+        { "from": "f3_entry", "to": "f3_master" },
+        { "from": "f3_master", "to": "f3_train1" },
+        { "from": "f3_train1", "to": "f3_students" },
+        { "from": "f3_students", "to": "f3_naseokju" },
+        { "from": "f3_naseokju", "to": "f3_train2" },
+        { "from": "f3_train2", "to": "f3_end" },
+        { "from": "f3_end", "to": "f3_clear" }
+      ]
+    }
+  ]
+}
