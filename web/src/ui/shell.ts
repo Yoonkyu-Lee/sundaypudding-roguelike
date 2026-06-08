@@ -99,6 +99,18 @@ export function renderHub(app: HTMLElement, d: HubData, h: ShellHandlers): void 
   app.querySelectorAll<HTMLElement>(".hub-run[data-run]").forEach((el) => el.addEventListener("click", () => h.onSelectRun(el.dataset.run!)));
 }
 
+/** 오류 알림 오버레이 (게임 내 — 네이티브 alert 대체, 게임-티 금지). 백드롭/확인 = 닫기. */
+export function renderError(app: HTMLElement, message: string, onDismiss: () => void): void {
+  app.querySelector(".pause-overlay")?.remove();
+  const ov = document.createElement("div");
+  ov.className = "pause-overlay";
+  ov.innerHTML = `<div class="pause-box" role="alertdialog"><h2>⚠ 시작할 수 없음</h2><p class="err-msg">${esc(message)}</p><button class="act" id="errok">확인</button></div>`;
+  app.appendChild(ov);
+  const close = () => { ov.remove(); onDismiss(); };
+  ov.addEventListener("click", (e) => { if (e.target === ov) close(); });
+  ov.querySelector("#errok")!.addEventListener("click", close);
+}
+
 /** 일시정지 오버레이 (런 화면 위에 덧댐). */
 export function renderPause(app: HTMLElement, h: ShellHandlers): void {
   app.querySelector(".pause-overlay")?.remove();

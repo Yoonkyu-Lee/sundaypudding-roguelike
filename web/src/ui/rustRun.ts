@@ -9,7 +9,7 @@ import { renderRunScreen, type RunHandlers } from "./runRender.ts";
 import { renderAppObs, type ObsTargeting } from "./render.ts";
 import { createTimelinePanel, type RollView } from "./battle/timelinePanel.ts";
 import type { Handlers, SkillBarEntry, Ui } from "./battle/shared.ts";
-import { renderTitle, renderHub, renderPause, type ShellHandlers } from "./shell.ts";
+import { renderTitle, renderHub, renderPause, renderError, type ShellHandlers } from "./shell.ts";
 import { createHub } from "./hub.ts";
 import { renderEditor } from "./editor/editorRender.ts";
 import { createEditor } from "./editor/controller.ts";
@@ -33,6 +33,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
   let seed = startSeed;
   let appState: "title" | "hub" | "editor" | "run" = "title";
   let hubMode: "menu" | "campaign" = "menu"; // 허브 하위 뷰(진입점 메뉴 / 캠페인 런 목록)
+  let lastError: string | null = null; // 셸(허브/에디터)에서 IPC 런 생성 실패 표시 — 죽은 클릭 방지
   let runActive = false;
   let pauseOpen = false;
   let view: RunView | null = null;
@@ -92,7 +93,12 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
     onEnterCampaign: () => { hubMode = "campaign"; render(); },
     onHubBack: () => { hubMode = "menu"; render(); },
     // 캠페인 = 선택 런의 고정 로스터로 시작(run_create_def — 주인공 강제, 자유 편성 없음).
-    onNewRun: async () => { clearSave(); view = await callView("run_create_def", { seed: ++seed, runDef: hub.selectedRunDef() }); runActive = true; pauseOpen = false; appState = "run"; cur = null; if (view.phase === "battle") await enterBattle(); else render(); persist(); },
+    onNewRun: async () => {
+      clearSave();
+      try { view = await callView("run_create_def", { seed: ++seed, runDef: hub.selectedRunDef() }); }
+      catch (e) { lastError = `런을 시작할 수 없습니다 — ${String(e)} (데스크톱 엔진을 다시 빌드하세요: cd desktop && cargo build)`; render(); return; }
+      lastError = null; runActive = true; pauseOpen = false; appState = "run"; cur = null; if (view.phase === "battle") await enterBattle(); else render(); persist();
+    },
     onResumeRun: () => { appState = "run"; pauseOpen = false; if (view?.phase === "battle") void enterBattle(); else render(); },
     onAbandonRun: () => { runActive = false; clearSave(); render(); },
     onToHub: () => { appState = "hub"; hubMode = "menu"; pauseOpen = false; if (view && (view.phase === "won" || view.phase === "lost")) { runActive = false; clearSave(); } render(); },
@@ -104,7 +110,12 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
 
   // ── 에디터(저작) — testRun=Rust 런 생성 ──
   const editor = createEditor({
-    testRun: async (def: RunDef) => { clearSave(); view = await callView("run_create_def", { seed: ++seed, runDef: def }); runActive = true; pauseOpen = false; appState = "run"; cur = null; if (view.phase === "battle") await enterBattle(); else render(); persist(); },
+    testRun: async (def: RunDef) => {
+      clearSave();
+      try { view = await callView("run_create_def", { seed: ++seed, runDef: def }); }
+      catch (e) { lastError = `테스트 런 실패 — ${String(e)}`; render(); return; }
+      lastError = null; runActive = true; pauseOpen = false; appState = "run"; cur = null; if (view.phase === "battle") await enterBattle(); else render(); persist();
+    },
     rerender: render,
     toTitle: () => { appState = "title"; render(); },
   });
@@ -228,6 +239,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
       if (appState === "title") renderTitle(app, shell);
       else if (appState === "editor") renderEditor(app, editor.data(), editor.handlers);
       else renderHub(app, hub.data(stubRun(), runActive, hubMode), shell);
+      if (lastError) renderError(app, lastError, () => { lastError = null; render(); });
       return;
     }
     if (view?.phase === "battle") { renderBattle(); }
