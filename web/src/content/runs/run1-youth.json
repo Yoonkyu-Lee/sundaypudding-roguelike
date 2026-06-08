@@ -2,12 +2,11 @@
   "id": "run1_youth",
   "name": "야인시대 1: 유년·성장",
   "desc": "맨주먹 고아 소년두한이 개성 착취에서 벗어나 경성 거지촌을 평정하고, 유태권에게 무술을 전수받아 사나이로 빚어진다. 단신→파티→전직의 성장 곡선. (원작 1~8화)",
+  "mode": "campaign",
   "useMastery": false,
   "entryFloorId": "f1",
   "roster": [
-    { "charId": "kim_young", "pos": { "row": 1, "col": 0 } },
-    { "charId": "gaekko", "pos": { "row": 1, "col": 2 } },
-    { "charId": "jin", "pos": { "row": 2, "col": 2 } }
+    { "charId": "kim_young", "pos": { "row": 1, "col": 0 } }
   ],
   "floors": [
     {
@@ -34,7 +33,7 @@
       "entryNodeId": "f2_entry",
       "nodes": [
         { "id": "f2_entry", "type": "start", "q": 0, "r": 0 },
-        { "id": "f2_join", "type": "encounter", "q": 1, "r": 0, "label": "거지패 합류", "core": [{ "kind": "text", "text": "경성역. 미와의 추격을 거지 아이들이 오물로 막아낸다. 익살꾼 개코와 독학파 정진영이 두한의 식구가 되다." }, { "kind": "heal", "pct": 30 }] },
+        { "id": "f2_join", "type": "encounter", "q": 1, "r": 0, "label": "거지패 합류", "core": [{ "kind": "text", "text": "경성역. 미와의 추격을 거지 아이들이 오물로 막아낸다. 익살꾼 개코와 독학파 정진영이 두한의 식구가 되다." }, { "kind": "partyChange", "add": ["gaekko", "jin"] }, { "kind": "heal", "pct": 30 }] },
         { "id": "f2_beggars", "type": "battle", "q": 2, "r": 0, "label": "거지촌 텃세", "core": [{ "kind": "combat", "roster": [{ "charId": "beggar_thug", "pos": { "row": 1, "col": 0 } }, { "charId": "beggar_thug", "pos": { "row": 2, "col": 0 } }, { "charId": "beggar_thug", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 8 }, { "kind": "reward", "tier": 1 }] },
         { "id": "f2_shop", "type": "shop", "q": 3, "r": 0, "label": "사동옥 보급", "core": [{ "kind": "shop" }] },
         { "id": "f2_rest", "type": "rest", "q": 4, "r": 0, "label": "장타령 한 마당", "core": [{ "kind": "heal", "pct": 40 }] },

@@ -433,8 +433,14 @@ mod tests {
         use crate::run::{choose_class_change, choose_encounter_option, leave_shop, resolve_battle_end, skip_class_change};
         let d = RunData::load();
         let rd = spr_data::runs().get("run1_youth").expect("run1_youth 런 존재").clone();
+        // E3: 단신 시작 — roster=소년두한 1명.
+        assert_eq!(rd.roster.len(), 1, "run1 단신 시작");
+        assert_eq!(rd.mode.as_deref(), Some("campaign"), "run1 캠페인 모드");
+        let mut any_joined = false;
         for seed in [1u32, 42] {
             let mut run = create_run(seed, &rd.roster.clone(), &rd, &HashMap::new(), rd.use_mastery, &d.chars);
+            assert_eq!(run.party.len(), 1, "시작 = 소년두한 단신");
+            let mut max_party = run.party.len();
             let mut guard = 0;
             while run.phase != "won" && run.phase != "lost" && guard < 5000 {
                 guard += 1;
@@ -470,8 +476,14 @@ mod tests {
                     }
                     _ => break,
                 }
+                max_party = max_party.max(run.party.len());
             }
             assert!(run.phase == "won" || run.phase == "lost", "run1 seed {} 미종료(현재 {})", seed, run.phase);
+            if max_party > 1 {
+                any_joined = true;
+            }
         }
+        // f2_join partyChange가 적어도 한 시드에서 발화(개코·정진영 합류) — 동적 파티 경로 검증.
+        assert!(any_joined, "run1 어느 시드도 f2 합류에 도달 못함(단신 f1 전멸?)");
     }
 }
