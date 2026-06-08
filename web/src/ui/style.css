@@ -745,7 +745,8 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .hub-mode-dsc { font-size: 12px; color: var(--dim); }
 .hub-soon { font-size: 10px; font-weight: 600; color: var(--dim); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; margin-left: 6px; vertical-align: middle; }
 
-.pause-box .err-msg { font-size: 13px; color: var(--dim); line-height: 1.5; margin: 4px 0 8px; max-width: 360px; }
+/* 디버깅용 오류 텍스트만 선택·복사 허용(전역 user-select:none 예외 — 사용자가 메시지 복사 요청). */
+.pause-box .err-msg { font-size: 13px; color: var(--dim); line-height: 1.5; margin: 4px 0 8px; max-width: 360px; user-select: text; -webkit-user-select: text; cursor: text; }
 
 /* ── 전투 엔진 검증 하네스 (P1-13, rustBattle.ts) ── */
 .rb-root { display: flex; flex-direction: column; gap: 12px; padding: 14px 18px; max-width: 1100px; margin: 0 auto; }
