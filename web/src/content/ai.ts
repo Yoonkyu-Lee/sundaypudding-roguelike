@@ -39,4 +39,37 @@ export const AI_PROFILES: Record<string, AiProfile> = {
       { prefer: "damage", target: "lowestHpEnemy" },
     ],
   },
+
+  // ── 야인시대 런1 ── (gamedata/run01-youth.md)
+  // 군림형 폭력배: 자기 강화(군림) 가능하면 먼저, 아니면 최저 HP 적 강타. (왕초)
+  bruiser: {
+    id: "bruiser", name: "군림", desc: "자기 강화 가능하면 군림, 아니면 최저 HP 적 공격.",
+    rules: [
+      { prefer: "applyStatus", target: "self" },
+      { prefer: "damage", target: "lowestHpEnemy" },
+    ],
+  },
+  // 지휘관: 적 전체 약화/제어 우선, 아니면 공격. (미와)
+  commander: {
+    id: "commander", name: "지휘", desc: "적 약화/제어 우선, 아니면 최저 HP 적 공격.",
+    rules: [
+      { prefer: "applyStatus", target: "anyEnemy" },
+      { prefer: "damage", target: "lowestHpEnemy" },
+    ],
+  },
+  // 겁쟁이: 자기 방어막부터, 여유 있으면 약하게 공격. (가네야마)
+  coward: {
+    id: "coward", name: "보신", desc: "HP 80% 미만이면 자기 방어, 아니면 소극 공격.",
+    rules: [
+      { if: [{ c: "selfHpPct", cmp: "lt", v: 80 }], prefer: "shield", target: "self" },
+      { prefer: "damage", target: "lowestHpEnemy" },
+    ],
+  },
+  // 떼거리: 무지성 최저 HP 적 집중 가격(다수 압박). (일본 학생)
+  swarm: {
+    id: "swarm", name: "떼거리", desc: "최저 HP 적에 떼로 달려든다.",
+    rules: [
+      { prefer: "damage", target: "lowestHpEnemy" },
+    ],
+  },
 };
