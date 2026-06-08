@@ -32,6 +32,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
   if (!invoke) { app.innerHTML = `<div class="rb-root"><p style="color:var(--enemy)">Rust 코어(Tauri) 런타임이 아님 — 앱에서 ?core=rust&full=1 로 실행하세요.</p></div>`; return; }
   let seed = startSeed;
   let appState: "title" | "hub" | "editor" | "run" = "title";
+  let hubMode: "menu" | "campaign" = "menu"; // 허브 하위 뷰(진입점 메뉴 / 캠페인 런 목록)
   let runActive = false;
   let pauseOpen = false;
   let view: RunView | null = null;
@@ -50,7 +51,6 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
     const party = view ? view.party.map((p) => ({ charId: p.charId })) : [];
     return { party, floor: view ? view.floor - 1 : 0, runDef: { id: DEFAULT_RUN.id, name: DEFAULT_RUN.name, floors: new Array(view?.totalFloors ?? DEFAULT_RUN.floors.length) } } as unknown as RunState;
   }
-  function selectedIds(): string[] { return hub.data(stubRun(), false).pool.filter((p) => p.selected).map((p) => p.charId); }
 
   // ── IPC 호출 ──
   function showErr(where: string, err: unknown): void {
@@ -87,14 +87,17 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
 
   // ── 셸(타이틀/허브/일시정지/에디터) ──
   const shell: ShellHandlers = {
-    onStart: () => { appState = "hub"; render(); },
+    onStart: () => { appState = "hub"; hubMode = "menu"; render(); },
     onEditor: () => { appState = "editor"; render(); },
-    onNewRun: async () => { clearSave(); view = await callView("run_create_roster", { seed: ++seed, charIds: selectedIds() }); runActive = true; pauseOpen = false; appState = "run"; cur = null; if (view.phase === "battle") await enterBattle(); else render(); persist(); },
+    onEnterCampaign: () => { hubMode = "campaign"; render(); },
+    onHubBack: () => { hubMode = "menu"; render(); },
+    // 캠페인 = 선택 런의 고정 로스터로 시작(run_create_def — 주인공 강제, 자유 편성 없음).
+    onNewRun: async () => { clearSave(); view = await callView("run_create_def", { seed: ++seed, runDef: hub.selectedRunDef() }); runActive = true; pauseOpen = false; appState = "run"; cur = null; if (view.phase === "battle") await enterBattle(); else render(); persist(); },
     onResumeRun: () => { appState = "run"; pauseOpen = false; if (view?.phase === "battle") void enterBattle(); else render(); },
     onAbandonRun: () => { runActive = false; clearSave(); render(); },
-    onToHub: () => { appState = "hub"; pauseOpen = false; if (view && (view.phase === "won" || view.phase === "lost")) { runActive = false; clearSave(); } render(); },
+    onToHub: () => { appState = "hub"; hubMode = "menu"; pauseOpen = false; if (view && (view.phase === "won" || view.phase === "lost")) { runActive = false; clearSave(); } render(); },
     onResume: () => { pauseOpen = false; render(); },
-    onToTitle: () => { appState = "title"; runActive = false; pauseOpen = false; clearSave(); render(); },
+    onToTitle: () => { appState = "title"; hubMode = "menu"; runActive = false; pauseOpen = false; clearSave(); render(); },
     onSelectRun: (id) => { if (runActive) return; hub.setRun(id); render(); },
     onToggleChar: (charId) => { if (runActive) return; hub.toggle(charId); render(); },
   };
@@ -224,7 +227,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
       app.querySelector(".pause-overlay")?.remove();
       if (appState === "title") renderTitle(app, shell);
       else if (appState === "editor") renderEditor(app, editor.data(), editor.handlers);
-      else renderHub(app, hub.data(stubRun(), runActive), shell);
+      else renderHub(app, hub.data(stubRun(), runActive, hubMode), shell);
       return;
     }
     if (view?.phase === "battle") { renderBattle(); }

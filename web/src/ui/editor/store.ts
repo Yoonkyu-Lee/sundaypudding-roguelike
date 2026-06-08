@@ -29,7 +29,7 @@ let drafts: Drafts = load();
 function persist(): void { try { localStorage.setItem(KEY, JSON.stringify(drafts)); } catch { /* */ } }
 
 export type RunSource = "repo" | "draft";
-export interface RunListItem { id: string; name: string; source: RunSource; }
+export interface RunListItem { id: string; name: string; source: RunSource; mode?: string; }
 
 // 드래프트 id 생성 — Date.now + counter(같은 ms 내 다중 생성 충돌 방지, ops.ts/templates.ts 패턴 일관).
 let draftCounter = 0;
@@ -37,8 +37,8 @@ function newDraftId(): string { return `draft_${Date.now().toString(36)}${(draft
 
 /** 런 목록 = 드래프트(편집가능) + repo RUNS(읽기전용). 같은 id면 드래프트 우선. */
 export function listRuns(): RunListItem[] {
-  const out: RunListItem[] = Object.values(drafts).map((r) => ({ id: r.id, name: r.name, source: "draft" as const }));
-  for (const r of Object.values(RUNS)) if (!drafts[r.id]) out.push({ id: r.id, name: r.name, source: "repo" });
+  const out: RunListItem[] = Object.values(drafts).map((r) => ({ id: r.id, name: r.name, source: "draft" as const, mode: r.mode }));
+  for (const r of Object.values(RUNS)) if (!drafts[r.id]) out.push({ id: r.id, name: r.name, source: "repo", mode: r.mode });
   return out;
 }
 export function getRun(id: string): RunDef | undefined { return drafts[id] ?? RUNS[id]; }

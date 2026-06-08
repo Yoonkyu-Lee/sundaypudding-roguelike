@@ -735,6 +735,16 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .hub-pickcount { margin-top: 12px; text-align: center; font-size: 12px; color: var(--accent); }
 .hub-controls .act[disabled] { opacity: .4; cursor: not-allowed; }
 
+/* ── 허브 진입점 메뉴(모드 선택) — E1b ── */
+.hub-modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.hub-mode { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 18px 18px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel2); color: var(--txt); cursor: pointer; text-align: left; transition: border-color .15s, transform .1s, box-shadow .15s; }
+.hub-mode:hover:not([disabled]) { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+.hub-mode[disabled] { opacity: .4; cursor: not-allowed; }
+.hub-mode-ic { font-size: 28px; }
+.hub-mode-nm { font-size: 17px; font-weight: 700; color: var(--accent); }
+.hub-mode-dsc { font-size: 12px; color: var(--dim); }
+.hub-soon { font-size: 10px; font-weight: 600; color: var(--dim); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; margin-left: 6px; vertical-align: middle; }
+
 /* ── 전투 엔진 검증 하네스 (P1-13, rustBattle.ts) ── */
 .rb-root { display: flex; flex-direction: column; gap: 12px; padding: 14px 18px; max-width: 1100px; margin: 0 auto; }
 .rb-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
