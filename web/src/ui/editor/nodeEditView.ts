@@ -31,6 +31,7 @@ function fieldInput(L: Layer, idx: number): string {
     if (f.type === "bool") control = `<input type="checkbox" id="${id}" data-fkey="${f.key}"${cur ? " checked" : ""}>`;
     else if (f.type === "select") { const empty = f.allowEmpty ? `<option value=""${cur ? "" : " selected"}>(전원)</option>` : ""; control = `<select id="${id}" data-fkey="${f.key}">${empty}${optionList(f).map((o) => `<option value="${o.value}"${cur === o.value ? " selected" : ""}>${esc(o.label)}</option>`).join("")}</select>`; }
     else if (f.type === "number") control = `<input type="number" id="${id}" data-fkey="${f.key}" value="${cur ?? 0}"${f.step ? ` step="${f.step}"` : ""}>`;
+    else if (f.type === "csv") control = `<input type="text" id="${id}" data-fkey="${f.key}" placeholder="charId,charId" value="${esc(Array.isArray(cur) ? cur.join(",") : "")}">`;
     else control = `<input type="text" id="${id}" data-fkey="${f.key}" value="${esc(String(cur ?? ""))}">`;
     return `<label class="ne-field">${esc(f.label)} ${control}</label>`;
   }).join("");
@@ -86,7 +87,10 @@ export function renderNodeEditView(app: HTMLElement, d: NodeEditData, h: EditorH
   app.querySelectorAll<HTMLElement>("[data-mv]").forEach((b) => b.addEventListener("click", () => h.onMoveLayer(b.dataset.slot as LayerSlot, Number(b.dataset.mv), Number(b.dataset.dir))));
   app.querySelectorAll<HTMLInputElement | HTMLSelectElement>(".ne-field [data-fkey]").forEach((el) => el.addEventListener("change", () => {
     const key = el.dataset.fkey!;
-    const val = el instanceof HTMLInputElement && el.type === "checkbox" ? el.checked : el instanceof HTMLInputElement && el.type === "number" ? Number(el.value) : el.value;
+    const fspec = sel ? LAYER_SPECS[sel.kind].fields.find((f) => f.key === key) : undefined;
+    const val = fspec?.type === "csv"
+      ? el.value.split(",").map((s) => s.trim()).filter(Boolean)
+      : el instanceof HTMLInputElement && el.type === "checkbox" ? el.checked : el instanceof HTMLInputElement && el.type === "number" ? Number(el.value) : el.value;
     h.onSetLayerField(d.sel!.slot, d.sel!.idx, key, val);
   }));
   // 전장 그리드: combat 적 배치 — 유효 구성(프리셋 포함) 표시, 편집 시 인라인 roster로 구체화

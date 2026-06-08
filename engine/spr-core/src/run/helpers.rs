@@ -4,9 +4,10 @@ use super::passives::{fire_run_trigger, RunTriggerCtx};
 use super::types::RunState;
 use crate::graph::live_reachable;
 use crate::util::round_div;
+use spr_types::data::{Character, Pos};
 use spr_types::map::{FloorDef, Layer};
-use spr_types::party::{PartyMemberState, PendingStatus};
-use std::collections::HashSet;
+use spr_types::party::{Equipped, PartyMemberState, PendingStatus};
+use std::collections::{HashMap, HashSet};
 
 /// 현재 층 그래프(RunState 단일 진실원).
 pub fn cur_floor(run: &RunState) -> &FloorDef {
@@ -34,7 +35,41 @@ pub fn heal_party(run: &mut RunState, pct: i64, revive: bool, d: &RunData) {
     fire_run_trigger(run, &ctx, d);
 }
 
-/// 즉시 데코레이터 레이어 실행 — gold/heal/grantStatus/text 순서 적용 + 로그. TS runInstantLayers.
+/// 파티원 1명 생성 — 루트 직업(0차)·learnset 앞4·빈 장비. create_run·partyChange add 공유.
+/// pos=진형 배치, mastery_level=숙련도 스냅샷(런 시작은 mastery맵, 런 중 합류는 0).
+pub fn build_party_member(char_id: &str, pos: Pos, mastery_level: i64, chars: &HashMap<String, Character>) -> PartyMemberState {
+    let c = &chars[char_id];
+    let owned: Vec<String> = c.skill_ids.iter().take(4).cloned().collect();
+    PartyMemberState {
+        char_id: char_id.to_string(),
+        pos,
+        hp: c.hp,
+        max_hp: c.hp,
+        skill_dmg_bonus: HashMap::new(),
+        owned_skill_ids: owned.clone(),
+        active_skill_ids: owned,
+        equipped: Equipped::default(),
+        mastery_level,
+        // 전직(4.7): 합류도 루트 직업(0차)에서 시작 — 차수 0, 부여 패시브 없음.
+        job_id: c.root_job_id.clone(),
+        class_tier: 0,
+        job_trait_ids: Vec::new(),
+    }
+}
+
+/// 진형 빈 슬롯 탐색 — col(0=전열) 우선, row 순. 점유 칸 회피(진형 충돌 방지). 만석이면 (0,0).
+fn empty_slot(party: &[PartyMemberState]) -> Pos {
+    for col in 0..3 {
+        for row in 0..4 {
+            if !party.iter().any(|m| m.pos.row == row && m.pos.col == col) {
+                return Pos { row, col };
+            }
+        }
+    }
+    Pos { row: 0, col: 0 }
+}
+
+/// 즉시 데코레이터 레이어 실행 — gold/heal/grantStatus/text/partyChange 순서 적용 + 로그. TS runInstantLayers.
 pub fn run_instant_layers(run: &mut RunState, layers: &[Layer], d: &RunData) {
     for l in layers {
         match l {
@@ -60,6 +95,27 @@ pub fn run_instant_layers(run: &mut RunState, layers: &[Layer], d: &RunData) {
                 run.log.push(format!("상태 부여(다음 전투): {}", status_id));
             }
             Layer::Text { text } => run.log.push(text.clone()),
+            Layer::PartyChange { add, remove } => {
+                // 이탈 먼저(슬롯 비우기) → 합류(빈 슬롯 배치). 중복 합류 무시.
+                if let Some(rm) = remove {
+                    for cid in rm {
+                        if let Some(i) = run.party.iter().position(|m| &m.char_id == cid) {
+                            run.party.remove(i);
+                            run.log.push(format!("이탈: {}", cid));
+                        }
+                    }
+                }
+                if let Some(ad) = add {
+                    for cid in ad {
+                        if run.party.iter().any(|m| &m.char_id == cid) || !d.chars.contains_key(cid) {
+                            continue; // 이미 있거나 미정의 캐릭 → 무시
+                        }
+                        let pos = empty_slot(&run.party);
+                        run.party.push(build_party_member(cid, pos, 0, &d.chars));
+                        run.log.push(format!("합류: {}", cid));
+                    }
+                }
+            }
             _ => {} // 상호작용 레이어는 시퀀서가 처리
         }
     }

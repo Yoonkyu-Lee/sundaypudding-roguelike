@@ -45,6 +45,14 @@ pub enum Layer {
     GrantStatus { #[serde(rename = "charId", default)] char_id: Option<String>, #[serde(rename = "statusId")] status_id: String, stacks: i64, duration: i64 },
     #[serde(rename = "text")]
     Text { text: String },
+    /// 파티 변동(즉시) — 런 중 합류/이탈(스토리). add=charId 신규 합류(루트 직업·숙련0·빈 슬롯 배치), remove=charId 이탈.
+    #[serde(rename = "partyChange")]
+    PartyChange {
+        #[serde(default)]
+        add: Option<Vec<String>>,
+        #[serde(default)]
+        remove: Option<Vec<String>>,
+    },
     // 상호작용(블록)
     #[serde(rename = "combat")]
     Combat { #[serde(default)] roster: Option<Vec<Placement>>, #[serde(default)] boss: bool, #[serde(default)] rules: Option<Vec<NodeRule>> },

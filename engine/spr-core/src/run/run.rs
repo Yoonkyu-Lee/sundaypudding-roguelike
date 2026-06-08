@@ -1,6 +1,6 @@
 //! 런 흐름 — 생성·편성·노드 진입·층 완료·전투종료·보상 (TS `core/run/run.ts`).
 use super::data::RunData;
-use super::helpers::{complete_node, cur_floor, heal_party, learn_owned, node, run_instant_layers, upgrade_owned};
+use super::helpers::{build_party_member, complete_node, cur_floor, heal_party, learn_owned, node, run_instant_layers, upgrade_owned};
 use super::layers::{advance_core, node_core, start_core};
 use super::passives::{fire_run_trigger, RunTriggerCtx};
 use super::rewards::gen_rewards;
@@ -8,7 +8,7 @@ use super::types::{RewardOption, RunState};
 use crate::graph::{live_reachable, validate_run};
 use spr_types::data::{Character, Placement, Pos};
 use spr_types::map::RunDef;
-use spr_types::party::{Equipped, PartyMemberState};
+use spr_types::party::PartyMemberState;
 use spr_types::rng::Rng;
 use std::collections::{HashMap, HashSet};
 
@@ -30,26 +30,7 @@ pub fn create_run(
     let f0 = &run_def.floors[entry_idx];
     let party: Vec<PartyMemberState> = roster
         .iter()
-        .map(|m| {
-            let c = &chars[&m.char_id];
-            let owned: Vec<String> = c.skill_ids.iter().take(4).cloned().collect();
-            PartyMemberState {
-                char_id: m.char_id.clone(),
-                pos: m.pos,
-                hp: c.hp,
-                max_hp: c.hp,
-                skill_dmg_bonus: HashMap::new(),
-                owned_skill_ids: owned.clone(),
-                active_skill_ids: owned,
-                equipped: Equipped::default(),
-                mastery_level: *mastery.get(&m.char_id).unwrap_or(&0),
-                // 전직(4.7): 런 시작 = 루트 직업(0차), 차수 0, 부여 패시브 없음(루트=최초 상태).
-                // 루트 grantsTraitIds는 미적용(루트 정체성=Character.traitIds). 전직 노드서 차수↑·패시브 누적.
-                job_id: c.root_job_id.clone(),
-                class_tier: 0,
-                job_trait_ids: Vec::new(),
-            }
-        })
+        .map(|m| build_party_member(&m.char_id, m.pos, *mastery.get(&m.char_id).unwrap_or(&0), chars))
         .collect();
     let mut visited_set = HashSet::new();
     visited_set.insert(f0.entry_node_id.clone());
@@ -331,6 +312,50 @@ mod tests {
         assert!(r.party[0].owned_skill_ids.contains(&"kim_punch_2".to_string()));
         learn_owned(&mut r.party[0], "kim_punch_2"); // 이미 보유 → 무변
         assert_eq!(r.party[0].owned_skill_ids.iter().filter(|s| *s == "kim_punch_2").count(), 1);
+    }
+
+    #[test]
+    fn party_change_add_remove_and_save_roundtrip() {
+        // E2: partyChange 레이어 — 합류/이탈, 진형 충돌 없음, 중복 무시, 세이브 왕복 보존.
+        use crate::run::save::{deserialize_run, serialize_run};
+        use spr_types::map::Layer;
+        let d = crate::run::RunData::load();
+        let mut r = make(); // yain: kim, shin, shanghai, cho
+        let before: Vec<&str> = r.party.iter().map(|m| m.char_id.as_str()).collect();
+        assert_eq!(before, vec!["kim", "shin", "shanghai", "cho"]);
+
+        // 이탈(shin) + 합류(gaekko, jin)
+        let layer = Layer::PartyChange { add: Some(vec!["gaekko".into(), "jin".into()]), remove: Some(vec!["shin".into()]) };
+        run_instant_layers(&mut r, std::slice::from_ref(&layer), &d);
+        let ids: Vec<&str> = r.party.iter().map(|m| m.char_id.as_str()).collect();
+        assert!(!ids.contains(&"shin"), "shin 이탈");
+        assert!(ids.contains(&"gaekko") && ids.contains(&"jin"), "gaekko·jin 합류");
+        assert_eq!(r.party.len(), 5); // 4 - 1 + 2
+
+        // 진형 충돌 없음(고유 pos)
+        let mut slots: Vec<(i64, i64)> = r.party.iter().map(|m| (m.pos.row, m.pos.col)).collect();
+        let n = slots.len();
+        slots.sort();
+        slots.dedup();
+        assert_eq!(slots.len(), n, "진형 슬롯 충돌");
+
+        // 합류원 = 루트 직업·차수0·learnset(≤4)
+        let g = r.party.iter().find(|m| m.char_id == "gaekko").unwrap();
+        assert_eq!(g.class_tier, 0);
+        assert_eq!(g.hp, g.max_hp);
+        assert!(!g.owned_skill_ids.is_empty() && g.owned_skill_ids.len() <= 4);
+
+        // 중복 합류·미정의 캐릭 무시
+        let dup = Layer::PartyChange { add: Some(vec!["gaekko".into(), "__nope__".into()]), remove: None };
+        run_instant_layers(&mut r, std::slice::from_ref(&dup), &d);
+        assert_eq!(r.party.iter().filter(|m| m.char_id == "gaekko").count(), 1);
+        assert_eq!(r.party.len(), 5);
+
+        // 세이브 왕복 — 동적 파티 보존
+        let expected: Vec<String> = r.party.iter().map(|m| m.char_id.clone()).collect();
+        let restored = deserialize_run(&serialize_run(&r)).expect("deserialize");
+        let rids: Vec<String> = restored.party.iter().map(|m| m.char_id.clone()).collect();
+        assert_eq!(rids, expected, "세이브 왕복 파티 보존");
     }
 
     #[test]

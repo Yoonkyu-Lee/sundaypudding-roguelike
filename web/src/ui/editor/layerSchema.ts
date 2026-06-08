@@ -3,7 +3,7 @@
 import type { Layer } from "../../contract/types.ts";
 import { NODE_ROSTERS } from "../../content/encounters.ts";
 
-export interface FieldSpec { key: string; label: string; type: "number" | "text" | "bool" | "select" | "roster"; options?: string[]; optionsFrom?: "chars" | "statuses"; allowEmpty?: boolean; step?: number; }
+export interface FieldSpec { key: string; label: string; type: "number" | "text" | "bool" | "select" | "roster" | "csv"; options?: string[]; optionsFrom?: "chars" | "statuses"; allowEmpty?: boolean; step?: number; }
 export interface LayerSpec { label: string; fields: FieldSpec[]; make: () => Layer; }
 
 export const LAYER_SPECS: Record<string, LayerSpec> = {
@@ -17,12 +17,13 @@ export const LAYER_SPECS: Record<string, LayerSpec> = {
   heal: { label: "❤ 회복", fields: [{ key: "pct", label: "퍼센트(0~100)", type: "number" }, { key: "revive", label: "전투불능 부활", type: "bool" }], make: () => ({ kind: "heal", pct: 50 }) },
   grantStatus: { label: "✨ 상태 부여(다음 전투)", fields: [{ key: "charId", label: "대상(비움=전원)", type: "select", optionsFrom: "chars", allowEmpty: true }, { key: "statusId", label: "상태", type: "select", optionsFrom: "statuses" }, { key: "stacks", label: "스택", type: "number" }, { key: "duration", label: "지속", type: "number" }], make: () => ({ kind: "grantStatus", statusId: "", stacks: 1, duration: 2 }) },
   text: { label: "💬 대사/로그", fields: [{ key: "text", label: "내용", type: "text" }], make: () => ({ kind: "text", text: "" }) },
+  partyChange: { label: "👥 파티 변동(합류/이탈)", fields: [{ key: "add", label: "합류(charId, 쉼표구분)", type: "csv" }, { key: "remove", label: "이탈(charId, 쉼표구분)", type: "csv" }], make: () => ({ kind: "partyChange", add: [], remove: [] }) }, // 런 중 스토리 합류/이탈
 };
 
 /** core 슬롯 추가 카탈로그(상호작용 먼저, 데코 뒤). */
-export const LAYER_KINDS: string[] = ["combat", "reward", "shop", "event", "classChange", "gold", "heal", "grantStatus", "text"];
+export const LAYER_KINDS: string[] = ["combat", "reward", "shop", "event", "classChange", "gold", "heal", "grantStatus", "text", "partyChange"];
 /** onEnter/onResolve 슬롯 카탈로그 — 데코레이터만(즉시 실행). */
-export const DECO_KINDS: string[] = ["gold", "heal", "grantStatus", "text"];
+export const DECO_KINDS: string[] = ["gold", "heal", "grantStatus", "text", "partyChange"];
 
 /** 레이어 1줄 요약(리스트 표기). */
 export function layerSummary(L: Layer): string {
@@ -36,5 +37,6 @@ export function layerSummary(L: Layer): string {
     case "heal": return `회복 ${Math.round(L.pct * 100)}%${L.revive ? " · 부활" : ""}`;
     case "grantStatus": return `상태 ${L.statusId || "?"}×${L.stacks} (${L.charId || "전원"})`;
     case "text": return `"${L.text}"`;
+    case "partyChange": return `파티 변동 (+${L.add?.length ?? 0}/−${L.remove?.length ?? 0})`;
   }
 }

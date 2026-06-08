@@ -90,7 +90,7 @@ export interface EditorHandlers {
   onRemoveLayer: (slot: LayerSlot, idx: number) => void;
   onMoveLayer: (slot: LayerSlot, idx: number, dir: number) => void; // 순서 ↑(-1)/↓(+1)
   onSelectLayer: (slot: LayerSlot, idx: number) => void;
-  onSetLayerField: (slot: LayerSlot, idx: number, key: string, value: string | number | boolean | RosterEntry[]) => void;
+  onSetLayerField: (slot: LayerSlot, idx: number, key: string, value: string | number | boolean | string[] | RosterEntry[]) => void;
   // 트리거 룰 (Phase E4) — 선택 룰(selRule) 대상으로 동작
   onAddRule: () => void;
   onRemoveRule: (idx: number) => void;

@@ -15,7 +15,8 @@ export type DecoratorLayer =
   | { kind: "gold"; amount: number } // 골드 ±(0 미만 클램프)
   | { kind: "heal"; pct: number; revive?: boolean } // 파티 회복(maxHp 정수 퍼센트, revive=전투불능 부활)
   | { kind: "grantStatus"; charId?: string; statusId: string; stacks: number; duration: number } // 다음 전투 계승(charId 없으면 전원)
-  | { kind: "text"; text: string }; // 로그/대사(컷신 뷰 강화는 Phase C)
+  | { kind: "text"; text: string } // 로그/대사(컷신 뷰 강화는 Phase C)
+  | { kind: "partyChange"; add?: string[]; remove?: string[] }; // 런 중 합류/이탈(스토리). add=신규(루트 직업·숙련0·빈 슬롯), remove=이탈
 // ── 인카운터 이벤트 스키마 (7.2) — event 레이어가 인라인 소유 가능. 풀 상수는 data/events.ts. ──
 export type EncounterOutcome =
   | { kind: "heal"; pct: number }
