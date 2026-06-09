@@ -9,6 +9,7 @@ import run_run4_liberation from "./run4-liberation.json" with { type: "json" };
 import run_run5_war from "./run5-war-era.json" with { type: "json" };
 import run_run6_dongdaemun from "./run6-dongdaemun.json" with { type: "json" };
 import run_run7_liberalfall from "./run7-liberal-fall.json" with { type: "json" };
+import run_run8_april from "./run8-april.json" with { type: "json" };
 
 export const RUNS: Record<string, RunDef> = {
   "yain": run_yain as unknown as RunDef,
@@ -19,4 +20,5 @@ export const RUNS: Record<string, RunDef> = {
   "run5_war": run_run5_war as unknown as RunDef,
   "run6_dongdaemun": run_run6_dongdaemun as unknown as RunDef,
   "run7_liberalfall": run_run7_liberalfall as unknown as RunDef,
+  "run8_april": run_run8_april as unknown as RunDef,
 };

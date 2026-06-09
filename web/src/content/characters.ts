@@ -82,4 +82,11 @@ export const CHARACTERS: Record<string, Character> = {
   kimdongjin: { id: "kimdongjin", name: "김동진", avatar: "🏃", aiProfileId: "coward", hp: 30, speedMin: 5, speedMax: 8, evasion: 10, accuracy: 5, critChance: 10, critMultiplier: 150, skillIds: ["kimdongjin_flee"] },
   igibung: { id: "igibung", name: "이기붕", avatar: "🏛", aiProfileId: "commander", hp: 50, speedMin: 3, speedMax: 6, evasion: 6, accuracy: 5, critChance: 8, critMultiplier: 150, skillIds: ["igibung_power", "igibung_order"] },
   gwakyoungju: { id: "gwakyoungju", name: "곽영주", avatar: "📞", aiProfileId: "commander", hp: 36, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 5, critMultiplier: 150, skillIds: ["gwak_call"] },
+
+  // ══ 야인시대 런8(4.19와 최후) — 신규 (두한·유지광·시라소니·이화룡·곽영주·임화수 재사용) ══ (gamedata/run08)
+  ichano: { id: "ichano", name: "이찬오", avatar: "🎓", playable: true, hp: 22, speedMin: 6, speedMax: 9, evasion: 10, accuracy: 8, critChance: 10, critMultiplier: 150, skillIds: ["ichano_watch", "ichano_jab"] },
+  joilhwan: { id: "joilhwan", name: "조일환", avatar: "🍚", playable: true, hp: 34, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 10, critMultiplier: 150, skillIds: ["joilhwan_supply", "joilhwan_jab"] },
+  kimhyungwook: { id: "kimhyungwook", name: "김형욱", avatar: "🕵", aiProfileId: "commander", hp: 46, speedMin: 4, speedMax: 7, evasion: 6, accuracy: 8, critChance: 8, critMultiplier: 155, skillIds: ["kimhyungwook_torture", "kimhyungwook_jab"] },
+  igwajang: { id: "igwajang", name: "이과장", avatar: "📋", aiProfileId: "commander", hp: 28, speedMin: 4, speedMax: 7, evasion: 6, accuracy: 5, critChance: 5, critMultiplier: 150, skillIds: ["igwajang_weaken"] },
+  minister: { id: "minister", name: "국무위원", avatar: "🎩", aiProfileId: "coward", hp: 42, speedMin: 2, speedMax: 4, evasion: 3, accuracy: 0, critChance: 0, critMultiplier: 150, skillIds: ["minister_cower"] },
 };

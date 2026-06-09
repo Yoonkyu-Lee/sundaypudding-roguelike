@@ -208,4 +208,15 @@ export const SKILLS: Record<string, Skill> = {
   igibung_power: { id: "igibung_power", name: "권력의 압박", exclusiveTo: "igibung", target: "enemy", cooldown: 1, accuracy: 90, effects: [{ kind: "damage", amount: 11 }] },
   igibung_order: { id: "igibung_order", name: "자유당 동원", exclusiveTo: "igibung", target: "ally", area: { kind: "all" }, cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 2 }] },
   gwak_call: { id: "gwak_call", name: "공권력 호출", exclusiveTo: "gwakyoungju", target: "enemy", area: { kind: "all" }, cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }, { kind: "applyStatus", statusId: "paralyze", stacks: 1, duration: 1 }] }, // 경찰 호출(광역 무력화)
+
+  // ══ 야인시대 런8(4.19와 최후) — 스킬 ══ (gamedata/run08)
+  duhan_dungthrow: { id: "duhan_dungthrow", name: "똥통 투척", exclusiveTo: "duhan", classReq: 1, target: "enemy", area: { kind: "all" }, cooldown: 5, accuracy: 0, alwaysHit: true, effects: [{ kind: "damage", amount: 16 }, { kind: "applyStatusSelf", statusId: "weaken", stacks: 1, duration: 2 }] }, // 자폭 굴욕기(광역+자기 대가)
+  ichano_watch: { id: "ichano_watch", name: "부정선거 감시", exclusiveTo: "ichano", target: "enemy", cooldown: 1, accuracy: 90, effects: [{ kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }] },
+  ichano_jab: { id: "ichano_jab", name: "일격", exclusiveTo: "ichano", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 6 }] },
+  joilhwan_supply: { id: "joilhwan_supply", name: "봉양 보급", exclusiveTo: "joilhwan", target: "ally", cooldown: 2, accuracy: 0, alwaysHit: true, effects: [{ kind: "heal", amount: 12 }, { kind: "shield", amount: 6 }] },
+  joilhwan_jab: { id: "joilhwan_jab", name: "주먹", exclusiveTo: "joilhwan", target: "enemy", cooldown: 0, accuracy: 88, reach: 1, effects: [{ kind: "damage", amount: 7 }] },
+  kimhyungwook_torture: { id: "kimhyungwook_torture", name: "전기 고문", exclusiveTo: "kimhyungwook", target: "enemy", cooldown: 1, accuracy: 95, effects: [{ kind: "damage", amount: 6 }, { kind: "applyStatus", statusId: "bleed", stacks: 2, duration: 2 }, { kind: "applyStatus", statusId: "paralyze", stacks: 1, duration: 1 }] },
+  kimhyungwook_jab: { id: "kimhyungwook_jab", name: "구타", exclusiveTo: "kimhyungwook", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 9 }] },
+  igwajang_weaken: { id: "igwajang_weaken", name: "심문", exclusiveTo: "igwajang", target: "enemy", cooldown: 1, accuracy: 90, effects: [{ kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }, { kind: "applyStatus", statusId: "fear", stacks: 1, duration: 2 }] },
+  minister_cower: { id: "minister_cower", name: "변명", exclusiveTo: "minister", target: "enemy", cooldown: 2, accuracy: 70, reach: 1, effects: [{ kind: "damage", amount: 3 }] }, // 무저항 표적
 };

@@ -601,7 +601,7 @@ mod tests {
         use crate::run::{choose_class_change, choose_encounter_option, class_options, leave_shop, resolve_battle_end, skip_class_change};
         let d = RunData::load();
         let runs = spr_data::runs();
-        for run_id in ["run3_antijapan", "run4_liberation", "run5_war", "run6_dongdaemun", "run7_liberalfall"] {
+        for run_id in ["run3_antijapan", "run4_liberation", "run5_war", "run6_dongdaemun", "run7_liberalfall", "run8_april"] {
             let rd = runs.get(run_id).unwrap_or_else(|| panic!("{} 존재", run_id)).clone();
             let protagonist = rd.roster[0].char_id.clone();
             for seed in [1u32, 42] {

@@ -1,0 +1,112 @@
+{
+  "id": "run8_april",
+  "name": "야인시대 8: 4.19와 최후",
+  "desc": "주먹의 시대가 끝나고, 두한 한 사람도 소멸한다. 승리하면서도 점점 잃어가는 비극형 종막 — 부정선거·혁명재판·고문 버티기, 그리고 국회 똥통 투척이라는 승리이자 파멸. 4개 층. (원작 121~124화)",
+  "mode": "campaign",
+  "useMastery": false,
+  "entryFloorId": "f1",
+  "resources": [
+    { "id": "legit", "name": "정당성", "min": 0, "max": 100, "initial": 50, "icon": "⚖" }
+  ],
+  "roster": [
+    { "charId": "duhan", "pos": { "row": 1, "col": 0 } },
+    { "charId": "ichano", "pos": { "row": 1, "col": 2 } },
+    { "charId": "yujikwang", "pos": { "row": 2, "col": 0 } },
+    { "charId": "sirasoni", "pos": { "row": 2, "col": 2 } }
+  ],
+  "floors": [
+    {
+      "id": "f1",
+      "name": "부정선거와 4.19",
+      "entryNodeId": "f1_entry",
+      "nodes": [
+        { "id": "f1_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f1_cheonil", "type": "battle", "q": 1, "r": 0, "label": "천일백화점 골목", "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 10 }, { "kind": "reward", "tier": 1 }] },
+        { "id": "f1_masan", "type": "battle", "q": 2, "r": 0, "label": "마산 시위 진압", "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 10 }, { "kind": "reward", "tier": 1 }] },
+        { "id": "f1_student", "type": "encounter", "q": 3, "r": 0, "label": "학생 보호 분기", "core": [{ "kind": "event", "event": { "id": "f1_student_ev", "title": "유지광의 명령 — 학생에 손대지 말라", "text": "고려대생 시위대를 칠 것인가. 보호하면 명분이 서고, 습격하면 즉시 보상이 따르나 정당성을 잃는다.", "choices": [
+          { "id": "protect", "label": "학생을 보호한다 (정당성 +15)", "result": { "kind": "resource", "id": "legit", "delta": 15 } },
+          { "id": "attack", "label": "습격한다 (골드 +20, 정당성 −10)", "result": { "kind": "gold", "amount": 20 } }
+        ] } }] },
+        { "id": "f1_gyeongmudae", "type": "elite", "q": 4, "r": 0, "label": "경무대 발포 라인", "core": [{ "kind": "combat", "roster": [{ "charId": "gwakyoungju", "pos": { "row": 1, "col": 2 } }, { "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 16 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f1_clear", "type": "clear", "q": 5, "r": 0, "toFloor": "f2" }
+      ],
+      "edges": [
+        { "from": "f1_entry", "to": "f1_cheonil" },
+        { "from": "f1_cheonil", "to": "f1_masan" },
+        { "from": "f1_masan", "to": "f1_student" },
+        { "from": "f1_student", "to": "f1_gyeongmudae" },
+        { "from": "f1_gyeongmudae", "to": "f1_clear" }
+      ]
+    },
+    {
+      "id": "f2",
+      "name": "하야와 혁명재판",
+      "entryNodeId": "f2_entry",
+      "nodes": [
+        { "id": "f2_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f2_rest", "type": "rest", "q": 1, "r": 0, "label": "과도정부 — 잠시의 평화", "core": [{ "kind": "heal", "pct": 50 }] },
+        { "id": "f2_geomgeo", "type": "elite", "q": 2, "r": 0, "label": "일제 검거", "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 0, "col": 0 } }, { "charId": "thug2", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 14 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f2_trial", "type": "encounter", "q": 3, "r": 0, "label": "혁명재판 — 결단", "core": [{ "kind": "event", "event": { "id": "f2_trial_ev", "title": "혁명재판", "text": "이정재·임화수·유지광의 운명이 증언으로 갈린다. 위증으로 식구를 살릴 것인가, 정직하게 법에 맡길 것인가.", "choices": [
+          { "id": "perjure", "label": "위증으로 식구를 살린다 (정당성 −10)", "result": { "kind": "resource", "id": "legit", "delta": -10 } },
+          { "id": "honest", "label": "정직하게 증언한다 (정당성 +10)", "result": { "kind": "resource", "id": "legit", "delta": 10 } }
+        ] } }, { "kind": "text", "text": "임화수는 끝내 자멸하고, 이정재는 형장으로 향한다. 잃으며 시대가 닫힌다." }] },
+        { "id": "f2_clear", "type": "clear", "q": 4, "r": 0, "toFloor": "f3" }
+      ],
+      "edges": [
+        { "from": "f2_entry", "to": "f2_rest" },
+        { "from": "f2_rest", "to": "f2_geomgeo" },
+        { "from": "f2_geomgeo", "to": "f2_trial" },
+        { "from": "f2_trial", "to": "f2_clear" }
+      ]
+    },
+    {
+      "id": "f3",
+      "name": "방황과 재기",
+      "entryNodeId": "f3_entry",
+      "nodes": [
+        { "id": "f3_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f3_aeguk", "type": "encounter", "q": 1, "r": 0, "label": "애국단 창설 도박", "core": [{ "kind": "event", "event": { "id": "f3_aeguk_ev", "title": "김종필의 권유", "text": "애국단 단원 2만. 수락하면 대량 자금이 오나 꼭두각시로 정당성을 잃고, 거부하면 재기의 신뢰가 굳는다.", "choices": [
+          { "id": "accept", "label": "수락한다 (골드 +30, 정당성 −10)", "result": { "kind": "gold", "amount": 30 } },
+          { "id": "decline", "label": "거부한다 (정당성 +10)", "result": { "kind": "resource", "id": "legit", "delta": 10 } }
+        ] } }] },
+        { "id": "f3_class", "type": "encounter", "q": 2, "r": 0, "label": "한독당 재건 — 전직", "core": [{ "kind": "text", "text": "한독당을 재건하며 노장이 다시 일어선다. 정치인의 연설이든 독립군의 일격이든, 마지막 길을 택한다." }, { "kind": "classChange", "max": 1 }, { "kind": "resource", "id": "legit", "delta": 10 }] },
+        { "id": "f3_recall", "type": "encounter", "q": 3, "r": 0, "label": "용산의 회상 — 김무옥", "core": [{ "kind": "text", "text": "죽은 동지의 기억이 두한을 깨운다. 역사의 회상이 노장의 주먹에 다시 불을 지핀다. 조일환이 봉양하며 합류한다." }, { "kind": "partyChange", "add": ["joilhwan"] }, { "kind": "heal", "pct": 40 }] },
+        { "id": "f3_yuse", "type": "battle", "q": 4, "r": 0, "label": "거리 유세 방해", "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug2", "pos": { "row": 2, "col": 0 } }, { "charId": "thug", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 14 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f3_clear", "type": "clear", "q": 5, "r": 0, "toFloor": "f4" }
+      ],
+      "edges": [
+        { "from": "f3_entry", "to": "f3_aeguk" },
+        { "from": "f3_aeguk", "to": "f3_class" },
+        { "from": "f3_class", "to": "f3_recall" },
+        { "from": "f3_recall", "to": "f3_yuse" },
+        { "from": "f3_yuse", "to": "f3_clear" }
+      ]
+    },
+    {
+      "id": "f4",
+      "name": "최후",
+      "entryNodeId": "f4_entry",
+      "nodes": [
+        { "id": "f4_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f4_torture", "type": "boss", "q": 1, "r": 0, "label": "중앙정보부 고문실 — 굴복 거부",
+          "core": [
+            { "kind": "combat", "boss": true, "roster": [{ "charId": "kimhyungwook", "pos": { "row": 1, "col": 0 } }, { "charId": "igwajang", "pos": { "row": 0, "col": 2 } }, { "charId": "thug2", "pos": { "row": 2, "col": 0 } }],
+              "resourceMods": [{ "resourceId": "legit", "cmp": "gte", "value": 60, "side": "ally", "statusId": "might", "stacks": 1, "duration": 99 }] },
+            { "kind": "gold", "amount": 20 },
+            { "kind": "reward", "tier": 3 }
+          ] },
+        { "id": "f4_setup", "type": "encounter", "q": 2, "r": 0, "label": "사카린 밀수 폭로", "core": [{ "kind": "text", "text": "파고다공원에서 인분을 모은다. 국회 본회의장으로 향하는 마지막 한 방을 준비한다." }] },
+        { "id": "f4_dung", "type": "boss", "q": 3, "r": 0, "label": "국회 똥통 투척 — 승리이자 파멸", "core": [{ "kind": "combat", "boss": true, "roster": [{ "charId": "minister", "pos": { "row": 1, "col": 0 } }, { "charId": "minister", "pos": { "row": 0, "col": 0 } }, { "charId": "minister", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 24 }, { "kind": "reward", "tier": 3 }] },
+        { "id": "f4_end", "type": "encounter", "q": 4, "r": 0, "label": "참회와 죽음", "core": [{ "kind": "text", "text": "「너무 많은 사람을 죽였습니다.」 절에서의 참회가 모든 것을 씻는다. 1972년, 야인의 시대가 닫힌다 — 야인시대라고나 할까." }, { "kind": "heal", "pct": 100 }] },
+        { "id": "f4_clear", "type": "clear", "q": 5, "r": 0 }
+      ],
+      "edges": [
+        { "from": "f4_entry", "to": "f4_torture" },
+        { "from": "f4_torture", "to": "f4_setup" },
+        { "from": "f4_setup", "to": "f4_dung" },
+        { "from": "f4_dung", "to": "f4_end" },
+        { "from": "f4_end", "to": "f4_clear" }
+      ]
+    }
+  ]
+}
