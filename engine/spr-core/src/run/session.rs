@@ -73,6 +73,14 @@ pub struct SheetMember {
     pub skills: Vec<SkillView>,
     #[serde(rename = "activeCount")]
     pub active_count: usize,
+    /// 현재 특성(내재 + 전직 부여 job_trait_ids) — 시트 표시(4.7).
+    #[serde(rename = "traitIds")]
+    pub trait_ids: Vec<String>,
+    /// 현재 직업명(전직 차수) — 시트 전직 상태 표시.
+    #[serde(rename = "jobName", skip_serializing_if = "Option::is_none")]
+    pub job_name: Option<String>,
+    #[serde(rename = "classTier")]
+    pub class_tier: i64,
 }
 #[derive(Serialize)]
 pub struct SheetBattleUnit {
@@ -92,6 +100,12 @@ pub struct SheetBattleUnit {
     #[serde(rename = "activeCount")]
     pub active_count: usize,
     pub equipped: Equipped,
+    #[serde(rename = "traitIds")]
+    pub trait_ids: Vec<String>,
+    #[serde(rename = "jobName", skip_serializing_if = "Option::is_none")]
+    pub job_name: Option<String>,
+    #[serde(rename = "classTier")]
+    pub class_tier: i64,
 }
 #[derive(Serialize)]
 pub struct SheetBundle {
@@ -237,6 +251,9 @@ impl RunSession {
                     equipped: m.equipped.clone(),
                     skills: skill_views(&m.owned_skill_ids, &m.active_skill_ids, &self.d),
                     active_count: m.active_skill_ids.len(),
+                    trait_ids: c.trait_ids.iter().chain(m.job_trait_ids.iter()).cloned().collect(),
+                    job_name: m.job_id.as_deref().and_then(|id| self.d.jobs.get(id)).map(|j| j.name.clone()),
+                    class_tier: m.class_tier,
                 }
             })
             .collect();
@@ -263,6 +280,11 @@ impl RunSession {
                             Equipped::default()
                         };
                         let (statuses, shield, hp, hp_max) = sv.get(u.uid.as_str()).map(|&(s, sh, h, hm)| (s.clone(), sh, h, hm)).unwrap_or((Vec::new(), u.shield, u.hp, u.hp_max));
+                        // 아군 = 내재+전직 부여 특성·전직 상태(파티원 조회). 적 = 내재만.
+                        let member = if u.side == "ally" { self.run.party.iter().find(|p| p.char_id == u.char_id) } else { None };
+                        let trait_ids: Vec<String> = ch.trait_ids.iter().chain(member.map(|m| m.job_trait_ids.iter()).into_iter().flatten()).cloned().collect();
+                        let job_name = member.and_then(|m| m.job_id.as_deref()).and_then(|id| self.d.jobs.get(id)).map(|j| j.name.clone());
+                        let class_tier = member.map(|m| m.class_tier).unwrap_or(0);
                         SheetBattleUnit {
                             uid: u.uid.clone(),
                             char_id: u.char_id.clone(),
@@ -276,6 +298,9 @@ impl RunSession {
                             skills: skill_views(&owned, &u.active_skill_ids, &self.d),
                             active_count: u.active_skill_ids.len(),
                             equipped,
+                            trait_ids,
+                            job_name,
+                            class_tier,
                         }
                     })
                     .collect()

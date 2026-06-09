@@ -47,6 +47,8 @@ export interface SheetData {
   activeCount: number;
   editable: boolean; // 맵=장착/활성4 조작, 전투=읽기전용
   detail: boolean; // '자세히 보기' — ON이면 능력치에 원본+변화 병기
+  jobName?: string; // 현재 직업(전직 4.7) — 머리 배지
+  classTier?: number; // 전직 차수(0=루트)
 }
 export interface SheetHandlers {
   onToggle: (charId: string, skillId: string) => void;
@@ -184,7 +186,8 @@ export function sheetBody(d: SheetData): string {
     ? `<div class="cssection"><h4>상태</h4><div class="chips csheet-chips">${statusChipsList(d.statuses)}</div></div>`
     : "";
   const toggle = `<button class="csdetail-toggle${d.detail ? " on" : ""}" data-toggle-detail>${d.detail ? "자세히 ✓" : "자세히 보기"}</button>`;
-  return `<div class="cshead">${avatarHtml(d.avatar, "avt")}<h3>${esc(d.name)}</h3></div>
+  const jobBadge = d.jobName ? `<span class="cs-job">🔀 ${esc(d.jobName)}${(d.classTier ?? 0) > 0 ? ` · ${d.classTier}차` : ""}</span>` : "";
+  return `<div class="cshead">${avatarHtml(d.avatar, "avt")}<div class="cshead-id"><h3>${esc(d.name)}</h3>${jobBadge}</div></div>
     ${barsBlock(d)}
     <div class="csbody">
       <div class="cssection"><h4>능력치 ${toggle}</h4><div class="csstats">${statRows(d)}</div></div>

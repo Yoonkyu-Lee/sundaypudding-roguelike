@@ -11,8 +11,8 @@ import { renderPartyView, type PartyBoardMember, type PartyViewHandlers } from "
 import type { Ui } from "./battle/shared.ts";
 import type { Equipped, UnitView } from "../contract/types.ts";
 
-interface SheetMemberRaw { charId: string; name: string; avatar?: string; pos: { row: number; col: number }; hp: number; hpMax: number; alive: boolean; equipped: Equipped; skills: SheetSkill[]; activeCount: number }
-interface SheetBattleUnitRaw { uid: string; charId: string; name: string; avatar?: string; side: string; hp: number; hpMax: number; shield: number; statuses: UnitView["statuses"]; skills: SheetSkill[]; activeCount: number; equipped: Equipped }
+interface SheetMemberRaw { charId: string; name: string; avatar?: string; pos: { row: number; col: number }; hp: number; hpMax: number; alive: boolean; equipped: Equipped; skills: SheetSkill[]; activeCount: number; traitIds: string[]; jobName?: string; classTier: number }
+interface SheetBattleUnitRaw { uid: string; charId: string; name: string; avatar?: string; side: string; hp: number; hpMax: number; shield: number; statuses: UnitView["statuses"]; skills: SheetSkill[]; activeCount: number; equipped: Equipped; traitIds: string[]; jobName?: string; classTier: number }
 export interface SheetBundle { inBattle: boolean; members: SheetMemberRaw[]; inventory: string[]; battleUnits: SheetBattleUnitRaw[] }
 
 type Invoke = (cmd: string, args?: Record<string, unknown>) => Promise<unknown>;
@@ -32,9 +32,9 @@ export interface RustOverlay {
 export function createRustOverlay(deps: RustOverlayDeps): RustOverlay {
   const { app, ui, invoke } = deps;
 
-  // 캐릭터 특성(상시) → 읽기전용 표시 데이터.
-  const traitsOf = (charId: string): SheetTrait[] =>
-    (CHARACTERS[charId]?.traitIds ?? []).map((id) => TRAITS[id]).filter(Boolean).map((t) => ({ name: t.name, icon: t.icon, rules: t.rules.map(describeRule) }));
+  // 특성(내재 + 전직 부여) → 읽기전용 표시. 엔진이 현재 trait 목록(job_trait_ids 포함)을 제공.
+  const traitsOf = (traitIds: string[]): SheetTrait[] =>
+    traitIds.map((id) => TRAITS[id]).filter(Boolean).map((t) => ({ name: t.name, icon: t.icon, rules: t.rules.map(describeRule) }));
   // 스킬에 active/passive 표시 정보 부착.
   const enrich = (s: SheetSkill): SheetSkill => {
     const sk = SKILLS[s.id];
@@ -53,8 +53,9 @@ export function createRustOverlay(deps: RustOverlayDeps): RustOverlay {
     return {
       charId, name: m.name, avatar: m.avatar, hp: m.hp, hpMax: m.hpMax, shield: 0,
       base: baseOf(charId), equipped: m.equipped, inventory: b.inventory,
-      skills: m.skills.map(enrich), traits: traitsOf(charId), statuses: [],
+      skills: m.skills.map(enrich), traits: traitsOf(m.traitIds), statuses: [],
       activeCount: m.activeCount, editable: !b.inBattle, detail: ui.sheetDetail,
+      jobName: m.jobName, classTier: m.classTier,
     };
   }
   // 전투 단독 시트(uid 키) — 아군/적 읽기전용. 스탯=라이브 유닛, 상태이상/쉴드=관측.
@@ -64,8 +65,9 @@ export function createRustOverlay(deps: RustOverlayDeps): RustOverlay {
     return {
       charId: u.charId, name: u.name, avatar: u.avatar, hp: u.hp, hpMax: u.hpMax, shield: u.shield,
       base: baseOf(u.charId), equipped: u.equipped, inventory: [],
-      skills: u.skills.map(enrich), traits: traitsOf(u.charId), statuses: u.statuses,
+      skills: u.skills.map(enrich), traits: traitsOf(u.traitIds), statuses: u.statuses,
       activeCount: u.activeCount, editable: false, detail: ui.sheetDetail,
+      jobName: u.jobName, classTier: u.classTier,
     };
   }
 
