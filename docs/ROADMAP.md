@@ -25,7 +25,7 @@
 
 **결정: (A) 콘텐츠를 JSON으로 이주** — `content/<domain>/*.json`(또는 `<domain>.json`) + 타입드 로더(런 저작과 동일 패턴: dev-write 미들웨어 → JSON 기록 → 배럴/로더 → `data:export`). 에디터 인프라 재사용. **점진적 이주**(에디터 만드는 도메인만 그때그때 — jobs → items → skills → traits, `characters`는 TS 유지 후순위). TS+JSON 혼재는 이미 런(JSON)+나머지(TS)로 검증됨.
 > (B) TS dev-write(에디터가 `.ts` 소스 생성/갱신, 파서/프린터)는 **기각** — erasable TS 제약 + 주석·포맷 왕복 보존이 악몽, A에 지배당함. 타입 안전성은 드리프트 가드 + 로드 검증으로 대체.
-- **진행**: ✅ S-J1 jobs.ts → `jobs.json` + 로더(거동 무변, 번들 바이트 동일). ✅ S-J2 전직 트리 에디터(`editor/jobEditor.ts` + dev-write `/api/save-jobs` + 허브 진입). 다음 도메인 = ⑤-b 아이템(items.ts → JSON + 에디터).
+- **진행**: ✅ S-J1/S-J2 전직 트리(jobs.json + `editor/jobEditor.ts`). ✅ S-I1/S-I2 아이템(items.json `{items,pool}` + `editor/itemEditor.ts` + `/api/save-items`). 다음 도메인 = ⑤-c 스킬(skills.ts → JSON + 에디터, 가장 복잡 — SkillEffect/area/passives).
 
 ---
 
@@ -67,7 +67,7 @@
 - **현황**: 맵/노드 에디터만(`web/src/ui/editor/*`). 나머지는 TS 직접 편집.
 - **선결**: ✅ 콘텐츠 저작 형식 = A(JSON 이주, 점진적) 확정. 도메인별로 이주 후 에디터.
 - **순서 제안**: ⑤-a 전직 트리 에디터(#1과 직결) → ⑤-b 아이템 에디터(`ItemDef`, 전용장비 trait 부여 포함) → ⑤-c 스킬 에디터 → ⑤-d 패시브/특성 에디터(`ruleEditor` 패턴 재사용).
-- **진행**: ✅ S-J1 jobs JSON 이주(데이터 출처 TS→JSON, 거동 무변). ✅ S-J2 전직 트리 에디터 GUI(`editor/jobEditor.ts`) + `/api/save-jobs` dev-write + 허브 진입. ⏳ ⑤-b 아이템 에디터(items.ts → JSON 이주 후).
+- **진행**: ✅ ⑤-a 전직 트리(jobs.json + `editor/jobEditor.ts` + `/api/save-jobs`). ✅ ⑤-b 아이템(items.json `{items,pool}` + `editor/itemEditor.ts` + `/api/save-items`). ⏳ ⑤-c 스킬 에디터(skills.ts → JSON 이주 후 — SkillEffect/area/passives로 가장 복잡).
 
 ---
 

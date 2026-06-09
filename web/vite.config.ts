@@ -10,7 +10,9 @@ import { fileURLToPath } from "node:url";
 const CONTENT_DIR = join(dirname(fileURLToPath(import.meta.url)), "src", "content");
 const RUNS_DIR = join(CONTENT_DIR, "runs");
 const JOBS_PATH = join(CONTENT_DIR, "jobs.json");
+const ITEMS_PATH = join(CONTENT_DIR, "items.json");
 const SAFE_ID = /^[a-zA-Z0-9_-]{1,40}$/;
+const EQUIP_SLOTS = new Set(["weapon", "armor", "held"]);
 
 // runs.generated.ts 재생성 — src/data/runs/*.json을 스캔해 RUNS 레지스트리를 결정론적으로 통째로 쓴다.
 // (Node 코어는 glob 불가하나 dev 미들웨어는 fs 접근 가능 → 마커 삽입 대신 전체 생성 = 견고)
@@ -87,8 +89,37 @@ function devWriteJobs(): Plugin {
   };
 }
 
+// dev 전용: 아이템 에디터 → items.json({ items, pool }) 통째 기록.
+function devWriteItems(): Plugin {
+  return {
+    name: "spr-dev-write-items",
+    apply: "serve",
+    configureServer(server) {
+      server.middlewares.use("/api/save-items", (req, res) => {
+        if (req.method !== "POST") { res.statusCode = 405; res.end("POST only"); return; }
+        let body = "";
+        req.on("data", (c) => { body += c; });
+        req.on("end", () => {
+          try {
+            const { items, pool } = JSON.parse(body) as { items: Record<string, { id?: string; name?: string; slot?: string }>; pool: string[] };
+            if (!items || typeof items !== "object" || Array.isArray(items)) { res.statusCode = 400; res.end("items 맵 형식 아님"); return; }
+            if (!Array.isArray(pool)) { res.statusCode = 400; res.end("pool 배열 아님"); return; }
+            for (const [key, it] of Object.entries(items)) {
+              if (!SAFE_ID.test(key)) { res.statusCode = 400; res.end(`잘못된 아이템 id: ${key}`); return; }
+              if (!it || typeof it !== "object" || it.id !== key || typeof it.name !== "string" || !EQUIP_SLOTS.has(it.slot as string)) { res.statusCode = 400; res.end(`ItemDef 형식 아님: ${key}`); return; }
+            }
+            for (const pid of pool) if (!items[pid]) { res.statusCode = 400; res.end(`pool에 미존재 아이템: ${pid}`); return; }
+            writeFileSync(ITEMS_PATH, JSON.stringify({ items, pool }, null, 2) + "\n", "utf8");
+            res.statusCode = 200; res.setHeader("content-type", "application/json"); res.end(JSON.stringify({ ok: true, count: Object.keys(items).length }));
+          } catch (e) { res.statusCode = 500; res.end(`기록 실패: ${(e as Error).message}`); }
+        });
+      });
+    },
+  };
+}
+
 export default defineConfig({
   base: "./", // Tauri 웹뷰는 frontendDist를 루트로 서빙 — 상대경로 에셋이 안전
-  plugins: [devWriteRuns(), devWriteJobs()],
+  plugins: [devWriteRuns(), devWriteJobs(), devWriteItems()],
   server: { port: 5173, strictPort: false },
 });
