@@ -13,6 +13,7 @@ const JOBS_PATH = join(CONTENT_DIR, "jobs.json");
 const ITEMS_PATH = join(CONTENT_DIR, "items.json");
 const SKILLS_PATH = join(CONTENT_DIR, "skills.json");
 const TRAITS_PATH = join(CONTENT_DIR, "traits.json");
+const CHARACTERS_PATH = join(CONTENT_DIR, "characters.json");
 const SAFE_ID = /^[a-zA-Z0-9_-]{1,40}$/;
 const EQUIP_SLOTS = new Set(["weapon", "armor", "held"]);
 const SKILL_TARGETS = new Set(["enemy", "ally", "self"]);
@@ -175,8 +176,35 @@ function devWriteTraits(): Plugin {
   };
 }
 
+// dev 전용: 캐릭터 에디터 → characters.json(Record<id,Character>) 통째 기록.
+function devWriteCharacters(): Plugin {
+  return {
+    name: "spr-dev-write-characters",
+    apply: "serve",
+    configureServer(server) {
+      server.middlewares.use("/api/save-characters", (req, res) => {
+        if (req.method !== "POST") { res.statusCode = 405; res.end("POST only"); return; }
+        let body = "";
+        req.on("data", (c) => { body += c; });
+        req.on("end", () => {
+          try {
+            const { characters } = JSON.parse(body) as { characters: Record<string, { id?: string; name?: string; hp?: number; skillIds?: unknown }> };
+            if (!characters || typeof characters !== "object" || Array.isArray(characters)) { res.statusCode = 400; res.end("characters 맵 형식 아님"); return; }
+            for (const [key, c] of Object.entries(characters)) {
+              if (!SAFE_ID.test(key)) { res.statusCode = 400; res.end(`잘못된 캐릭 id: ${key}`); return; }
+              if (!c || typeof c !== "object" || c.id !== key || typeof c.name !== "string" || typeof c.hp !== "number" || !Array.isArray(c.skillIds)) { res.statusCode = 400; res.end(`Character 형식 아님: ${key}`); return; }
+            }
+            writeFileSync(CHARACTERS_PATH, JSON.stringify(characters, null, 2) + "\n", "utf8");
+            res.statusCode = 200; res.setHeader("content-type", "application/json"); res.end(JSON.stringify({ ok: true, count: Object.keys(characters).length }));
+          } catch (e) { res.statusCode = 500; res.end(`기록 실패: ${(e as Error).message}`); }
+        });
+      });
+    },
+  };
+}
+
 export default defineConfig({
   base: "./", // Tauri 웹뷰는 frontendDist를 루트로 서빙 — 상대경로 에셋이 안전
-  plugins: [devWriteRuns(), devWriteJobs(), devWriteItems(), devWriteSkills(), devWriteTraits()],
+  plugins: [devWriteRuns(), devWriteJobs(), devWriteItems(), devWriteSkills(), devWriteTraits(), devWriteCharacters()],
   server: { port: 5173, strictPort: false },
 });

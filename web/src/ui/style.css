@@ -876,6 +876,14 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 /* 스킬 에디터 — 목록 좁게·인스펙터 넓게 + 필터 + 효과 카드. */
 .jobed-skilled .jobed-main, .jobed-traited .jobed-main { flex: none; width: 280px; }
 .jobed-skilled .jobed-inspect, .jobed-traited .jobed-inspect { flex: 1; width: auto; }
+/* 캐릭터 에디터 — 좁은 목록 + 스킬풀 순서 행. */
+.cce-av { width: 24px; height: 24px; border-radius: 5px; font-size: 15px; vertical-align: middle; }
+.cce-skills { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+.cce-skill { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel2); }
+.cce-skill-nm { flex: 1; min-width: 0; font-size: 13px; }
+.cce-skill-id { font-size: 10px; color: var(--dim); font-family: monospace; }
+.cce-skill-btns button { background: var(--panel); border: 1px solid var(--line); border-radius: 5px; color: var(--dim); cursor: pointer; padding: 0 6px; margin-left: 2px; }
+.cce-skill-btns button:hover { border-color: var(--accent); color: var(--accent); }
 .ske-filter { width: 100%; box-sizing: border-box; margin-bottom: 8px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; color: var(--txt); font-size: 13px; }
 .ske-pmk { color: var(--accent); font-size: 11px; }
 .ske-effs { display: flex; flex-direction: column; gap: 8px; }

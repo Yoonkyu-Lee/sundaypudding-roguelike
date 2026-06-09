@@ -140,8 +140,9 @@ desktop/src/main.rs   #[tauri::command]: 전투 데모(create_session·battle_st
 | `editor/skillEditor.ts` · `skillEffectSchema.ts` | **스킬 에디터**(⑤-c, 개발자 도구) — `skills.json` 저작 GUI. 좌: 필터+exclusiveTo 그룹 목록(139). 우: 스칼라(target/cooldown/accuracy/reach/tier/exclusiveTo/nextTierId/alwaysHit/active…)·area(AreaShape)·effects[](SkillEffect 8종, `skillEffectSchema` 스펙)·**passives[]**(rulesEditor). 저장=`POST /api/save-skills`(빈 passives 직렬화 생략) | `createSkillEditor` · `SKILL_EFFECT_SPECS` |
 | `editor/ruleFields.ts` · `rulesEditor.ts` | **룰 에디터 공유 인프라.** ruleFields=FieldSpec→입력 컨트롤 프리미티브(ctrl/specForm/fieldVal, ruleEditor·rulesEditor 공유). rulesEditor=**owner 없는 자립 PassiveRule[] 에디터**(스킬 passives·특성 rules 공용, ruleSchema 카탈로그). 전투-레이어 룰(owner 있음)은 `ruleEditor.ts` | `rulesEditorHtml` · `bindRulesEditor` |
 | `editor/traitEditor.ts` | **패시브/특성 에디터**(⑤-d, 개발자 도구) — `traits.json` 저작 GUI. 2열(목록·인스펙터). name/icon/desc + `rules`(rulesEditor 재사용), CRUD. 저장=`POST /api/save-traits` | `createTraitEditor` |
+| `editor/characterEditor.ts` | **캐릭터 에디터**(⑤-e, 개발자 도구) — `characters.json` 저작 GUI. 필터+playable 그룹 목록. 인스펙터: 프로필(name/avatar/playable)·스탯(7)·skillIds(순서=앞4 활성, ↑↓✕)·traitIds(칩)·aiProfileId·rootJobId(SKILLS/TRAITS/AI_PROFILES/JOBS 셀렉트 참조). 저장=`POST /api/save-characters` | `createCharacterEditor` |
 | `style.css` | 다크 테마 + **게임셸 리셋**(브라우저 제스처/크롬 제거 — CLAUDE 웹-티 금지 B) | — |
-| `index.html` · `vite.config.ts` | Vite 진입/설정. **dev-write 미들웨어**(`POST /api/save-run` → `runs/{id}.json` + 레지스트리 재생성 · `/api/save-{jobs,items,skills,traits}` → 각 콘텐츠 JSON 통째 기록) | `devWriteRuns`·`devWriteJobs`·`devWriteItems`·`devWriteSkills`·`devWriteTraits` |
+| `index.html` · `vite.config.ts` | Vite 진입/설정. **dev-write 미들웨어**(`POST /api/save-run` → `runs/{id}.json` + 레지스트리 재생성 · `/api/save-{jobs,items,skills,traits,characters}` → 각 콘텐츠 JSON 통째 기록) | `devWriteRuns`·`devWriteJobs`·`devWriteItems`·`devWriteSkills`·`devWriteTraits`·`devWriteCharacters` |
 
 ## 4. `web/src/content/` — 콘텐츠 (디자이너 영역, → JSON export → Rust 로드)
 
