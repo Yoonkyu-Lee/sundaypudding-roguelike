@@ -83,7 +83,10 @@ export interface RunView {
   rewards: RewardOption[] | null;
   gold: number;
   shop: ShopOffer[] | null;
-  encounter: { id: string; title: string; text: string; choices: { id: string; label: string }[] } | null;
+  encounter: { id: string; title: string; text: string; choices: { id: string; label: string; available: boolean; requiresLabel?: string }[] } | null;
   classChange?: ClassChangeView; // 전직 phase에서만(4.7)
+  resources?: ResourceView[]; // 런 자원 게이지(R1) — 비면 생략. 골드 옆 표시
   log: string[];
 }
+/** 런 자원 게이지(R1) 뷰 — 골드 옆 게이지. */
+export interface ResourceView { id: string; name: string; value: number; min: number; max: number; icon?: string; }

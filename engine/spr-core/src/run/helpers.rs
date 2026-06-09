@@ -69,7 +69,19 @@ fn empty_slot(party: &[PartyMemberState]) -> Pos {
     Pos { row: 0, col: 0 }
 }
 
-/// 즉시 데코레이터 레이어 실행 — gold/heal/grantStatus/text/partyChange 순서 적용 + 로그. TS runInstantLayers.
+/// 런 자원(R1) 변경 — def의 min/max 클램프 + 로그. 미정의 자원 id면 무시.
+pub fn modify_resource(run: &mut RunState, id: &str, delta: i64) {
+    let def = match run.run_def.resources.iter().find(|r| r.id == id) {
+        Some(r) => (r.min, r.max, r.name.clone()),
+        None => return,
+    };
+    let cur = *run.resources.get(id).unwrap_or(&0);
+    let next = (cur + delta).clamp(def.0, def.1);
+    run.resources.insert(id.to_string(), next);
+    run.log.push(format!("{} {}{} → {}", def.2, if delta >= 0 { "+" } else { "" }, delta, next));
+}
+
+/// 즉시 데코레이터 레이어 실행 — gold/heal/grantStatus/text/partyChange/resource 순서 적용 + 로그. TS runInstantLayers.
 pub fn run_instant_layers(run: &mut RunState, layers: &[Layer], d: &RunData) {
     for l in layers {
         match l {
@@ -95,6 +107,7 @@ pub fn run_instant_layers(run: &mut RunState, layers: &[Layer], d: &RunData) {
                 run.log.push(format!("상태 부여(다음 전투): {}", status_id));
             }
             Layer::Text { text } => run.log.push(text.clone()),
+            Layer::Resource { id, delta } => modify_resource(run, id, *delta),
             Layer::PartyChange { add, remove } => {
                 // 이탈 먼저(슬롯 비우기) → 합류(빈 슬롯 배치). 중복 합류 무시.
                 if let Some(rm) = remove {

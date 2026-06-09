@@ -18,12 +18,13 @@ export const LAYER_SPECS: Record<string, LayerSpec> = {
   grantStatus: { label: "✨ 상태 부여(다음 전투)", fields: [{ key: "charId", label: "대상(비움=전원)", type: "select", optionsFrom: "chars", allowEmpty: true }, { key: "statusId", label: "상태", type: "select", optionsFrom: "statuses" }, { key: "stacks", label: "스택", type: "number" }, { key: "duration", label: "지속", type: "number" }], make: () => ({ kind: "grantStatus", statusId: "", stacks: 1, duration: 2 }) },
   text: { label: "💬 대사/로그", fields: [{ key: "text", label: "내용", type: "text" }], make: () => ({ kind: "text", text: "" }) },
   partyChange: { label: "👥 파티 변동(합류/이탈)", fields: [{ key: "add", label: "합류(charId, 쉼표구분)", type: "csv" }, { key: "remove", label: "이탈(charId, 쉼표구분)", type: "csv" }], make: () => ({ kind: "partyChange", add: [], remove: [] }) }, // 런 중 스토리 합류/이탈
+  resource: { label: "⚖ 자원 변경", fields: [{ key: "id", label: "자원 id(민심 등)", type: "text" }, { key: "delta", label: "증감", type: "number" }], make: () => ({ kind: "resource", id: "", delta: 0 }) }, // 런 자원 게이지(R1)
 };
 
 /** core 슬롯 추가 카탈로그(상호작용 먼저, 데코 뒤). */
-export const LAYER_KINDS: string[] = ["combat", "reward", "shop", "event", "classChange", "gold", "heal", "grantStatus", "text", "partyChange"];
+export const LAYER_KINDS: string[] = ["combat", "reward", "shop", "event", "classChange", "gold", "heal", "grantStatus", "text", "partyChange", "resource"];
 /** onEnter/onResolve 슬롯 카탈로그 — 데코레이터만(즉시 실행). */
-export const DECO_KINDS: string[] = ["gold", "heal", "grantStatus", "text", "partyChange"];
+export const DECO_KINDS: string[] = ["gold", "heal", "grantStatus", "text", "partyChange", "resource"];
 
 /** 레이어 1줄 요약(리스트 표기). */
 export function layerSummary(L: Layer): string {
@@ -38,5 +39,6 @@ export function layerSummary(L: Layer): string {
     case "grantStatus": return `상태 ${L.statusId || "?"}×${L.stacks} (${L.charId || "전원"})`;
     case "text": return `"${L.text}"`;
     case "partyChange": return `파티 변동 (+${L.add?.length ?? 0}/−${L.remove?.length ?? 0})`;
+    case "resource": return `자원 ${L.id || "?"} ${L.delta >= 0 ? "+" : ""}${L.delta}`;
   }
 }

@@ -55,7 +55,13 @@ pub enum Layer {
     },
     // 상호작용(블록)
     #[serde(rename = "combat")]
-    Combat { #[serde(default)] roster: Option<Vec<Placement>>, #[serde(default)] boss: bool, #[serde(default)] rules: Option<Vec<NodeRule>> },
+    Combat {
+        #[serde(default)] roster: Option<Vec<Placement>>,
+        #[serde(default)] boss: bool,
+        #[serde(default)] rules: Option<Vec<NodeRule>>,
+        /// 자원 게이지 조건부 전투 시작 모디파이어(R1) — 충족 시 side 전원에 상태 주입(민심高→아군 버프 / 심리전→적 fear).
+        #[serde(rename = "resourceMods", default)] resource_mods: Option<Vec<ResourceMod>>,
+    },
     #[serde(rename = "reward")]
     Reward { #[serde(default)] tier: Option<i64> },
     #[serde(rename = "shop")]
@@ -68,6 +74,59 @@ pub enum Layer {
         #[serde(default = "default_one")]
         max: i64,
     },
+    /// 런 자원 변경(R1, 즉시) — id 자원을 delta만큼 가감(min/max 클램프). event 선택지·노드 onResolve용.
+    #[serde(rename = "resource")]
+    Resource {
+        id: String,
+        delta: i64,
+    },
+}
+
+/// 런 자원 정의(R1) — 민심·명예·토사구팽 등 런-영속 명명 자원. RunDef.resources.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ResourceDef {
+    pub id: String,
+    pub name: String,
+    pub min: i64,
+    pub max: i64,
+    pub initial: i64,
+    #[serde(default)]
+    pub icon: Option<String>,
+}
+
+/// 자원 임계 비교(R1) — resourceMods·EncounterChoice.requires 공용. cmp = gte|lte|gt|lt|eq.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ResourceReq {
+    #[serde(rename = "resourceId")]
+    pub resource_id: String,
+    pub cmp: String,
+    pub value: i64,
+}
+
+/// 전투 시작 자원 모디파이어(R1) — 자원이 임계를 충족하면 side 전원에 상태 주입.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ResourceMod {
+    #[serde(rename = "resourceId")]
+    pub resource_id: String,
+    pub cmp: String,
+    pub value: i64,
+    pub side: String, // ally|enemy
+    #[serde(rename = "statusId")]
+    pub status_id: String,
+    pub stacks: i64,
+    pub duration: i64,
+}
+
+/// cmp 평가(R1 공용) — gte|lte|gt|lt|eq.
+pub fn cmp_ok(cmp: &str, lhs: i64, rhs: i64) -> bool {
+    match cmp {
+        "gte" => lhs >= rhs,
+        "lte" => lhs <= rhs,
+        "gt" => lhs > rhs,
+        "lt" => lhs < rhs,
+        "eq" => lhs == rhs,
+        _ => false,
+    }
 }
 
 fn default_one() -> i64 {
@@ -122,6 +181,9 @@ pub enum EncounterOutcome {
     LearnUniversal,
     #[serde(rename = "nothing")]
     Nothing,
+    /// 런 자원 가감(R1) — id 자원 delta.
+    #[serde(rename = "resource")]
+    Resource { id: String, delta: i64 },
 }
 
 #[derive(Debug, Clone, Deserialize, serde::Serialize)]
@@ -139,6 +201,9 @@ pub struct EncounterChoice {
     pub result: Option<EncounterOutcome>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub gamble: Option<Gamble>,
+    /// 자원 게이팅(R1) — 충족해야 선택 가능(예: 민심 gte 60). 미충족=비활성.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub requires: Option<ResourceReq>,
 }
 
 #[derive(Debug, Clone, Deserialize, serde::Serialize)]
@@ -175,4 +240,7 @@ pub struct RunDef {
     pub entry_floor_id: String,
     pub roster: Vec<Placement>,
     pub floors: Vec<FloorDef>,
+    /// 런 자원 게이지(R1) — 민심·명예 등 런-영속 자원 정의. 미지정=자원 없는 런.
+    #[serde(default)]
+    pub resources: Vec<ResourceDef>,
 }

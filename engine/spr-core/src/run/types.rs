@@ -59,6 +59,9 @@ pub struct RunState {
     #[serde(default)]
     pub class_change_remaining: Option<i64>,
     pub pending_statuses: HashMap<String, Vec<PendingStatus>>,
+    /// 런 자원 게이지(R1) — id→현재값. 순회/노출은 run_def.resources(순서) 기준(결정론). 초기화=create_run.
+    #[serde(default)]
+    pub resources: HashMap<String, i64>,
     pub firing: bool,
     pub log: Vec<String>,
 }

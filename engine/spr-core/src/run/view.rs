@@ -5,7 +5,7 @@ use super::jobs::class_options;
 use super::types::{RewardOption, RunState, ShopOffer};
 use serde::Serialize;
 use spr_types::data::Pos;
-use spr_types::map::MapEdge;
+use spr_types::map::{cmp_ok, MapEdge};
 
 #[derive(Serialize)]
 pub struct NodeView {
@@ -51,6 +51,22 @@ pub struct PartyView {
 pub struct ChoiceView {
     pub id: String,
     pub label: String,
+    /// 자원 게이팅(R1) — 요구 충족 여부. false=프론트 비활성. requires 없으면 true.
+    pub available: bool,
+    #[serde(rename = "requiresLabel", skip_serializing_if = "Option::is_none")]
+    pub requires_label: Option<String>,
+}
+
+/// 런 자원 게이지(R1) 뷰 — 골드 옆 게이지. run_def.resources 순서.
+#[derive(Serialize)]
+pub struct ResourceView {
+    pub id: String,
+    pub name: String,
+    pub value: i64,
+    pub min: i64,
+    pub max: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub icon: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -101,6 +117,9 @@ pub struct RunView {
     pub encounter: Option<EncounterView>,
     #[serde(rename = "classChange", skip_serializing_if = "Option::is_none")]
     pub class_change: Option<ClassChangeView>,
+    /// 런 자원 게이지(R1) — 비면 생략(자원 없는 런=골든 무변).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub resources: Vec<ResourceView>,
     pub log: Vec<String>,
 }
 
@@ -163,7 +182,18 @@ pub fn get_run_view(run: &RunState, d: &RunData) -> RunView {
             id: ev.id.clone(),
             title: ev.title.clone(),
             text: ev.text.clone(),
-            choices: ev.choices.iter().map(|c| ChoiceView { id: c.id.clone(), label: c.label.clone() }).collect(),
+            choices: ev.choices.iter().map(|c| {
+                let (available, requires_label) = match &c.requires {
+                    Some(req) => {
+                        let v = *run.resources.get(&req.resource_id).unwrap_or(&0);
+                        let name = run.run_def.resources.iter().find(|r| r.id == req.resource_id).map(|r| r.name.clone()).unwrap_or_else(|| req.resource_id.clone());
+                        let sym = match req.cmp.as_str() { "gte" => "≥", "lte" => "≤", "gt" => ">", "lt" => "<", _ => "=" };
+                        (cmp_ok(&req.cmp, v, req.value), Some(format!("{} {} {}", name, sym, req.value)))
+                    }
+                    None => (true, None),
+                };
+                ChoiceView { id: c.id.clone(), label: c.label.clone(), available, requires_label }
+            }).collect(),
         })
     } else {
         None
@@ -194,6 +224,12 @@ pub fn get_run_view(run: &RunState, d: &RunData) -> RunView {
     } else {
         None
     };
+    let resources: Vec<ResourceView> = run
+        .run_def
+        .resources
+        .iter()
+        .map(|rd| ResourceView { id: rd.id.clone(), name: rd.name.clone(), value: *run.resources.get(&rd.id).unwrap_or(&rd.initial), min: rd.min, max: rd.max, icon: rd.icon.clone() })
+        .collect();
     let log_tail: Vec<String> = run.log.iter().rev().take(12).rev().cloned().collect();
     RunView {
         phase: run.phase.clone(),
@@ -207,6 +243,7 @@ pub fn get_run_view(run: &RunState, d: &RunData) -> RunView {
         shop: run.shop.clone(),
         encounter,
         class_change,
+        resources,
         log: log_tail,
     }
 }

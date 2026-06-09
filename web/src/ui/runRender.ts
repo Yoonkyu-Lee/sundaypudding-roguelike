@@ -50,7 +50,13 @@ function partyPanel(view: RunView): string {
     })
     .join("");
   const editBtn = view.party.length ? `<button class="party-edit" data-party-edit="${view.party[0].charId}">⚙ 파티 편성 ▸</button>` : "";
-  return `<div class="party"><h3>파티 <span class="goldtag">💰 ${view.gold}G</span></h3>${rows}${editBtn}</div>`;
+  // 런 자원 게이지(R1) — 골드 아래 바. 비면 생략.
+  const gauges = (view.resources ?? []).map((r) => {
+    const pct = r.max > r.min ? Math.max(0, Math.min(100, ((r.value - r.min) / (r.max - r.min)) * 100)) : 0;
+    return `<div class="resgauge"><span class="reslabel">${r.icon ? `${r.icon} ` : ""}${esc(r.name)}</span><span class="resbar"><span class="resfill" style="width:${pct}%"></span></span><span class="resval">${r.value}/${r.max}</span></div>`;
+  }).join("");
+  const resBlock = gauges ? `<div class="resgauges">${gauges}</div>` : "";
+  return `<div class="party"><h3>파티 <span class="goldtag">💰 ${view.gold}G</span></h3>${resBlock}${rows}${editBtn}</div>`;
 }
 
 function shopScreen(view: RunView): string {
@@ -70,7 +76,7 @@ function shopScreen(view: RunView): string {
 function encounterScreen(view: RunView): string {
   const ev = view.encounter;
   if (!ev) return "";
-  const choices = ev.choices.map((c) => `<button class="enchoice" data-choice="${c.id}">${esc(c.label)}</button>`).join("");
+  const choices = ev.choices.map((c) => `<button class="enchoice${c.available ? "" : " locked"}" data-choice="${c.id}"${c.available ? "" : " disabled"}>${esc(c.label)}${!c.available && c.requiresLabel ? `<span class="enc-req">🔒 ${esc(c.requiresLabel)}</span>` : ""}</button>`).join("");
   return `<div class="encounter"><h2>❓ ${esc(ev.title)}</h2><p class="enctext">${esc(ev.text)}</p><div class="encchoices">${choices}</div></div>`;
 }
 

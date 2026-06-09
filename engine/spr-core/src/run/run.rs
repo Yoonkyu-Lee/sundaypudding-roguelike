@@ -55,6 +55,8 @@ pub fn create_run(
         encounter: None,
         class_change_remaining: None,
         pending_statuses: HashMap::new(),
+        // 런 자원(R1) 초기화 — def.resources의 initial(min/max 클램프).
+        resources: run_def.resources.iter().map(|r| (r.id.clone(), r.initial.clamp(r.min, r.max))).collect(),
         firing: false,
         log: vec![format!("런 시작 (seed {})", seed)],
     }
@@ -356,6 +358,44 @@ mod tests {
         let restored = deserialize_run(&serialize_run(&r)).expect("deserialize");
         let rids: Vec<String> = restored.party.iter().map(|m| m.char_id.clone()).collect();
         assert_eq!(rids, expected, "세이브 왕복 파티 보존");
+    }
+
+    #[test]
+    fn resource_gauge_modify_clamp_save_and_view() {
+        // R1: 런 자원 게이지 — 초기화·가감·클램프·미정의 무시·cmp·세이브 왕복·뷰 노출.
+        use crate::run::helpers::modify_resource;
+        use crate::run::save::{deserialize_run, serialize_run};
+        use crate::run::view::get_run_view;
+        use spr_types::map::{cmp_ok, ResourceDef};
+        let d = crate::run::RunData::load();
+        let mut rd = spr_data::default_run();
+        rd.resources = vec![ResourceDef { id: "minsim".into(), name: "민심".into(), min: 0, max: 100, initial: 50, icon: Some("⚖".into()) }];
+        let mut r = create_run(7, &rd.roster.clone(), &rd, &HashMap::new(), false, &d.chars);
+        assert_eq!(*r.resources.get("minsim").unwrap(), 50); // initial 클램프
+
+        modify_resource(&mut r, "minsim", 30);
+        assert_eq!(*r.resources.get("minsim").unwrap(), 80);
+        modify_resource(&mut r, "minsim", 50); // max 클램프
+        assert_eq!(*r.resources.get("minsim").unwrap(), 100);
+        modify_resource(&mut r, "minsim", -250); // min 클램프
+        assert_eq!(*r.resources.get("minsim").unwrap(), 0);
+        modify_resource(&mut r, "__nope__", 10); // 미정의 자원 무시
+        assert!(!r.resources.contains_key("__nope__"));
+
+        // cmp 평가
+        assert!(cmp_ok("gte", 60, 60) && !cmp_ok("gt", 60, 60) && cmp_ok("lt", 0, 1) && cmp_ok("lte", 5, 5));
+
+        // 세이브 왕복 — 자원 보존
+        modify_resource(&mut r, "minsim", 42);
+        let restored = deserialize_run(&serialize_run(&r)).expect("deserialize");
+        assert_eq!(*restored.resources.get("minsim").unwrap(), 42);
+
+        // 뷰 노출 — run_def.resources 순서로 게이지 1개
+        let view = get_run_view(&r, &d);
+        assert_eq!(view.resources.len(), 1);
+        assert_eq!(view.resources[0].id, "minsim");
+        assert_eq!(view.resources[0].value, 42);
+        assert_eq!(view.resources[0].max, 100);
     }
 
     #[test]

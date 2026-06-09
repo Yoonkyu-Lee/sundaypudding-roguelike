@@ -16,7 +16,8 @@ export type DecoratorLayer =
   | { kind: "heal"; pct: number; revive?: boolean } // 파티 회복(maxHp 정수 퍼센트, revive=전투불능 부활)
   | { kind: "grantStatus"; charId?: string; statusId: string; stacks: number; duration: number } // 다음 전투 계승(charId 없으면 전원)
   | { kind: "text"; text: string } // 로그/대사(컷신 뷰 강화는 Phase C)
-  | { kind: "partyChange"; add?: string[]; remove?: string[] }; // 런 중 합류/이탈(스토리). add=신규(루트 직업·숙련0·빈 슬롯), remove=이탈
+  | { kind: "partyChange"; add?: string[]; remove?: string[] } // 런 중 합류/이탈(스토리). add=신규(루트 직업·숙련0·빈 슬롯), remove=이탈
+  | { kind: "resource"; id: string; delta: number }; // 런 자원(R1) 가감(min/max 클램프). event 선택지·노드 onResolve용
 // ── 인카운터 이벤트 스키마 (7.2) — event 레이어가 인라인 소유 가능. 풀 상수는 data/events.ts. ──
 export type EncounterOutcome =
   | { kind: "heal"; pct: number }
@@ -24,12 +25,16 @@ export type EncounterOutcome =
   | { kind: "gold"; amount: number }
   | { kind: "upgradeRandom" }
   | { kind: "learnUniversal" }
-  | { kind: "nothing" };
+  | { kind: "nothing" }
+  | { kind: "resource"; id: string; delta: number }; // 런 자원(R1) 가감
+/** 자원 임계 비교(R1) — requires·resourceMods 공용. cmp=gte|lte|gt|lt|eq. */
+export interface ResourceReq { resourceId: string; cmp: "gte" | "lte" | "gt" | "lt" | "eq"; value: number; }
 export interface EncounterChoice {
   id: string;
   label: string;
   result?: EncounterOutcome; // 확정 결과
   gamble?: { chance: number; win: EncounterOutcome; lose: EncounterOutcome }; // 도박(확률 win/lose)
+  requires?: ResourceReq; // 자원 게이팅(R1) — 충족해야 선택 가능(예: 민심 gte 60)
 }
 export interface EncounterEvent {
   id: string;
@@ -50,8 +55,10 @@ export type ShopOfferDef =
 export type NodeRule = PassiveRule & { owner?: { side: "ally" | "enemy"; charId: string } };
 
 /** 상호작용 레이어 — 완료까지 블록(phase 전환). combat·reward(B). shop/event는 후속. */
+/** 전투 시작 자원 모디파이어(R1) — 자원이 임계 충족 시 side 전원에 상태 주입(민심高→아군 버프 / 심리전→적 fear). */
+export interface ResourceMod { resourceId: string; cmp: "gte" | "lte" | "gt" | "lt" | "eq"; value: number; side: "ally" | "enemy"; statusId: string; stacks: number; duration: number; }
 export type InteractiveLayer =
-  | { kind: "combat"; roster?: { charId: string; pos: Pos }[]; boss?: boolean; rules?: NodeRule[] } // 적=인라인 roster(노드 소유, 단일 소스). 비면 엔진 fallback=NODE_ROSTERS.battle. 보스=진형보너스. rules=이 전투의 트리거 룰(Phase C/E4)
+  | { kind: "combat"; roster?: { charId: string; pos: Pos }[]; boss?: boolean; rules?: NodeRule[]; resourceMods?: ResourceMod[] } // 적=인라인 roster. 보스=진형보너스. rules=트리거 룰. resourceMods=자원 조건부 전투시작 상태(R1)
   | { kind: "reward"; tier?: number } // 보상(genRewards) — 등급↑(2~3)=선택지·아이템 가산. 기본 1=3택1. treasure 노드 = core:[reward]
   | { kind: "shop"; offers?: ShopOfferDef[]; keepGenerated?: boolean } // 상점 진열 — offers 있으면 그 저작 진열, 없으면 절차생성(generateShop). keepGenerated=저작+절차 병행. leaveShop까지 블록. 스타터 DI(run.ts)
   | { kind: "event"; event?: EncounterEvent } // 인카운터 — event 인라인(노드 저작) 우선, 없으면 전역 풀 랜덤. chooseEncounterOption까지 블록
@@ -96,6 +103,8 @@ export interface FloorDef {
   edges: MapEdge[];
 }
 
+/** 런 자원 정의(R1) — 민심·명예·토사구팽 등 런-영속 명명 자원. */
+export interface ResourceDef { id: string; name: string; min: number; max: number; initial: number; icon?: string; }
 /** 런 = 층 그래프(floors 집합, clear.toFloor로 연결) + 시작 파티 + 모드 설정. (구 GameMode 흡수) */
 export type RunMode = "campaign"; // 향후: "standard" | "endless" 등. 셸이 모드별 런 필터·노출 (SHELL D8)
 export interface RunDef {
@@ -108,4 +117,5 @@ export interface RunDef {
   entryFloorId: string; // 시작 층 id
   roster: { charId: string; pos: Pos }[];
   floors: FloorDef[]; // 순서 무의미 — 탐색은 id(entryFloorId·clear.toFloor)로
+  resources?: ResourceDef[]; // 런 자원 게이지(R1) — 민심 등. 미지정=자원 없는 런
 }

@@ -7,8 +7,9 @@ use super::rewards::gen_rewards;
 use super::shop::generate_shop;
 use super::types::RunState;
 use crate::battle::create_battle_grown;
+use crate::status::apply_status_instance;
 use spr_types::data::{Encounter, Placement};
-use spr_types::map::{Layer, MapNode, NodeRule};
+use spr_types::map::{cmp_ok, Layer, MapNode, NodeRule, ResourceMod};
 
 fn copy_roster(d: &RunData, key: &str) -> Vec<Placement> {
     d.node_rosters.get(key).or_else(|| d.node_rosters.get("battle")).cloned().unwrap_or_default()
@@ -17,9 +18,9 @@ fn copy_roster(d: &RunData, key: &str) -> Vec<Placement> {
 /// 타입별 기본 core 시드. TS defaultCore.
 pub fn default_core(node_type: &str, d: &RunData) -> Vec<Layer> {
     match node_type {
-        "battle" => vec![Layer::Combat { roster: Some(copy_roster(d, "battle")), boss: false, rules: None }, Layer::Gold { amount: 8 }, Layer::Reward { tier: Some(1) }],
-        "elite" => vec![Layer::Combat { roster: Some(copy_roster(d, "elite")), boss: false, rules: None }, Layer::Gold { amount: 16 }, Layer::Reward { tier: Some(2) }],
-        "boss" => vec![Layer::Combat { roster: Some(copy_roster(d, "boss")), boss: true, rules: None }, Layer::Gold { amount: 24 }, Layer::Reward { tier: Some(3) }],
+        "battle" => vec![Layer::Combat { roster: Some(copy_roster(d, "battle")), boss: false, rules: None, resource_mods: None }, Layer::Gold { amount: 8 }, Layer::Reward { tier: Some(1) }],
+        "elite" => vec![Layer::Combat { roster: Some(copy_roster(d, "elite")), boss: false, rules: None, resource_mods: None }, Layer::Gold { amount: 16 }, Layer::Reward { tier: Some(2) }],
+        "boss" => vec![Layer::Combat { roster: Some(copy_roster(d, "boss")), boss: true, rules: None, resource_mods: None }, Layer::Gold { amount: 24 }, Layer::Reward { tier: Some(3) }],
         "shop" => vec![Layer::Shop { offers: None, keep_generated: None }],
         "rest" => vec![Layer::Heal { pct: 50, revive: Some(true) }],
         "encounter" => vec![Layer::Event { event: None }],
@@ -52,8 +53,8 @@ pub fn step_core(run: &mut RunState, node_id: &str, d: &RunData) {
             return;
         }
         match &core[cursor] {
-            Layer::Combat { roster, boss, rules } => {
-                start_combat(run, roster.clone(), *boss, rules.clone().unwrap_or_default(), d);
+            Layer::Combat { roster, boss, rules, resource_mods } => {
+                start_combat(run, roster.clone(), *boss, rules.clone().unwrap_or_default(), resource_mods.clone(), d);
                 return;
             }
             Layer::Reward { tier } => {
@@ -88,8 +89,8 @@ pub fn step_core(run: &mut RunState, node_id: &str, d: &RunData) {
     }
 }
 
-/// 전투 레이어 시작 — 적 구성(override 우선) + 계승상태 + 노드룰 주입.
-fn start_combat(run: &mut RunState, roster: Option<Vec<Placement>>, boss: bool, rules: Vec<NodeRule>, d: &RunData) {
+/// 전투 레이어 시작 — 적 구성(override 우선) + 계승상태 + 노드룰 + 자원 모디파이어(R1) 주입.
+fn start_combat(run: &mut RunState, roster: Option<Vec<Placement>>, boss: bool, rules: Vec<NodeRule>, resource_mods: Option<Vec<ResourceMod>>, d: &RunData) {
     let seed = run.rng.int(0, 2_000_000_000) as u32;
     let enemies = match roster {
         Some(r) if !r.is_empty() => r,
@@ -99,6 +100,20 @@ fn start_combat(run: &mut RunState, roster: Option<Vec<Placement>>, boss: bool, 
     let battle = create_battle_grown(seed, &enc, &run.party, &run.pending_statuses, &rules, &d.chars, &d.skills, &d.traits, &d.items, &d.defs);
     run.battle = Some(battle);
     run.pending_statuses.clear();
+    // R1: 자원 모디파이어 — 자원이 임계 충족 시 side 전원에 상태 주입(민심高→아군 버프 / 심리전→적 fear).
+    for m in resource_mods.unwrap_or_default() {
+        let val = *run.resources.get(&m.resource_id).unwrap_or(&0);
+        if !cmp_ok(&m.cmp, val, m.value) {
+            continue;
+        }
+        let bt = run.battle.as_mut().unwrap();
+        let idxs: Vec<usize> = bt.units.iter().enumerate().filter(|(_, u)| u.side == m.side).map(|(i, _)| i).collect();
+        for i in idxs {
+            let uid = bt.units[i].uid.clone();
+            apply_status_instance(bt, i, &uid, &m.status_id, m.stacks, m.duration, None, &d.defs, &d.skills);
+        }
+        run.log.push(format!("자원 효과({} {}{}): {} 측 {}", m.resource_id, m.cmp, m.value, m.side, m.status_id));
+    }
     run.phase = "battle".to_string();
     run.log.push("전투 진입".to_string());
 }

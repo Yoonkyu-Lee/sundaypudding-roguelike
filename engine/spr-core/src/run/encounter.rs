@@ -1,12 +1,12 @@
 //! 인카운터 (TS `core/run/encounter.ts`, 7.2) — 선택지/도박, 생존보장(최소 HP1). RNG 결정론.
 use super::data::RunData;
-use super::helpers::{complete_node, heal_party, learn_owned, node, upgrade_owned};
+use super::helpers::{complete_node, heal_party, learn_owned, modify_resource, node, upgrade_owned};
 use super::layers::advance_core;
 use super::passives::{fire_run_trigger, RunTriggerCtx};
 use super::rewards::owns_upgrade_line;
 use super::types::RunState;
 use crate::util::round_div;
-use spr_types::map::{EncounterEvent, EncounterOutcome};
+use spr_types::map::{cmp_ok, EncounterEvent, EncounterOutcome};
 
 fn apply_outcome(run: &mut RunState, o: &EncounterOutcome, d: &RunData) {
     match o {
@@ -66,6 +66,7 @@ fn apply_outcome(run: &mut RunState, o: &EncounterOutcome, d: &RunData) {
                 run.log.push(format!("{} 「{}」 습득!", d.chars[&run.party[mi].char_id].name, d.skills[&sid].name));
             }
         }
+        EncounterOutcome::Resource { id, delta } => modify_resource(run, id, *delta),
         EncounterOutcome::Nothing => {}
     }
 }
@@ -94,6 +95,13 @@ pub fn choose_encounter_option(run: &mut RunState, choice_id: &str, d: &RunData)
         Some(c) => c.clone(),
         None => return,
     };
+    // R1: 자원 게이팅 — 요구 미충족 선택은 무시(방어; 프론트도 비활성).
+    if let Some(req) = &ch.requires {
+        let val = *run.resources.get(&req.resource_id).unwrap_or(&0);
+        if !cmp_ok(&req.cmp, val, req.value) {
+            return;
+        }
+    }
     let mut outcome = ch.result.unwrap_or(EncounterOutcome::Nothing);
     if let Some(g) = &ch.gamble {
         let win = run.rng.chance(g.chance);
