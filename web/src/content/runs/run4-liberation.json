@@ -1,0 +1,100 @@
+{
+  "id": "run4_liberation",
+  "name": "야인시대 4: 해방과 좌우 대결",
+  "desc": "주먹의 시대가 총·폭탄·이념의 시대로 넘어간다. 좌익 전위대장에서 우익 별동대장으로 전향하는 두한. 거점 폭파·암살·다수전, 그리고 잃어가며 얻는 비극. 최종 적은 옛 동지 정진영. (원작 51~76화)",
+  "mode": "campaign",
+  "useMastery": false,
+  "entryFloorId": "f1",
+  "resources": [
+    { "id": "minsim", "name": "민심", "min": 0, "max": 100, "initial": 50, "icon": "⚖" }
+  ],
+  "roster": [
+    { "charId": "duhan", "pos": { "row": 1, "col": 0 } },
+    { "charId": "mook", "pos": { "row": 2, "col": 0 } },
+    { "charId": "gaekko_b", "pos": { "row": 1, "col": 2 } },
+    { "charId": "kimyt", "pos": { "row": 2, "col": 2 } }
+  ],
+  "floors": [
+    {
+      "id": "f1",
+      "name": "점령과 전향",
+      "entryNodeId": "f1_entry",
+      "nodes": [
+        { "id": "f1_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f1_mukwanbu", "type": "battle", "q": 1, "r": 0, "label": "해군무관부 점령", "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 10 }, { "kind": "reward", "tier": 1 }] },
+        { "id": "f1_turn", "type": "encounter", "q": 2, "r": 0, "label": "전향 — 별동대장", "core": [{ "kind": "text", "text": "아버지 김좌진 암살의 진실. 두한이 좌익 전위대를 떠나 우익 별동대장으로 돌아선다." }, { "kind": "classChange", "max": 1 }, { "kind": "resource", "id": "minsim", "delta": 10 }] },
+        { "id": "f1_jail", "type": "battle", "q": 3, "r": 0, "label": "유치장 좌익 죄수", "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 8 }, { "kind": "reward", "tier": 1 }] },
+        { "id": "f1_clear", "type": "clear", "q": 4, "r": 0, "toFloor": "f2" }
+      ],
+      "edges": [
+        { "from": "f1_entry", "to": "f1_mukwanbu" },
+        { "from": "f1_mukwanbu", "to": "f1_turn" },
+        { "from": "f1_turn", "to": "f1_jail" },
+        { "from": "f1_jail", "to": "f1_clear" }
+      ]
+    },
+    {
+      "id": "f2",
+      "name": "좌우 무력 전쟁",
+      "entryNodeId": "f2_entry",
+      "nodes": [
+        { "id": "f2_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f2_jeonmae", "type": "battle", "q": 1, "r": 0, "label": "전매국 아편 탈취", "core": [{ "kind": "combat", "roster": [{ "charId": "thug2", "pos": { "row": 1, "col": 0 } }, { "charId": "thug2", "pos": { "row": 2, "col": 0 } }, { "charId": "thug", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 12 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f2_shop", "type": "shop", "q": 2, "r": 0, "label": "사고야마 정보상", "core": [{ "kind": "shop" }] },
+        { "id": "f2_ihwa", "type": "elite", "q": 3, "r": 0, "label": "이화룡 명동 충돌", "core": [{ "kind": "combat", "roster": [{ "charId": "ihwaryong", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 16 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f2_sirasoni", "type": "encounter", "q": 4, "r": 0, "label": "시라소니 자진무릎", "core": [{ "kind": "text", "text": "시라소니가 무릎을 꿇어 형제의 결의를 맺는다. 지는 것이 이기는 것 — 압도적 무력이 식구가 되다." }, { "kind": "partyChange", "add": ["sirasoni"] }, { "kind": "resource", "id": "minsim", "delta": 10 }, { "kind": "heal", "pct": 30 }] },
+        { "id": "f2_taereung", "type": "battle", "q": 5, "r": 0, "label": "태릉 국군준비대 거점", "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 14 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f2_geumgang", "type": "boss", "q": 6, "r": 0, "label": "금강 옥상 결투",
+          "core": [
+            { "kind": "combat", "boss": true, "roster": [{ "charId": "geumgang", "pos": { "row": 1, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }],
+              "resourceMods": [{ "resourceId": "minsim", "cmp": "gte", "value": 60, "side": "ally", "statusId": "might", "stacks": 1, "duration": 99 }] },
+            { "kind": "gold", "amount": 24 },
+            { "kind": "reward", "tier": 3 }
+          ] },
+        { "id": "f2_clear", "type": "clear", "q": 7, "r": 0, "toFloor": "f3" }
+      ],
+      "edges": [
+        { "from": "f2_entry", "to": "f2_jeonmae" },
+        { "from": "f2_jeonmae", "to": "f2_shop" },
+        { "from": "f2_shop", "to": "f2_ihwa" },
+        { "from": "f2_ihwa", "to": "f2_sirasoni" },
+        { "from": "f2_sirasoni", "to": "f2_taereung" },
+        { "from": "f2_taereung", "to": "f2_geumgang" },
+        { "from": "f2_geumgang", "to": "f2_clear" }
+      ]
+    },
+    {
+      "id": "f3",
+      "name": "우정의 파국",
+      "entryNodeId": "f3_entry",
+      "nodes": [
+        { "id": "f3_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f3_donation", "type": "encounter", "q": 1, "r": 0, "label": "애국헌금 강제징수", "core": [{ "kind": "event", "event": { "id": "f3_donation_ev", "title": "부호들의 애국헌금", "text": "이승만의 휘호를 앞세워 부호 30여 명에게 징수한다. 영수증을 끊으면 의적의 명분이, 강탈하면 자금이 남는다.", "choices": [
+          { "id": "receipt", "label": "영수증을 발행한다 (민심 +15)", "result": { "kind": "resource", "id": "minsim", "delta": 15 } },
+          { "id": "rob", "label": "강탈한다 (골드 +30, 민심 −15)", "result": { "kind": "gold", "amount": 30 } }
+        ] } }] },
+        { "id": "f3_yongsan", "type": "battle", "q": 2, "r": 0, "label": "용산 파업 진압", "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 12 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f3_mook", "type": "encounter", "q": 3, "r": 0, "label": "김무옥 전사", "core": [{ "kind": "text", "text": "허성탁의 약속 위반 총격. 김무옥이 두한을 감싸고 쓰러진다. 또 하나의 식구를 잃는다." }, { "kind": "partyChange", "remove": ["mook"] }, { "kind": "resource", "id": "minsim", "delta": -5 }] },
+        { "id": "f3_gaekko", "type": "encounter", "q": 4, "r": 0, "label": "개코 자결", "core": [{ "kind": "text", "text": "여공 사망 누명. 개코가 조직의 명예를 위해 스스로 목숨을 끊는다. 별동대의 결속이 피로 굳는다." }, { "kind": "partyChange", "remove": ["gaekko_b"] }, { "kind": "resource", "id": "minsim", "delta": 10 }] },
+        { "id": "f3_kimilsung", "type": "battle", "q": 5, "r": 0, "label": "김일성 별장 잠입", "core": [{ "kind": "combat", "roster": [{ "charId": "kimcheonho", "pos": { "row": 1, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }, { "charId": "thug2", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 14 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f3_jeong", "type": "boss", "q": 6, "r": 0, "label": "정진영 최종전",
+          "core": [
+            { "kind": "combat", "boss": true, "roster": [{ "charId": "jeongjinyoung", "pos": { "row": 1, "col": 0 } }, { "charId": "kimcheonho", "pos": { "row": 0, "col": 0 } }, { "charId": "thug2", "pos": { "row": 2, "col": 0 } }],
+              "resourceMods": [{ "resourceId": "minsim", "cmp": "gte", "value": 60, "side": "ally", "statusId": "might", "stacks": 1, "duration": 99 }] },
+            { "kind": "gold", "amount": 26 },
+            { "kind": "reward", "tier": 3 }
+          ] },
+        { "id": "f3_clear", "type": "clear", "q": 7, "r": 0 }
+      ],
+      "edges": [
+        { "from": "f3_entry", "to": "f3_donation" },
+        { "from": "f3_donation", "to": "f3_yongsan" },
+        { "from": "f3_yongsan", "to": "f3_mook" },
+        { "from": "f3_mook", "to": "f3_gaekko" },
+        { "from": "f3_gaekko", "to": "f3_kimilsung" },
+        { "from": "f3_kimilsung", "to": "f3_jeong" },
+        { "from": "f3_jeong", "to": "f3_clear" }
+      ]
+    }
+  ]
+}

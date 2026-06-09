@@ -171,4 +171,15 @@ export const SKILLS: Record<string, Skill> = {
   // 하야시 — 혼마찌 오야붕(지휘·증원은 노드 적 구성으로 근사)
   hayashi_order: { id: "hayashi_order", name: "지휘", exclusiveTo: "hayashi", target: "ally", area: { kind: "all" }, cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 2 }] },
   hayashi_jab: { id: "hayashi_jab", name: "지팡이", exclusiveTo: "hayashi", target: "enemy", cooldown: 1, accuracy: 85, reach: 1, effects: [{ kind: "damage", amount: 9 }] },
+
+  // ══ 야인시대 런4(해방·좌우 대결) — 스킬 ══ (gamedata/run04)
+  duhan_dynamite: { id: "duhan_dynamite", name: "다이너마이트 기습", exclusiveTo: "duhan", classReq: 1, target: "enemy", area: { kind: "square" }, cooldown: 4, accuracy: 85, effects: [{ kind: "damage", amount: 14 }] }, // 거점 광역(전향 후 해금)
+  sirasoni_rampage: { id: "sirasoni_rampage", name: "광폭난타", exclusiveTo: "sirasoni", target: "enemy", cooldown: 1, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 13 }] },
+  sirasoni_headbutt: { id: "sirasoni_headbutt", name: "들이받기", exclusiveTo: "sirasoni", target: "enemy", cooldown: 2, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 17 }] },
+  geumgang_smash: { id: "geumgang_smash", name: "곰의 강타", exclusiveTo: "geumgang", target: "enemy", cooldown: 1, accuracy: 85, reach: 1, effects: [{ kind: "damage", amount: 22 }] },
+  geumgang_push: { id: "geumgang_push", name: "밀어 추락", exclusiveTo: "geumgang", target: "enemy", cooldown: 2, accuracy: 90, reach: 1, effects: [{ kind: "move", who: "target", deltaCol: 2 }, { kind: "damage", amount: 9 }] },
+  ihwaryong_strike: { id: "ihwaryong_strike", name: "명동 일격", exclusiveTo: "ihwaryong", target: "enemy", cooldown: 1, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 13 }] },
+  kimcheonho_ambush: { id: "kimcheonho_ambush", name: "차량 폭탄", exclusiveTo: "kimcheonho", target: "enemy", cooldown: 2, accuracy: 80, effects: [{ kind: "damage", amount: 12 }, { kind: "applyStatus", statusId: "bleed", stacks: 1, duration: 2 }] },
+  jeong_command: { id: "jeong_command", name: "전위대 지휘", exclusiveTo: "jeongjinyoung", target: "ally", area: { kind: "all" }, cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 2 }] },
+  jeong_pistol: { id: "jeong_pistol", name: "권총", exclusiveTo: "jeongjinyoung", target: "enemy", cooldown: 1, accuracy: 90, effects: [{ kind: "damage", amount: 13 }] },
 };

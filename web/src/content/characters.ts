@@ -55,4 +55,11 @@ export const CHARACTERS: Record<string, Character> = {
   kamisori: { id: "kamisori", name: "가미소리", avatar: "🗡", aiProfileId: "assassin", hp: 38, speedMin: 5, speedMax: 8, evasion: 9, accuracy: 8, critChance: 18, critMultiplier: 170, skillIds: ["kamisori_ambush"] },
   gendarme: { id: "gendarme", name: "헌병", avatar: "🎖", aiProfileId: "commander", hp: 34, speedMin: 4, speedMax: 7, evasion: 6, accuracy: 5, critChance: 5, critMultiplier: 150, skillIds: ["gendarme_torture"] },
   hayashi: { id: "hayashi", name: "하야시", avatar: "🎩", aiProfileId: "commander", hp: 48, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 10, critMultiplier: 150, skillIds: ["hayashi_order", "hayashi_jab"] },
+
+  // ══ 야인시대 런4(해방·좌우 대결) — 신규 (두한·김무옥·개코·김영태·문영철·신영균(shin)·상하이(shanghai) 재사용) ══ (gamedata/run04)
+  sirasoni: { id: "sirasoni", name: "시라소니", avatar: "🐯", playable: true, traitIds: ["drunken_fury"], hp: 48, speedMin: 5, speedMax: 8, evasion: 13, accuracy: 5, critChance: 18, critMultiplier: 160, skillIds: ["sirasoni_rampage", "sirasoni_headbutt"] },
+  geumgang: { id: "geumgang", name: "금강", avatar: "🐻", aiProfileId: "bruiser", hp: 62, speedMin: 2, speedMax: 5, evasion: 4, accuracy: 5, critChance: 15, critMultiplier: 180, skillIds: ["geumgang_smash", "geumgang_push"] },
+  ihwaryong: { id: "ihwaryong", name: "이화룡", avatar: "🐲", aiProfileId: "guardian", hp: 44, speedMin: 4, speedMax: 7, evasion: 8, accuracy: 5, critChance: 12, critMultiplier: 155, skillIds: ["ihwaryong_strike"] },
+  kimcheonho: { id: "kimcheonho", name: "김천호", avatar: "💣", aiProfileId: "assassin", hp: 26, speedMin: 6, speedMax: 9, evasion: 11, accuracy: 5, critChance: 25, critMultiplier: 175, skillIds: ["kimcheonho_ambush"] },
+  jeongjinyoung: { id: "jeongjinyoung", name: "정진영(전위대장)", avatar: "🚩", aiProfileId: "commander", hp: 52, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 12, critMultiplier: 160, skillIds: ["jeong_command", "jeong_pistol"] },
 };

@@ -103,4 +103,11 @@ export const TRAITS: Record<string, TraitDef> = {
     id: "torture_resist", name: "고문 항거", icon: "✊", desc: "내 턴 시작 시 공포 상태면 떨쳐낸다(정신 공격 항거).",
     rules: [{ when: { on: "turnStart", who: "self" }, if: [{ c: "hasStatus", who: "self", statusId: "fear" }], then: [{ do: "cleanse", target: "self" }], maxPerTurn: 1 }],
   },
+
+  // ── 런4(좌우 대결) 신규 특성 ──
+  // 만취 광폭 — 시라소니. 취할(약화)수록 더 사나워진다.
+  drunken_fury: {
+    id: "drunken_fury", name: "만취 광폭", icon: "🍶", desc: "내 턴 시작 시 약화 상태면 투지를 얻는다(약할수록 사나워짐).",
+    rules: [{ when: { on: "turnStart", who: "self" }, if: [{ c: "hasStatus", who: "self", statusId: "weaken" }], then: [{ do: "applyStatus", statusId: "might", stacks: 1, duration: 1, target: "self" }], maxPerTurn: 1 }],
+  },
 };
