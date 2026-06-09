@@ -62,4 +62,11 @@ export const CHARACTERS: Record<string, Character> = {
   ihwaryong: { id: "ihwaryong", name: "이화룡", avatar: "🐲", aiProfileId: "guardian", hp: 44, speedMin: 4, speedMax: 7, evasion: 8, accuracy: 5, critChance: 12, critMultiplier: 155, skillIds: ["ihwaryong_strike"] },
   kimcheonho: { id: "kimcheonho", name: "김천호", avatar: "💣", aiProfileId: "assassin", hp: 26, speedMin: 6, speedMax: 9, evasion: 11, accuracy: 5, critChance: 25, critMultiplier: 175, skillIds: ["kimcheonho_ambush"] },
   jeongjinyoung: { id: "jeongjinyoung", name: "정진영(전위대장)", avatar: "🚩", aiProfileId: "commander", hp: 52, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 12, critMultiplier: 160, skillIds: ["jeong_command", "jeong_pistol"] },
+
+  // ══ 야인시대 런5(사형·전쟁기) — 신규 (두한·문영철·김무옥·김영태·이화룡·시라소니 재사용) ══ (gamedata/run05)
+  michael: { id: "michael", name: "마이클 상사", avatar: "🥊", aiProfileId: "bruiser", hp: 60, speedMin: 4, speedMax: 7, evasion: 12, accuracy: 8, critChance: 12, critMultiplier: 165, skillIds: ["michael_box"] },
+  nodeoksul: { id: "nodeoksul", name: "노덕술", avatar: "🕴", aiProfileId: "coward", hp: 30, speedMin: 4, speedMax: 7, evasion: 9, accuracy: 5, critChance: 5, critMultiplier: 150, skillIds: ["nodeoksul_assassin"] },
+  gosaimachi: { id: "gosaimachi", name: "고사이마찌", avatar: "🔫", aiProfileId: "assassin", hp: 24, speedMin: 5, speedMax: 8, evasion: 9, accuracy: 12, critChance: 22, critMultiplier: 180, skillIds: ["gosaimachi_pistol"] },
+  ijeongjae: { id: "ijeongjae", name: "이정재(회장)", avatar: "🎩", aiProfileId: "commander", hp: 54, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 12, critMultiplier: 160, traitIds: ["kim_oyabun_will"], skillIds: ["ijeongjae_order", "ijeongjae_pistol"] },
+  iseokjae: { id: "iseokjae", name: "이석재", avatar: "🎯", aiProfileId: "assassin", hp: 26, speedMin: 4, speedMax: 7, evasion: 8, accuracy: 15, critChance: 20, critMultiplier: 170, skillIds: ["iseokjae_shot"] },
 };

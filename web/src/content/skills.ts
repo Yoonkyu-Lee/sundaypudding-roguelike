@@ -182,4 +182,13 @@ export const SKILLS: Record<string, Skill> = {
   kimcheonho_ambush: { id: "kimcheonho_ambush", name: "차량 폭탄", exclusiveTo: "kimcheonho", target: "enemy", cooldown: 2, accuracy: 80, effects: [{ kind: "damage", amount: 12 }, { kind: "applyStatus", statusId: "bleed", stacks: 1, duration: 2 }] },
   jeong_command: { id: "jeong_command", name: "전위대 지휘", exclusiveTo: "jeongjinyoung", target: "ally", area: { kind: "all" }, cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 2 }] },
   jeong_pistol: { id: "jeong_pistol", name: "권총", exclusiveTo: "jeongjinyoung", target: "enemy", cooldown: 1, accuracy: 90, effects: [{ kind: "damage", amount: 13 }] },
+
+  // ══ 야인시대 런5(사형·전쟁기) — 스킬 ══ (gamedata/run05)
+  duhan_command: { id: "duhan_command", name: "지휘", exclusiveTo: "duhan", classReq: 1, target: "ally", area: { kind: "all" }, cooldown: 4, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 2 }, { kind: "shield", amount: 6 }] }, // 학도병 사기 진작
+  michael_box: { id: "michael_box", name: "정통 복싱", exclusiveTo: "michael", target: "enemy", cooldown: 1, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 14 }], passives: [{ when: { on: "battleStart" }, then: [{ do: "shield", amount: 20, target: "self" }] }] }, // 챔피언의 가드
+  nodeoksul_assassin: { id: "nodeoksul_assassin", name: "암살 의뢰", exclusiveTo: "nodeoksul", target: "enemy", cooldown: 1, accuracy: 95, effects: [{ kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }, { kind: "damage", amount: 5 }] },
+  gosaimachi_pistol: { id: "gosaimachi_pistol", name: "부두 권총", exclusiveTo: "gosaimachi", target: "enemy", cooldown: 2, accuracy: 95, effects: [{ kind: "damage", amount: 26 }] }, // 권총 글래스캐논(즉사급)
+  ijeongjae_order: { id: "ijeongjae_order", name: "회장의 규율", exclusiveTo: "ijeongjae", target: "ally", area: { kind: "all" }, cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 2 }] },
+  ijeongjae_pistol: { id: "ijeongjae_pistol", name: "권총", exclusiveTo: "ijeongjae", target: "enemy", cooldown: 1, accuracy: 90, effects: [{ kind: "damage", amount: 13 }] },
+  iseokjae_shot: { id: "iseokjae_shot", name: "8발 전탄 명중", exclusiveTo: "iseokjae", target: "enemy", cooldown: 2, accuracy: 0, alwaysHit: true, effects: [{ kind: "damage", amount: 18 }] }, // 명사수(반드시 명중)
 };

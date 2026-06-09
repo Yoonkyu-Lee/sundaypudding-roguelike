@@ -1,0 +1,88 @@
+{
+  "id": "run5_war",
+  "name": "야인시대 5: 사형·전쟁기",
+  "desc": "사형수 두한이 전쟁 영웅으로 부활하고, 동대문 이정재 사단이 태동한다. 미군 챔피언·권총·인민군 웨이브 — 주먹 룰이 깨지는 양식 충돌. 통쾌함과 비극이 교차하는 분수령. (원작 77~89화)",
+  "mode": "campaign",
+  "useMastery": false,
+  "entryFloorId": "f1",
+  "resources": [
+    { "id": "honor", "name": "명예", "min": 0, "max": 100, "initial": 50, "icon": "🎖" }
+  ],
+  "roster": [
+    { "charId": "duhan", "pos": { "row": 1, "col": 0 } },
+    { "charId": "mook", "pos": { "row": 2, "col": 0 } }
+  ],
+  "floors": [
+    {
+      "id": "f1",
+      "name": "사형·청산",
+      "entryNodeId": "f1_entry",
+      "nodes": [
+        { "id": "f1_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f1_court", "type": "encounter", "q": 1, "r": 0, "label": "미 군법회의", "core": [{ "kind": "event", "event": { "id": "f1_court_ev", "title": "아놀드 군정의 사형 선고", "text": "「한국 법정에서 죽겠다.」 자해로 결기를 보일 것인가, 굴욕을 삼킬 것인가.", "choices": [
+          { "id": "selfharm", "label": "자해로 맞선다 (명예 +15)", "result": { "kind": "resource", "id": "honor", "delta": 15 } },
+          { "id": "submit", "label": "굴욕을 삼킨다 (보상 적음)", "result": { "kind": "nothing" } }
+        ] } }] },
+        { "id": "f1_michael", "type": "boss", "q": 2, "r": 0, "label": "오키나와 킥복싱 — 마이클", "core": [{ "kind": "combat", "boss": true, "roster": [{ "charId": "michael", "pos": { "row": 1, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 20 }, { "kind": "reward", "tier": 3 }] },
+        { "id": "f1_amnesty", "type": "encounter", "q": 3, "r": 0, "label": "특별사면·노동운동", "core": [{ "kind": "text", "text": "특별사면. 전진한 노총의 제안으로 우미관 식구 문영철·김영태가 합류한다." }, { "kind": "partyChange", "add": ["moon", "kimyt"] }, { "kind": "heal", "pct": 40 }] },
+        { "id": "f1_banmin", "type": "elite", "q": 4, "r": 0, "label": "반민특위 — 노덕술", "core": [{ "kind": "combat", "roster": [{ "charId": "nodeoksul", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 16 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f1_clear", "type": "clear", "q": 5, "r": 0, "toFloor": "f2" }
+      ],
+      "edges": [
+        { "from": "f1_entry", "to": "f1_court" },
+        { "from": "f1_court", "to": "f1_michael" },
+        { "from": "f1_michael", "to": "f1_amnesty" },
+        { "from": "f1_amnesty", "to": "f1_banmin" },
+        { "from": "f1_banmin", "to": "f1_clear" }
+      ]
+    },
+    {
+      "id": "f2",
+      "name": "전란·생존",
+      "entryNodeId": "f2_entry",
+      "nodes": [
+        { "id": "f2_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f2_625", "type": "encounter", "q": 1, "r": 0, "label": "6.25 발발", "core": [{ "kind": "text", "text": "전쟁이 터진다. 한강 다리가 끊기기 전에 식구를 데리고 강을 건너야 한다." }, { "kind": "heal", "pct": 20 }] },
+        { "id": "f2_hangang", "type": "battle", "q": 2, "r": 0, "label": "한강 도하", "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 10 }, { "kind": "reward", "tier": 1 }] },
+        { "id": "f2_rescue", "type": "encounter", "q": 3, "r": 0, "label": "점령 서울 잠입·구출", "core": [{ "kind": "text", "text": "명동패 시라소니·이화룡이 합류해 점령 서울에서 식구를 구출한다." }, { "kind": "partyChange", "add": ["sirasoni", "ihwaryong"] }, { "kind": "heal", "pct": 30 }] },
+        { "id": "f2_budu", "type": "elite", "q": 4, "r": 0, "label": "부두 파업 — 권총의 시대", "core": [{ "kind": "combat", "roster": [{ "charId": "gosaimachi", "pos": { "row": 0, "col": 2 } }, { "charId": "thug2", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 18 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f2_yeongcheon", "type": "boss", "q": 5, "r": 0, "label": "학도병 영천 고지전", "core": [{ "kind": "combat", "boss": true, "roster": [{ "charId": "thug", "pos": { "row": 0, "col": 0 } }, { "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug2", "pos": { "row": 1, "col": 1 } }] }, { "kind": "gold", "amount": 22 }, { "kind": "reward", "tier": 3 }] },
+        { "id": "f2_clear", "type": "clear", "q": 6, "r": 0, "toFloor": "f3" }
+      ],
+      "edges": [
+        { "from": "f2_entry", "to": "f2_625" },
+        { "from": "f2_625", "to": "f2_hangang" },
+        { "from": "f2_hangang", "to": "f2_rescue" },
+        { "from": "f2_rescue", "to": "f2_budu" },
+        { "from": "f2_budu", "to": "f2_yeongcheon" },
+        { "from": "f2_yeongcheon", "to": "f2_clear" }
+      ]
+    },
+    {
+      "id": "f3",
+      "name": "조직·갈림",
+      "entryNodeId": "f3_entry",
+      "nodes": [
+        { "id": "f3_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f3_moon", "type": "encounter", "q": 1, "r": 0, "label": "문영철 전사", "core": [{ "kind": "text", "text": "영천에서 입은 중상. 문영철이 학도병을 지키고 끝내 눈을 감는다. 분노가 남은 식구를 단단히 한다." }, { "kind": "partyChange", "remove": ["moon"] }, { "kind": "resource", "id": "honor", "delta": 5 }] },
+        { "id": "f3_busan", "type": "battle", "q": 2, "r": 0, "label": "부산 유흥가 청소", "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 14 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f3_class", "type": "encounter", "q": 3, "r": 0, "label": "전직 분기 — 노총·참전", "core": [{ "kind": "text", "text": "노동·참전의 길로 들어선다. 지휘와 역전의 투혼이 깊어진다." }, { "kind": "classChange", "max": 1 }, { "kind": "resource", "id": "honor", "delta": 10 }] },
+        { "id": "f3_summit", "type": "boss", "q": 4, "r": 0, "label": "동대문 상인연합회 상견례",
+          "core": [
+            { "kind": "combat", "boss": true, "roster": [{ "charId": "ijeongjae", "pos": { "row": 1, "col": 0 } }, { "charId": "iseokjae", "pos": { "row": 0, "col": 2 } }, { "charId": "gosaimachi", "pos": { "row": 2, "col": 2 } }, { "charId": "thug2", "pos": { "row": 2, "col": 0 } }],
+              "resourceMods": [{ "resourceId": "honor", "cmp": "gte", "value": 60, "side": "ally", "statusId": "might", "stacks": 1, "duration": 99 }] },
+            { "kind": "gold", "amount": 28 },
+            { "kind": "reward", "tier": 3 }
+          ] },
+        { "id": "f3_clear", "type": "clear", "q": 5, "r": 0 }
+      ],
+      "edges": [
+        { "from": "f3_entry", "to": "f3_moon" },
+        { "from": "f3_moon", "to": "f3_busan" },
+        { "from": "f3_busan", "to": "f3_class" },
+        { "from": "f3_class", "to": "f3_summit" },
+        { "from": "f3_summit", "to": "f3_clear" }
+      ]
+    }
+  ]
+}
