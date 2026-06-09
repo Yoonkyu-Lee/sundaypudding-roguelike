@@ -4,6 +4,7 @@ import { avatarHtml, esc } from "./battle/shared.ts";
 export interface ShellHandlers {
   onStart: () => void; // 타이틀 → 허브(진입점 메뉴)
   onEditor: () => void; // 타이틀/허브 → 런 에디터
+  onJobEditor: () => void; // 허브 메뉴 → 전직 트리 에디터 (개발자 도구)
   onEnterCampaign: () => void; // 허브 메뉴 → 캠페인 런 목록
   onCharDex: () => void; // 허브 메뉴 → 캐릭터 도감
   onHubBack: () => void; // 캠페인 목록 → 허브 메뉴
@@ -74,6 +75,7 @@ export function renderHub(app: HTMLElement, d: HubData, h: ShellHandlers): void 
           <button class="hub-mode" disabled><span class="hub-mode-ic">⚔</span><span class="hub-mode-nm">일반 <span class="hub-soon">준비 중</span></span><span class="hub-mode-dsc">자유 편성으로 즐기는 런</span></button>
           <button class="hub-mode" disabled><span class="hub-mode-ic">🔥</span><span class="hub-mode-nm">챌린지 <span class="hub-soon">준비 중</span></span><span class="hub-mode-dsc">제약 조건 도전</span></button>
           <button class="hub-mode" id="hubeditorbtn"><span class="hub-mode-ic">🗺</span><span class="hub-mode-nm">런 에디터</span><span class="hub-mode-dsc">나만의 런 저작·테스트</span></button>
+          <button class="hub-mode" id="hubjobedbtn"><span class="hub-mode-ic">🔀</span><span class="hub-mode-nm">전직 트리 에디터</span><span class="hub-mode-dsc">캐릭터 직업 트리 저작 (jobs.json)</span></button>
         </div></section>`;
   } else {
     // 캠페인 — 런 목록 + 선택 런의 고정 로스터 미리보기. 자유 편성 없음(주인공 강제).
@@ -94,6 +96,7 @@ export function renderHub(app: HTMLElement, d: HubData, h: ShellHandlers): void 
   app.querySelector("#campaignbtn")?.addEventListener("click", () => h.onEnterCampaign());
   app.querySelector("#hubchardexbtn")?.addEventListener("click", () => h.onCharDex());
   app.querySelector("#hubeditorbtn")?.addEventListener("click", () => h.onEditor());
+  app.querySelector("#hubjobedbtn")?.addEventListener("click", () => h.onJobEditor());
   app.querySelector("#hubbackbtn")?.addEventListener("click", () => h.onHubBack());
   app.querySelector("#newrunbtn")?.addEventListener("click", () => h.onNewRun());
   app.querySelector("#resumebtn")?.addEventListener("click", () => h.onResumeRun());

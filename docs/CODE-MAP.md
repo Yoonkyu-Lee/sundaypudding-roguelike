@@ -135,8 +135,9 @@ desktop/src/main.rs   #[tauri::command]: 전투 데모(create_session·battle_st
 | `battle/timelinePanel.ts` | **행동서열 패널** — `rolling`(SPD 주사위→서열) → `dock` FLIP → `live`(타임라인). `.battleleft` 영속 마운트 | `createTimelinePanel` · `RollView` |
 | `battle/{events,arrow}.ts` | 이벤트→로그 한 줄 / 캐스터→타겟 화살표 | `formatEvent` · `drawArrow` |
 | `editor/` | **런 에디터 GUI**(디자이너 도구) — 헥스 구조 에디터. store(드래프트·F3 repo저장)·ops(노드/변/층 변이)·controller·editView(SVG)·battlefieldEditor(combat 전장)·ruleEditor(트리거 룰)·eventEditor·shopEditor·layerSchema/ruleSchema(스키마 폼). 테스트플레이=`run_create_def` IPC. `validateRun`/`hexAdjacent`(contract) 재사용 | `createEditor` · `renderEditor` |
+| `editor/jobEditor.ts` | **전직 트리 에디터**(⑤-a, 개발자 도구) — `jobs.json` 저작 GUI. 3열(트리 목록·차수 컬럼 트리·인스펙터), 노드 CRUD·이름/차수/부여특성/advancesTo 편집. charDex 티어 BFS 재사용. 저장=`POST /api/save-jobs`. 루트↔캐릭 매핑은 읽기전용(`rootJobId`=characters.ts 미이주) | `createJobEditor` |
 | `style.css` | 다크 테마 + **게임셸 리셋**(브라우저 제스처/크롬 제거 — CLAUDE 웹-티 금지 B) | — |
-| `index.html` · `vite.config.ts` | Vite 진입/설정. **F3 dev-write 미들웨어**(`POST /api/save-run` → `data/runs/{id}.json` + `runs.generated.ts` 재생성) | `devWriteRuns` |
+| `index.html` · `vite.config.ts` | Vite 진입/설정. **dev-write 미들웨어**(`POST /api/save-run` → `runs/{id}.json` + `runs.generated.ts` 재생성 · `POST /api/save-jobs` → `jobs.json` 통째 기록) | `devWriteRuns` · `devWriteJobs` |
 
 ## 4. `web/src/content/` — 콘텐츠 (디자이너 영역, → JSON export → Rust 로드)
 

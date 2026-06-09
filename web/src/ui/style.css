@@ -821,6 +821,47 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .cdx-q { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 5px; background: var(--line); color: var(--dim); font-weight: 700; }
 .cdx-job-nm { font-weight: 600; }
 
+/* ── 전직 트리 에디터 (jobEditor.ts, ⑤-a) — charDex 티어 컬럼 재사용 + 3열(트리 목록·트리·인스펙터). 개발자 도구. */
+.jobed { display: flex; flex-direction: column; height: calc(100vh - 32px); }
+.jobed header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex: none; }
+.jobed header h1 { font-size: 20px; color: var(--accent); margin: 0; display: flex; gap: 8px; align-items: baseline; }
+.jobed-head-actions { display: flex; gap: 8px; }
+.jobed-body { flex: 1; min-height: 0; display: flex; gap: 14px; align-items: stretch; }
+.jobed-trees { flex: none; width: 200px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+.jobed-trees-h { font-size: 11px; color: var(--dim); font-weight: 600; margin-bottom: 2px; }
+.jobed-tree-pick { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel2); color: var(--txt); cursor: pointer; text-align: left; }
+.jobed-tree-pick:hover { border-color: var(--ally); }
+.jobed-tree-pick.sel { border-color: var(--accent); background: rgba(255,209,102,.08); }
+.jobed-tree-pick .jobed-av { width: 32px; height: 32px; border-radius: 7px; font-size: 18px; flex: none; }
+.jobed-tree-nm { flex: 1; min-width: 0; font-weight: 600; font-size: 13px; }
+.jobed-newroot { margin-top: 4px; padding: 7px; border: 1px dashed var(--line); border-radius: 9px; background: transparent; color: var(--dim); cursor: pointer; }
+.jobed-newroot:hover { border-color: var(--accent); color: var(--accent); }
+.jobed-main { flex: 1; min-width: 0; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.jobed-empty { color: var(--dim); padding: 30px; text-align: center; }
+.jobed-tree { display: flex; align-items: stretch; gap: 0; overflow-x: auto; }
+.jobed-tier { flex: 1 1 0; min-width: 180px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel2); padding: 10px; }
+.jobed-tier-h { font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: .04em; }
+.jobed-link { align-self: center; flex: none; color: var(--dim); font-size: 20px; padding: 0 6px; }
+.jobed-node { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--txt); cursor: pointer; text-align: left; }
+.jobed-node:hover { border-color: var(--ally); }
+.jobed-node.sel { border-color: var(--accent); background: rgba(255,209,102,.1); }
+.jobed-node-nm { font-weight: 600; }
+.jobed-node-meta { font-size: 11px; color: var(--accent); }
+.jobed-node-id { font-size: 10px; color: var(--dim); font-family: monospace; }
+.jobed-inspect { flex: none; width: 300px; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.jobed-inspect h4 { margin: 0 0 10px; font-size: 15px; display: flex; gap: 8px; align-items: baseline; }
+.jobed-field { margin-bottom: 12px; display: flex; flex-direction: column; gap: 5px; }
+.jobed-field > label { font-size: 11px; color: var(--dim); font-weight: 600; display: flex; gap: 6px; align-items: baseline; }
+.jobed-field input { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; color: var(--txt); font-size: 13px; }
+.jobed-field input:focus { border-color: var(--accent); outline: none; }
+.jobed-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.jobed-chip { font-size: 11.5px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel2); color: var(--dim); cursor: pointer; }
+.jobed-chip:hover { border-color: var(--ally); }
+.jobed-chip.on { border-color: var(--accent); color: var(--accent); background: rgba(255,209,102,.12); font-weight: 600; }
+.jobed-chip-t { opacity: .6; font-size: 10px; }
+.jobed-inspect-actions { display: flex; gap: 8px; margin-top: 14px; }
+.jobed-inspect-actions .act { flex: 1; }
+
 /* ── 전투 엔진 검증 하네스 (P1-13, rustBattle.ts) ── */
 .rb-root { display: flex; flex-direction: column; gap: 12px; padding: 14px 18px; max-width: 1100px; margin: 0 auto; }
 .rb-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }

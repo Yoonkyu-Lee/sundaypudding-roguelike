@@ -1,11 +1,81 @@
 {
-  "kim_job_brawler": { "id": "kim_job_brawler", "name": "종로 주먹", "classReq": 0, "advancesTo": ["kim_job_boss", "kim_job_fist"] },
-  "kim_job_boss": { "id": "kim_job_boss", "name": "우미관 두목", "classReq": 1, "grantsTraitIds": ["kim_oyabun_will"] },
-  "kim_job_fist": { "id": "kim_job_fist", "name": "협객", "classReq": 1, "grantsTraitIds": ["kim_relentless"] },
-  "kim_young_job_boy": { "id": "kim_young_job_boy", "name": "종로 거지 소년", "classReq": 0, "advancesTo": ["kim_young_job_martial"] },
-  "kim_young_job_martial": { "id": "kim_young_job_martial", "name": "무도가", "classReq": 1, "grantsTraitIds": ["qi_focus"] },
-  "duhan_job_solo": { "id": "duhan_job_solo", "name": "무소속 주먹", "classReq": 0, "advancesTo": ["duhan_job_indep"] },
-  "duhan_job_indep": { "id": "duhan_job_indep", "name": "거리의 독립군", "classReq": 1, "grantsTraitIds": ["warspirit"], "advancesTo": ["duhan_job_oyabun"] },
-  "duhan_job_oyabun": { "id": "duhan_job_oyabun", "name": "이정목 오야붕", "classReq": 2, "grantsTraitIds": ["kim_oyabun_will"], "advancesTo": ["duhan_job_umigwan"] },
-  "duhan_job_umigwan": { "id": "duhan_job_umigwan", "name": "우미관 오야붕", "classReq": 3, "grantsTraitIds": ["kim_relentless"] }
+  "kim_job_brawler": {
+    "id": "kim_job_brawler",
+    "name": "종로 주먹",
+    "classReq": 0,
+    "advancesTo": [
+      "kim_job_boss",
+      "kim_job_fist"
+    ]
+  },
+  "kim_job_boss": {
+    "id": "kim_job_boss",
+    "name": "우미관 두목",
+    "classReq": 1,
+    "grantsTraitIds": [
+      "kim_oyabun_will"
+    ]
+  },
+  "kim_job_fist": {
+    "id": "kim_job_fist",
+    "name": "협객",
+    "classReq": 1,
+    "grantsTraitIds": [
+      "kim_relentless"
+    ]
+  },
+  "kim_young_job_boy": {
+    "id": "kim_young_job_boy",
+    "name": "종로 거지 소년",
+    "classReq": 0,
+    "advancesTo": [
+      "kim_young_job_martial"
+    ]
+  },
+  "kim_young_job_martial": {
+    "id": "kim_young_job_martial",
+    "name": "무도가",
+    "classReq": 1,
+    "grantsTraitIds": [
+      "qi_focus"
+    ]
+  },
+  "duhan_job_solo": {
+    "id": "duhan_job_solo",
+    "name": "무소속 주먹",
+    "classReq": 0,
+    "advancesTo": [
+      "duhan_job_indep"
+    ]
+  },
+  "duhan_job_indep": {
+    "id": "duhan_job_indep",
+    "name": "거리의 독립군",
+    "classReq": 1,
+    "grantsTraitIds": [
+      "warspirit"
+    ],
+    "advancesTo": [
+      "duhan_job_oyabun"
+    ]
+  },
+  "duhan_job_oyabun": {
+    "id": "duhan_job_oyabun",
+    "name": "이정목 오야붕",
+    "classReq": 2,
+    "grantsTraitIds": [
+      "kim_oyabun_will"
+    ],
+    "advancesTo": [
+      "duhan_job_umigwan"
+    ]
+  },
+  "duhan_job_umigwan": {
+    "id": "duhan_job_umigwan",
+    "name": "우미관 오야붕",
+    "classReq": 3,
+    "grantsTraitIds": [
+      "kim_relentless"
+    ]
+  }
 }

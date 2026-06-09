@@ -7,7 +7,9 @@ import { fileURLToPath } from "node:url";
 // 웹 프론트(플레이어 GUI). dev: vite 서버(localhost:5173), Rust 엔진은 Tauri IPC로 호출.
 // build: 일반 multi-file dist/(index.html + assets/ + avatars/) → Tauri가 frontendDist로 통째 번들(단일 데스크톱 앱).
 
-const RUNS_DIR = join(dirname(fileURLToPath(import.meta.url)), "src", "content", "runs");
+const CONTENT_DIR = join(dirname(fileURLToPath(import.meta.url)), "src", "content");
+const RUNS_DIR = join(CONTENT_DIR, "runs");
+const JOBS_PATH = join(CONTENT_DIR, "jobs.json");
 const SAFE_ID = /^[a-zA-Z0-9_-]{1,40}$/;
 
 // runs.generated.ts 재생성 — src/data/runs/*.json을 스캔해 RUNS 레지스트리를 결정론적으로 통째로 쓴다.
@@ -58,8 +60,35 @@ function devWriteRuns(): Plugin {
   };
 }
 
+// dev 전용: 전직 트리 에디터 → jobs.json 통째 기록. 단일 파일(맵 Record<id,JobDef>)이라 배럴 재생성 불요(loader가 직접 import).
+function devWriteJobs(): Plugin {
+  return {
+    name: "spr-dev-write-jobs",
+    apply: "serve",
+    configureServer(server) {
+      server.middlewares.use("/api/save-jobs", (req, res) => {
+        if (req.method !== "POST") { res.statusCode = 405; res.end("POST only"); return; }
+        let body = "";
+        req.on("data", (c) => { body += c; });
+        req.on("end", () => {
+          try {
+            const { jobs } = JSON.parse(body) as { jobs: Record<string, { id?: string; name?: string; classReq?: number }> };
+            if (!jobs || typeof jobs !== "object" || Array.isArray(jobs)) { res.statusCode = 400; res.end("jobs 맵 형식 아님"); return; }
+            for (const [key, j] of Object.entries(jobs)) {
+              if (!SAFE_ID.test(key)) { res.statusCode = 400; res.end(`잘못된 직업 id: ${key}`); return; }
+              if (!j || typeof j !== "object" || j.id !== key || typeof j.name !== "string" || typeof j.classReq !== "number") { res.statusCode = 400; res.end(`JobDef 형식 아님: ${key}`); return; }
+            }
+            writeFileSync(JOBS_PATH, JSON.stringify(jobs, null, 2) + "\n", "utf8");
+            res.statusCode = 200; res.setHeader("content-type", "application/json"); res.end(JSON.stringify({ ok: true, count: Object.keys(jobs).length }));
+          } catch (e) { res.statusCode = 500; res.end(`기록 실패: ${(e as Error).message}`); }
+        });
+      });
+    },
+  };
+}
+
 export default defineConfig({
   base: "./", // Tauri 웹뷰는 frontendDist를 루트로 서빙 — 상대경로 에셋이 안전
-  plugins: [devWriteRuns()],
+  plugins: [devWriteRuns(), devWriteJobs()],
   server: { port: 5173, strictPort: false },
 });
