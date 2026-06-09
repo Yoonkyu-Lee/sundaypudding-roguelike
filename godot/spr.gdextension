@@ -1,0 +1,14 @@
+; GDExtension 매니페스트 — spr-godot cdylib을 Godot에 로드. gdext 엔트리심볼=gdext_rust_init.
+; cdylib은 프로젝트 안 bin/에 복사(res://는 프로젝트 밖 ../ 불가). 빌드 후 복사: cp spr-godot/target/debug/spr_godot.dll godot/bin/
+[configuration]
+entry_symbol = "gdext_rust_init"
+compatibility_minimum = 4.2
+reloadable = true
+
+[libraries]
+windows.debug.x86_64 = "res://bin/spr_godot.dll"
+windows.release.x86_64 = "res://bin/spr_godot.dll"
+linux.debug.x86_64 = "res://bin/libspr_godot.so"
+linux.release.x86_64 = "res://bin/libspr_godot.so"
+macos.debug = "res://bin/libspr_godot.dylib"
+macos.release = "res://bin/libspr_godot.dylib"

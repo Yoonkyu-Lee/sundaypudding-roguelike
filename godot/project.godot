@@ -1,0 +1,8 @@
+; Godot 4 프로젝트 — RENDER-MIGRATION R1 스파이크. spr-core를 GDExtension(spr.gdextension)으로 붙여 RunView 표시.
+config_version=5
+
+[application]
+
+config/name="Sunday Pudding — R1 spike"
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.6")

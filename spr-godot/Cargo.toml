@@ -1,0 +1,18 @@
+# Godot 4 GDExtension 바인딩 — spr-core 세션을 Godot에 노출(RENDER-MIGRATION R1 스파이크). desktop/(Tauri)의 대응물.
+# 독립 워크스페이스([workspace]) — engine/ 게이트(npm run check)에 안 들어옴(gdext 의존 트리 큼).
+# 빌드: cargo build --manifest-path spr-godot/Cargo.toml  → target/debug/spr_godot.dll (godot/spr.gdextension가 참조)
+[package]
+name = "spr-godot"
+version = "0.0.1"
+edition = "2021"
+
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+godot = "0.2"
+serde_json = "1"
+spr-core = { path = "../engine/spr-core" }
+spr-types = { path = "../engine/spr-types" }

@@ -93,7 +93,7 @@ ROADMAP의 "엔진+도구=엔지니어 / 콘텐츠=디자이너" 원칙을 **데
 | 단계 | 무엇 | 끝점/검증 |
 |---|---|---|
 | **R0** 계약 동결 | 관측·이벤트 계약(화면에 있어야 할 정보 집합)을 명문화 — 두 프론트가 지킬 SoT. 현 RunView/BattleView/GameEvent 타입에서 추출 | 계약 문서 = WHAT의 단일 기준 |
-| **R1** gdext 스파이크 | `spr-godot` 세움: `spr-core`를 GDExtension으로, `create_run`+`view` 한 메서드가 JSON 반환, Godot 씬이 view를 출력. 게임 아님 | **경계+빌드 파이프라인 입증**(미지 리스크 제거) |
+| **R1** gdext 스파이크 ✅ | `spr-godot`(top-level, 독립 워크스페이스) = `SprSession` GDExtension. `create_run`/`view`가 RunView JSON 반환. `godot/`(Godot 4.6.3 프로젝트)가 호출·표시 | **✅ 완료(2026-06)** — 헤드리스 검증: Godot이 익스텐션 로드→spr-core 호출→**2949자 RunView 수신·파싱**. gdext 0.2.4 ↔ Godot 4.6.3 호환. 경계+빌드 파이프라인 입증 |
 | **R2** 수직 슬라이스 1 = 전투 한 장면 | 전투 씬 하나를 Godot에서 끝까지: 전장+유닛+스킬 1종+이벤트 구동 디렉터. 디자이너가 씬/애니 저작, 당신이 디렉터 배선. **DOM 프론트는 병행 가동** | 이벤트→애니메이션 패턴 + 디자이너 워크플로 입증 |
 | **R3** 전투 완성 | 전투 GUI 전체(타겟팅·상태·서열·주사위·전 스킬 VFX·카메라) Godot로 | 전투 패리티 |
 | **R4** 런·비전투 화면 | 노드 맵·보상·상점·인카운터·도감·허브 — 모바일 게임 레이아웃 재설계 | 런 전체 패리티 |
@@ -118,6 +118,22 @@ ROADMAP의 "엔진+도구=엔지니어 / 콘텐츠=디자이너" 원칙을 **데
 6. **오디오·입력·세이브**: Godot 내장으로 흡수(현 manual DOM 대비 이득). 세이브 = 현 `run_save`/`run_load` JSON 그대로 `spr-godot` 통해.
 
 ---
+
+## 부록 — R1 빌드·실행 레시피
+
+```bash
+# 1) cdylib 빌드 (gdext + spr-core)
+cargo build --manifest-path spr-godot/Cargo.toml
+# 2) dll을 프로젝트 안으로 복사 (res://는 프로젝트 밖 ../ 불가 → godot/bin/)
+cp spr-godot/target/debug/spr_godot.dll godot/bin/        # win: Copy-Item
+# 3) 에디터 임포트 1회 — .godot/extension_list.cfg 생성(GDExtension 등록). 클론/최초 1회
+tools/godot/Godot_v4.6.3-stable_win64_console.exe --headless --editor --quit --path godot
+# 4-a) 헤드리스 검증(CLI): print에 "경계 OK …" 떠야 함
+tools/godot/Godot_v4.6.3-stable_win64_console.exe --headless --path godot
+# 4-b) GUI: Godot 에디터로 godot/ 열고 F5 → 화면에 "✅ 경계 OK" 라벨
+```
+- 미래 자동화: dll 복사를 cargo post-build/스크립트로(현재 수동). `godot/bin/`·`godot/.godot/`·`spr-godot/target/`·`tools/godot/`는 gitignore(아티팩트/바이너리).
+- 알려진 함정: ① `res://../`로 프로젝트 밖 dll 참조 불가 → `bin/`에 복사 ② 에디터 임포트 전엔 GDExtension 미등록(extension_list.cfg 없음) → 최초 1회 `--editor --quit`.
 
 ## 부록 — 참고
 - 엔진 선례: Slay the Spire(Java+LibGDX→2는 Godot) · Darkest Dungeon 1/2(Unity).
