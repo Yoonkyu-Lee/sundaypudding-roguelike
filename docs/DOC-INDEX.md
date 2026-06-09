@@ -33,6 +33,7 @@
 | 문서 | 무엇 | 언제 읽나 |
 |---|---|---|
 | [`PORTING.md`](PORTING.md) | TS→Rust 마이그레이션 이력(완료) | Rust 엔진·아카이브(`archive/ts-core`) 참조 |
+| [`RENDER-MIGRATION.md`](RENDER-MIGRATION.md) | **렌더링 마이그레이션 설계(웹 DOM→Godot, 회의/진행 중).** PORTING의 후속 — Godot↔Rust 경계·디자이너 워크플로·단계 계획 | 렌더링 엔진 방향·Godot 전환 논의 |
 | [`UI-GLOSSARY.md`](UI-GLOSSARY.md) | GUI 도메인 명칭 SoT(화면·패널 통일 이름) | GUI 만들거나 부를 때 |
 | [`../README.md`](../README.md) | 실행법·아키텍처 요약 | 돌려볼 때 |
 | [`../web/src/content/README.md`](../web/src/content/README.md) | 디자이너 콘텐츠 작성 가이드 | 콘텐츠 저작 |
