@@ -1,7 +1,7 @@
 // 캐릭터 도감 (CDX-3) — 허브 진입점. 우측 캐릭터 목록(해금=밝게 / 미해금=어두운 프로필+🔒),
 // 좌측 선택 캐릭 스펙 카드 + 스킬 트리(겸 스킬 도감). 런에서 본 스킬만 스펙 공개(나머지 '?').
 // 해금 = 관련 런 클리어(meta.unlocked), 스킬 공개 = 런 보유/획득(meta.seenSkills). 순수 표시 — 메타만 읽음.
-import type { Character, Skill } from "../contract/types.ts";
+import type { Character, Skill, JobDef } from "../contract/types.ts";
 import { CHARACTERS } from "../content/characters.ts";
 import { SKILLS } from "../content/skills.ts";
 import { JOBS } from "../content/jobs.ts";
@@ -26,28 +26,17 @@ function chain(baseId: string): string[] {
   return out;
 }
 
-// 캐릭터 스킬 묶음: 전용 시작기(체인) · 범용기 · 전직기(차수별) · 전직 분기 패시브.
-function skillGroups(c: Character): { title: string; sub?: string; chains: string[][] }[] {
-  const ids = c.skillIds ?? [];
-  const sigBases = ids.filter((id) => SKILLS[id]?.exclusiveTo === c.id);
-  const univBases = ids.filter((id) => SKILLS[id] && !SKILLS[id].exclusiveTo);
-  // 전직 전용기 = exclusiveTo 본인 + classReq 설정 + 시작 풀 밖. classReq(차수)별 그룹.
-  const classSkills = Object.values(SKILLS).filter((s) => s.exclusiveTo === c.id && s.classReq != null && !ids.includes(s.id));
-  const tiers = [...new Set(classSkills.map((s) => s.classReq!))].sort((a, b) => a - b);
-  const groups: { title: string; sub?: string; chains: string[][] }[] = [];
-  if (sigBases.length) groups.push({ title: "전용기", sub: "시작 보유", chains: sigBases.map(chain) });
-  if (univBases.length) groups.push({ title: "범용기", sub: "학습 가능", chains: univBases.map(chain) });
-  for (const t of tiers) {
-    const bases = classSkills.filter((s) => s.classReq === t).map((s) => s.id).sort();
-    groups.push({ title: `전직 ${t}차 전용기`, sub: "숙련도 보류 — 전직 차수로 해금", chains: bases.map(chain) });
-  }
-  return groups;
+// 특성 카드 — 아이콘·이름·설명. 전직 노드가 부여하는 패시브(분기 차별점) 표시용.
+function traitCard(traitId: string): string {
+  const t = TRAITS[traitId];
+  if (!t) return `<div class="cdx-tcard"><div class="cdx-tcard-h">✦ ${esc(traitId)}</div></div>`;
+  return `<div class="cdx-tcard"><div class="cdx-tcard-h">${t.icon ?? "✦"} ${esc(t.name)}</div><div class="cstrait-r">${esc(t.desc ?? "")}</div></div>`;
 }
 
-// 전직 분기(직업 트리) 한 줄 요약 — 차수·부여 패시브. rootJob부터 advancesTo BFS.
-function jobBranches(c: Character): string {
-  if (!c.rootJobId || !JOBS[c.rootJobId]) return "";
-  const rows: string[] = [];
+// 직업 트리를 차수별로 — rootJob부터 advancesTo BFS. Map<차수, JobDef[]>(분기=같은 차수 여러 노드).
+function jobsByTier(c: Character): Map<number, JobDef[]> {
+  const map = new Map<number, JobDef[]>();
+  if (!c.rootJobId) return map;
   const queue = [c.rootJobId];
   const seen = new Set<string>();
   while (queue.length) {
@@ -55,11 +44,42 @@ function jobBranches(c: Character): string {
     if (seen.has(id) || !JOBS[id]) continue;
     seen.add(id);
     const j = JOBS[id];
-    const pass = (j.grantsTraitIds ?? []).map((tid) => TRAITS[tid]?.name ?? tid).join(" · ");
-    rows.push(`<div class="cdx-job"><span class="cdx-job-t">${j.classReq}차</span><span class="cdx-job-nm">${esc(j.name)}</span>${pass ? `<span class="cdx-job-p">✦ ${esc(pass)}</span>` : ""}</div>`);
+    const arr = map.get(j.classReq) ?? [];
+    arr.push(j);
+    map.set(j.classReq, arr);
     for (const n of j.advancesTo ?? []) queue.push(n);
   }
-  return rows.length > 1 ? `<div class="cdx-col"><h4>전직 트리 <span class="cshint">분기 차이=패시브</span></h4><div class="cdx-jobs">${rows.join("")}</div></div>` : "";
+  return map;
+}
+
+// 차수 컬럼(가로) — 컬럼당: 상단=그 차수 직업 노드(분기 세로 스택 + 부여 특성 카드), 하단=그 차수 스킬.
+// 핵심 모델: 분기는 특성으로 갈리고, 전용기 풀은 같은 차수 분기가 공유(GAME-DESIGN 4.7).
+function tierColumnsHtml(c: Character, seen: Set<string>): string {
+  const ids = c.skillIds ?? [];
+  const sigChains = ids.filter((id) => SKILLS[id]?.exclusiveTo === c.id).map(chain);
+  const univChains = ids.filter((id) => SKILLS[id] && !SKILLS[id].exclusiveTo).map(chain);
+  const classSkills = Object.values(SKILLS).filter((s) => s.exclusiveTo === c.id && s.classReq != null && !ids.includes(s.id));
+  const jobs = jobsByTier(c);
+  const maxTier = Math.max(0, ...jobs.keys(), ...classSkills.map((s) => s.classReq!));
+  const cols: string[] = [];
+  for (let t = 0; t <= maxTier; t++) {
+    const jobCards = (jobs.get(t) ?? []).map((j) => {
+      const traits = (j.grantsTraitIds ?? []).map(traitCard).join("");
+      const branch = t >= 1 ? `<span class="cdx-branch">⑂</span>` : "";
+      return `<div class="cdx-jobcard"><div class="cdx-jobcard-h">${branch}<span class="cdx-job-nm">${esc(j.name)}</span></div>${traits}</div>`;
+    }).join("") || `<div class="cshint">—</div>`;
+    let skillsHtml: string;
+    if (t === 0) {
+      const sig = sigChains.length ? `<div class="cdx-group"><h5>시작기</h5>${sigChains.map((ch) => chainHtml(ch, seen)).join("")}</div>` : "";
+      const uni = univChains.length ? `<div class="cdx-group"><h5>범용기 <span class="cshint">학습</span></h5>${univChains.map((ch) => chainHtml(ch, seen)).join("")}</div>` : "";
+      skillsHtml = sig + uni;
+    } else {
+      const bases = classSkills.filter((s) => s.classReq === t).map((s) => s.id).sort();
+      skillsHtml = bases.length ? `<div class="cdx-group"><h5>전용기 <span class="cshint">분기 공유</span></h5>${bases.map((id) => chainHtml(chain(id), seen)).join("")}</div>` : "";
+    }
+    cols.push(`<div class="cdx-tier"><div class="cdx-tier-h">${t}차</div><div class="cdx-tier-jobs">${jobCards}</div><div class="cdx-tier-skills">${skillsHtml || "<div class='cshint'>—</div>"}</div></div>`);
+  }
+  return `<div class="cdx-tree">${cols.join('<div class="cdx-tier-link">→</div>')}</div>`;
 }
 
 // 스킬 노드 — 본 적 있으면 스펙 카드, 아니면 '?'(트리 형태만 노출, 상세 가림).
@@ -93,11 +113,11 @@ function statBlock(c: Character): string {
   </div>`;
 }
 
-// 캐릭터 특성(상시 패시브) 요약 — 상단 밴드 한 칼럼.
-function traitBlock(c: Character): string {
-  const ts = (c.traitIds ?? []).map((id) => TRAITS[id]).filter(Boolean);
-  if (!ts.length) return "";
-  return `<div class="cdx-col"><h4>특성 <span class="cshint">상시</span></h4><div class="cdx-traits">${ts.map((t) => `<div class="cstrait"><div class="cstrait-h">${t.icon ?? "✦"} ${esc(t.name)}</div><div class="cstrait-r">${esc(t.desc ?? "")}</div></div>`).join("")}</div></div>`;
+// 기본 특성(상시·내재) 칩 — 정체성 바. 전직 부여 특성은 트리 노드 카드로 따로 노출.
+function baseTraitsBar(c: Character): string {
+  const ids = (c.traitIds ?? []).filter((id) => TRAITS[id]);
+  if (!ids.length) return "";
+  return `<div class="cdx-basetraits"><span class="cdx-bt-label">기본 특성</span>${ids.map((id) => `<span class="cdx-bt-chip">${TRAITS[id].icon ?? "✦"} ${esc(TRAITS[id].name)}</span>`).join("")}</div>`;
 }
 
 function detailPane(c: Character, unlocked: boolean, seen: Set<string>): string {
@@ -105,22 +125,19 @@ function detailPane(c: Character, unlocked: boolean, seen: Set<string>): string 
     return `<div class="cdx-detail locked">
       <div class="cdx-locked-art">${avatarHtml(undefined, "avt cdx-lockav")}<span class="cdx-lock-ic">🔒</span></div>
       <h3>미해금 캐릭터</h3>
-      <p class="cshint">관련 런을 클리어하면 해금됩니다. 해금 후 능력치·스킬 트리·전직을 도감에서 열람할 수 있습니다.</p>
+      <p class="cshint">관련 런을 클리어하면 해금됩니다. 해금 후 능력치·전직 트리·스킬을 도감에서 열람할 수 있습니다.</p>
     </div>`;
   }
-  const groups = skillGroups(c)
-    .map((g) => `<div class="cdx-group"><h4>${esc(g.title)} ${g.sub ? `<span class="cshint">${esc(g.sub)}</span>` : ""}</h4>${g.chains.map((ch) => chainHtml(ch, seen)).join("")}</div>`)
-    .join("");
   return `<div class="cdx-detail">
-    <div class="cdx-top">
-      <div class="cdx-col cdx-id">
-        <div class="cshead">${avatarHtml(c.avatar, "avt")}<h3>${esc(c.name)}</h3></div>
-        <div class="cssection"><h4>능력치</h4>${statBlock(c)}</div>
-      </div>
-      ${traitBlock(c)}
-      ${jobBranches(c)}
+    <div class="cdx-idbar">
+      <div class="cshead">${avatarHtml(c.avatar, "avt")}<h3>${esc(c.name)}</h3></div>
+      ${statBlock(c)}
+      ${baseTraitsBar(c)}
     </div>
-    <div class="cssection cdx-skills-sec"><h4>스킬 트리 <span class="cshint">런에서 본 스킬만 공개</span></h4>${groups || "<div class='cshint'>스킬 없음</div>"}</div>
+    <div class="cssection cdx-tree-sec">
+      <h4>전직 트리 + 스킬 <span class="cshint">분기=특성 · 전용기 풀은 차수 분기 공유 · 런에서 본 스킬만 공개</span></h4>
+      ${tierColumnsHtml(c, seen)}
+    </div>
   </div>`;
 }
 
