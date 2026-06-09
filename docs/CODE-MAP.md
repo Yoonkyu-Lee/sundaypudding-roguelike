@@ -114,7 +114,7 @@ desktop/src/main.rs   #[tauri::command]: 전투 데모(create_session·battle_st
 | `runRender.ts` | **맵/보상/상점/인카운터/전직(4.7)/결과** 렌더 + 헥스 노드 + 파티 요약. 전직=`classChangeScreen`(파티원·갈래 카드 + 건너뛰기, 인게임 모달 스타일). 맵=고정 뷰포트(`attachCamera` 줌·팬)·벽(`hexgeo` 기하 공유) | `renderRunScreen` |
 | `shell.ts` | **게임 흐름 셸** — 타이틀·허브(진입점 메뉴: 캠페인·📖도감·에디터→캠페인 런 목록)·일시정지·오류 오버레이. 런 바깥. `HubMode`=menu/campaign | `renderTitle` · `renderHub` · `renderPause` · `renderError` · `ShellHandlers` · `HubMode` |
 | `hub.ts` | **허브 컨트롤러** — 캠페인 런 목록(`mode==="campaign"` 필터)·선택 런 고정 로스터 노출. 캠페인 시작=`run_create_def`(주인공 강제). 자유 편성(toggle/pool)은 비캠페인 모드용 휴면 | `createHub` · `Hub.selectedRunDef` |
-| `codex.ts` | **캐릭터 도감(CDX)** — 우측 캐릭 목록(해금=밝게/미해금=🔒 어두운 프로필), 좌측 스펙카드+특성+전직 트리+스킬 트리(`skillCardBody` 재사용, 본 스킬만 공개·나머지 '?'). 메타만 읽음(순수 표시) | `renderCodex` · `CodexHandlers` |
+| `charDex.ts` | **캐릭터 도감(charDex)** — 우측 캐릭 목록(해금=밝게/미해금=🔒 어두운 프로필), 좌측 스펙카드+특성+전직 트리+스킬 트리(`skillCardBody` 재사용, 본 스킬만 공개·나머지 '?'). 메타만 읽음(순수 표시). CSS 접두사 `.cdx-`(char-deX) | `renderCharDex` · `CharDexHandlers` |
 | `meta.ts` | **영구 메타**(레벨/XP + 편성 로스터 + **해금 캐릭(unlocked)·본 스킬(seenSkills)**, 별도 세이브 `spr_meta_v1`) — `grantWin`·`masteryInfo`·`getRoster`/`setRoster`·`unlockChars`·`markSkillsSeen`·`unlockedCharSet`·`seenSkillSet`. (숙련도 게이트=보류, useMastery:false) | `grantWin` · `unlockChars` · `markSkillsSeen` |
 | `rustRun.ts` | **풀 게임 컨트롤러**(IPC) — 타이틀/허브/도감/에디터/런/전투 디스패치. 진행 기록(`noteProgress`=도감 공개+승리 해금). ⚠ 305줄(소프트캡 초과) — 전투 서브컨트롤러 분리 후속 | `mountRustRun` |
 | `charSheet.ts` | **캐릭터 시트** — 능력치(원본→현재 델타)·3 장착칸·보유 스킬. 전투 모달·파티뷰 상세 공용 | `renderCharSheet` · `sheetBody` · `wireSheet` |

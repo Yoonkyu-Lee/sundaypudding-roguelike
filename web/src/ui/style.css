@@ -749,9 +749,9 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .pause-box .err-msg { font-size: 13px; color: var(--dim); line-height: 1.5; margin: 4px 0 8px; max-width: 360px; user-select: text; -webkit-user-select: text; cursor: text; }
 
 /* ── 캐릭터 도감 (CDX-3) — 풀폭 + 패널 내부 스크롤(전체 페이지 스크롤 없음) ── */
-.codex { display: flex; flex-direction: column; height: calc(100vh - 32px); }
-.codex header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex: none; }
-.codex header h1 { font-size: 20px; color: var(--accent); margin: 0; }
+.chardex { display: flex; flex-direction: column; height: calc(100vh - 32px); }
+.chardex header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex: none; }
+.chardex header h1 { font-size: 20px; color: var(--accent); margin: 0; }
 .cdx-body { flex: 1; min-height: 0; display: flex; gap: 16px; align-items: stretch; }
 /* 좌측 디테일 = 두 패널 분리: 프로필/스탯(고정) + 전직 트리(내부 스크롤). */
 .cdx-pane { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }

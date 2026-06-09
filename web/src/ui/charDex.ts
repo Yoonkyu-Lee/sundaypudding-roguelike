@@ -1,4 +1,4 @@
-// 캐릭터 도감 (CDX-3) — 허브 진입점. 우측 캐릭터 목록(해금=밝게 / 미해금=어두운 프로필+🔒),
+// 캐릭터 도감 (charDex) — 허브 진입점. 우측 캐릭터 목록(해금=밝게 / 미해금=어두운 프로필+🔒),
 // 좌측 선택 캐릭 스펙 카드 + 스킬 트리(겸 스킬 도감). 런에서 본 스킬만 스펙 공개(나머지 '?').
 // 해금 = 관련 런 클리어(meta.unlocked), 스킬 공개 = 런 보유/획득(meta.seenSkills). 순수 표시 — 메타만 읽음.
 import type { Character, Skill, JobDef } from "../contract/types.ts";
@@ -10,7 +10,7 @@ import { skillCardBody, skillType } from "./battle/skillDesc.ts";
 import { avatarHtml, esc, r1 } from "./battle/shared.ts";
 import { unlockedCharSet, seenSkillSet } from "./meta.ts";
 
-export interface CodexHandlers {
+export interface CharDexHandlers {
   onSelect: (charId: string) => void;
   onBack: () => void;
 }
@@ -148,7 +148,7 @@ function detailPane(c: Character, unlocked: boolean, seen: Set<string>): string 
 }
 
 /** 캐릭터 도감 화면. selectedCharId 없으면 첫 해금 캐릭(없으면 첫 캐릭) 자동 선택. */
-export function renderCodex(app: HTMLElement, selectedCharId: string | null, h: CodexHandlers): void {
+export function renderCharDex(app: HTMLElement, selectedCharId: string | null, h: CharDexHandlers): void {
   const list = PLAYABLE();
   const unlocked = unlockedCharSet();
   const seen = seenSkillSet();
@@ -163,7 +163,7 @@ export function renderCodex(app: HTMLElement, selectedCharId: string | null, h: 
   }).join("");
 
   const unlockedCount = list.filter((c) => unlocked.has(c.id)).length;
-  app.innerHTML = `<div class="codex">
+  app.innerHTML = `<div class="chardex">
     <header><h1>📖 캐릭터 도감 <span class="cshint">해금 ${unlockedCount}/${list.length}</span></h1><button class="hub-link" id="cdx-back">← 허브</button></header>
     <div class="cdx-body">
       <section class="cdx-pane">${sel ? detailPane(sel, unlocked.has(sel.id), seen) : "<div class='cshint'>캐릭터 없음</div>"}</section>

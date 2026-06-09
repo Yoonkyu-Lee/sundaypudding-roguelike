@@ -15,7 +15,7 @@
 | 본편 화면 | **보상 화면** | `runRender.ts` `rewardScreen` | `.reward` |
 | 본편 화면 | **인카운터 화면** | `runRender.ts` `encounterScreen` | `.encounter` |
 | 본편 화면 | **결과 화면** | `runRender.ts` `endScreen` | `.endscreen` |
-| 본편 화면 | **캐릭터 도감 화면** | `codex.ts` `renderCodex` | `.codex` |
+| 본편 화면 | **캐릭터 도감 화면** | `charDex.ts` `renderCharDex` | `.chardex` |
 | 팝업(모달) | **캐릭터 시트** | `charSheet.ts` `renderCharSheet` | `.charsheet` |
 | 팝업(모달) | **파티 편성** | `partyView.ts` `renderPartyView` | `.party-modal` |
 | 팝업(모달) | **일시정지** | `shell.ts` `renderPause` | `.pause-overlay` |
@@ -92,20 +92,20 @@
 클리어/실패. **`runRender.ts` `endScreen` / `.endscreen`**.
 
 ## 캐릭터 도감 화면 (CDX)
-허브 진입점 `📖 캐릭터 도감`. **`codex.ts` `renderCodex` / `.codex`**(풀폭, 전체 페이지 스크롤 없음 — 패널 내부 스크롤만). 2열: **좌=디테일**, **우=캐릭터 목록**.
+허브 진입점 `📖 캐릭터 도감`. **`charDex.ts` `renderCharDex` / `.chardex`**(풀폭, 전체 페이지 스크롤 없음 — 패널 내부 스크롤만). 2열: **좌=디테일**, **우=캐릭터 목록**.
 
 - **상태 모델**(메타, `meta.ts`): **해금**=관련 런 클리어(`unlocked`) — 미해금은 잠금 표시 · **스킬 공개**=런에서 보유/획득해본 스킬(`seenSkills`) — 나머지 '?'. (숙련도 게이트는 보류, GAME-DESIGN 4.4.)
 - **분기 모델**(GAME-DESIGN 4.7): 전직 분기는 **부여 특성으로 갈리고**, **전용기 풀은 같은 차수 분기가 공유**. 도감은 이를 차수 컬럼으로 표현(분기=특성 카드, 스킬=차수 띠).
 
 | 도메인 이름 | 무엇 | 코드 | CSS 루트 |
 |---|---|---|---|
-| **캐릭터 목록** | 우측 패널 — 전체 playable 캐릭. 해금=밝게, **미해금=🔒 어두운 프로필·???**. 자체 스크롤, 선택=좌측 디테일 갱신 | `codex.ts` | `.cdx-list`·`.cdx-pick`(`.locked`/`.sel`) |
-| **정체성 바** | 좌측 상단 **고정 패널**(스크롤 안 함) — 아바타·이름 · 능력치 · **기본 특성 칩**(내재·상시) | `codex.ts` `baseTraitsBar` | `.cdx-idbar`·`.cdx-bt-chip` |
-| **전직 트리 패널** | 좌측 하단 **자체 스크롤 패널** — **차수 컬럼**(0차→1차→… 가로 진행). 미해금 캐릭이면 잠금 안내 | `codex.ts` `tierColumnsHtml` | `.cdx-tree-sec`·`.cdx-tree` |
-| └ **차수 컬럼** | 한 차수(0/1/2…)=한 컬럼. 상단=직업 노드, 하단=그 차수 스킬. 컬럼 사이 `→` | `codex.ts` | `.cdx-tier`·`.cdx-tier-link` |
-| └ **직업 노드** | 그 차수 직업. **분기는 세로 스택**(⑂). 노드 안에 **부여 특성 카드**(✦ 이름+설명) — 분기 차별점 | `codex.ts` `jobsByTier`·`traitCard` | `.cdx-jobcard`·`.cdx-tcard` |
-| └ **스킬 카드** | 차수별 스킬(0차=시작기·범용기, N차=전용기 풀=분기 공유). 런에서 본 스킬=전투용 스펙(`skillCardBody` 재사용), **미발견='?'** | `codex.ts` `skillCardEl`·`skillSpec` | `.cdx-skill`(`.locked`)·`.cdx-q` |
-| └ **강화 토글** | 강화 체인 스킬은 **차수 토글(T1/T2…)** 한 카드에서 원본↔강화 스펙 전환(공간 절약, 로컬 DOM·재렌더 없음) | `codex.ts` `skillCardEl` | `.cdx-upg`·`.cdx-tbtn`/`.cdx-tbody` |
+| **캐릭터 목록** | 우측 패널 — 전체 playable 캐릭. 해금=밝게, **미해금=🔒 어두운 프로필·???**. 자체 스크롤, 선택=좌측 디테일 갱신 | `charDex.ts` | `.cdx-list`·`.cdx-pick`(`.locked`/`.sel`) |
+| **정체성 바** | 좌측 상단 **고정 패널**(스크롤 안 함) — 아바타·이름 · 능력치 · **기본 특성 칩**(내재·상시) | `charDex.ts` `baseTraitsBar` | `.cdx-idbar`·`.cdx-bt-chip` |
+| **전직 트리 패널** | 좌측 하단 **자체 스크롤 패널** — **차수 컬럼**(0차→1차→… 가로 진행). 미해금 캐릭이면 잠금 안내 | `charDex.ts` `tierColumnsHtml` | `.cdx-tree-sec`·`.cdx-tree` |
+| └ **차수 컬럼** | 한 차수(0/1/2…)=한 컬럼. 상단=직업 노드, 하단=그 차수 스킬. 컬럼 사이 `→` | `charDex.ts` | `.cdx-tier`·`.cdx-tier-link` |
+| └ **직업 노드** | 그 차수 직업. **분기는 세로 스택**(⑂). 노드 안에 **부여 특성 카드**(✦ 이름+설명) — 분기 차별점 | `charDex.ts` `jobsByTier`·`traitCard` | `.cdx-jobcard`·`.cdx-tcard` |
+| └ **스킬 카드** | 차수별 스킬(0차=시작기·범용기, N차=전용기 풀=분기 공유). 런에서 본 스킬=전투용 스펙(`skillCardBody` 재사용), **미발견='?'** | `charDex.ts` `skillCardEl`·`skillSpec` | `.cdx-skill`(`.locked`)·`.cdx-q` |
+| └ **강화 토글** | 강화 체인 스킬은 **차수 토글(T1/T2…)** 한 카드에서 원본↔강화 스펙 전환(공간 절약, 로컬 DOM·재렌더 없음) | `charDex.ts` `skillCardEl` | `.cdx-upg`·`.cdx-tbtn`/`.cdx-tbody` |
 
 ---
 

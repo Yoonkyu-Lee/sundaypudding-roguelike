@@ -5,7 +5,7 @@ export interface ShellHandlers {
   onStart: () => void; // 타이틀 → 허브(진입점 메뉴)
   onEditor: () => void; // 타이틀/허브 → 런 에디터
   onEnterCampaign: () => void; // 허브 메뉴 → 캠페인 런 목록
-  onCodex: () => void; // 허브 메뉴 → 캐릭터 도감
+  onCharDex: () => void; // 허브 메뉴 → 캐릭터 도감
   onHubBack: () => void; // 캠페인 목록 → 허브 메뉴
   onSelectRun: (id: string) => void; // 캠페인: 플레이할 런 선택
   onNewRun: () => void; // 캠페인: 선택 런을 고정 로스터로 시작
@@ -70,7 +70,7 @@ export function renderHub(app: HTMLElement, d: HubData, h: ShellHandlers): void 
     body = `<section class="hub-sec"><h2>모드 선택</h2>
         <div class="hub-modes">
           <button class="hub-mode" id="campaignbtn"><span class="hub-mode-ic">📜</span><span class="hub-mode-nm">캠페인</span><span class="hub-mode-dsc">야인시대 스토리 — 주인공이 정해진 런</span></button>
-          <button class="hub-mode" id="hubcodexbtn"><span class="hub-mode-ic">📖</span><span class="hub-mode-nm">캐릭터 도감</span><span class="hub-mode-dsc">해금 캐릭터·스킬 트리 열람</span></button>
+          <button class="hub-mode" id="hubchardexbtn"><span class="hub-mode-ic">📖</span><span class="hub-mode-nm">캐릭터 도감</span><span class="hub-mode-dsc">해금 캐릭터·스킬 트리 열람</span></button>
           <button class="hub-mode" disabled><span class="hub-mode-ic">⚔</span><span class="hub-mode-nm">일반 <span class="hub-soon">준비 중</span></span><span class="hub-mode-dsc">자유 편성으로 즐기는 런</span></button>
           <button class="hub-mode" disabled><span class="hub-mode-ic">🔥</span><span class="hub-mode-nm">챌린지 <span class="hub-soon">준비 중</span></span><span class="hub-mode-dsc">제약 조건 도전</span></button>
           <button class="hub-mode" id="hubeditorbtn"><span class="hub-mode-ic">🗺</span><span class="hub-mode-nm">런 에디터</span><span class="hub-mode-dsc">나만의 런 저작·테스트</span></button>
@@ -92,7 +92,7 @@ export function renderHub(app: HTMLElement, d: HubData, h: ShellHandlers): void 
     <div class="hub-body">${body}</div>
   </div>`;
   app.querySelector("#campaignbtn")?.addEventListener("click", () => h.onEnterCampaign());
-  app.querySelector("#hubcodexbtn")?.addEventListener("click", () => h.onCodex());
+  app.querySelector("#hubchardexbtn")?.addEventListener("click", () => h.onCharDex());
   app.querySelector("#hubeditorbtn")?.addEventListener("click", () => h.onEditor());
   app.querySelector("#hubbackbtn")?.addEventListener("click", () => h.onHubBack());
   app.querySelector("#newrunbtn")?.addEventListener("click", () => h.onNewRun());
