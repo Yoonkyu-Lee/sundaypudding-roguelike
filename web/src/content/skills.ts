@@ -198,4 +198,14 @@ export const SKILLS: Record<string, Skill> = {
   aomasu_strike: { id: "aomasu_strike", name: "신세대 검", exclusiveTo: "aomasu", target: "enemy", cooldown: 1, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 13 }], passives: [{ when: { on: "onHit", as: "attacker" }, then: [{ do: "applyStatus", statusId: "edge", stacks: 1, duration: 2, target: "self" }] }] },
   doksa_powder: { id: "doksa_powder", name: "분말 가루", exclusiveTo: "doksa", target: "enemy", cooldown: 1, accuracy: 95, effects: [{ kind: "applyStatus", statusId: "weaken", stacks: 2, duration: 2 }, { kind: "applyStatus", statusId: "bleed", stacks: 1, duration: 2 }] }, // blind 근사=weaken(명중 무력화)
   imhwasu_trap: { id: "imhwasu_trap", name: "함정 유인", exclusiveTo: "imhwasu", target: "enemy", cooldown: 1, accuracy: 90, effects: [{ kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }, { kind: "damage", amount: 5 }] },
+
+  // ══ 야인시대 런7(자유당 폭정·몰락) — 스킬 ══ (gamedata/run07)
+  ijeongjae_summon: { id: "ijeongjae_summon", name: "머릿수 동원", exclusiveTo: "ijeongjae", target: "self", cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "summon", charId: "beggar_ally", count: 1, duration: 3 }] }, // R2 소환(잡몹 동원)
+  imhwasu_fury: { id: "imhwasu_fury", name: "자멸 폭주", exclusiveTo: "imhwasu", target: "enemy", cooldown: 2, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 11 }, { kind: "applyStatusSelf", statusId: "might", stacks: 1, duration: 2 }] },
+  osangsa_guts: { id: "osangsa_guts", name: "배수진 강타", exclusiveTo: "osangsa", target: "enemy", cooldown: 1, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 14 }] },
+  manbal_kick: { id: "manbal_kick", name: "맨발 차기", exclusiveTo: "manbal", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 8 }] },
+  kimdongjin_flee: { id: "kimdongjin_flee", name: "도주 일격", exclusiveTo: "kimdongjin", target: "enemy", cooldown: 1, accuracy: 85, reach: 1, effects: [{ kind: "damage", amount: 9 }] },
+  igibung_power: { id: "igibung_power", name: "권력의 압박", exclusiveTo: "igibung", target: "enemy", cooldown: 1, accuracy: 90, effects: [{ kind: "damage", amount: 11 }] },
+  igibung_order: { id: "igibung_order", name: "자유당 동원", exclusiveTo: "igibung", target: "ally", area: { kind: "all" }, cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 2 }] },
+  gwak_call: { id: "gwak_call", name: "공권력 호출", exclusiveTo: "gwakyoungju", target: "enemy", area: { kind: "all" }, cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }, { kind: "applyStatus", statusId: "paralyze", stacks: 1, duration: 1 }] }, // 경찰 호출(광역 무력화)
 };

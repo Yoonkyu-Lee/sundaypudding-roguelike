@@ -1,0 +1,94 @@
+{
+  "id": "run7_liberalfall",
+  "name": "야인시대 7: 자유당 폭정과 주먹의 몰락",
+  "desc": "통일의 대가가 곧 멸망. 동대문 사단으로 전국을 통일할수록 강해지지만, 자유당의 「토사구팽 게이지」가 차올라 마지막에 폭발한다. 이길수록 위험한 자멸의 아크 — 권력 의존(비호·부정선거)이 게이지 빚이 된다. (원작 105~120화)",
+  "mode": "campaign",
+  "useMastery": false,
+  "entryFloorId": "f1",
+  "resources": [
+    { "id": "topsa", "name": "토사구팽", "min": 0, "max": 100, "initial": 0, "icon": "🪤" }
+  ],
+  "roster": [
+    { "charId": "ijeongjae", "pos": { "row": 1, "col": 0 } },
+    { "charId": "yujikwang", "pos": { "row": 2, "col": 0 } },
+    { "charId": "imhwasu", "pos": { "row": 1, "col": 2 } }
+  ],
+  "floors": [
+    {
+      "id": "f1",
+      "name": "통일전쟁",
+      "entryNodeId": "f1_entry",
+      "nodes": [
+        { "id": "f1_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f1_dansungsa", "type": "battle", "q": 1, "r": 0, "label": "단성사 저격", "core": [{ "kind": "combat", "roster": [{ "charId": "kimdongjin", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 10 }, { "kind": "reward", "tier": 1 }] },
+        { "id": "f1_susa", "type": "encounter", "q": 2, "r": 0, "label": "권력의 수사 방해", "core": [{ "kind": "event", "event": { "id": "f1_susa_ev", "title": "검사 김윤도의 수사", "text": "곽영주의 비호를 받으면 구속을 피하고 자금이 들어오지만, 권력에 빚이 쌓인다(토사구팽↑).", "choices": [
+          { "id": "patron", "label": "곽영주 비호를 받는다 (토사구팽 +15, 골드 +25)", "result": { "kind": "gold", "amount": 25 } },
+          { "id": "face", "label": "정면으로 맞선다 (토사구팽 +0)", "result": { "kind": "nothing" } }
+        ] } }, { "kind": "text", "text": "권력의 단물은 빚으로 돌아온다." }] },
+        { "id": "f1_loyalty", "type": "encounter", "q": 3, "r": 0, "label": "충성 의식", "core": [{ "kind": "text", "text": "손가락을 걸고 충성을 맹세한다. 조직의 결속이 굳지만 자유당의 통제도 깊어진다." }, { "kind": "resource", "id": "topsa", "delta": 10 }, { "kind": "heal", "pct": 30 }] },
+        { "id": "f1_samwoo", "type": "battle", "q": 4, "r": 0, "label": "삼우회 결성 — 종로 포섭", "core": [{ "kind": "combat", "roster": [{ "charId": "aomasu", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 12 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f1_sirasoni", "type": "boss", "q": 5, "r": 0, "label": "시라소니 — 숙명의 결투", "core": [{ "kind": "combat", "boss": true, "roster": [{ "charId": "sirasoni", "pos": { "row": 1, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 20 }, { "kind": "reward", "tier": 3 }] },
+        { "id": "f1_join", "type": "encounter", "q": 6, "r": 0, "label": "결투 예우 — 화해", "core": [{ "kind": "text", "text": "결투의 예우로 시라소니를 처치하지 않는다. 방랑 고수가 잠시 식구가 되어 함께 한다." }, { "kind": "partyChange", "add": ["sirasoni"] }, { "kind": "heal", "pct": 30 }] },
+        { "id": "f1_clear", "type": "clear", "q": 7, "r": 0, "toFloor": "f2" }
+      ],
+      "edges": [
+        { "from": "f1_entry", "to": "f1_dansungsa" },
+        { "from": "f1_dansungsa", "to": "f1_susa" },
+        { "from": "f1_susa", "to": "f1_loyalty" },
+        { "from": "f1_loyalty", "to": "f1_samwoo" },
+        { "from": "f1_samwoo", "to": "f1_sirasoni" },
+        { "from": "f1_sirasoni", "to": "f1_join" },
+        { "from": "f1_join", "to": "f1_clear" }
+      ]
+    },
+    {
+      "id": "f2",
+      "name": "조작된 민의",
+      "entryNodeId": "f2_entry",
+      "nodes": [
+        { "id": "f2_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f2_demo", "type": "battle", "q": 1, "r": 0, "label": "관제데모 동원", "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 12 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f2_imhwasu", "type": "elite", "q": 2, "r": 0, "label": "임화수 폭주", "core": [{ "kind": "combat", "roster": [{ "charId": "doksa", "pos": { "row": 1, "col": 0 } }, { "charId": "thug2", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 16 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f2_election", "type": "encounter", "q": 3, "r": 0, "label": "대구 개표 공작", "core": [{ "kind": "event", "event": { "id": "f2_election_ev", "title": "부정선거 사보타주", "text": "투표함을 바꿔치기할 것인가. 실행하면 자금과 권력이 오나 토사구팽 빚이 크게 늘고, 부하들의 충성이 흔들린다.", "choices": [
+          { "id": "rig", "label": "공작을 실행한다 (토사구팽 +20, 골드 +30)", "result": { "kind": "gold", "amount": 30 } },
+          { "id": "refuse", "label": "양심상 거부한다 (토사구팽 +0)", "result": { "kind": "nothing" } }
+        ] } }] },
+        { "id": "f2_62", "type": "boss", "q": 4, "r": 0, "label": "62인 가두시위 — 기마경찰", "core": [{ "kind": "combat", "boss": true, "roster": [{ "charId": "gwakyoungju", "pos": { "row": 1, "col": 2 } }, { "charId": "thug", "pos": { "row": 0, "col": 0 } }, { "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 22 }, { "kind": "reward", "tier": 3 }] },
+        { "id": "f2_clear", "type": "clear", "q": 5, "r": 0, "toFloor": "f3" }
+      ],
+      "edges": [
+        { "from": "f2_entry", "to": "f2_demo" },
+        { "from": "f2_demo", "to": "f2_imhwasu" },
+        { "from": "f2_imhwasu", "to": "f2_election" },
+        { "from": "f2_election", "to": "f2_62" },
+        { "from": "f2_62", "to": "f2_clear" }
+      ]
+    },
+    {
+      "id": "f3",
+      "name": "토사구팽",
+      "entryNodeId": "f3_entry",
+      "nodes": [
+        { "id": "f3_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f3_gukhoe", "type": "battle", "q": 1, "r": 0, "label": "국회 난입 — 말의 패배", "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug2", "pos": { "row": 2, "col": 0 } }, { "charId": "thug", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 12 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f3_chungjeong", "type": "elite", "q": 2, "r": 0, "label": "충정로 — 명동 전멸", "core": [{ "kind": "combat", "roster": [{ "charId": "osangsa", "pos": { "row": 1, "col": 0 } }, { "charId": "manbal", "pos": { "row": 0, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 16 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f3_rest", "type": "rest", "q": 3, "r": 0, "label": "통일 직후의 정점", "core": [{ "kind": "heal", "pct": 50 }, { "kind": "text", "text": "천하통일. 그러나 권력의 황혼이 다가온다." }] },
+        { "id": "f3_icheon", "type": "boss", "q": 4, "r": 0, "label": "이천 선거구 — 토사구팽",
+          "core": [
+            { "kind": "combat", "boss": true, "roster": [{ "charId": "igibung", "pos": { "row": 1, "col": 0 } }, { "charId": "gwakyoungju", "pos": { "row": 0, "col": 2 } }, { "charId": "thug2", "pos": { "row": 2, "col": 0 } }, { "charId": "thug", "pos": { "row": 1, "col": 1 } }],
+              "resourceMods": [{ "resourceId": "topsa", "cmp": "gte", "value": 40, "side": "enemy", "statusId": "might", "stacks": 1, "duration": 99 }] },
+            { "kind": "gold", "amount": 28 },
+            { "kind": "reward", "tier": 3 }
+          ] },
+        { "id": "f3_clear", "type": "clear", "q": 5, "r": 0 }
+      ],
+      "edges": [
+        { "from": "f3_entry", "to": "f3_gukhoe" },
+        { "from": "f3_gukhoe", "to": "f3_chungjeong" },
+        { "from": "f3_chungjeong", "to": "f3_rest" },
+        { "from": "f3_rest", "to": "f3_icheon" },
+        { "from": "f3_icheon", "to": "f3_clear" }
+      ]
+    }
+  ]
+}

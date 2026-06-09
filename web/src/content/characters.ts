@@ -67,12 +67,19 @@ export const CHARACTERS: Record<string, Character> = {
   michael: { id: "michael", name: "마이클 상사", avatar: "🥊", aiProfileId: "bruiser", hp: 60, speedMin: 4, speedMax: 7, evasion: 12, accuracy: 8, critChance: 12, critMultiplier: 165, skillIds: ["michael_box"] },
   nodeoksul: { id: "nodeoksul", name: "노덕술", avatar: "🕴", aiProfileId: "coward", hp: 30, speedMin: 4, speedMax: 7, evasion: 9, accuracy: 5, critChance: 5, critMultiplier: 150, skillIds: ["nodeoksul_assassin"] },
   gosaimachi: { id: "gosaimachi", name: "고사이마찌", avatar: "🔫", aiProfileId: "assassin", hp: 24, speedMin: 5, speedMax: 8, evasion: 9, accuracy: 12, critChance: 22, critMultiplier: 180, skillIds: ["gosaimachi_pistol"] },
-  ijeongjae: { id: "ijeongjae", name: "이정재(회장)", avatar: "🎩", aiProfileId: "commander", hp: 54, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 12, critMultiplier: 160, traitIds: ["kim_oyabun_will"], skillIds: ["ijeongjae_order", "ijeongjae_pistol"] },
+  ijeongjae: { id: "ijeongjae", name: "이정재(회장)", avatar: "🎩", playable: true, aiProfileId: "commander", hp: 54, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 12, critMultiplier: 160, traitIds: ["kim_oyabun_will"], skillIds: ["ijeongjae_order", "ijeongjae_pistol", "ijeongjae_summon"] },
   iseokjae: { id: "iseokjae", name: "이석재", avatar: "🎯", aiProfileId: "assassin", hp: 26, speedMin: 4, speedMax: 7, evasion: 8, accuracy: 15, critChance: 20, critMultiplier: 170, skillIds: ["iseokjae_shot"] },
 
   // ══ 야인시대 런6(동대문 패권·정치) — 신규 (두한·신영균(shin)·김영태·시라소니·이화룡·이정재·이석재 재사용) ══ (gamedata/run06)
   yujikwang: { id: "yujikwang", name: "유지광", avatar: "🎓", playable: true, hp: 34, speedMin: 6, speedMax: 9, evasion: 11, accuracy: 8, critChance: 20, critMultiplier: 170, skillIds: ["yujikwang_duel", "yujikwang_challenge"] },
   aomasu: { id: "aomasu", name: "아오마스", avatar: "⚔", aiProfileId: "assassin", hp: 42, speedMin: 6, speedMax: 9, evasion: 10, accuracy: 8, critChance: 22, critMultiplier: 170, skillIds: ["aomasu_strike"] },
   doksa: { id: "doksa", name: "독사", avatar: "🐍", aiProfileId: "commander", hp: 30, speedMin: 5, speedMax: 8, evasion: 9, accuracy: 12, critChance: 10, critMultiplier: 150, skillIds: ["doksa_powder"] },
-  imhwasu: { id: "imhwasu", name: "임화수", avatar: "🎭", aiProfileId: "commander", hp: 32, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 5, critMultiplier: 150, skillIds: ["imhwasu_trap"] },
+  imhwasu: { id: "imhwasu", name: "임화수", avatar: "🎭", playable: true, aiProfileId: "commander", hp: 32, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 5, critMultiplier: 150, skillIds: ["imhwasu_trap", "imhwasu_fury"] },
+
+  // ══ 야인시대 런7(자유당 폭정·몰락) — 신규 (이정재·유지광·임화수·시라소니·아오마스·독사·이화룡 재사용) ══ (gamedata/run07)
+  osangsa: { id: "osangsa", name: "오상사", avatar: "🦅", aiProfileId: "bruiser", hp: 38, speedMin: 5, speedMax: 8, evasion: 10, accuracy: 8, critChance: 18, critMultiplier: 165, traitIds: ["last_stand"], skillIds: ["osangsa_guts"] },
+  manbal: { id: "manbal", name: "맨발", avatar: "👣", aiProfileId: "skirmisher", hp: 28, speedMin: 7, speedMax: 10, evasion: 14, accuracy: 5, critChance: 15, critMultiplier: 155, skillIds: ["manbal_kick"] },
+  kimdongjin: { id: "kimdongjin", name: "김동진", avatar: "🏃", aiProfileId: "coward", hp: 30, speedMin: 5, speedMax: 8, evasion: 10, accuracy: 5, critChance: 10, critMultiplier: 150, skillIds: ["kimdongjin_flee"] },
+  igibung: { id: "igibung", name: "이기붕", avatar: "🏛", aiProfileId: "commander", hp: 50, speedMin: 3, speedMax: 6, evasion: 6, accuracy: 5, critChance: 8, critMultiplier: 150, skillIds: ["igibung_power", "igibung_order"] },
+  gwakyoungju: { id: "gwakyoungju", name: "곽영주", avatar: "📞", aiProfileId: "commander", hp: 36, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 5, critMultiplier: 150, skillIds: ["gwak_call"] },
 };

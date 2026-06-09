@@ -108,6 +108,6 @@ mod tests {
         for key in ["aiProfiles", "characters", "jobs", "items", "skills", "statuses", "traits", "nodeRosters", "demoEncounter", "standardFormation", "encounterEvents"] {
             assert!(v.get(key).is_some(), "번들에 '{}' 누락", key);
         }
-        assert_eq!(v["skills"].as_object().unwrap().len(), 122, "skills 122개"); // ...+런6 5(유지광×2/아오마스/독사/임화수)
+        assert_eq!(v["skills"].as_object().unwrap().len(), 130, "skills 130개"); // ...+런7 8(이정재소환/임화수폭주/오상사/맨발/김동진/이기붕×2/곽영주)
     }
 }

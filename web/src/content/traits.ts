@@ -110,4 +110,11 @@ export const TRAITS: Record<string, TraitDef> = {
     id: "drunken_fury", name: "만취 광폭", icon: "🍶", desc: "내 턴 시작 시 약화 상태면 투지를 얻는다(약할수록 사나워짐).",
     rules: [{ when: { on: "turnStart", who: "self" }, if: [{ c: "hasStatus", who: "self", statusId: "weaken" }], then: [{ do: "applyStatus", statusId: "might", stacks: 1, duration: 1, target: "self" }], maxPerTurn: 1 }],
   },
+
+  // ── 런7(자유당 몰락) 신규 특성 ──
+  // 배수진(깡) — 오상사·명동. 머릿수 열세일수록 투지+쉴드(소수정예).
+  last_stand: {
+    id: "last_stand", name: "배수진", icon: "🩸", desc: "전투 시작 시 아군이 적보다 적으면 투지와 쉴드를 얻는다.",
+    rules: [{ when: { on: "battleStart" }, if: [{ c: "outnumbered" }], then: [{ do: "applyStatus", statusId: "might", stacks: 1, duration: 99, target: "self" }, { do: "shield", amount: 8, target: "self" }] }],
+  },
 };
