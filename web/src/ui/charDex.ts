@@ -119,11 +119,11 @@ function statBlock(c: Character): string {
   </div>`;
 }
 
-// 기본 특성(상시·내재) 칩 — 정체성 바. 전직 부여 특성은 트리 노드 카드로 따로 노출.
+// 기본 특성(상시·내재) — 정체성 바. 이름+설명 카드(분기 무관 항상 켜짐). 전직 부여 특성은 트리 노드 카드로 따로.
 function baseTraitsBar(c: Character): string {
   const ids = (c.traitIds ?? []).filter((id) => TRAITS[id]);
   if (!ids.length) return "";
-  return `<div class="cdx-basetraits"><span class="cdx-bt-label">기본 특성</span>${ids.map((id) => `<span class="cdx-bt-chip">${TRAITS[id].icon ?? "✦"} ${esc(TRAITS[id].name)}</span>`).join("")}</div>`;
+  return `<div class="cdx-basetraits"><span class="cdx-bt-label">기본 특성 <span class="cshint">상시·내재</span></span><div class="cdx-bt-cards">${ids.map(traitCard).join("")}</div></div>`;
 }
 
 function detailPane(c: Character, unlocked: boolean, seen: Set<string>): string {
