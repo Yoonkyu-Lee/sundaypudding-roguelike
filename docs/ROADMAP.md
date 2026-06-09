@@ -25,7 +25,7 @@
 
 **결정: (A) 콘텐츠를 JSON으로 이주** — `content/<domain>/*.json`(또는 `<domain>.json`) + 타입드 로더(런 저작과 동일 패턴: dev-write 미들웨어 → JSON 기록 → 배럴/로더 → `data:export`). 에디터 인프라 재사용. **점진적 이주**(에디터 만드는 도메인만 그때그때 — jobs → items → skills → traits, `characters`는 TS 유지 후순위). TS+JSON 혼재는 이미 런(JSON)+나머지(TS)로 검증됨.
 > (B) TS dev-write(에디터가 `.ts` 소스 생성/갱신, 파서/프린터)는 **기각** — erasable TS 제약 + 주석·포맷 왕복 보존이 악몽, A에 지배당함. 타입 안전성은 드리프트 가드 + 로드 검증으로 대체.
-- **진행**: ✅ ⑤-a 전직 트리 · ✅ ⑤-b 아이템 · ✅ ⑤-c 스킬 에디터(skills.json + `skillEditor.ts`+`skillEffectSchema.ts` — 스칼라·area·effects[]·passives[]). ✅ S-S3 passives 편집(owner 없는 재사용 `rulesEditor.ts` + 공유 `ruleFields.ts` 추출). 다음 = ⑤-d 패시브/특성 에디터(`TraitDef`, rulesEditor 재사용).
+- **진행**: ✅ ⑤-a 전직 트리 · ✅ ⑤-b 아이템 · ✅ ⑤-c 스킬(+passives) · ✅ ⑤-d 패시브/특성(`traits.json` + `traitEditor.ts`, rulesEditor 재사용). **저작 도구 트랙 코어 완료** — 디자이너가 GUI로 jobs·items·skills·traits 저작 가능. (남은 후보: characters 이주+에디터 / 런 에디터 `ruleEditor`→`rulesEditor` 통합 dedup / 에디터 폴리시.)
 
 ---
 
@@ -67,7 +67,7 @@
 - **현황**: 맵/노드 에디터만(`web/src/ui/editor/*`). 나머지는 TS 직접 편집.
 - **선결**: ✅ 콘텐츠 저작 형식 = A(JSON 이주, 점진적) 확정. 도메인별로 이주 후 에디터.
 - **순서 제안**: ⑤-a 전직 트리 에디터(#1과 직결) → ⑤-b 아이템 에디터(`ItemDef`, 전용장비 trait 부여 포함) → ⑤-c 스킬 에디터 → ⑤-d 패시브/특성 에디터(`ruleEditor` 패턴 재사용).
-- **진행**: ✅ ⑤-a 전직 트리 · ✅ ⑤-b 아이템 · ✅ ⑤-c 스킬 에디터(스칼라·area·effects[]·**passives[]**) · ✅ S-S3 passives 편집 — owner 없는 재사용 `rulesEditor.ts` + 공유 `ruleFields.ts` 추출(스킬·특성 공용). ⏳ ⑤-d 패시브/특성 에디터(`TraitDef` — rulesEditor 거의 그대로 재사용). (런 에디터 `ruleEditor.ts`도 rulesEditor로 통합 가능 = 후속 dedup 기회.)
+- **진행**: ✅ ⑤-a 전직 · ✅ ⑤-b 아이템 · ✅ ⑤-c 스킬(+passives, S-S3 rulesEditor 추출) · ✅ ⑤-d 패시브/특성(`traits.json` + `traitEditor.ts`). **저작 도구 코어 완료** — jobs·items·skills·traits 모두 GUI 저작. 후속 후보: characters 이주+에디터 · 런 에디터 `ruleEditor`→`rulesEditor` 통합 dedup · 에디터 UX 폴리시.
 
 ---
 

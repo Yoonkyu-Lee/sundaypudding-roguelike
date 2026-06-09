@@ -12,6 +12,7 @@ const RUNS_DIR = join(CONTENT_DIR, "runs");
 const JOBS_PATH = join(CONTENT_DIR, "jobs.json");
 const ITEMS_PATH = join(CONTENT_DIR, "items.json");
 const SKILLS_PATH = join(CONTENT_DIR, "skills.json");
+const TRAITS_PATH = join(CONTENT_DIR, "traits.json");
 const SAFE_ID = /^[a-zA-Z0-9_-]{1,40}$/;
 const EQUIP_SLOTS = new Set(["weapon", "armor", "held"]);
 const SKILL_TARGETS = new Set(["enemy", "ally", "self"]);
@@ -147,8 +148,35 @@ function devWriteSkills(): Plugin {
   };
 }
 
+// dev 전용: 패시브/특성 에디터 → traits.json(Record<id,TraitDef>) 통째 기록.
+function devWriteTraits(): Plugin {
+  return {
+    name: "spr-dev-write-traits",
+    apply: "serve",
+    configureServer(server) {
+      server.middlewares.use("/api/save-traits", (req, res) => {
+        if (req.method !== "POST") { res.statusCode = 405; res.end("POST only"); return; }
+        let body = "";
+        req.on("data", (c) => { body += c; });
+        req.on("end", () => {
+          try {
+            const { traits } = JSON.parse(body) as { traits: Record<string, { id?: string; name?: string; rules?: unknown }> };
+            if (!traits || typeof traits !== "object" || Array.isArray(traits)) { res.statusCode = 400; res.end("traits 맵 형식 아님"); return; }
+            for (const [key, t] of Object.entries(traits)) {
+              if (!SAFE_ID.test(key)) { res.statusCode = 400; res.end(`잘못된 특성 id: ${key}`); return; }
+              if (!t || typeof t !== "object" || t.id !== key || typeof t.name !== "string" || !Array.isArray(t.rules)) { res.statusCode = 400; res.end(`TraitDef 형식 아님: ${key}`); return; }
+            }
+            writeFileSync(TRAITS_PATH, JSON.stringify(traits, null, 2) + "\n", "utf8");
+            res.statusCode = 200; res.setHeader("content-type", "application/json"); res.end(JSON.stringify({ ok: true, count: Object.keys(traits).length }));
+          } catch (e) { res.statusCode = 500; res.end(`기록 실패: ${(e as Error).message}`); }
+        });
+      });
+    },
+  };
+}
+
 export default defineConfig({
   base: "./", // Tauri 웹뷰는 frontendDist를 루트로 서빙 — 상대경로 에셋이 안전
-  plugins: [devWriteRuns(), devWriteJobs(), devWriteItems(), devWriteSkills()],
+  plugins: [devWriteRuns(), devWriteJobs(), devWriteItems(), devWriteSkills(), devWriteTraits()],
   server: { port: 5173, strictPort: false },
 });

@@ -874,8 +874,8 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .ied-num:focus { border-color: var(--accent); outline: none; }
 .ied-num-row select, .ske-eff-fields input { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; color: var(--txt); font-size: 13px; }
 /* 스킬 에디터 — 목록 좁게·인스펙터 넓게 + 필터 + 효과 카드. */
-.jobed-skilled .jobed-main { flex: none; width: 280px; }
-.jobed-skilled .jobed-inspect { flex: 1; width: auto; }
+.jobed-skilled .jobed-main, .jobed-traited .jobed-main { flex: none; width: 280px; }
+.jobed-skilled .jobed-inspect, .jobed-traited .jobed-inspect { flex: 1; width: auto; }
 .ske-filter { width: 100%; box-sizing: border-box; margin-bottom: 8px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; color: var(--txt); font-size: 13px; }
 .ske-pmk { color: var(--accent); font-size: 11px; }
 .ske-effs { display: flex; flex-direction: column; gap: 8px; }
