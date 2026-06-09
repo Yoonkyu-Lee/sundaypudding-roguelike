@@ -59,7 +59,7 @@ function jobBranches(c: Character): string {
     rows.push(`<div class="cdx-job"><span class="cdx-job-t">${j.classReq}차</span><span class="cdx-job-nm">${esc(j.name)}</span>${pass ? `<span class="cdx-job-p">✦ ${esc(pass)}</span>` : ""}</div>`);
     for (const n of j.advancesTo ?? []) queue.push(n);
   }
-  return rows.length > 1 ? `<div class="cdx-jobs"><h4>전직 트리 <span class="cshint">분기 차이=패시브</span></h4>${rows.join("")}</div>` : "";
+  return rows.length > 1 ? `<div class="cdx-col"><h4>전직 트리 <span class="cshint">분기 차이=패시브</span></h4><div class="cdx-jobs">${rows.join("")}</div></div>` : "";
 }
 
 // 스킬 노드 — 본 적 있으면 스펙 카드, 아니면 '?'(트리 형태만 노출, 상세 가림).
@@ -93,11 +93,11 @@ function statBlock(c: Character): string {
   </div>`;
 }
 
-// 캐릭터 특성(상시 패시브) 요약.
+// 캐릭터 특성(상시 패시브) 요약 — 상단 밴드 한 칼럼.
 function traitBlock(c: Character): string {
   const ts = (c.traitIds ?? []).map((id) => TRAITS[id]).filter(Boolean);
   if (!ts.length) return "";
-  return `<div class="cdx-traits">${ts.map((t) => `<div class="cstrait"><div class="cstrait-h">${t.icon ?? "✦"} ${esc(t.name)}</div><div class="cstrait-r">${esc(t.desc ?? "")}</div></div>`).join("")}</div>`;
+  return `<div class="cdx-col"><h4>특성 <span class="cshint">상시</span></h4><div class="cdx-traits">${ts.map((t) => `<div class="cstrait"><div class="cstrait-h">${t.icon ?? "✦"} ${esc(t.name)}</div><div class="cstrait-r">${esc(t.desc ?? "")}</div></div>`).join("")}</div></div>`;
 }
 
 function detailPane(c: Character, unlocked: boolean, seen: Set<string>): string {
@@ -112,11 +112,15 @@ function detailPane(c: Character, unlocked: boolean, seen: Set<string>): string 
     .map((g) => `<div class="cdx-group"><h4>${esc(g.title)} ${g.sub ? `<span class="cshint">${esc(g.sub)}</span>` : ""}</h4>${g.chains.map((ch) => chainHtml(ch, seen)).join("")}</div>`)
     .join("");
   return `<div class="cdx-detail">
-    <div class="cshead">${avatarHtml(c.avatar, "avt")}<h3>${esc(c.name)}</h3></div>
-    <div class="cssection"><h4>능력치</h4>${statBlock(c)}</div>
-    ${traitBlock(c)}
-    ${jobBranches(c)}
-    <div class="cssection"><h4>스킬 트리 <span class="cshint">런에서 본 스킬만 공개</span></h4>${groups || "<div class='cshint'>스킬 없음</div>"}</div>
+    <div class="cdx-top">
+      <div class="cdx-col cdx-id">
+        <div class="cshead">${avatarHtml(c.avatar, "avt")}<h3>${esc(c.name)}</h3></div>
+        <div class="cssection"><h4>능력치</h4>${statBlock(c)}</div>
+      </div>
+      ${traitBlock(c)}
+      ${jobBranches(c)}
+    </div>
+    <div class="cssection cdx-skills-sec"><h4>스킬 트리 <span class="cshint">런에서 본 스킬만 공개</span></h4>${groups || "<div class='cshint'>스킬 없음</div>"}</div>
   </div>`;
 }
 

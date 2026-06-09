@@ -748,13 +748,19 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 /* 디버깅용 오류 텍스트만 선택·복사 허용(전역 user-select:none 예외 — 사용자가 메시지 복사 요청). */
 .pause-box .err-msg { font-size: 13px; color: var(--dim); line-height: 1.5; margin: 4px 0 8px; max-width: 360px; user-select: text; -webkit-user-select: text; cursor: text; }
 
-/* ── 캐릭터 도감 (CDX-3) ── */
-.codex { max-width: 1100px; margin: 0 auto; padding: 14px 18px; }
-.codex header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+/* ── 캐릭터 도감 (CDX-3) — 풀폭 + 패널 내부 스크롤(전체 페이지 스크롤 없음) ── */
+.codex { display: flex; flex-direction: column; height: calc(100vh - 32px); }
+.codex header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex: none; }
 .codex header h1 { font-size: 20px; color: var(--accent); margin: 0; }
-.cdx-body { display: flex; gap: 16px; align-items: flex-start; }
-.cdx-pane { flex: 1; min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
-.cdx-list { width: 200px; flex: none; display: flex; flex-direction: column; gap: 8px; max-height: 78vh; overflow-y: auto; }
+.cdx-body { flex: 1; min-height: 0; display: flex; gap: 16px; align-items: stretch; }
+.cdx-pane { flex: 1; min-width: 0; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.cdx-list { width: 230px; flex: none; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 4px; }
+/* 상단 밴드: 정체성·능력치·특성·전직 트리를 가로로 배치(넓은 폭 활용). 스킬 트리는 아래 풀폭. */
+.cdx-top { display: flex; flex-wrap: wrap; gap: 16px 22px; align-items: flex-start; margin-bottom: 8px; }
+.cdx-col { flex: 1 1 240px; min-width: 220px; }
+.cdx-id { flex: 1 1 260px; }
+.cdx-col > h4 { font-size: 12px; color: var(--dim); margin: 0 0 8px; }
+.cdx-skills-sec { margin-top: 8px; }
 .cdx-pick { position: relative; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel2); color: var(--txt); cursor: pointer; text-align: left; transition: border-color .12s, background .12s; }
 .cdx-pick:hover { border-color: var(--ally); }
 .cdx-pick.sel { border-color: var(--accent); background: rgba(255,209,102,.08); }
@@ -779,12 +785,11 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .cdx-skill-nm { font-weight: 600; }
 .cdx-skill-nm.dim { color: var(--dim); font-weight: 500; }
 .cdx-q { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 5px; background: var(--line); color: var(--dim); font-weight: 700; }
-.cdx-jobs { margin-bottom: 14px; }
 .cdx-job { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid var(--line); font-size: 13px; }
 .cdx-job-t { color: var(--accent); font-weight: 700; min-width: 28px; }
 .cdx-job-nm { font-weight: 600; }
 .cdx-job-p { color: var(--dim); font-size: 12px; }
-.cdx-traits { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.cdx-traits { display: flex; flex-direction: column; gap: 8px; }
 
 /* ── 전투 엔진 검증 하네스 (P1-13, rustBattle.ts) ── */
 .rb-root { display: flex; flex-direction: column; gap: 12px; padding: 14px 18px; max-width: 1100px; margin: 0 auto; }
