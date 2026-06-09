@@ -112,7 +112,7 @@ export function createItemEditor(deps: { onBack: () => void }): { render: (app: 
   function paint(): void {
     if (!host) return;
     if (selId && !items[selId]) selId = null;
-    host.innerHTML = `<div class="jobed">
+    host.innerHTML = `<div class="jobed jobed-itemed">
       <header><h1>🛡 아이템 에디터 <span class="cshint">items.json${dirty ? " · 변경됨*" : ""}</span></h1>
         <div class="jobed-head-actions"><button class="hub-link" id="ied-save"${dirty ? "" : " disabled"}>💾 저장</button><button class="hub-link" id="ied-back">← 허브</button></div></header>
       <div class="jobed-body">
