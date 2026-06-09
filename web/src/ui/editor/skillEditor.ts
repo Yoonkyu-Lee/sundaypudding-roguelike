@@ -6,6 +6,7 @@ import { CHARACTERS } from "../../content/characters.ts";
 import { STATUS_DEFS } from "../../content/statuses.ts";
 import { esc } from "../battle/shared.ts";
 import { SKILL_EFFECT_SPECS, EFFECT_KINDS, AREA_KINDS, type EffField } from "./skillEffectSchema.ts";
+import { rulesEditorHtml, bindRulesEditor } from "./rulesEditor.ts";
 
 const SAFE_ID = /^[a-zA-Z0-9_-]{1,40}$/;
 const OPTIONAL_NUM = new Set(["reach", "tier", "masteryReq", "classReq", "grantsInterrupt"]);
@@ -79,6 +80,7 @@ export function createSkillEditor(deps: { onBack: () => void }): { render: (app:
   }
   async function save(): Promise<void> {
     try {
+      for (const sk of Object.values(skills)) if (sk.passives && !sk.passives.length) delete sk.passives; // 빈 passives는 직렬화 생략
       const res = await fetch("/api/save-skills", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ skills }) });
       if (!res.ok) { alert(`저장 실패: ${await res.text()}`); return; }
       dirty = false; paint();
@@ -135,7 +137,6 @@ export function createSkillEditor(deps: { onBack: () => void }): { render: (app:
     else if (a.kind === "free") areaExtra = `<div class="ied-num-row"><label>count</label><input class="ied-num" data-areanum="count" type="number" value="${(a as { count?: number }).count ?? 1}"></div>`;
     const charOpts = `<option value="">— 범용</option>` + charIds.map((c) => `<option value="${c}"${s.exclusiveTo === c ? " selected" : ""}>${esc(CHARACTERS[c]?.name ?? c)}</option>`).join("");
     const nextOpts = `<option value="">— 없음</option>` + Object.keys(skills).filter((k) => k !== s.id).map((k) => `<option value="${k}"${s.nextTierId === k ? " selected" : ""}>${esc(skills[k].name)}</option>`).join("");
-    const pcount = s.passives?.length ?? 0;
     return `<h4>${esc(s.name)} <span class="jobed-node-id">${esc(s.id)}</span></h4>
       <div class="jobed-field"><label>이름</label><input id="sk-name" value="${esc(s.name)}"></div>
       <div class="jobed-field"><label>대상(target)</label><div class="jobed-chips">${targetChips}</div></div>
@@ -146,7 +147,7 @@ export function createSkillEditor(deps: { onBack: () => void }): { render: (app:
       <div class="jobed-field"><label>강화 다음(nextTierId)</label><select id="sk-next">${nextOpts}</select></div>
       <div class="jobed-field"><label>면적(area)</label><div class="jobed-chips">${areaChips}</div>${areaExtra}</div>
       <div class="jobed-field"><label>효과(effects)</label><div class="ske-effs">${effectsHtml(s)}</div></div>
-      <div class="jobed-field"><label>패시브(passives)</label><div class="cshint">${pcount ? `⚡ 룰 ${pcount}개 — 편집은 S-S3(현재 읽기전용)` : "없음"}</div></div>
+      <div class="jobed-field"><label>패시브(passives) <span class="cshint">출전 시 작동하는 when/if/then 룰</span></label>${rulesEditorHtml(s.passives ?? [])}</div>
       <div class="jobed-inspect-actions"><button class="act ghost" id="sk-del">🗑 삭제</button></div>`;
   }
 
@@ -180,6 +181,7 @@ export function createSkillEditor(deps: { onBack: () => void }): { render: (app:
     host.querySelectorAll<HTMLElement>("[data-effdel]").forEach((el) => el.addEventListener("click", () => delEffect(Number(el.dataset.effdel))));
     host.querySelectorAll<HTMLElement>("[data-effmv]").forEach((el) => el.addEventListener("click", () => { const [i, d] = el.dataset.effmv!.split(":"); moveEffect(Number(i), Number(d)); }));
     host.querySelectorAll<HTMLInputElement | HTMLSelectElement>("[data-eff]").forEach((el) => el.addEventListener("change", () => setEffField(Number(el.dataset.eff), el.dataset.effk!, el.value, el.dataset.efft!)));
+    const cur = sel(); if (cur) { cur.passives ??= []; bindRulesEditor(host, cur.passives, touch); } // 패시브 룰 에디터(owner 없음)
     if (refocus && fi) { fi.focus(); fi.setSelectionRange(fi.value.length, fi.value.length); refocus = false; }
   }
 
