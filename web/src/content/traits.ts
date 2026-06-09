@@ -91,4 +91,16 @@ export const TRAITS: Record<string, TraitDef> = {
     id: "devotion", name: "헌신", icon: "🛡", desc: "전투 시작 시 도발 상태가 되어 적의 화력을 끌어들인다.",
     rules: [{ when: { on: "battleStart" }, then: [{ do: "applyStatus", statusId: "taunt", stacks: 1, duration: 99, target: "self" }] }],
   },
+
+  // ── 런3(일제말 항일) 신규 특성 ──
+  // 1대다 각성 — 두한. 머릿수 열세일수록 강해진다(무산대중의 영웅).
+  outnumbered_awakening: {
+    id: "outnumbered_awakening", name: "1대다 각성", icon: "🔥", desc: "내 턴 시작 시 아군이 적보다 적으면 투지·예리를 얻는다(턴당 1회).",
+    rules: [{ when: { on: "turnStart", who: "self" }, if: [{ c: "outnumbered" }], then: [{ do: "applyStatus", statusId: "might", stacks: 1, duration: 1, target: "self" }, { do: "applyStatus", statusId: "edge", stacks: 1, duration: 1, target: "self" }], maxPerTurn: 1 }],
+  },
+  // 고문 항거 — 김영태. 정신 공격(공포)을 떨쳐낸다(의지).
+  torture_resist: {
+    id: "torture_resist", name: "고문 항거", icon: "✊", desc: "내 턴 시작 시 공포 상태면 떨쳐낸다(정신 공격 항거).",
+    rules: [{ when: { on: "turnStart", who: "self" }, if: [{ c: "hasStatus", who: "self", statusId: "fear" }], then: [{ do: "cleanse", target: "self" }], maxPerTurn: 1 }],
+  },
 };

@@ -1,0 +1,103 @@
+{
+  "id": "run3_antijapan",
+  "name": "야인시대 3: 일제말 항일 — 혼마찌 대결",
+  "desc": "상대가 민족(일본)으로 바뀐다. 진검 야쿠자·유도 명인·헌병 고문에 맞서 무력만이 아니라 명예·의지로 버틴다. 두한이 건달에서 무산대중의 영웅으로 각성하는 무거운 아크. (원작 30~50화)",
+  "mode": "campaign",
+  "useMastery": false,
+  "entryFloorId": "f1",
+  "resources": [
+    { "id": "honor", "name": "명예", "min": 0, "max": 100, "initial": 30, "icon": "🎌" },
+    { "id": "will", "name": "의지", "min": 0, "max": 100, "initial": 50, "icon": "✊" }
+  ],
+  "roster": [
+    { "charId": "duhan", "pos": { "row": 1, "col": 0 } },
+    { "charId": "kimyt", "pos": { "row": 1, "col": 2 } },
+    { "charId": "mook", "pos": { "row": 2, "col": 0 } }
+  ],
+  "floors": [
+    {
+      "id": "f1",
+      "name": "혼마찌 전면전",
+      "entryNodeId": "f1_entry",
+      "nodes": [
+        { "id": "f1_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f1_opium", "type": "encounter", "q": 1, "r": 0, "label": "아편 소각", "core": [{ "kind": "event", "event": { "id": "f1_opium_ev", "title": "아사히마찌 아편 창고", "text": "다나까의 아편이 쌓여 있다. 불태우면 민족의 명분이 서지만 혼마찌 전면전이 시작된다.", "choices": [
+          { "id": "burn", "label": "소각한다 (명예 +15)", "result": { "kind": "resource", "id": "honor", "delta": 15 } },
+          { "id": "deal", "label": "협상해 돈을 받는다 (골드 +20, 명예 −10)", "result": { "kind": "gold", "amount": 20 } }
+        ] } }] },
+        { "id": "f1_asahi", "type": "battle", "q": 2, "r": 0, "label": "아사히마찌 기습", "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 10 }, { "kind": "reward", "tier": 1 }] },
+        { "id": "f1_join", "type": "encounter", "q": 3, "r": 0, "label": "5인방 합류", "core": [{ "kind": "text", "text": "정진영·문영철·번개가 종로에서 합류한다. 혼마찌에 맞설 전선이 선다." }, { "kind": "partyChange", "add": ["jin_b", "moon", "beolgae"] }, { "kind": "resource", "id": "honor", "delta": 10 }, { "kind": "heal", "pct": 30 }] },
+        { "id": "f1_kamisori", "type": "elite", "q": 4, "r": 0, "label": "가미소리 암수", "core": [{ "kind": "combat", "roster": [{ "charId": "kamisori", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 16 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f1_shop", "type": "shop", "q": 5, "r": 0, "label": "우미관 본거지", "core": [{ "kind": "shop" }] },
+        { "id": "f1_maruoka", "type": "boss", "q": 6, "r": 0, "label": "마루오까 — 유도 명인", "core": [{ "kind": "combat", "boss": true, "roster": [{ "charId": "maruoka", "pos": { "row": 1, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 24 }, { "kind": "reward", "tier": 3 }] },
+        { "id": "f1_clear", "type": "clear", "q": 7, "r": 0, "toFloor": "f2" }
+      ],
+      "edges": [
+        { "from": "f1_entry", "to": "f1_opium" },
+        { "from": "f1_opium", "to": "f1_asahi" },
+        { "from": "f1_asahi", "to": "f1_join" },
+        { "from": "f1_join", "to": "f1_kamisori" },
+        { "from": "f1_kamisori", "to": "f1_shop" },
+        { "from": "f1_shop", "to": "f1_maruoka" },
+        { "from": "f1_maruoka", "to": "f1_clear" }
+      ]
+    },
+    {
+      "id": "f2",
+      "name": "헌병대 고문",
+      "entryNodeId": "f2_entry",
+      "nodes": [
+        { "id": "f2_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f2_awaken", "type": "encounter", "q": 1, "r": 0, "label": "신불출 각성", "core": [{ "kind": "text", "text": "「자네는 무산대중의 영웅이야.」 두한이 건달에서 민족의 주먹으로 깨어난다." }, { "kind": "classChange", "max": 1 }, { "kind": "resource", "id": "will", "delta": 10 }] },
+        { "id": "f2_boce", "type": "battle", "q": 2, "r": 0, "label": "헌병 보초", "core": [{ "kind": "combat", "roster": [{ "charId": "gendarme", "pos": { "row": 1, "col": 0 } }, { "charId": "gendarme", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 12 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f2_beolgae", "type": "encounter", "q": 3, "r": 0, "label": "번개의 죽음", "core": [{ "kind": "text", "text": "번개가 헌병 고문에 끝내 숨을 거둔다. 전력과 마음에 구멍이 난다." }, { "kind": "partyChange", "remove": ["beolgae"] }, { "kind": "resource", "id": "will", "delta": -10 }] },
+        { "id": "f2_miwa", "type": "boss", "q": 4, "r": 0, "label": "미와 — 고문 대결(의지전)",
+          "core": [
+            { "kind": "combat", "boss": true, "roster": [{ "charId": "miwa", "pos": { "row": 1, "col": 0 } }, { "charId": "gendarme", "pos": { "row": 0, "col": 0 } }, { "charId": "gendarme", "pos": { "row": 2, "col": 0 } }],
+              "resourceMods": [{ "resourceId": "will", "cmp": "gte", "value": 60, "side": "ally", "statusId": "might", "stacks": 1, "duration": 99 }] },
+            { "kind": "gold", "amount": 22 },
+            { "kind": "reward", "tier": 3 }
+          ] },
+        { "id": "f2_clear", "type": "clear", "q": 5, "r": 0, "toFloor": "f3" }
+      ],
+      "edges": [
+        { "from": "f2_entry", "to": "f2_awaken" },
+        { "from": "f2_awaken", "to": "f2_boce" },
+        { "from": "f2_boce", "to": "f2_beolgae" },
+        { "from": "f2_beolgae", "to": "f2_miwa" },
+        { "from": "f2_miwa", "to": "f2_clear" }
+      ]
+    },
+    {
+      "id": "f3",
+      "name": "징용·해방",
+      "entryNodeId": "f3_entry",
+      "nodes": [
+        { "id": "f3_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f3_unite", "type": "encounter", "q": 1, "r": 0, "label": "전국 오야붕 회의", "core": [{ "kind": "text", "text": "작두·신영균·전국 주먹패가 연대한다. 징용에 맞설 거대한 전선이 선다." }, { "kind": "resource", "id": "honor", "delta": 15 }, { "kind": "heal", "pct": 40 }] },
+        { "id": "f3_danke", "type": "encounter", "q": 2, "r": 0, "label": "단게 담판 — 징용장 찢기", "core": [{ "kind": "event", "event": { "id": "f3_danke_ev", "title": "단게 대좌의 징용장", "text": "징용 명단을 들이민다. 명분이 충분하면 찢어버릴 수 있다.", "choices": [
+          { "id": "tear", "label": "징용장을 찢는다 (명예 50↑ 필요 — 의지 +15)", "requires": { "resourceId": "honor", "cmp": "gte", "value": 50 }, "result": { "kind": "resource", "id": "will", "delta": 15 } },
+          { "id": "endure", "label": "굴욕을 삼킨다 (체력 10%)", "result": { "kind": "hurt", "pct": 10 } }
+        ] } }] },
+        { "id": "f3_gendarme3", "type": "elite", "q": 3, "r": 0, "label": "헌병 정예 3연전", "core": [{ "kind": "combat", "roster": [{ "charId": "gendarme", "pos": { "row": 0, "col": 0 } }, { "charId": "gendarme", "pos": { "row": 1, "col": 0 } }, { "charId": "gendarme", "pos": { "row": 2, "col": 0 } }, { "charId": "thug2", "pos": { "row": 1, "col": 1 } }] }, { "kind": "gold", "amount": 16 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f3_bomb", "type": "encounter", "q": 4, "r": 0, "label": "부민관 의거", "core": [{ "kind": "text", "text": "부민관에 사제 폭탄이 터진다. 친일 집회가 무너지고 민족의 사기가 치솟는다." }, { "kind": "resource", "id": "honor", "delta": 10 }, { "kind": "resource", "id": "will", "delta": 10 }] },
+        { "id": "f3_hayashi", "type": "boss", "q": 5, "r": 0, "label": "해방 — 혼마찌 최후",
+          "core": [
+            { "kind": "combat", "boss": true, "roster": [{ "charId": "hayashi", "pos": { "row": 1, "col": 0 } }, { "charId": "kamisori", "pos": { "row": 0, "col": 0 } }, { "charId": "gendarme", "pos": { "row": 2, "col": 0 } }],
+              "resourceMods": [{ "resourceId": "honor", "cmp": "gte", "value": 50, "side": "enemy", "statusId": "weaken", "stacks": 1, "duration": 99 }] },
+            { "kind": "gold", "amount": 26 },
+            { "kind": "reward", "tier": 3 }
+          ] },
+        { "id": "f3_clear", "type": "clear", "q": 6, "r": 0 }
+      ],
+      "edges": [
+        { "from": "f3_entry", "to": "f3_unite" },
+        { "from": "f3_unite", "to": "f3_danke" },
+        { "from": "f3_danke", "to": "f3_gendarme3" },
+        { "from": "f3_gendarme3", "to": "f3_bomb" },
+        { "from": "f3_bomb", "to": "f3_hayashi" },
+        { "from": "f3_hayashi", "to": "f3_clear" }
+      ]
+    }
+  ]
+}

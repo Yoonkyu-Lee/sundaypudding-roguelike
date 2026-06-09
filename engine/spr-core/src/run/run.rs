@@ -592,4 +592,70 @@ mod tests {
             assert!(run.phase == "won" || run.phase == "lost", "run2 seed {} 미종료(현재 {})", seed, run.phase);
         }
     }
+
+    #[test]
+    fn campaign_runs_boot_and_complete() {
+        // 모든 후속 캠페인 런(run3~)이 자동전투로 완주 — 부팅·자원·합류/이탈·전직·게이팅·보스 무오류.
+        use crate::ai::choose_action;
+        use crate::flow::step;
+        use crate::run::{choose_class_change, choose_encounter_option, class_options, leave_shop, resolve_battle_end, skip_class_change};
+        let d = RunData::load();
+        let runs = spr_data::runs();
+        for run_id in ["run3_antijapan"] {
+            let rd = runs.get(run_id).unwrap_or_else(|| panic!("{} 존재", run_id)).clone();
+            let protagonist = rd.roster[0].char_id.clone();
+            for seed in [1u32, 42] {
+                let mut run = create_run(seed, &rd.roster.clone(), &rd, &HashMap::new(), rd.use_mastery, &d.chars);
+                let mut guard = 0;
+                while run.phase != "won" && run.phase != "lost" && guard < 9000 {
+                    guard += 1;
+                    match run.phase.as_str() {
+                        "map" => {
+                            let n = run.reachable[0].clone();
+                            enter_node(&mut run, &n, &d);
+                        }
+                        "battle" => {
+                            while run.battle.as_ref().map(|b| b.phase == "inProgress").unwrap_or(false) {
+                                let a = {
+                                    let b = run.battle.as_ref().unwrap();
+                                    choose_action(b, &d.skills, &d.defs, &d.ai_profiles)
+                                };
+                                step(run.battle.as_mut().unwrap(), &a, &d.defs, &d.skills);
+                            }
+                            resolve_battle_end(&mut run, &d);
+                        }
+                        "reward" => {
+                            let id = super::reward_id(&run.rewards.as_ref().unwrap()[0]).to_string();
+                            choose_reward(&mut run, &id, &d);
+                        }
+                        "shop" => leave_shop(&mut run, &d),
+                        "encounter" => {
+                            let ev = run.encounter.as_ref().unwrap();
+                            let pick = ev
+                                .choices
+                                .iter()
+                                .find(|c| match &c.requires {
+                                    Some(req) => spr_types::map::cmp_ok(&req.cmp, *run.resources.get(&req.resource_id).unwrap_or(&0), req.value),
+                                    None => true,
+                                })
+                                .map(|c| c.id.clone())
+                                .unwrap_or_else(|| ev.choices[0].id.clone());
+                            choose_encounter_option(&mut run, &pick, &d);
+                        }
+                        "classChange" => {
+                            let opts = class_options(&run, &protagonist, &d);
+                            if let Some(j) = opts.first() {
+                                choose_class_change(&mut run, &protagonist, j, &d);
+                            }
+                            if run.phase == "classChange" {
+                                skip_class_change(&mut run, &d);
+                            }
+                        }
+                        _ => break,
+                    }
+                }
+                assert!(run.phase == "won" || run.phase == "lost", "{} seed {} 미종료(현재 {})", run_id, seed, run.phase);
+            }
+        }
+    }
 }

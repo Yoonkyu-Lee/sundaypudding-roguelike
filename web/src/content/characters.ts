@@ -33,10 +33,10 @@ export const CHARACTERS: Record<string, Character> = {
   jp_student: { id: "jp_student", name: "일본 학생", avatar: "🎒", aiProfileId: "swarm", hp: 16, speedMin: 5, speedMax: 8, evasion: 9, accuracy: 0, critChance: 10, critMultiplier: 150, skillIds: ["jp_gang_beat"] },
 
   // ══ 야인시대 런2(종로 입성·주먹 패권) — 플레이어 파티 ══ (gamedata/run02)
-  duhan: { id: "duhan", name: "두한(청년)", avatar: "/avatars/kimduhan_youth.webp", playable: true, rootJobId: "duhan_job_solo", traitIds: ["phantom_revival"], hp: 50, speedMin: 4, speedMax: 7, evasion: 8, accuracy: 5, critChance: 20, critMultiplier: 160, skillIds: ["duhan_kick", "duhan_headbutt"] },
+  duhan: { id: "duhan", name: "두한(청년)", avatar: "/avatars/kimduhan_youth.webp", playable: true, rootJobId: "duhan_job_solo", traitIds: ["phantom_revival", "outnumbered_awakening"], hp: 50, speedMin: 4, speedMax: 7, evasion: 8, accuracy: 5, critChance: 20, critMultiplier: 160, skillIds: ["duhan_kick", "duhan_headbutt"] },
   gaekko_b: { id: "gaekko_b", name: "개코(왕초)", avatar: "/avatars/gaekko.webp", playable: true, hp: 26, speedMin: 5, speedMax: 8, evasion: 12, accuracy: 0, critChance: 22, critMultiplier: 160, skillIds: ["gaekko_summon", "gaekko_grapple"] },
   jin_b: { id: "jin_b", name: "정진영", avatar: "/avatars/jin.webp", playable: true, traitIds: ["devotion"], hp: 34, speedMin: 3, speedMax: 6, evasion: 6, accuracy: 0, critChance: 10, critMultiplier: 150, skillIds: ["jin_guard", "jin_aid2"] },
-  kimyt: { id: "kimyt", name: "김영태", avatar: "📋", playable: true, hp: 22, speedMin: 6, speedMax: 9, evasion: 9, accuracy: 5, critChance: 10, critMultiplier: 150, skillIds: ["kimyt_buff", "kimyt_expose"] },
+  kimyt: { id: "kimyt", name: "김영태", avatar: "📋", playable: true, traitIds: ["torture_resist"], hp: 22, speedMin: 6, speedMax: 9, evasion: 9, accuracy: 5, critChance: 10, critMultiplier: 150, skillIds: ["kimyt_buff", "kimyt_expose"] },
   moon: { id: "moon", name: "문영철", avatar: "🥊", playable: true, traitIds: ["thorns"], hp: 30, speedMin: 5, speedMax: 8, evasion: 8, accuracy: 8, critChance: 20, critMultiplier: 160, skillIds: ["moon_combo", "moon_jab"] },
   mook: { id: "mook", name: "김무옥", avatar: "⚔", playable: true, hp: 46, speedMin: 3, speedMax: 6, evasion: 4, accuracy: 0, critChance: 10, critMultiplier: 150, skillIds: ["mook_taunt", "mook_guard"] },
   beggar_ally: { id: "beggar_ally", name: "거지패", avatar: "🥖", aiProfileId: "swarm", hp: 12, speedMin: 5, speedMax: 8, evasion: 10, accuracy: 0, critChance: 10, critMultiplier: 150, skillIds: ["beggar_swing"] }, // 개코 소환 토큰(R2)
@@ -48,4 +48,11 @@ export const CHARACTERS: Record<string, Character> = {
   jakdu: { id: "jakdu", name: "작두", avatar: "🪓", aiProfileId: "guardian", hp: 40, speedMin: 3, speedMax: 6, evasion: 5, accuracy: 0, critChance: 10, critMultiplier: 150, skillIds: ["jakdu_chop"] },
   wangbal: { id: "wangbal", name: "왕발", avatar: "🔫", aiProfileId: "assassin", hp: 34, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 10, critChance: 20, critMultiplier: 180, skillIds: ["wangbal_gun"] },
   tanaka: { id: "tanaka", name: "다나까", avatar: "💉", aiProfileId: "commander", hp: 46, speedMin: 4, speedMax: 7, evasion: 6, accuracy: 5, critChance: 10, critMultiplier: 150, skillIds: ["tanaka_opium", "tanaka_jab"] },
+
+  // ══ 야인시대 런3(일제말 항일) — 신규 (두한·김영태·김무옥·정진영·문영철·미와·다나까 재사용) ══ (gamedata/run03)
+  beolgae: { id: "beolgae", name: "번개", avatar: "⚡", playable: true, hp: 24, speedMin: 7, speedMax: 10, evasion: 13, accuracy: 5, critChance: 15, critMultiplier: 150, skillIds: ["beolgae_dash"] },
+  maruoka: { id: "maruoka", name: "마루오까", avatar: "🥋", aiProfileId: "guardian", hp: 56, speedMin: 3, speedMax: 6, evasion: 6, accuracy: 5, critChance: 10, critMultiplier: 160, skillIds: ["maruoka_throw", "maruoka_choke"] },
+  kamisori: { id: "kamisori", name: "가미소리", avatar: "🗡", aiProfileId: "assassin", hp: 38, speedMin: 5, speedMax: 8, evasion: 9, accuracy: 8, critChance: 18, critMultiplier: 170, skillIds: ["kamisori_ambush"] },
+  gendarme: { id: "gendarme", name: "헌병", avatar: "🎖", aiProfileId: "commander", hp: 34, speedMin: 4, speedMax: 7, evasion: 6, accuracy: 5, critChance: 5, critMultiplier: 150, skillIds: ["gendarme_torture"] },
+  hayashi: { id: "hayashi", name: "하야시", avatar: "🎩", aiProfileId: "commander", hp: 48, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 10, critMultiplier: 150, skillIds: ["hayashi_order", "hayashi_jab"] },
 };

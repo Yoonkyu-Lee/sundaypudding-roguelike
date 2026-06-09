@@ -154,4 +154,21 @@ export const SKILLS: Record<string, Skill> = {
   wangbal_gun: { id: "wangbal_gun", name: "권총", exclusiveTo: "wangbal", target: "enemy", cooldown: 3, accuracy: 95, effects: [{ kind: "damage", amount: 28 }] }, // 단일 즉사급
   tanaka_opium: { id: "tanaka_opium", name: "아편 살포", exclusiveTo: "tanaka", target: "enemy", cooldown: 2, accuracy: 90, effects: [{ kind: "damage", amount: 4 }, { kind: "applyStatus", statusId: "poison", stacks: 2, duration: 3 }] },
   tanaka_jab: { id: "tanaka_jab", name: "주먹", exclusiveTo: "tanaka", target: "enemy", cooldown: 0, accuracy: 85, reach: 1, effects: [{ kind: "damage", amount: 8 }] },
+
+  // ══ 야인시대 런3(일제말 항일) — 스킬 ══ (gamedata/run03)
+  // 두한 전직 보상기(협객 1차 — 무산대중의 영웅). 날아차기=피니셔(기절), 풍차=광역.
+  duhan_flykick: { id: "duhan_flykick", name: "날아 차기", exclusiveTo: "duhan", classReq: 1, target: "enemy", cooldown: 3, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 18 }, { kind: "applyStatus", statusId: "freeze", stacks: 1, duration: 1 }] },
+  duhan_windmill: { id: "duhan_windmill", name: "풍차 돌려차기", exclusiveTo: "duhan", classReq: 1, target: "enemy", area: { kind: "cross" }, cooldown: 3, accuracy: 85, reach: 1, effects: [{ kind: "damage", amount: 11 }] },
+  // 번개 — 속공
+  beolgae_dash: { id: "beolgae_dash", name: "번개 연타", exclusiveTo: "beolgae", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 7 }] },
+  // 마루오까 — 유도(엎어치기·조르기)
+  maruoka_throw: { id: "maruoka_throw", name: "엎어치기", exclusiveTo: "maruoka", target: "enemy", cooldown: 2, accuracy: 90, reach: 1, effects: [{ kind: "move", who: "target", deltaCol: 2 }, { kind: "damage", amount: 10 }] },
+  maruoka_choke: { id: "maruoka_choke", name: "조르기", exclusiveTo: "maruoka", target: "enemy", cooldown: 2, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 6 }, { kind: "applyStatus", statusId: "paralyze", stacks: 1, duration: 1 }] },
+  // 가미소리 — 진검 암수(출혈)
+  kamisori_ambush: { id: "kamisori_ambush", name: "암수", exclusiveTo: "kamisori", target: "enemy", cooldown: 1, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 10 }, { kind: "applyStatus", statusId: "bleed", stacks: 2, duration: 2 }] },
+  // 헌병 — 고문(공포·정신 잠식)
+  gendarme_torture: { id: "gendarme_torture", name: "고문", exclusiveTo: "gendarme", target: "enemy", cooldown: 1, accuracy: 95, effects: [{ kind: "applyStatus", statusId: "fear", stacks: 1, duration: 2 }, { kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }] },
+  // 하야시 — 혼마찌 오야붕(지휘·증원은 노드 적 구성으로 근사)
+  hayashi_order: { id: "hayashi_order", name: "지휘", exclusiveTo: "hayashi", target: "ally", area: { kind: "all" }, cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 2 }] },
+  hayashi_jab: { id: "hayashi_jab", name: "지팡이", exclusiveTo: "hayashi", target: "enemy", cooldown: 1, accuracy: 85, reach: 1, effects: [{ kind: "damage", amount: 9 }] },
 };

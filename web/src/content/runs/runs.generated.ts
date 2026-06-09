@@ -4,9 +4,11 @@ import type { RunDef } from "../../contract/types.ts";
 import run_yain from "./yain.json" with { type: "json" };
 import run_run1_youth from "./run1-youth.json" with { type: "json" };
 import run_run2_jongno from "./run2-jongno.json" with { type: "json" };
+import run_run3_antijapan from "./run3-anti-japan.json" with { type: "json" };
 
 export const RUNS: Record<string, RunDef> = {
   "yain": run_yain as unknown as RunDef,
   "run1_youth": run_run1_youth as unknown as RunDef,
   "run2_jongno": run_run2_jongno as unknown as RunDef,
+  "run3_antijapan": run_run3_antijapan as unknown as RunDef,
 };
