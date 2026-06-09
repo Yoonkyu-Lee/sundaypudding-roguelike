@@ -127,6 +127,7 @@ export type GameEvent =
   | { t: "skip"; uid: string; reason: "noUsableSkill" | "frozen" | "chosen" }
   | { t: "death"; uid: string }
   | { t: "dialog"; speaker?: string; text: string } // 대사/컷신(연출, phase 불변) — Phase C
+  | { t: "summon"; uid: string; charId: string } // 소환(R2) — 임시 아군 등장
   | { t: "battleEnd"; phase: Phase };
 
 // ── 게임 상태 ───────────────────────────────────────────────────────────────

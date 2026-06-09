@@ -10,8 +10,31 @@ use spr_types::map::NodeRule;
 use spr_types::party::{Equipped, PartyMemberState, PendingStatus};
 use spr_types::passives::TraitDef;
 use spr_types::rng::Rng;
-use spr_types::skills::Skill;
+use spr_types::skills::{Skill, SkillEffect};
 use std::collections::HashMap;
+
+/// 소환 템플릿(R2) — 아군 활성 스킬의 summon charId를 스캔해 사전 빌드. 전투 step 중 chars 없이 복제 소환.
+fn build_summon_templates(units: &[Unit], chars: &HashMap<String, Character>, skills: &HashMap<String, Skill>, traits: &HashMap<String, TraitDef>) -> HashMap<String, Unit> {
+    let mut out: HashMap<String, Unit> = HashMap::new();
+    for u in units.iter().filter(|u| u.side == "ally") {
+        for sid in &u.active_skill_ids {
+            let sk = match skills.get(sid) {
+                Some(s) => s,
+                None => continue,
+            };
+            for eff in &sk.effects {
+                if let SkillEffect::Summon { char_id, .. } = eff {
+                    if !out.contains_key(char_id) {
+                        if let Some(c) = chars.get(char_id) {
+                            out.insert(char_id.clone(), make_unit(c, "ally", 0, Pos { row: 0, col: 0 }, chars, skills, traits));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    out
+}
 
 /// 장착 3칸 비-HP 스탯 보정 + 무기 dmgFlat·방어구 쉴드획득 합산(4.3). TS equipBonus.
 #[derive(Default)]
@@ -83,6 +106,8 @@ pub fn make_unit(
         ai_profile_id: c.ai_profile_id.clone(),
         equip_dmg_flat: 0,
         equip_shield_gain_add: 0,
+        summoned: false,
+        expires_round: 0,
     }
 }
 
@@ -111,6 +136,7 @@ pub fn create_battle_with(
     }
     let std = spr_data::standard_formation();
     let mut state = GameState {
+        summon_templates: build_summon_templates(&units, chars, skills, traits),
         rng: Rng::new(seed),
         round: 0,
         units,
@@ -175,6 +201,8 @@ fn make_unit_grown(
         ai_profile_id: c.ai_profile_id.clone(),
         equip_dmg_flat: eb.dmg_flat,
         equip_shield_gain_add: eb.shield_gain_add,
+        summoned: false,
+        expires_round: 0,
     }
 }
 
@@ -203,6 +231,7 @@ pub fn create_battle_grown(
     }
     let std = spr_data::standard_formation();
     let mut state = GameState {
+        summon_templates: build_summon_templates(&units, chars, skills, traits),
         rng: Rng::new(seed),
         round: 0,
         units,
@@ -264,6 +293,14 @@ pub fn check_win(state: &mut GameState, defs: &StatusDefs, skills: &HashMap<Stri
 /// 라운드 시작: SPD 주사위(유닛 순서대로 rng) + speedRoll 패시브 + 서열 정렬 + roundStart 이벤트/훅 + advance. TS startRound.
 pub fn start_round(state: &mut GameState, defs: &StatusDefs, skills: &HashMap<String, Skill>) {
     state.round += 1;
+    // R2: 만료 소환수 소멸 — round > expires_round면 이번 라운드 시작 시 제거(서열 진입 전).
+    for i in 0..state.units.len() {
+        if state.units[i].summoned && state.units[i].alive && state.round > state.units[i].expires_round {
+            state.units[i].alive = false;
+            let uid = state.units[i].uid.clone();
+            state.log.push(GameEvent::Death { uid });
+        }
+    }
     let alive: Vec<usize> = state.units.iter().enumerate().filter(|(_, u)| u.alive).map(|(i, _)| i).collect();
     let mut rolls: Vec<SpeedRoll> = Vec::new();
     for i in alive {

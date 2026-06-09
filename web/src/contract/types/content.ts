@@ -73,7 +73,8 @@ export type SkillEffect =
   | { kind: "shield"; amount: number } // 쉴드(덤 HP) 부여 (2.9)
   | { kind: "heal"; amount: number }
   | { kind: "cleanse" } // 디버프 정화 (대상의 비버프 상태 제거)
-  | { kind: "move"; who: "target" | "self"; deltaCol: number }; // 동적 재배치 (6.4)
+  | { kind: "move"; who: "target" | "self"; deltaCol: number } // 동적 재배치 (6.4)
+  | { kind: "summon"; charId: string; count?: number; duration?: number }; // 소환(R2) — 임시 아군 생성, duration 라운드 후 소멸
 
 /**
  * 면적(풋프린트) 모양 — 선택한 앵커 칸 기준으로 영향 칸을 정의. 바닥에 표시(2.4 확장).

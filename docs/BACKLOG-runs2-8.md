@@ -14,7 +14,8 @@
 - **노출**: RunView.resources(게이지). 프론트=골드 옆 자원 칩/바 + 미충족 선택지 비활성.
 - **검증**: drift 가드(TS↔Rust) + 결정론(변경·클램프·세이브왕복·전투 모디파이어·게이팅) + data:export.
 
-### R2 — summon (전투 중 임시 아군) `[엔진 프리미티브 추가]`
+### R2 ✅ — summon (전투 중 임시 아군) `[엔진 프리미티브 추가]`
+> 완료: `SkillEffect::summon` + `Unit.summoned/expiresRound` + `GameState.summon_templates`(전투 생성 시 아군 스킬 스캔 사전빌드) + `summon_units`(빈 슬롯·만료) + 라운드 시작 만료 제거. 다음 라운드 서열 자동 합류. 결정론 테스트(`summon_creates_temp_ally_joins_next_round_then_expires`). 골든 무변(미사용 필드 직렬화 생략). TS contract(SkillEffect·GameEvent)·drift·check green.
 **무엇**: `SkillEffect::Summon{charId,count?,duration?}` — 전투 중 빈 슬롯에 임시 유닛 생성(N턴/전투 한정). run2 개코 거지패·세력 증원.
 - **스키마**: `SkillEffect`에 summon 추가(`spr-types/skills`). 임시 유닛 표식(`Unit.summoned`/`expiresAtTurn`).
 - **전투 모듈**(`spr-core/battle`): 유닛 삽입(턴순서 재계산)·AI 구동·만료/전투종료 제거. 관측(`buildObservation`)에 소환 유닛 포함.

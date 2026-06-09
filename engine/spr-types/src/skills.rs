@@ -35,6 +35,16 @@ pub enum SkillEffect {
         #[serde(rename = "deltaCol")]
         delta_col: i64,
     },
+    /// 소환(R2) — 시전자 측(아군) 빈 슬롯에 임시 유닛 count명 생성, duration 라운드 후 소멸. 자기효과(1회/시전).
+    #[serde(rename = "summon")]
+    Summon {
+        #[serde(rename = "charId")]
+        char_id: String,
+        #[serde(default)]
+        count: Option<i64>,
+        #[serde(default)]
+        duration: Option<i64>,
+    },
 }
 
 /// 면적 모양(판별자 `kind`). single/row/col/square/cross/all(+radius?) / free(+count). TS AreaShape.

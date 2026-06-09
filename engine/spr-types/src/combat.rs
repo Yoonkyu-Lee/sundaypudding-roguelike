@@ -53,7 +53,16 @@ pub struct Unit {
     pub ai_profile_id: Option<String>, // 적/자동플레이 행동결정 정책(data/ai)
     pub equip_dmg_flat: i64,        // 장착 무기 dmgFlat 합(4.3) — computeDamage 합산
     pub equip_shield_gain_add: i64, // 장착 방어구 쉴드획득 보정 합(4.3)
+    /// 소환수(R2) 여부 — 만료 시 소멸. 기본 false면 직렬화 생략(골든 무변).
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub summoned: bool,
+    /// 소환 만료 라운드(R2) — round > expires_round면 라운드 시작 시 소멸. 기본 0면 직렬화 생략.
+    #[serde(rename = "expiresRound", default, skip_serializing_if = "is_zero_i64")]
+    pub expires_round: i64,
 }
+
+fn is_false(b: &bool) -> bool { !*b }
+fn is_zero_i64(n: &i64) -> bool { *n == 0 }
 
 pub type TurnKind = &'static str; // "normal" | "interrupt"
 
@@ -193,6 +202,13 @@ pub enum GameEvent {
     BattleEnd { phase: String },
     #[serde(rename = "skip")]
     Skip { uid: String, reason: String },
+    /// 소환(R2) — 임시 아군 유닛 생성.
+    #[serde(rename = "summon")]
+    Summon {
+        uid: String,
+        #[serde(rename = "charId")]
+        char_id: String,
+    },
 }
 
 /// 전투 상태. 세이브 직렬화 대상 — `log`은 append-only(프로덕션 로직 미참조)라 skip(GameEvent serde 트리 회피, 복원 시 빈 벡터).
@@ -212,4 +228,7 @@ pub struct GameState {
     // 패시브 재진입 가드(P0-3) — 후속 슬라이스서 사용
     pub fire_depth: i64,
     pub fire_active_keys: Vec<String>,
+    /// 소환 템플릿(R2) — charId→사전빌드 Unit. 전투 생성 시 아군 스킬의 summon charId 스캔. 비면 직렬화 생략(골든 무변).
+    #[serde(rename = "summonTemplates", default, skip_serializing_if = "std::collections::HashMap::is_empty")]
+    pub summon_templates: std::collections::HashMap<String, Unit>,
 }
