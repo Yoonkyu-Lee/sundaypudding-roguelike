@@ -33,6 +33,8 @@
 
 > **에픽 완료(2026-06)**: R1·R2 프리미티브 + run2~8 콘텐츠 전부. 모든 캠페인 런 `campaign_runs_boot_and_complete` green. 스킬 139·캐릭터 다수. 새 프리미티브 갭(spare·즉사·phase·survival승리·morale·후계계승)은 전부 데이터-온리 근사로 우회(사용자 "이대로" 방침).
 
+> **나이듦 표현(2026-06)**: 김두한은 청년→중년으로 늙는다. avatar는 Character당 1개이므로 `duhan_mid`(중년, `/avatars/kimduhan_midage.webp`) 캐릭터를 별도로 두고 **전쟁기(run5)부터 로스터에서 청년 `duhan`을 `duhan_mid`로 교체**(run5/6/8 — run7 주인공은 이정재). run2~4는 청년 유지. duhan_mid는 `duhan_job_solo` rootJob 공유 → 전직 트리·보상 풀 동일. 동시에 run2~8 적·아군 다수의 이모지를 디자이너 파밍 초상화(`web/public/avatars/*.webp`)로 배선(이모지 유지: thug류·기따노·다나까·헌병·김천호·맨발·이찬오·조일환·김형욱·이과장·국무위원 = 파밍본 없음). [데이터-온리]
+
 각 런 종료 = `npm run check` green + boot 테스트(`runN_boots_and_completes`) + 커밋. 새 메커니즘엔 결정론 단위 테스트.
 
 ## 🛑 진행 메모
