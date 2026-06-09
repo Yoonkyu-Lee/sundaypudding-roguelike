@@ -79,4 +79,16 @@ export const TRAITS: Record<string, TraitDef> = {
     id: "kim_relentless", name: "맹타", icon: "🥊", desc: "적을 쓰러뜨리면 예리 1을 얻는다.",
     rules: [{ when: { on: "kill" }, then: [{ do: "applyStatus", statusId: "edge", stacks: 1, duration: 3, target: "self" }] }],
   },
+
+  // ── 런2(종로 패권) 신규 특성 ──
+  // 환영 부활(각성) — 김좌진 환영. 치사 직전 1회 대회복 + 투지 2(구마적전 2페이즈 역전 손맛). 민심 비례 강화는 노드 resourceMods로 별도.
+  phantom_revival: {
+    id: "phantom_revival", name: "환영 부활", icon: "👻", desc: "위기(체력 25% 이하)에 피격되면 전투당 1회 체력 20 회복 + 투지 2를 얻는다.",
+    rules: [{ when: { on: "damaged" }, if: [{ c: "hpPct", who: "self", cmp: "lte", v: 25 }], then: [{ do: "heal", amount: 20, target: "self" }, { do: "applyStatus", statusId: "might", stacks: 2, duration: 99, target: "self" }], maxPerBattle: 1 }],
+  },
+  // 헌신 — 정진영. 전투 시작 시 도발(자신이 적 화력을 끌어 두한을 보호).
+  devotion: {
+    id: "devotion", name: "헌신", icon: "🛡", desc: "전투 시작 시 도발 상태가 되어 적의 화력을 끌어들인다.",
+    rules: [{ when: { on: "battleStart" }, then: [{ do: "applyStatus", statusId: "taunt", stacks: 1, duration: 99, target: "self" }] }],
+  },
 };

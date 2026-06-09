@@ -31,4 +31,21 @@ export const CHARACTERS: Record<string, Character> = {
   detective: { id: "detective", name: "형사", avatar: "🕵", aiProfileId: "guardian", hp: 27, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 0, critChance: 5, critMultiplier: 150, skillIds: ["det_cuff", "det_baton"] },
   kaneyama: { id: "kaneyama", name: "가네야마", avatar: "/avatars/kaneyama.webp", aiProfileId: "coward", hp: 26, speedMin: 3, speedMax: 6, evasion: 5, accuracy: 0, critChance: 5, critMultiplier: 150, skillIds: ["kane_greed", "kane_slap"] },
   jp_student: { id: "jp_student", name: "일본 학생", avatar: "🎒", aiProfileId: "swarm", hp: 16, speedMin: 5, speedMax: 8, evasion: 9, accuracy: 0, critChance: 10, critMultiplier: 150, skillIds: ["jp_gang_beat"] },
+
+  // ══ 야인시대 런2(종로 입성·주먹 패권) — 플레이어 파티 ══ (gamedata/run02)
+  duhan: { id: "duhan", name: "두한(청년)", avatar: "/avatars/kimduhan_youth.webp", playable: true, rootJobId: "duhan_job_solo", traitIds: ["phantom_revival"], hp: 50, speedMin: 4, speedMax: 7, evasion: 8, accuracy: 5, critChance: 20, critMultiplier: 160, skillIds: ["duhan_kick", "duhan_headbutt"] },
+  gaekko_b: { id: "gaekko_b", name: "개코(왕초)", avatar: "/avatars/gaekko.webp", playable: true, hp: 26, speedMin: 5, speedMax: 8, evasion: 12, accuracy: 0, critChance: 22, critMultiplier: 160, skillIds: ["gaekko_summon", "gaekko_grapple"] },
+  jin_b: { id: "jin_b", name: "정진영", avatar: "/avatars/jin.webp", playable: true, traitIds: ["devotion"], hp: 34, speedMin: 3, speedMax: 6, evasion: 6, accuracy: 0, critChance: 10, critMultiplier: 150, skillIds: ["jin_guard", "jin_aid2"] },
+  kimyt: { id: "kimyt", name: "김영태", avatar: "📋", playable: true, hp: 22, speedMin: 6, speedMax: 9, evasion: 9, accuracy: 5, critChance: 10, critMultiplier: 150, skillIds: ["kimyt_buff", "kimyt_expose"] },
+  moon: { id: "moon", name: "문영철", avatar: "🥊", playable: true, traitIds: ["thorns"], hp: 30, speedMin: 5, speedMax: 8, evasion: 8, accuracy: 8, critChance: 20, critMultiplier: 160, skillIds: ["moon_combo", "moon_jab"] },
+  mook: { id: "mook", name: "김무옥", avatar: "⚔", playable: true, hp: 46, speedMin: 3, speedMax: 6, evasion: 4, accuracy: 0, critChance: 10, critMultiplier: 150, skillIds: ["mook_taunt", "mook_guard"] },
+  beggar_ally: { id: "beggar_ally", name: "거지패", avatar: "🥖", aiProfileId: "swarm", hp: 12, speedMin: 5, speedMax: 8, evasion: 10, accuracy: 0, critChance: 10, critMultiplier: 150, skillIds: ["beggar_swing"] }, // 개코 소환 토큰(R2)
+
+  // ══ 런2 — 적 ══
+  kitano: { id: "kitano", name: "기따노", avatar: "🗡", aiProfileId: "assassin", hp: 30, speedMin: 5, speedMax: 8, evasion: 8, accuracy: 8, critChance: 15, critMultiplier: 170, skillIds: ["kitano_slash"] },
+  shinmajeok: { id: "shinmajeok", name: "신마적", avatar: "😡", aiProfileId: "bruiser", hp: 36, speedMin: 4, speedMax: 7, evasion: 6, accuracy: 0, critChance: 15, critMultiplier: 150, skillIds: ["shin_choke"] },
+  gumajeok: { id: "gumajeok", name: "구마적", avatar: "👹", aiProfileId: "bruiser", hp: 58, speedMin: 3, speedMax: 6, evasion: 5, accuracy: 0, critChance: 15, critMultiplier: 160, skillIds: ["guma_headbutt", "guma_axe"] },
+  jakdu: { id: "jakdu", name: "작두", avatar: "🪓", aiProfileId: "guardian", hp: 40, speedMin: 3, speedMax: 6, evasion: 5, accuracy: 0, critChance: 10, critMultiplier: 150, skillIds: ["jakdu_chop"] },
+  wangbal: { id: "wangbal", name: "왕발", avatar: "🔫", aiProfileId: "assassin", hp: 34, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 10, critChance: 20, critMultiplier: 180, skillIds: ["wangbal_gun"] },
+  tanaka: { id: "tanaka", name: "다나까", avatar: "💉", aiProfileId: "commander", hp: 46, speedMin: 4, speedMax: 7, evasion: 6, accuracy: 5, critChance: 10, critMultiplier: 150, skillIds: ["tanaka_opium", "tanaka_jab"] },
 };

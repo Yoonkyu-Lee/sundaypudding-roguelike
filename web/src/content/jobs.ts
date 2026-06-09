@@ -15,4 +15,10 @@ export const JOBS: Record<string, JobDef> = {
   // 0차 소년두한 → 1차 무도가(유태권 입문, n9 classChange). 무도가 = 기 집중 + 1차 전용기(날라차기·단전 일격) 해금.
   kim_young_job_boy: { id: "kim_young_job_boy", name: "종로 거지 소년", classReq: 0, advancesTo: ["kim_young_job_martial"] },
   kim_young_job_martial: { id: "kim_young_job_martial", name: "무도가", classReq: 1, grantsTraitIds: ["qi_focus"] },
+
+  // ══ 런2 — 두한(청년) 전직 트리 ══ 0차 무소속 → 1차 거리의 독립군 → 2차 이정목 오야붕 → 3차 우미관 오야붕.
+  duhan_job_solo: { id: "duhan_job_solo", name: "무소속 주먹", classReq: 0, advancesTo: ["duhan_job_indep"] },
+  duhan_job_indep: { id: "duhan_job_indep", name: "거리의 독립군", classReq: 1, grantsTraitIds: ["warspirit"], advancesTo: ["duhan_job_oyabun"] },
+  duhan_job_oyabun: { id: "duhan_job_oyabun", name: "이정목 오야붕", classReq: 2, grantsTraitIds: ["kim_oyabun_will"], advancesTo: ["duhan_job_umigwan"] },
+  duhan_job_umigwan: { id: "duhan_job_umigwan", name: "우미관 오야붕", classReq: 3, grantsTraitIds: ["kim_relentless"] },
 };

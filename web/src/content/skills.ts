@@ -123,4 +123,35 @@ export const SKILLS: Record<string, Skill> = {
   kim_headbutt: { id: "kim_headbutt", name: "박치기", exclusiveTo: "kim", masteryReq: 1, classReq: 1, target: "enemy", cooldown: 2, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 20 }, { kind: "applyStatus", statusId: "fear", stacks: 1, duration: 1 }] },
   // 종로 호령: 아군 전체 강화(공위증+쉴드). 팀(두목 "의리") 의도 — 단, 협객이 뽑아도 됨.
   kim_command: { id: "kim_command", name: "종로 호령", exclusiveTo: "kim", masteryReq: 1, classReq: 1, target: "ally", area: { kind: "all" }, cooldown: 4, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 2 }, { kind: "shield", amount: 8 }] },
+
+  // ══ 야인시대 런2(종로 패권) — 스킬 ══ (gamedata/run02)
+  // 두한(청년) — 맨손 격투 에이스
+  duhan_kick: { id: "duhan_kick", name: "발차기 콤보", exclusiveTo: "duhan", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, tier: 1, effects: [{ kind: "damage", amount: 11 }] },
+  duhan_headbutt: { id: "duhan_headbutt", name: "박치기", exclusiveTo: "duhan", target: "enemy", cooldown: 2, accuracy: 95, reach: 1, effects: [{ kind: "damage", amount: 16 }], passives: [{ when: { on: "onHit", as: "attacker", crit: true }, then: [{ do: "applyStatus", statusId: "might", stacks: 1, duration: 2, target: "self" }] }] }, // 카운터 — 크리 시 투지
+  // 개코(왕초) — 거지패 소환 + 그래플
+  gaekko_summon: { id: "gaekko_summon", name: "거지패 동원", exclusiveTo: "gaekko_b", target: "self", cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "summon", charId: "beggar_ally", count: 2, duration: 3 }] },
+  gaekko_grapple: { id: "gaekko_grapple", name: "고간 잡기", exclusiveTo: "gaekko_b", target: "enemy", cooldown: 3, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 8 }, { kind: "applyStatus", statusId: "paralyze", stacks: 1, duration: 1 }] },
+  // 정진영 — 헌신/방패
+  jin_guard: { id: "jin_guard", name: "헌신 방패", exclusiveTo: "jin_b", target: "self", cooldown: 2, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatusSelf", statusId: "taunt", stacks: 1, duration: 2 }, { kind: "shield", amount: 10 }] },
+  jin_aid2: { id: "jin_aid2", name: "응급 처치", exclusiveTo: "jin_b", target: "ally", cooldown: 2, accuracy: 0, alwaysHit: true, effects: [{ kind: "heal", amount: 14 }] },
+  // 김영태 — 버프 참모
+  kimyt_buff: { id: "kimyt_buff", name: "책사의 묘책", exclusiveTo: "kimyt", target: "ally", area: { kind: "all" }, cooldown: 4, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 2 }] },
+  kimyt_expose: { id: "kimyt_expose", name: "약점 노출", exclusiveTo: "kimyt", target: "enemy", cooldown: 1, accuracy: 90, effects: [{ kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }] },
+  // 문영철 — 권투 딜러(thorns 카운터)
+  moon_combo: { id: "moon_combo", name: "연타", exclusiveTo: "moon", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 9 }] },
+  moon_jab: { id: "moon_jab", name: "정타", exclusiveTo: "moon", target: "enemy", cooldown: 2, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 14 }] },
+  // 김무옥 — 탱커
+  mook_taunt: { id: "mook_taunt", name: "도발", exclusiveTo: "mook", target: "self", cooldown: 2, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatusSelf", statusId: "taunt", stacks: 1, duration: 2 }, { kind: "shield", amount: 8 }] },
+  mook_guard: { id: "mook_guard", name: "버티기", exclusiveTo: "mook", target: "self", cooldown: 1, accuracy: 0, alwaysHit: true, effects: [{ kind: "shield", amount: 12 }] },
+  // 거지패(소환 토큰)
+  beggar_swing: { id: "beggar_swing", name: "막대 휘두르기", exclusiveTo: "beggar_ally", target: "enemy", cooldown: 0, accuracy: 85, reach: 1, effects: [{ kind: "damage", amount: 4 }] },
+  // 적
+  kitano_slash: { id: "kitano_slash", name: "일본도 베기", exclusiveTo: "kitano", target: "enemy", cooldown: 1, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 14 }], passives: [{ when: { on: "battleStart" }, then: [{ do: "applyStatus", statusId: "might", stacks: 1, duration: 99, target: "self" }] }] }, // 무기 보너스
+  shin_choke: { id: "shin_choke", name: "목 조르기", exclusiveTo: "shinmajeok", target: "enemy", cooldown: 2, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 8 }, { kind: "applyStatus", statusId: "freeze", stacks: 1, duration: 1 }] },
+  guma_headbutt: { id: "guma_headbutt", name: "박치기", exclusiveTo: "gumajeok", target: "enemy", cooldown: 2, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 20 }] },
+  guma_axe: { id: "guma_axe", name: "손도끼", exclusiveTo: "gumajeok", target: "enemy", cooldown: 1, accuracy: 85, reach: 1, effects: [{ kind: "damage", amount: 12 }], passives: [{ when: { on: "battleStart" }, then: [{ do: "applyStatus", statusId: "might", stacks: 1, duration: 99, target: "self" }] }] },
+  jakdu_chop: { id: "jakdu_chop", name: "작두질", exclusiveTo: "jakdu", target: "enemy", cooldown: 1, accuracy: 88, reach: 1, effects: [{ kind: "damage", amount: 13 }] },
+  wangbal_gun: { id: "wangbal_gun", name: "권총", exclusiveTo: "wangbal", target: "enemy", cooldown: 3, accuracy: 95, effects: [{ kind: "damage", amount: 28 }] }, // 단일 즉사급
+  tanaka_opium: { id: "tanaka_opium", name: "아편 살포", exclusiveTo: "tanaka", target: "enemy", cooldown: 2, accuracy: 90, effects: [{ kind: "damage", amount: 4 }, { kind: "applyStatus", statusId: "poison", stacks: 2, duration: 3 }] },
+  tanaka_jab: { id: "tanaka_jab", name: "주먹", exclusiveTo: "tanaka", target: "enemy", cooldown: 0, accuracy: 85, reach: 1, effects: [{ kind: "damage", amount: 8 }] },
 };
