@@ -1,0 +1,105 @@
+{
+  "id": "run6_dongdaemun",
+  "name": "야인시대 6: 동대문 패권과 정치 입문",
+  "desc": "주먹의 시대가 정치에 먹힌다. 두한이 국회로 가는 동안 동대문 이정재가 자유당과 결탁해 폭력을 제도화한다. 후반의 적은 칼이 아니라 경찰 호출·투옥·디버프 — 정정당당이 통하지 않는 좌절 속의 불굴. (원작 90~104화)",
+  "mode": "campaign",
+  "useMastery": false,
+  "entryFloorId": "f1",
+  "resources": [
+    { "id": "honor", "name": "명예", "min": 0, "max": 100, "initial": 50, "icon": "🎖" }
+  ],
+  "roster": [
+    { "charId": "duhan", "pos": { "row": 1, "col": 0 } },
+    { "charId": "shin", "pos": { "row": 2, "col": 0 } },
+    { "charId": "kimyt", "pos": { "row": 1, "col": 2 } }
+  ],
+  "floors": [
+    {
+      "id": "f1",
+      "name": "귀환과 선거전",
+      "entryNodeId": "f1_entry",
+      "nodes": [
+        { "id": "f1_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f1_ruins", "type": "battle", "q": 1, "r": 0, "label": "폐허 잡싸움", "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 8 }, { "kind": "reward", "tier": 1 }] },
+        { "id": "f1_fund", "type": "encounter", "q": 2, "r": 0, "label": "건중친목회 발족", "core": [{ "kind": "event", "event": { "id": "f1_fund_ev", "title": "미군 군수물자 불하", "text": "물자를 어떻게 나눌 것인가. 이상대로 분배하면 명분이, 보스들에게 돌리면 자금이 남는다.", "choices": [
+          { "id": "ideal", "label": "이상대로 분배한다 (명예 +10)", "result": { "kind": "resource", "id": "honor", "delta": 10 } },
+          { "id": "fund", "label": "자금화한다 (골드 +25, 명예 −10)", "result": { "kind": "gold", "amount": 25 } }
+        ] } }] },
+        { "id": "f1_shop", "type": "shop", "q": 3, "r": 0, "label": "종로 시장 보급", "core": [{ "kind": "shop" }] },
+        { "id": "f1_election", "type": "battle", "q": 4, "r": 0, "label": "선거 유세 방해", "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 10 }, { "kind": "reward", "tier": 1 }] },
+        { "id": "f1_politics", "type": "encounter", "q": 5, "r": 0, "label": "정치 입문", "core": [{ "kind": "text", "text": "조병옥의 출마 권유. 두한이 주먹에서 정치인의 길로 들어선다 — 카리스마와 불굴이 깊어진다." }, { "kind": "classChange", "max": 1 }, { "kind": "resource", "id": "honor", "delta": 10 }] },
+        { "id": "f1_aomasu", "type": "boss", "q": 6, "r": 0, "label": "아오마스 — 낭만파의 종말", "core": [{ "kind": "combat", "boss": true, "roster": [{ "charId": "aomasu", "pos": { "row": 1, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 22 }, { "kind": "reward", "tier": 3 }] },
+        { "id": "f1_clear", "type": "clear", "q": 7, "r": 0, "toFloor": "f2" }
+      ],
+      "edges": [
+        { "from": "f1_entry", "to": "f1_ruins" },
+        { "from": "f1_ruins", "to": "f1_fund" },
+        { "from": "f1_fund", "to": "f1_shop" },
+        { "from": "f1_shop", "to": "f1_election" },
+        { "from": "f1_election", "to": "f1_politics" },
+        { "from": "f1_politics", "to": "f1_aomasu" },
+        { "from": "f1_aomasu", "to": "f1_clear" }
+      ]
+    },
+    {
+      "id": "f2",
+      "name": "의리의 붕괴",
+      "entryNodeId": "f2_entry",
+      "nodes": [
+        { "id": "f2_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f2_join", "type": "encounter", "q": 1, "r": 0, "label": "명동 합류", "core": [{ "kind": "text", "text": "시라소니와 이화룡이 명동의 의리로 두한과 손을 잡는다." }, { "kind": "partyChange", "add": ["sirasoni", "ihwaryong"] }, { "kind": "resource", "id": "honor", "delta": 10 }, { "kind": "heal", "pct": 30 }] },
+        { "id": "f2_yeongsuk", "type": "elite", "q": 2, "r": 0, "label": "시라소니 단신 압승전", "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 0, "col": 0 } }, { "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug", "pos": { "row": 1, "col": 1 } }] }, { "kind": "gold", "amount": 14 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f2_myeongdan", "type": "encounter", "q": 3, "r": 0, "label": "명단/신표 도박", "core": [{ "kind": "event", "event": { "id": "f2_myeongdan_ev", "title": "이중첩자", "text": "이정재가 넘긴 암살 명단과 신표. 충성을 위장할 것인가, 역이용할 것인가.", "choices": [
+          { "id": "loyal", "label": "충성을 위장한다 (안전, 명예 +5)", "result": { "kind": "resource", "id": "honor", "delta": 5 } },
+          { "id": "double", "label": "역이용한다 (골드 +20, 다음 함정 강화)", "result": { "kind": "gold", "amount": 20 } }
+        ] } }] },
+        { "id": "f2_lynch", "type": "boss", "q": 4, "r": 0, "label": "린치 함정 — 독사의 무력화",
+          "core": [
+            { "kind": "combat", "boss": true, "roster": [{ "charId": "doksa", "pos": { "row": 1, "col": 0 } }, { "charId": "imhwasu", "pos": { "row": 0, "col": 2 } }, { "charId": "thug2", "pos": { "row": 2, "col": 0 } }],
+              "resourceMods": [{ "resourceId": "honor", "cmp": "gte", "value": 60, "side": "ally", "statusId": "might", "stacks": 1, "duration": 99 }] },
+            { "kind": "gold", "amount": 20 },
+            { "kind": "reward", "tier": 3 }
+          ] },
+        { "id": "f2_clear", "type": "clear", "q": 5, "r": 0, "toFloor": "f3" }
+      ],
+      "edges": [
+        { "from": "f2_entry", "to": "f2_join" },
+        { "from": "f2_join", "to": "f2_yeongsuk" },
+        { "from": "f2_yeongsuk", "to": "f2_myeongdan" },
+        { "from": "f2_myeongdan", "to": "f2_lynch" },
+        { "from": "f2_lynch", "to": "f2_clear" }
+      ]
+    },
+    {
+      "id": "f3",
+      "name": "헌정 유린",
+      "entryNodeId": "f3_entry",
+      "nodes": [
+        { "id": "f3_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f3_kimsangdo", "type": "battle", "q": 1, "r": 0, "label": "김상도 호위전", "core": [{ "kind": "combat", "roster": [{ "charId": "thug2", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 12 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f3_dojang", "type": "elite", "q": 2, "r": 0, "label": "유지광 도장깨기", "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 0, "col": 0 } }, { "charId": "thug2", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug2", "pos": { "row": 1, "col": 1 } }] }, { "kind": "gold", "amount": 16 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f3_yujikwang", "type": "encounter", "q": 3, "r": 0, "label": "유지광 영입", "core": [{ "kind": "text", "text": "별동대 도장깨기를 모두 꺾자 만능 결투가 유지광이 두한의 식구가 된다." }, { "kind": "partyChange", "add": ["yujikwang"] }, { "kind": "heal", "pct": 30 }] },
+        { "id": "f3_jail", "type": "encounter", "q": 4, "r": 0, "label": "투옥/석방 분기", "core": [{ "kind": "event", "event": { "id": "f3_jail_ev", "title": "자유당의 구속 조작", "text": "살인미수 누명. 입당원서에 도장을 찍으면 석방되지만 명예가 꺾이고, 거부하면 옥에 갇히나 명분이 선다.", "choices": [
+          { "id": "join", "label": "입당하고 석방된다 (명예 −10)", "result": { "kind": "resource", "id": "honor", "delta": -10 } },
+          { "id": "refuse", "label": "끝까지 거부한다 (명예 +10)", "result": { "kind": "resource", "id": "honor", "delta": 10 } }
+        ] } }] },
+        { "id": "f3_ijeongjae", "type": "boss", "q": 5, "r": 0, "label": "이정재 — 정치 폭력의 화신",
+          "core": [
+            { "kind": "combat", "boss": true, "roster": [{ "charId": "ijeongjae", "pos": { "row": 1, "col": 0 } }, { "charId": "iseokjae", "pos": { "row": 0, "col": 2 } }, { "charId": "imhwasu", "pos": { "row": 2, "col": 2 } }, { "charId": "thug2", "pos": { "row": 2, "col": 0 } }],
+              "resourceMods": [{ "resourceId": "honor", "cmp": "gte", "value": 60, "side": "ally", "statusId": "might", "stacks": 1, "duration": 99 }] },
+            { "kind": "gold", "amount": 28 },
+            { "kind": "reward", "tier": 3 }
+          ] },
+        { "id": "f3_clear", "type": "clear", "q": 6, "r": 0 }
+      ],
+      "edges": [
+        { "from": "f3_entry", "to": "f3_kimsangdo" },
+        { "from": "f3_kimsangdo", "to": "f3_dojang" },
+        { "from": "f3_dojang", "to": "f3_yujikwang" },
+        { "from": "f3_yujikwang", "to": "f3_jail" },
+        { "from": "f3_jail", "to": "f3_ijeongjae" },
+        { "from": "f3_ijeongjae", "to": "f3_clear" }
+      ]
+    }
+  ]
+}

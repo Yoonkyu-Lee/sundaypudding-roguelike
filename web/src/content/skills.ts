@@ -191,4 +191,11 @@ export const SKILLS: Record<string, Skill> = {
   ijeongjae_order: { id: "ijeongjae_order", name: "회장의 규율", exclusiveTo: "ijeongjae", target: "ally", area: { kind: "all" }, cooldown: 3, accuracy: 0, alwaysHit: true, effects: [{ kind: "applyStatus", statusId: "might", stacks: 1, duration: 2 }] },
   ijeongjae_pistol: { id: "ijeongjae_pistol", name: "권총", exclusiveTo: "ijeongjae", target: "enemy", cooldown: 1, accuracy: 90, effects: [{ kind: "damage", amount: 13 }] },
   iseokjae_shot: { id: "iseokjae_shot", name: "8발 전탄 명중", exclusiveTo: "iseokjae", target: "enemy", cooldown: 2, accuracy: 0, alwaysHit: true, effects: [{ kind: "damage", amount: 18 }] }, // 명사수(반드시 명중)
+
+  // ══ 야인시대 런6(동대문 패권·정치) — 스킬 ══ (gamedata/run06)
+  yujikwang_duel: { id: "yujikwang_duel", name: "결투", exclusiveTo: "yujikwang", target: "enemy", cooldown: 0, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 12 }] },
+  yujikwang_challenge: { id: "yujikwang_challenge", name: "도전장", exclusiveTo: "yujikwang", target: "enemy", cooldown: 2, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 9 }, { kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }] },
+  aomasu_strike: { id: "aomasu_strike", name: "신세대 검", exclusiveTo: "aomasu", target: "enemy", cooldown: 1, accuracy: 90, reach: 1, effects: [{ kind: "damage", amount: 13 }], passives: [{ when: { on: "onHit", as: "attacker" }, then: [{ do: "applyStatus", statusId: "edge", stacks: 1, duration: 2, target: "self" }] }] },
+  doksa_powder: { id: "doksa_powder", name: "분말 가루", exclusiveTo: "doksa", target: "enemy", cooldown: 1, accuracy: 95, effects: [{ kind: "applyStatus", statusId: "weaken", stacks: 2, duration: 2 }, { kind: "applyStatus", statusId: "bleed", stacks: 1, duration: 2 }] }, // blind 근사=weaken(명중 무력화)
+  imhwasu_trap: { id: "imhwasu_trap", name: "함정 유인", exclusiveTo: "imhwasu", target: "enemy", cooldown: 1, accuracy: 90, effects: [{ kind: "applyStatus", statusId: "weaken", stacks: 1, duration: 2 }, { kind: "damage", amount: 5 }] },
 };
