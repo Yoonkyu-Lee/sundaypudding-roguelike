@@ -116,7 +116,9 @@ desktop/src/main.rs   #[tauri::command]: 전투 데모(create_session·battle_st
 | `hub.ts` | **허브 컨트롤러** — 캠페인 런 목록(`mode==="campaign"` 필터)·선택 런 고정 로스터 노출. 캠페인 시작=`run_create_def`(주인공 강제). 자유 편성(toggle/pool)은 비캠페인 모드용 휴면 | `createHub` · `Hub.selectedRunDef` |
 | `charDex.ts` | **캐릭터 도감(charDex)** — 우측 캐릭 목록(해금=밝게/미해금=🔒 어두운 프로필), 좌측 스펙카드+특성+전직 트리+스킬 트리(`skillCardBody` 재사용, 본 스킬만 공개·나머지 '?'). 메타만 읽음(순수 표시). CSS 접두사 `.cdx-`(char-deX) | `renderCharDex` · `CharDexHandlers` |
 | `meta.ts` | **영구 메타**(레벨/XP + 편성 로스터 + **해금 캐릭(unlocked)·본 스킬(seenSkills)**, 별도 세이브 `spr_meta_v1`) — `grantWin`·`masteryInfo`·`getRoster`/`setRoster`·`unlockChars`·`markSkillsSeen`·`unlockedCharSet`·`seenSkillSet`. (숙련도 게이트=보류, useMastery:false) | `grantWin` · `unlockChars` · `markSkillsSeen` |
-| `rustRun.ts` | **풀 게임 컨트롤러**(IPC) — 타이틀/허브/도감/에디터/런/전투 디스패치. 진행 기록(`noteProgress`=도감 공개+승리 해금). ⚠ 305줄(소프트캡 초과) — 전투 서브컨트롤러 분리 후속 | `mountRustRun` |
+| `rustRun.ts` | **풀 게임 셸/디스패치**(IPC) — 타이틀/허브/도감/에디터/런(비전투) + 부팅·키보드. 전투 루프는 `rustBattle`로 위임. 공유 가변상태=`st`(view/cur/busy/logEvents/tgtInfo, 참조 공유) | `mountRustRun` |
+| `rustBattle.ts` | **전투 서브컨트롤러**(rustRun 분리) — IPC 전투 루프(주사위 연출·AI 자동·step·타겟팅) + `battleHandlers`. 부모 `st`+콜백(`BattleCtx`)으로 구동 | `createBattleController` · `BattleState`/`BattleCtx` |
+| `runProgress.ts` | **런 진행 기록(CDX)** — `playableRunCast`·`recordRunProgress`(파티 스킬 도감 공개+승리 시 출연진 해금). 순수 함수 | `recordRunProgress` |
 | `charSheet.ts` | **캐릭터 시트** — 능력치(원본→현재 델타)·3 장착칸·보유 스킬. 전투 모달·파티뷰 상세 공용 | `renderCharSheet` · `sheetBody` · `wireSheet` |
 | `partyView.ts` | **파티 편성(모달)** — 진형 보드(드래그 배치) + 캐릭 상세 + 장착 인벤토리 | `renderPartyView` |
 | `camera.ts` | **공용 뷰포트 카메라** — 휠 줌·드래그 팬·줌버튼. 에디터/인게임 맵 공유 | `attachCamera` |
