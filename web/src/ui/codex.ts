@@ -70,34 +70,40 @@ function tierColumnsHtml(c: Character, seen: Set<string>): string {
     }).join("") || `<div class="cshint">—</div>`;
     let skillsHtml: string;
     if (t === 0) {
-      const sig = sigChains.length ? `<div class="cdx-group"><h5>시작기</h5>${sigChains.map((ch) => chainHtml(ch, seen)).join("")}</div>` : "";
-      const uni = univChains.length ? `<div class="cdx-group"><h5>범용기 <span class="cshint">학습</span></h5>${univChains.map((ch) => chainHtml(ch, seen)).join("")}</div>` : "";
+      const sig = sigChains.length ? `<div class="cdx-group"><h5>시작기</h5>${sigChains.map((ch) => skillCardEl(ch, seen)).join("")}</div>` : "";
+      const uni = univChains.length ? `<div class="cdx-group"><h5>범용기 <span class="cshint">학습</span></h5>${univChains.map((ch) => skillCardEl(ch, seen)).join("")}</div>` : "";
       skillsHtml = sig + uni;
     } else {
       const bases = classSkills.filter((s) => s.classReq === t).map((s) => s.id).sort();
-      skillsHtml = bases.length ? `<div class="cdx-group"><h5>전용기 <span class="cshint">분기 공유</span></h5>${bases.map((id) => chainHtml(chain(id), seen)).join("")}</div>` : "";
+      skillsHtml = bases.length ? `<div class="cdx-group"><h5>전용기 <span class="cshint">분기 공유</span></h5>${bases.map((id) => skillCardEl(chain(id), seen)).join("")}</div>` : "";
     }
     cols.push(`<div class="cdx-tier"><div class="cdx-tier-h">${t}차</div><div class="cdx-tier-jobs">${jobCards}</div><div class="cdx-tier-skills">${skillsHtml || "<div class='cshint'>—</div>"}</div></div>`);
   }
   return `<div class="cdx-tree">${cols.join('<div class="cdx-tier-link">→</div>')}</div>`;
 }
 
-// 스킬 노드 — 본 적 있으면 스펙 카드, 아니면 '?'(트리 형태만 노출, 상세 가림).
-function skillNode(skillId: string, seen: Set<string>): string {
+// 스킬 내용물(타입·이름·스펙 또는 '?') — 외곽 카드 없이 내부만. 본 적 없으면 '?'.
+function skillSpec(skillId: string, seen: Set<string>): string {
   const sk: Skill | undefined = SKILLS[skillId];
   if (!sk) return "";
   const tNum = sk.tier ?? 1;
   const tsup = tNum > 1 ? `<sup>T${tNum}</sup>` : "";
   if (!seen.has(skillId)) {
-    return `<div class="cdx-skill locked"><div class="cdx-skill-h"><span class="cdx-q">?</span><span class="cdx-skill-nm dim">미발견 스킬${tsup}</span></div><div class="cshint">런에서 보유·획득하면 도감에 공개됩니다.</div></div>`;
+    return `<div class="cdx-skill-h"><span class="cdx-q">?</span><span class="cdx-skill-nm dim">미발견${tsup}</span></div><div class="cshint">런에서 보유·획득하면 공개</div>`;
   }
   const tk = skillType(sk);
-  return `<div class="cdx-skill"><div class="cdx-skill-h"><span class="sktype t-${tk.key}">${tk.label}</span><span class="cdx-skill-nm">${esc(sk.name)}${tsup}</span></div>${skillCardBody(sk)}</div>`;
+  return `<div class="cdx-skill-h"><span class="sktype t-${tk.key}">${tk.label}</span><span class="cdx-skill-nm">${esc(sk.name)}${tsup}</span></div>${skillCardBody(sk)}`;
 }
 
-// 강화 체인 한 줄(베이스 → 강화…) — 노드 사이 화살표.
-function chainHtml( chainIds: string[], seen: Set<string>): string {
-  return `<div class="cdx-chain">${chainIds.map((id) => skillNode(id, seen)).join('<span class="cdx-arrow">→</span>')}</div>`;
+// 스킬 카드 — 강화 체인이면 차수 토글(T1/T2…)로 한 카드에서 스펙 전환(공간 절약). 단일이면 토글 없음.
+function skillCardEl(chainIds: string[], seen: Set<string>): string {
+  if (chainIds.length <= 1) {
+    const id = chainIds[0];
+    return `<div class="cdx-skill${id && !seen.has(id) ? " locked" : ""}">${skillSpec(id, seen)}</div>`;
+  }
+  const tabs = chainIds.map((id, i) => `<button class="cdx-tbtn${i === 0 ? " on" : ""}" data-tb="${i}">T${SKILLS[id]?.tier ?? i + 1}</button>`).join("");
+  const bodies = chainIds.map((id, i) => `<div class="cdx-tbody${i === 0 ? "" : " hidden"}" data-tbody="${i}">${skillSpec(id, seen)}</div>`).join("");
+  return `<div class="cdx-skill cdx-upg" data-upg><div class="cdx-tabs"><span class="cdx-tabs-l">강화</span>${tabs}</div>${bodies}</div>`;
 }
 
 // 능력치 블록 — 캐릭터 원본 스펙(장착·런 무관).
@@ -167,4 +173,12 @@ export function renderCodex(app: HTMLElement, selectedCharId: string | null, h: 
 
   app.querySelector("#cdx-back")!.addEventListener("click", () => h.onBack());
   app.querySelectorAll<HTMLElement>(".cdx-pick[data-cdx]").forEach((el) => el.addEventListener("click", () => h.onSelect(el.dataset.cdx!)));
+  // 강화 토글 — 카드 안에서 차수별 스펙 전환(로컬 DOM, 재렌더 없음).
+  app.querySelectorAll<HTMLElement>("[data-upg]").forEach((card) => {
+    card.querySelectorAll<HTMLElement>(".cdx-tbtn").forEach((btn) => btn.addEventListener("click", () => {
+      const i = btn.dataset.tb!;
+      card.querySelectorAll<HTMLElement>(".cdx-tbtn").forEach((b) => b.classList.toggle("on", b === btn));
+      card.querySelectorAll<HTMLElement>(".cdx-tbody").forEach((b) => b.classList.toggle("hidden", b.dataset.tbody !== i));
+    }));
+  });
 }

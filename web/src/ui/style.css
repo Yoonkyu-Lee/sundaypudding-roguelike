@@ -753,13 +753,16 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .codex header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex: none; }
 .codex header h1 { font-size: 20px; color: var(--accent); margin: 0; }
 .cdx-body { flex: 1; min-height: 0; display: flex; gap: 16px; align-items: stretch; }
-.cdx-pane { flex: 1; min-width: 0; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+/* 좌측 디테일 = 두 패널 분리: 프로필/스탯(고정) + 전직 트리(내부 스크롤). */
+.cdx-pane { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+.cdx-detail { display: flex; flex-direction: column; min-height: 0; flex: 1; gap: 12px; }
 .cdx-list { width: 230px; flex: none; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 4px; }
-/* 정체성 바: 아바타·이름 | 능력치 | 기본 특성 칩 (가로). */
-.cdx-idbar { display: flex; flex-wrap: wrap; gap: 14px 26px; align-items: center; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--line); }
+/* 정체성 바(고정 패널): 아바타·이름 | 능력치 | 기본 특성 칩. */
+.cdx-idbar { display: flex; flex-wrap: wrap; gap: 14px 26px; align-items: center; flex: none; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
 .cdx-basetraits { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .cdx-bt-label { color: var(--dim); font-size: 11px; }
 .cdx-bt-chip { font-size: 12px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel2); }
+.cdx-tree-sec { flex: 1; min-height: 0; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
 .cdx-tree-sec > h4 { font-size: 12px; color: var(--dim); margin: 0 0 10px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
 /* 차수 컬럼 트리 — 가로 진행(0차→1차→…), 분기는 컬럼 내 세로 스택. 전용기 풀=차수 공유. */
 .cdx-tree { display: flex; align-items: stretch; gap: 0; overflow-x: auto; padding-bottom: 4px; }
@@ -785,14 +788,18 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .cdx-detail .cshead { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
 .cdx-detail .cshead .avt { width: 64px; height: 64px; border-radius: 12px; font-size: 38px; }
 .cdx-detail .cshead h3 { margin: 0; font-size: 20px; }
-.cdx-detail.locked { text-align: center; padding: 40px 20px; color: var(--dim); }
+.cdx-detail.locked { flex: 1; text-align: center; padding: 40px 20px; color: var(--dim); background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
 .cdx-locked-art { position: relative; display: inline-block; margin-bottom: 12px; }
 .cdx-lockav { width: 88px; height: 88px; filter: grayscale(1) brightness(.3); }
 .cdx-locked-art .cdx-lock-ic { left: 50%; top: 50%; transform: translate(-50%,-50%); font-size: 38px; }
-.cdx-group { margin: 0; }
-.cdx-chain { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
-.cdx-arrow { align-self: center; color: var(--dim); transform: rotate(90deg); font-size: 12px; }
-.cdx-skill { flex: 1 1 220px; min-width: 200px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--panel2); }
+.cdx-group { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+/* 강화 토글 — 한 카드에서 차수 스펙 전환(공간 절약). */
+.cdx-tabs { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; }
+.cdx-tabs-l { font-size: 10px; color: var(--dim); margin-right: 2px; }
+.cdx-tbtn { font-size: 10.5px; padding: 1px 8px; border: 1px solid var(--line); border-radius: 5px; background: var(--panel); color: var(--dim); cursor: pointer; }
+.cdx-tbtn.on { border-color: var(--accent); color: var(--accent); background: rgba(255,209,102,.1); font-weight: 600; }
+.cdx-tbody.hidden { display: none; }
+.cdx-skill { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--panel2); }
 .cdx-skill.locked { border-style: dashed; opacity: .7; }
 .cdx-skill-h { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
 .cdx-skill-nm { font-weight: 600; }
