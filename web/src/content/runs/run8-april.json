@@ -9,7 +9,7 @@
     { "id": "legit", "name": "정당성", "min": 0, "max": 100, "initial": 50, "icon": "⚖" }
   ],
   "roster": [
-    { "charId": "duhan", "pos": { "row": 1, "col": 0 } },
+    { "charId": "duhan_mid", "pos": { "row": 1, "col": 0 } },
     { "charId": "ichano", "pos": { "row": 1, "col": 2 } },
     { "charId": "yujikwang", "pos": { "row": 2, "col": 0 } },
     { "charId": "sirasoni", "pos": { "row": 2, "col": 2 } }

@@ -9,7 +9,7 @@
     { "id": "honor", "name": "명예", "min": 0, "max": 100, "initial": 50, "icon": "🎖" }
   ],
   "roster": [
-    { "charId": "duhan", "pos": { "row": 1, "col": 0 } },
+    { "charId": "duhan_mid", "pos": { "row": 1, "col": 0 } },
     { "charId": "mook", "pos": { "row": 2, "col": 0 } }
   ],
   "floors": [

@@ -34,54 +34,55 @@ export const CHARACTERS: Record<string, Character> = {
 
   // ══ 야인시대 런2(종로 입성·주먹 패권) — 플레이어 파티 ══ (gamedata/run02)
   duhan: { id: "duhan", name: "두한(청년)", avatar: "/avatars/kimduhan_youth.webp", playable: true, rootJobId: "duhan_job_solo", traitIds: ["phantom_revival", "outnumbered_awakening"], hp: 50, speedMin: 4, speedMax: 7, evasion: 8, accuracy: 5, critChance: 20, critMultiplier: 160, skillIds: ["duhan_kick", "duhan_headbutt"] },
+  duhan_mid: { id: "duhan_mid", name: "두한(중년)", avatar: "/avatars/kimduhan_midage.webp", playable: true, rootJobId: "duhan_job_solo", traitIds: ["phantom_revival", "outnumbered_awakening"], hp: 54, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 20, critMultiplier: 160, skillIds: ["duhan_kick", "duhan_headbutt"] }, // 전쟁기(run5)부터 — 청년 두한이 나이 듦
   gaekko_b: { id: "gaekko_b", name: "개코(왕초)", avatar: "/avatars/gaekko.webp", playable: true, hp: 26, speedMin: 5, speedMax: 8, evasion: 12, accuracy: 0, critChance: 22, critMultiplier: 160, skillIds: ["gaekko_summon", "gaekko_grapple"] },
   jin_b: { id: "jin_b", name: "정진영", avatar: "/avatars/jin.webp", playable: true, traitIds: ["devotion"], hp: 34, speedMin: 3, speedMax: 6, evasion: 6, accuracy: 0, critChance: 10, critMultiplier: 150, skillIds: ["jin_guard", "jin_aid2"] },
-  kimyt: { id: "kimyt", name: "김영태", avatar: "📋", playable: true, traitIds: ["torture_resist"], hp: 22, speedMin: 6, speedMax: 9, evasion: 9, accuracy: 5, critChance: 10, critMultiplier: 150, skillIds: ["kimyt_buff", "kimyt_expose"] },
-  moon: { id: "moon", name: "문영철", avatar: "🥊", playable: true, traitIds: ["thorns"], hp: 30, speedMin: 5, speedMax: 8, evasion: 8, accuracy: 8, critChance: 20, critMultiplier: 160, skillIds: ["moon_combo", "moon_jab"] },
-  mook: { id: "mook", name: "김무옥", avatar: "⚔", playable: true, hp: 46, speedMin: 3, speedMax: 6, evasion: 4, accuracy: 0, critChance: 10, critMultiplier: 150, skillIds: ["mook_taunt", "mook_guard"] },
+  kimyt: { id: "kimyt", name: "김영태", avatar: "/avatars/kim_youngtae.webp", playable: true, traitIds: ["torture_resist"], hp: 22, speedMin: 6, speedMax: 9, evasion: 9, accuracy: 5, critChance: 10, critMultiplier: 150, skillIds: ["kimyt_buff", "kimyt_expose"] },
+  moon: { id: "moon", name: "문영철", avatar: "/avatars/mun.webp", playable: true, traitIds: ["thorns"], hp: 30, speedMin: 5, speedMax: 8, evasion: 8, accuracy: 8, critChance: 20, critMultiplier: 160, skillIds: ["moon_combo", "moon_jab"] },
+  mook: { id: "mook", name: "김무옥", avatar: "/avatars/kim_muok.webp", playable: true, hp: 46, speedMin: 3, speedMax: 6, evasion: 4, accuracy: 0, critChance: 10, critMultiplier: 150, skillIds: ["mook_taunt", "mook_guard"] },
   beggar_ally: { id: "beggar_ally", name: "거지패", avatar: "🥖", aiProfileId: "swarm", hp: 12, speedMin: 5, speedMax: 8, evasion: 10, accuracy: 0, critChance: 10, critMultiplier: 150, skillIds: ["beggar_swing"] }, // 개코 소환 토큰(R2)
 
   // ══ 런2 — 적 ══
   kitano: { id: "kitano", name: "기따노", avatar: "🗡", aiProfileId: "assassin", hp: 30, speedMin: 5, speedMax: 8, evasion: 8, accuracy: 8, critChance: 15, critMultiplier: 170, skillIds: ["kitano_slash"] },
-  shinmajeok: { id: "shinmajeok", name: "신마적", avatar: "😡", aiProfileId: "bruiser", hp: 36, speedMin: 4, speedMax: 7, evasion: 6, accuracy: 0, critChance: 15, critMultiplier: 150, skillIds: ["shin_choke"] },
-  gumajeok: { id: "gumajeok", name: "구마적", avatar: "👹", aiProfileId: "bruiser", hp: 58, speedMin: 3, speedMax: 6, evasion: 5, accuracy: 0, critChance: 15, critMultiplier: 160, skillIds: ["guma_headbutt", "guma_axe"] },
-  jakdu: { id: "jakdu", name: "작두", avatar: "🪓", aiProfileId: "guardian", hp: 40, speedMin: 3, speedMax: 6, evasion: 5, accuracy: 0, critChance: 10, critMultiplier: 150, skillIds: ["jakdu_chop"] },
-  wangbal: { id: "wangbal", name: "왕발", avatar: "🔫", aiProfileId: "assassin", hp: 34, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 10, critChance: 20, critMultiplier: 180, skillIds: ["wangbal_gun"] },
+  shinmajeok: { id: "shinmajeok", name: "신마적", avatar: "/avatars/sinmajeok.webp", aiProfileId: "bruiser", hp: 36, speedMin: 4, speedMax: 7, evasion: 6, accuracy: 0, critChance: 15, critMultiplier: 150, skillIds: ["shin_choke"] },
+  gumajeok: { id: "gumajeok", name: "구마적", avatar: "/avatars/gumajeok.webp", aiProfileId: "bruiser", hp: 58, speedMin: 3, speedMax: 6, evasion: 5, accuracy: 0, critChance: 15, critMultiplier: 160, skillIds: ["guma_headbutt", "guma_axe"] },
+  jakdu: { id: "jakdu", name: "작두", avatar: "/avatars/jakdu.webp", aiProfileId: "guardian", hp: 40, speedMin: 3, speedMax: 6, evasion: 5, accuracy: 0, critChance: 10, critMultiplier: 150, skillIds: ["jakdu_chop"] },
+  wangbal: { id: "wangbal", name: "왕발", avatar: "/avatars/wangbal.webp", aiProfileId: "assassin", hp: 34, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 10, critChance: 20, critMultiplier: 180, skillIds: ["wangbal_gun"] },
   tanaka: { id: "tanaka", name: "다나까", avatar: "💉", aiProfileId: "commander", hp: 46, speedMin: 4, speedMax: 7, evasion: 6, accuracy: 5, critChance: 10, critMultiplier: 150, skillIds: ["tanaka_opium", "tanaka_jab"] },
 
   // ══ 야인시대 런3(일제말 항일) — 신규 (두한·김영태·김무옥·정진영·문영철·미와·다나까 재사용) ══ (gamedata/run03)
-  beolgae: { id: "beolgae", name: "번개", avatar: "⚡", playable: true, hp: 24, speedMin: 7, speedMax: 10, evasion: 13, accuracy: 5, critChance: 15, critMultiplier: 150, skillIds: ["beolgae_dash"] },
-  maruoka: { id: "maruoka", name: "마루오까", avatar: "🥋", aiProfileId: "guardian", hp: 56, speedMin: 3, speedMax: 6, evasion: 6, accuracy: 5, critChance: 10, critMultiplier: 160, skillIds: ["maruoka_throw", "maruoka_choke"] },
-  kamisori: { id: "kamisori", name: "가미소리", avatar: "🗡", aiProfileId: "assassin", hp: 38, speedMin: 5, speedMax: 8, evasion: 9, accuracy: 8, critChance: 18, critMultiplier: 170, skillIds: ["kamisori_ambush"] },
+  beolgae: { id: "beolgae", name: "번개", avatar: "/avatars/beongae.webp", playable: true, hp: 24, speedMin: 7, speedMax: 10, evasion: 13, accuracy: 5, critChance: 15, critMultiplier: 150, skillIds: ["beolgae_dash"] },
+  maruoka: { id: "maruoka", name: "마루오까", avatar: "/avatars/maruoka.webp", aiProfileId: "guardian", hp: 56, speedMin: 3, speedMax: 6, evasion: 6, accuracy: 5, critChance: 10, critMultiplier: 160, skillIds: ["maruoka_throw", "maruoka_choke"] },
+  kamisori: { id: "kamisori", name: "가미소리", avatar: "/avatars/gamisori.webp", aiProfileId: "assassin", hp: 38, speedMin: 5, speedMax: 8, evasion: 9, accuracy: 8, critChance: 18, critMultiplier: 170, skillIds: ["kamisori_ambush"] },
   gendarme: { id: "gendarme", name: "헌병", avatar: "🎖", aiProfileId: "commander", hp: 34, speedMin: 4, speedMax: 7, evasion: 6, accuracy: 5, critChance: 5, critMultiplier: 150, skillIds: ["gendarme_torture"] },
-  hayashi: { id: "hayashi", name: "하야시", avatar: "🎩", aiProfileId: "commander", hp: 48, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 10, critMultiplier: 150, skillIds: ["hayashi_order", "hayashi_jab"] },
+  hayashi: { id: "hayashi", name: "하야시", avatar: "/avatars/hayashi.webp", aiProfileId: "commander", hp: 48, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 10, critMultiplier: 150, skillIds: ["hayashi_order", "hayashi_jab"] },
 
   // ══ 야인시대 런4(해방·좌우 대결) — 신규 (두한·김무옥·개코·김영태·문영철·신영균(shin)·상하이(shanghai) 재사용) ══ (gamedata/run04)
-  sirasoni: { id: "sirasoni", name: "시라소니", avatar: "🐯", playable: true, traitIds: ["drunken_fury"], hp: 48, speedMin: 5, speedMax: 8, evasion: 13, accuracy: 5, critChance: 18, critMultiplier: 160, skillIds: ["sirasoni_rampage", "sirasoni_headbutt"] },
-  geumgang: { id: "geumgang", name: "금강", avatar: "🐻", aiProfileId: "bruiser", hp: 62, speedMin: 2, speedMax: 5, evasion: 4, accuracy: 5, critChance: 15, critMultiplier: 180, skillIds: ["geumgang_smash", "geumgang_push"] },
-  ihwaryong: { id: "ihwaryong", name: "이화룡", avatar: "🐲", aiProfileId: "guardian", hp: 44, speedMin: 4, speedMax: 7, evasion: 8, accuracy: 5, critChance: 12, critMultiplier: 155, skillIds: ["ihwaryong_strike"] },
+  sirasoni: { id: "sirasoni", name: "시라소니", avatar: "/avatars/sirasoni.webp", playable: true, traitIds: ["drunken_fury"], hp: 48, speedMin: 5, speedMax: 8, evasion: 13, accuracy: 5, critChance: 18, critMultiplier: 160, skillIds: ["sirasoni_rampage", "sirasoni_headbutt"] },
+  geumgang: { id: "geumgang", name: "금강", avatar: "/avatars/geumgang.webp", aiProfileId: "bruiser", hp: 62, speedMin: 2, speedMax: 5, evasion: 4, accuracy: 5, critChance: 15, critMultiplier: 180, skillIds: ["geumgang_smash", "geumgang_push"] },
+  ihwaryong: { id: "ihwaryong", name: "이화룡", avatar: "/avatars/ihwaryong.webp", aiProfileId: "guardian", hp: 44, speedMin: 4, speedMax: 7, evasion: 8, accuracy: 5, critChance: 12, critMultiplier: 155, skillIds: ["ihwaryong_strike"] },
   kimcheonho: { id: "kimcheonho", name: "김천호", avatar: "💣", aiProfileId: "assassin", hp: 26, speedMin: 6, speedMax: 9, evasion: 11, accuracy: 5, critChance: 25, critMultiplier: 175, skillIds: ["kimcheonho_ambush"] },
-  jeongjinyoung: { id: "jeongjinyoung", name: "정진영(전위대장)", avatar: "🚩", aiProfileId: "commander", hp: 52, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 12, critMultiplier: 160, skillIds: ["jeong_command", "jeong_pistol"] },
+  jeongjinyoung: { id: "jeongjinyoung", name: "정진영(전위대장)", avatar: "/avatars/jeong_mid.webp", aiProfileId: "commander", hp: 52, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 12, critMultiplier: 160, skillIds: ["jeong_command", "jeong_pistol"] },
 
   // ══ 야인시대 런5(사형·전쟁기) — 신규 (두한·문영철·김무옥·김영태·이화룡·시라소니 재사용) ══ (gamedata/run05)
-  michael: { id: "michael", name: "마이클 상사", avatar: "🥊", aiProfileId: "bruiser", hp: 60, speedMin: 4, speedMax: 7, evasion: 12, accuracy: 8, critChance: 12, critMultiplier: 165, skillIds: ["michael_box"] },
-  nodeoksul: { id: "nodeoksul", name: "노덕술", avatar: "🕴", aiProfileId: "coward", hp: 30, speedMin: 4, speedMax: 7, evasion: 9, accuracy: 5, critChance: 5, critMultiplier: 150, skillIds: ["nodeoksul_assassin"] },
-  gosaimachi: { id: "gosaimachi", name: "고사이마찌", avatar: "🔫", aiProfileId: "assassin", hp: 24, speedMin: 5, speedMax: 8, evasion: 9, accuracy: 12, critChance: 22, critMultiplier: 180, skillIds: ["gosaimachi_pistol"] },
-  ijeongjae: { id: "ijeongjae", name: "이정재(회장)", avatar: "🎩", playable: true, aiProfileId: "commander", hp: 54, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 12, critMultiplier: 160, traitIds: ["kim_oyabun_will"], skillIds: ["ijeongjae_order", "ijeongjae_pistol", "ijeongjae_summon"] },
-  iseokjae: { id: "iseokjae", name: "이석재", avatar: "🎯", aiProfileId: "assassin", hp: 26, speedMin: 4, speedMax: 7, evasion: 8, accuracy: 15, critChance: 20, critMultiplier: 170, skillIds: ["iseokjae_shot"] },
+  michael: { id: "michael", name: "마이클 상사", avatar: "/avatars/michael.webp", aiProfileId: "bruiser", hp: 60, speedMin: 4, speedMax: 7, evasion: 12, accuracy: 8, critChance: 12, critMultiplier: 165, skillIds: ["michael_box"] },
+  nodeoksul: { id: "nodeoksul", name: "노덕술", avatar: "/avatars/nodeoksul.webp", aiProfileId: "coward", hp: 30, speedMin: 4, speedMax: 7, evasion: 9, accuracy: 5, critChance: 5, critMultiplier: 150, skillIds: ["nodeoksul_assassin"] },
+  gosaimachi: { id: "gosaimachi", name: "고사이마찌", avatar: "/avatars/gosaimachi.webp", aiProfileId: "assassin", hp: 24, speedMin: 5, speedMax: 8, evasion: 9, accuracy: 12, critChance: 22, critMultiplier: 180, skillIds: ["gosaimachi_pistol"] },
+  ijeongjae: { id: "ijeongjae", name: "이정재(회장)", avatar: "/avatars/ijeongjae.webp", playable: true, aiProfileId: "commander", hp: 54, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 12, critMultiplier: 160, traitIds: ["kim_oyabun_will"], skillIds: ["ijeongjae_order", "ijeongjae_pistol", "ijeongjae_summon"] },
+  iseokjae: { id: "iseokjae", name: "이석재", avatar: "/avatars/iseokjae.webp", aiProfileId: "assassin", hp: 26, speedMin: 4, speedMax: 7, evasion: 8, accuracy: 15, critChance: 20, critMultiplier: 170, skillIds: ["iseokjae_shot"] },
 
   // ══ 야인시대 런6(동대문 패권·정치) — 신규 (두한·신영균(shin)·김영태·시라소니·이화룡·이정재·이석재 재사용) ══ (gamedata/run06)
-  yujikwang: { id: "yujikwang", name: "유지광", avatar: "🎓", playable: true, hp: 34, speedMin: 6, speedMax: 9, evasion: 11, accuracy: 8, critChance: 20, critMultiplier: 170, skillIds: ["yujikwang_duel", "yujikwang_challenge"] },
-  aomasu: { id: "aomasu", name: "아오마스", avatar: "⚔", aiProfileId: "assassin", hp: 42, speedMin: 6, speedMax: 9, evasion: 10, accuracy: 8, critChance: 22, critMultiplier: 170, skillIds: ["aomasu_strike"] },
-  doksa: { id: "doksa", name: "독사", avatar: "🐍", aiProfileId: "commander", hp: 30, speedMin: 5, speedMax: 8, evasion: 9, accuracy: 12, critChance: 10, critMultiplier: 150, skillIds: ["doksa_powder"] },
-  imhwasu: { id: "imhwasu", name: "임화수", avatar: "🎭", playable: true, aiProfileId: "commander", hp: 32, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 5, critMultiplier: 150, skillIds: ["imhwasu_trap", "imhwasu_fury"] },
+  yujikwang: { id: "yujikwang", name: "유지광", avatar: "/avatars/yujigwang.webp", playable: true, hp: 34, speedMin: 6, speedMax: 9, evasion: 11, accuracy: 8, critChance: 20, critMultiplier: 170, skillIds: ["yujikwang_duel", "yujikwang_challenge"] },
+  aomasu: { id: "aomasu", name: "아오마스", avatar: "/avatars/aomas.webp", aiProfileId: "assassin", hp: 42, speedMin: 6, speedMax: 9, evasion: 10, accuracy: 8, critChance: 22, critMultiplier: 170, skillIds: ["aomasu_strike"] },
+  doksa: { id: "doksa", name: "독사", avatar: "/avatars/doksa.webp", aiProfileId: "commander", hp: 30, speedMin: 5, speedMax: 8, evasion: 9, accuracy: 12, critChance: 10, critMultiplier: 150, skillIds: ["doksa_powder"] },
+  imhwasu: { id: "imhwasu", name: "임화수", avatar: "/avatars/imhwasu.webp", playable: true, aiProfileId: "commander", hp: 32, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 5, critMultiplier: 150, skillIds: ["imhwasu_trap", "imhwasu_fury"] },
 
   // ══ 야인시대 런7(자유당 폭정·몰락) — 신규 (이정재·유지광·임화수·시라소니·아오마스·독사·이화룡 재사용) ══ (gamedata/run07)
-  osangsa: { id: "osangsa", name: "오상사", avatar: "🦅", aiProfileId: "bruiser", hp: 38, speedMin: 5, speedMax: 8, evasion: 10, accuracy: 8, critChance: 18, critMultiplier: 165, traitIds: ["last_stand"], skillIds: ["osangsa_guts"] },
+  osangsa: { id: "osangsa", name: "오상사", avatar: "/avatars/osangsa.webp", aiProfileId: "bruiser", hp: 38, speedMin: 5, speedMax: 8, evasion: 10, accuracy: 8, critChance: 18, critMultiplier: 165, traitIds: ["last_stand"], skillIds: ["osangsa_guts"] },
   manbal: { id: "manbal", name: "맨발", avatar: "👣", aiProfileId: "skirmisher", hp: 28, speedMin: 7, speedMax: 10, evasion: 14, accuracy: 5, critChance: 15, critMultiplier: 155, skillIds: ["manbal_kick"] },
-  kimdongjin: { id: "kimdongjin", name: "김동진", avatar: "🏃", aiProfileId: "coward", hp: 30, speedMin: 5, speedMax: 8, evasion: 10, accuracy: 5, critChance: 10, critMultiplier: 150, skillIds: ["kimdongjin_flee"] },
-  igibung: { id: "igibung", name: "이기붕", avatar: "🏛", aiProfileId: "commander", hp: 50, speedMin: 3, speedMax: 6, evasion: 6, accuracy: 5, critChance: 8, critMultiplier: 150, skillIds: ["igibung_power", "igibung_order"] },
-  gwakyoungju: { id: "gwakyoungju", name: "곽영주", avatar: "📞", aiProfileId: "commander", hp: 36, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 5, critMultiplier: 150, skillIds: ["gwak_call"] },
+  kimdongjin: { id: "kimdongjin", name: "김동진", avatar: "/avatars/kimdongjin.webp", aiProfileId: "coward", hp: 30, speedMin: 5, speedMax: 8, evasion: 10, accuracy: 5, critChance: 10, critMultiplier: 150, skillIds: ["kimdongjin_flee"] },
+  igibung: { id: "igibung", name: "이기붕", avatar: "/avatars/igibung.webp", aiProfileId: "commander", hp: 50, speedMin: 3, speedMax: 6, evasion: 6, accuracy: 5, critChance: 8, critMultiplier: 150, skillIds: ["igibung_power", "igibung_order"] },
+  gwakyoungju: { id: "gwakyoungju", name: "곽영주", avatar: "/avatars/gwakyeongju.webp", aiProfileId: "commander", hp: 36, speedMin: 4, speedMax: 7, evasion: 7, accuracy: 5, critChance: 5, critMultiplier: 150, skillIds: ["gwak_call"] },
 
   // ══ 야인시대 런8(4.19와 최후) — 신규 (두한·유지광·시라소니·이화룡·곽영주·임화수 재사용) ══ (gamedata/run08)
   ichano: { id: "ichano", name: "이찬오", avatar: "🎓", playable: true, hp: 22, speedMin: 6, speedMax: 9, evasion: 10, accuracy: 8, critChance: 10, critMultiplier: 150, skillIds: ["ichano_watch", "ichano_jab"] },
