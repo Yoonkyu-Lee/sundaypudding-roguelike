@@ -1,0 +1,98 @@
+{
+  "id": "run2_jongno",
+  "name": "야인시대 2: 종로 입성·주먹 패권",
+  "desc": "무명 청년 두한이 종로 주먹계 밑바닥에서 일기토의 사다리를 올라 경성 최고 오야붕에 오른다. 민심(명분) 게이지·거지패 소환·환영 부활·구마적 2페이즈 결전. 단신→파티→패권. (원작 9~29화)",
+  "mode": "campaign",
+  "useMastery": false,
+  "entryFloorId": "f1",
+  "resources": [
+    { "id": "minsim", "name": "민심", "min": 0, "max": 100, "initial": 50, "icon": "⚖" }
+  ],
+  "roster": [
+    { "charId": "duhan", "pos": { "row": 1, "col": 0 } }
+  ],
+  "floors": [
+    {
+      "id": "f1",
+      "name": "입문과 합류",
+      "entryNodeId": "f1_entry",
+      "nodes": [
+        { "id": "f1_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f1_resist", "type": "encounter", "q": 1, "r": 0, "label": "원노인 순국", "core": [{ "kind": "event", "event": { "id": "f1_resist_ev", "title": "사동옥 급습 — 원노인 순국", "text": "미와의 헌병이 사동옥을 덮친다. 원노인이 두한을 지키며 쓰러진다. 「강한 사나이가 되어 의를 위해 목숨을 버려라.」", "choices": [
+          { "id": "fight", "label": "맞서 저항한다 (민심 +15, 체력 10%)", "result": { "kind": "resource", "id": "minsim", "delta": 15 } },
+          { "id": "yield", "label": "굴복하고 후일을 도모한다 (민심 −10)", "result": { "kind": "resource", "id": "minsim", "delta": -10 } }
+        ] } }, { "kind": "text", "text": "복수를 가슴에 새기다 — 환영 부활의 씨앗." }] },
+        { "id": "f1_duel1", "type": "battle", "q": 2, "r": 0, "label": "입문 결투", "core": [{ "kind": "combat", "roster": [{ "charId": "thug", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 8 }, { "kind": "reward", "tier": 1 }] },
+        { "id": "f1_join", "type": "encounter", "q": 3, "r": 0, "label": "거지패 합류", "core": [{ "kind": "text", "text": "경성역. 거지 아이들이 오물로 미와의 추격을 막는다. 익살꾼 개코와 의리의 정진영이 두한의 식구가 되다." }, { "kind": "partyChange", "add": ["gaekko_b", "jin_b"] }, { "kind": "resource", "id": "minsim", "delta": 10 }, { "kind": "heal", "pct": 30 }] },
+        { "id": "f1_kitano", "type": "elite", "q": 4, "r": 0, "label": "신마찌 — 기따노 독사", "core": [{ "kind": "combat", "roster": [{ "charId": "kitano", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }, { "charId": "thug", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 16 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f1_rest", "type": "rest", "q": 5, "r": 0, "label": "쌍칼 조직 입문", "core": [{ "kind": "heal", "pct": 50, "revive": true }, { "kind": "classChange", "max": 1 }, { "kind": "text", "text": "쌍칼의 칼 투척 시험을 미동 없이 통과 — 거리의 독립군으로 전직." }] },
+        { "id": "f1_clear", "type": "clear", "q": 6, "r": 0, "toFloor": "f2" }
+      ],
+      "edges": [
+        { "from": "f1_entry", "to": "f1_resist" },
+        { "from": "f1_resist", "to": "f1_duel1" },
+        { "from": "f1_duel1", "to": "f1_join" },
+        { "from": "f1_join", "to": "f1_kitano" },
+        { "from": "f1_kitano", "to": "f1_rest" },
+        { "from": "f1_rest", "to": "f1_clear" }
+      ]
+    },
+    {
+      "id": "f2",
+      "name": "승계와 증명",
+      "entryNodeId": "f2_entry",
+      "nodes": [
+        { "id": "f2_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f2_join", "type": "encounter", "q": 1, "r": 0, "label": "이정목 승계", "core": [{ "kind": "text", "text": "쌍칼이 박치기에 패해 두한을 후계로 지목. 김영태·문영철·김무옥이 식구가 되다." }, { "kind": "partyChange", "add": ["kimyt", "moon", "mook"] }, { "kind": "resource", "id": "minsim", "delta": 10 }] },
+        { "id": "f2_shin", "type": "elite", "q": 2, "r": 0, "label": "두한 vs 신마적", "core": [{ "kind": "combat", "roster": [{ "charId": "shinmajeok", "pos": { "row": 1, "col": 0 } }, { "charId": "thug2", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 16 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f2_rest", "type": "rest", "q": 3, "r": 0, "label": "설향의 암자", "core": [{ "kind": "heal", "pct": 50 }] },
+        { "id": "f2_guma", "type": "boss", "q": 4, "r": 0, "label": "구마적 패권 결투",
+          "core": [
+            { "kind": "combat", "boss": true, "roster": [{ "charId": "gumajeok", "pos": { "row": 1, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }],
+              "resourceMods": [{ "resourceId": "minsim", "cmp": "gte", "value": 60, "side": "ally", "statusId": "might", "stacks": 1, "duration": 99 }] },
+            { "kind": "gold", "amount": 24 },
+            { "kind": "reward", "tier": 3 }
+          ] },
+        { "id": "f2_clear", "type": "clear", "q": 5, "r": 0, "toFloor": "f3" }
+      ],
+      "edges": [
+        { "from": "f2_entry", "to": "f2_join" },
+        { "from": "f2_join", "to": "f2_shin" },
+        { "from": "f2_shin", "to": "f2_rest" },
+        { "from": "f2_rest", "to": "f2_guma" },
+        { "from": "f2_guma", "to": "f2_clear" }
+      ]
+    },
+    {
+      "id": "f3",
+      "name": "통일과 새 적",
+      "entryNodeId": "f3_entry",
+      "nodes": [
+        { "id": "f3_entry", "type": "start", "q": 0, "r": 0 },
+        { "id": "f3_unify", "type": "encounter", "q": 1, "r": 0, "label": "통합 연설", "core": [{ "kind": "text", "text": "세금 절반·직업 보유·일본패 단절을 선포. 민심이 두한에게 모인다." }, { "kind": "resource", "id": "minsim", "delta": 15 }, { "kind": "classChange", "max": 1 }] },
+        { "id": "f3_jakdu", "type": "battle", "q": 2, "r": 0, "label": "서대문 작두 복속", "core": [{ "kind": "combat", "roster": [{ "charId": "jakdu", "pos": { "row": 1, "col": 0 } }, { "charId": "thug", "pos": { "row": 2, "col": 0 } }] }, { "kind": "gold", "amount": 12 }, { "kind": "reward", "tier": 2 }] },
+        { "id": "f3_jjakko", "type": "encounter", "q": 3, "r": 0, "label": "시구문 짝코 심리전", "core": [{ "kind": "event", "event": { "id": "f3_jjakko_ev", "title": "짝코 — 무혈 복속", "text": "시구문 짝코가 길을 막는다. 세력과 명분이 충분하면 칼을 섞지 않고 굴복시킬 수 있다.", "choices": [
+          { "id": "submit", "label": "명분으로 굴복시킨다 (민심 60↑ 필요 — 골드 +20, 민심 +5)", "requires": { "resourceId": "minsim", "cmp": "gte", "value": 60 }, "result": { "kind": "gold", "amount": 20 } },
+          { "id": "force", "label": "강행 돌파한다 (체력 15%)", "result": { "kind": "hurt", "pct": 15 } }
+        ] } }] },
+        { "id": "f3_wangbal", "type": "boss", "q": 4, "r": 0, "label": "왕발 — 총기 결전",
+          "core": [
+            { "kind": "combat", "boss": true, "roster": [{ "charId": "wangbal", "pos": { "row": 1, "col": 0 } }, { "charId": "thug2", "pos": { "row": 0, "col": 0 } }],
+              "resourceMods": [{ "resourceId": "minsim", "cmp": "gte", "value": 70, "side": "enemy", "statusId": "paralyze", "stacks": 1, "duration": 2 }] },
+            { "kind": "gold", "amount": 20 },
+            { "kind": "reward", "tier": 3 }
+          ] },
+        { "id": "f3_tanaka", "type": "boss", "q": 5, "r": 0, "label": "다나까 — 아편 야쿠자", "core": [{ "kind": "combat", "boss": true, "roster": [{ "charId": "tanaka", "pos": { "row": 1, "col": 0 } }, { "charId": "thug2", "pos": { "row": 2, "col": 0 } }, { "charId": "thug", "pos": { "row": 0, "col": 0 } }] }, { "kind": "gold", "amount": 24 }, { "kind": "reward", "tier": 3 }] },
+        { "id": "f3_clear", "type": "clear", "q": 6, "r": 0 }
+      ],
+      "edges": [
+        { "from": "f3_entry", "to": "f3_unify" },
+        { "from": "f3_unify", "to": "f3_jakdu" },
+        { "from": "f3_jakdu", "to": "f3_jjakko" },
+        { "from": "f3_jjakko", "to": "f3_wangbal" },
+        { "from": "f3_wangbal", "to": "f3_tanaka" },
+        { "from": "f3_tanaka", "to": "f3_clear" }
+      ]
+    }
+  ]
+}
