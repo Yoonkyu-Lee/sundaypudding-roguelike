@@ -137,8 +137,9 @@ desktop/src/main.rs   #[tauri::command]: 전투 데모(create_session·battle_st
 | `editor/` | **런 에디터 GUI**(디자이너 도구) — 헥스 구조 에디터. store(드래프트·F3 repo저장)·ops(노드/변/층 변이)·controller·editView(SVG)·battlefieldEditor(combat 전장)·ruleEditor(트리거 룰)·eventEditor·shopEditor·layerSchema/ruleSchema(스키마 폼). 테스트플레이=`run_create_def` IPC. `validateRun`/`hexAdjacent`(contract) 재사용 | `createEditor` · `renderEditor` |
 | `editor/jobEditor.ts` | **전직 트리 에디터**(⑤-a, 개발자 도구) — `jobs.json` 저작 GUI. 3열(트리 목록·차수 컬럼 트리·인스펙터), 노드 CRUD·이름/차수/부여특성/advancesTo 편집. charDex 티어 BFS 재사용. 저장=`POST /api/save-jobs`. 루트↔캐릭 매핑은 읽기전용(`rootJobId`=characters.ts 미이주) | `createJobEditor` |
 | `editor/itemEditor.ts` | **아이템 에디터**(⑤-b, 개발자 도구) — `items.json`(`{items,pool}`) 저작 GUI. 2열(슬롯별 목록·인스펙터). 폼 위주: 이름/아이콘/슬롯/dmgFlat/shieldGainAdd/tier/mods(7스탯)/nextTierId/풀 토글, CRUD. 저장=`POST /api/save-items` | `createItemEditor` |
+| `editor/skillEditor.ts` · `skillEffectSchema.ts` | **스킬 에디터**(⑤-c, 개발자 도구) — `skills.json` 저작 GUI. 좌: 필터+exclusiveTo 그룹 목록(139). 우: 스칼라(target/cooldown/accuracy/reach/tier/exclusiveTo/nextTierId/alwaysHit/active…)·area(AreaShape)·effects[](SkillEffect 8종 add/remove/reorder, `skillEffectSchema` 스펙). passives는 읽기전용(편집=S-S3). 저장=`POST /api/save-skills` | `createSkillEditor` · `SKILL_EFFECT_SPECS` |
 | `style.css` | 다크 테마 + **게임셸 리셋**(브라우저 제스처/크롬 제거 — CLAUDE 웹-티 금지 B) | — |
-| `index.html` · `vite.config.ts` | Vite 진입/설정. **dev-write 미들웨어**(`POST /api/save-run` → `runs/{id}.json` + `runs.generated.ts` 재생성 · `POST /api/save-jobs` → `jobs.json` · `POST /api/save-items` → `items.json` 통째 기록) | `devWriteRuns` · `devWriteJobs` · `devWriteItems` |
+| `index.html` · `vite.config.ts` | Vite 진입/설정. **dev-write 미들웨어**(`POST /api/save-run` → `runs/{id}.json` + 레지스트리 재생성 · `/api/save-jobs`·`/api/save-items`·`/api/save-skills` → 각 `{jobs,items,skills}.json` 통째 기록) | `devWriteRuns`·`devWriteJobs`·`devWriteItems`·`devWriteSkills` |
 
 ## 4. `web/src/content/` — 콘텐츠 (디자이너 영역, → JSON export → Rust 로드)
 

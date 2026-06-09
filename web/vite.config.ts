@@ -11,8 +11,10 @@ const CONTENT_DIR = join(dirname(fileURLToPath(import.meta.url)), "src", "conten
 const RUNS_DIR = join(CONTENT_DIR, "runs");
 const JOBS_PATH = join(CONTENT_DIR, "jobs.json");
 const ITEMS_PATH = join(CONTENT_DIR, "items.json");
+const SKILLS_PATH = join(CONTENT_DIR, "skills.json");
 const SAFE_ID = /^[a-zA-Z0-9_-]{1,40}$/;
 const EQUIP_SLOTS = new Set(["weapon", "armor", "held"]);
+const SKILL_TARGETS = new Set(["enemy", "ally", "self"]);
 
 // runs.generated.ts 재생성 — src/data/runs/*.json을 스캔해 RUNS 레지스트리를 결정론적으로 통째로 쓴다.
 // (Node 코어는 glob 불가하나 dev 미들웨어는 fs 접근 가능 → 마커 삽입 대신 전체 생성 = 견고)
@@ -118,8 +120,35 @@ function devWriteItems(): Plugin {
   };
 }
 
+// dev 전용: 스킬 에디터 → skills.json(Record<id,Skill>) 통째 기록.
+function devWriteSkills(): Plugin {
+  return {
+    name: "spr-dev-write-skills",
+    apply: "serve",
+    configureServer(server) {
+      server.middlewares.use("/api/save-skills", (req, res) => {
+        if (req.method !== "POST") { res.statusCode = 405; res.end("POST only"); return; }
+        let body = "";
+        req.on("data", (c) => { body += c; });
+        req.on("end", () => {
+          try {
+            const { skills } = JSON.parse(body) as { skills: Record<string, { id?: string; name?: string; target?: string; cooldown?: number; accuracy?: number }> };
+            if (!skills || typeof skills !== "object" || Array.isArray(skills)) { res.statusCode = 400; res.end("skills 맵 형식 아님"); return; }
+            for (const [key, s] of Object.entries(skills)) {
+              if (!SAFE_ID.test(key)) { res.statusCode = 400; res.end(`잘못된 스킬 id: ${key}`); return; }
+              if (!s || typeof s !== "object" || s.id !== key || typeof s.name !== "string" || !SKILL_TARGETS.has(s.target as string) || typeof s.cooldown !== "number" || typeof s.accuracy !== "number") { res.statusCode = 400; res.end(`Skill 형식 아님: ${key}`); return; }
+            }
+            writeFileSync(SKILLS_PATH, JSON.stringify(skills, null, 2) + "\n", "utf8");
+            res.statusCode = 200; res.setHeader("content-type", "application/json"); res.end(JSON.stringify({ ok: true, count: Object.keys(skills).length }));
+          } catch (e) { res.statusCode = 500; res.end(`기록 실패: ${(e as Error).message}`); }
+        });
+      });
+    },
+  };
+}
+
 export default defineConfig({
   base: "./", // Tauri 웹뷰는 frontendDist를 루트로 서빙 — 상대경로 에셋이 안전
-  plugins: [devWriteRuns(), devWriteJobs(), devWriteItems()],
+  plugins: [devWriteRuns(), devWriteJobs(), devWriteItems(), devWriteSkills()],
   server: { port: 5173, strictPort: false },
 });

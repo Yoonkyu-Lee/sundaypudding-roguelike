@@ -14,6 +14,7 @@ import { renderEditor } from "./editor/editorRender.ts";
 import { createEditor } from "./editor/controller.ts";
 import { createJobEditor } from "./editor/jobEditor.ts";
 import { createItemEditor } from "./editor/itemEditor.ts";
+import { createSkillEditor } from "./editor/skillEditor.ts";
 import { createRustOverlay, type RustOverlay, type SheetBundle } from "./rustOverlay.ts";
 import { createBattleController, type BattleState } from "./rustBattle.ts";
 import { recordRunProgress } from "./runProgress.ts";
@@ -30,7 +31,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
   const invoke = invoker();
   if (!invoke) { app.innerHTML = `<div class="rb-root"><p style="color:var(--enemy)">Rust 코어(Tauri) 런타임이 아님 — 앱에서 ?core=rust&full=1 로 실행하세요.</p></div>`; return; }
   let seed = startSeed;
-  let appState: "title" | "hub" | "editor" | "jobsEditor" | "itemsEditor" | "run" | "chardex" = "title";
+  let appState: "title" | "hub" | "editor" | "jobsEditor" | "itemsEditor" | "skillsEditor" | "run" | "chardex" = "title";
   let hubMode: "menu" | "campaign" = "menu"; // 허브 하위 뷰(진입점 메뉴 / 캠페인 런 목록)
   let charDexSel: string | null = null; // 도감 선택 캐릭 id
   let lastError: string | null = null; // 셸(허브/에디터)에서 IPC 런 생성 실패 표시 — 죽은 클릭 방지
@@ -92,6 +93,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
     onEditor: () => { appState = "editor"; render(); },
     onJobEditor: () => { appState = "jobsEditor"; render(); },
     onItemEditor: () => { appState = "itemsEditor"; render(); },
+    onSkillEditor: () => { appState = "skillsEditor"; render(); },
     onEnterCampaign: () => { hubMode = "campaign"; render(); },
     onCharDex: () => { appState = "chardex"; render(); },
     onHubBack: () => { hubMode = "menu"; render(); },
@@ -137,6 +139,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
   // ── 전직 트리 에디터(⑤-a, jobs.json 저작) ──
   const jobEditor = createJobEditor({ onBack: () => { appState = "hub"; hubMode = "menu"; render(); } });
   const itemEditor = createItemEditor({ onBack: () => { appState = "hub"; hubMode = "menu"; render(); } });
+  const skillEditor = createSkillEditor({ onBack: () => { appState = "hub"; hubMode = "menu"; render(); } });
 
   // ── 캐릭터 도감(CDX) ──
   const charDexHandlers: CharDexHandlers = {
@@ -168,6 +171,7 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
       else if (appState === "editor") renderEditor(app, editor.data(), editor.handlers);
       else if (appState === "jobsEditor") jobEditor.render(app);
       else if (appState === "itemsEditor") itemEditor.render(app);
+      else if (appState === "skillsEditor") skillEditor.render(app);
       else if (appState === "chardex") renderCharDex(app, charDexSel, charDexHandlers);
       else renderHub(app, hub.data(stubRun(), runActive, hubMode), shell);
       if (lastError) renderError(app, lastError, () => { lastError = null; render(); });
@@ -187,14 +191,14 @@ export function mountRustRun(app: HTMLElement, startSeed: number): void {
       else if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); editor.handlers.onDeleteSel(); }
       return;
     }
-    if (appState === "jobsEditor" || appState === "itemsEditor") { if (e.key === "Escape" && !editing) { appState = "hub"; hubMode = "menu"; render(); } return; }
+    if (appState === "jobsEditor" || appState === "itemsEditor" || appState === "skillsEditor") { if (e.key === "Escape" && !editing) { appState = "hub"; hubMode = "menu"; render(); } return; }
     if (e.key === "Escape" && appState === "chardex") { appState = "hub"; hubMode = "menu"; render(); return; }
     if (e.key !== "Escape" || appState !== "run") return;
     if (ui.sheetUid || ui.partyOpen) { ui.sheetUid = null; ui.partyOpen = false; ui.sheetCharId = null; render(); }
     else if (ui.selectedSkillId) battle.battleHandlers.onCancel();
     else { pauseOpen = !pauseOpen; render(); }
   });
-  const devToolState = () => appState === "editor" || appState === "jobsEditor" || appState === "itemsEditor";
+  const devToolState = () => appState === "editor" || appState === "jobsEditor" || appState === "itemsEditor" || appState === "skillsEditor";
   window.addEventListener("contextmenu", (e) => { if (!devToolState() && !(e.target as HTMLElement)?.closest("input,textarea")) e.preventDefault(); });
 
   // 부팅: 세이브 있으면 복원(이어하기 활성) 후 렌더. 손상/비호환이면 run_load=null → 폐기.

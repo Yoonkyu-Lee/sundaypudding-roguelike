@@ -872,6 +872,22 @@ header h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .ied-num-row label { font-size: 11px; color: var(--dim); display: flex; gap: 5px; align-items: baseline; }
 .ied-num { width: 70px; background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; color: var(--txt); font-size: 13px; }
 .ied-num:focus { border-color: var(--accent); outline: none; }
+.ied-num-row select, .ske-eff-fields input { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; color: var(--txt); font-size: 13px; }
+/* 스킬 에디터 — 목록 좁게·인스펙터 넓게 + 필터 + 효과 카드. */
+.jobed-skilled .jobed-main { flex: none; width: 280px; }
+.jobed-skilled .jobed-inspect { flex: 1; width: auto; }
+.ske-filter { width: 100%; box-sizing: border-box; margin-bottom: 8px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; color: var(--txt); font-size: 13px; }
+.ske-pmk { color: var(--accent); font-size: 11px; }
+.ske-effs { display: flex; flex-direction: column; gap: 8px; }
+.ske-eff { border: 1px solid var(--line); border-radius: 8px; background: var(--panel2); padding: 8px 10px; }
+.ske-eff-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.ske-eff-kind { font-weight: 600; font-size: 13px; color: var(--accent); }
+.ske-eff-btns button { background: var(--panel); border: 1px solid var(--line); border-radius: 5px; color: var(--dim); cursor: pointer; padding: 1px 7px; margin-left: 3px; }
+.ske-eff-btns button:hover { border-color: var(--accent); color: var(--accent); }
+.ske-eff-fields { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.ske-eff-fields .ied-num-row { gap: 6px; }
+.ske-add { display: flex; gap: 6px; margin-top: 4px; }
+.ske-add select { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; color: var(--txt); }
 
 /* ── 전투 엔진 검증 하네스 (P1-13, rustBattle.ts) ── */
 .rb-root { display: flex; flex-direction: column; gap: 12px; padding: 14px 18px; max-width: 1100px; margin: 0 auto; }

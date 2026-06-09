@@ -6,6 +6,7 @@ export interface ShellHandlers {
   onEditor: () => void; // 타이틀/허브 → 런 에디터
   onJobEditor: () => void; // 허브 메뉴 → 전직 트리 에디터 (개발자 도구)
   onItemEditor: () => void; // 허브 메뉴 → 아이템 에디터 (개발자 도구)
+  onSkillEditor: () => void; // 허브 메뉴 → 스킬 에디터 (개발자 도구)
   onEnterCampaign: () => void; // 허브 메뉴 → 캠페인 런 목록
   onCharDex: () => void; // 허브 메뉴 → 캐릭터 도감
   onHubBack: () => void; // 캠페인 목록 → 허브 메뉴
@@ -78,6 +79,7 @@ export function renderHub(app: HTMLElement, d: HubData, h: ShellHandlers): void 
           <button class="hub-mode" id="hubeditorbtn"><span class="hub-mode-ic">🗺</span><span class="hub-mode-nm">런 에디터</span><span class="hub-mode-dsc">나만의 런 저작·테스트</span></button>
           <button class="hub-mode" id="hubjobedbtn"><span class="hub-mode-ic">🔀</span><span class="hub-mode-nm">전직 트리 에디터</span><span class="hub-mode-dsc">캐릭터 직업 트리 저작 (jobs.json)</span></button>
           <button class="hub-mode" id="hubitemedbtn"><span class="hub-mode-ic">🛡</span><span class="hub-mode-nm">아이템 에디터</span><span class="hub-mode-dsc">장착 아이템 저작 (items.json)</span></button>
+          <button class="hub-mode" id="hubskilledbtn"><span class="hub-mode-ic">⚔</span><span class="hub-mode-nm">스킬 에디터</span><span class="hub-mode-dsc">스킬 효과·면적 저작 (skills.json)</span></button>
         </div></section>`;
   } else {
     // 캠페인 — 런 목록 + 선택 런의 고정 로스터 미리보기. 자유 편성 없음(주인공 강제).
@@ -100,6 +102,7 @@ export function renderHub(app: HTMLElement, d: HubData, h: ShellHandlers): void 
   app.querySelector("#hubeditorbtn")?.addEventListener("click", () => h.onEditor());
   app.querySelector("#hubjobedbtn")?.addEventListener("click", () => h.onJobEditor());
   app.querySelector("#hubitemedbtn")?.addEventListener("click", () => h.onItemEditor());
+  app.querySelector("#hubskilledbtn")?.addEventListener("click", () => h.onSkillEditor());
   app.querySelector("#hubbackbtn")?.addEventListener("click", () => h.onHubBack());
   app.querySelector("#newrunbtn")?.addEventListener("click", () => h.onNewRun());
   app.querySelector("#resumebtn")?.addEventListener("click", () => h.onResumeRun());
