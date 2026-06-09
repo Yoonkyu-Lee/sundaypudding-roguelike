@@ -28,8 +28,13 @@
 
 | 도메인 이름 | 무엇 | 코드 | CSS 루트 |
 |---|---|---|---|
-| **타이틀 화면** | 부팅 스플래시 → '시작'(→본거지) | `shell.ts` `renderTitle` | `.title-screen` |
-| **본거지(집)** | 런 밖 허브. 편성 중=**캐릭터 선택 그리드**(playable 풀에서 1~4명 토글, 카드에 숙련도 Lv·해금T·XP바)+새 런 / 런 중=현재 원정대(읽기전용)+이어하기/포기 | `shell.ts` `renderHub` | `.hub` · `.hub-pickgrid` / `.hub-pick` |
+| **타이틀 화면** | 부팅 스플래시 → '시작'(→허브) | `shell.ts` `renderTitle` | `.title-screen` |
+| **허브** | 런 밖 **진입점 메뉴**. 모드 선택(📜 캠페인 · 📖 캐릭터 도감 · 일반/챌린지=회색 준비중 · 🗺 런 에디터). **캠페인** 입장 → `mode==="campaign"` 런 목록 → 선택 런의 **고정 로스터로 시작**(스토리=주인공 강제, 자유 편성 없음). 런 중=현재 원정대(읽기전용)+이어하기/포기 *(구 "본거지/집"·자유 편성 picker는 비캠페인 모드용으로 휴면)* | `shell.ts` `renderHub`·`HubMode` | `.hub` · `.hub-modes`/`.hub-mode` |
+| **캐릭터 도감** | 해금 캐릭터·전직 트리·스킬 열람(허브 메뉴 진입). 좌=디테일(정체성 바 **고정** + 전직 트리 패널 **자체 스크롤**), 우=캐릭터 목록. 해금=런 클리어, 스킬 공개=런에서 보유/획득(나머지 '?') | `codex.ts` `renderCodex` | `.codex` |
+| └ **캐릭터 목록** | 우측 — 전체 playable 캐릭. 해금=밝게, 미해금=🔒 어두운 프로필·???. 자체 스크롤 | `codex.ts` | `.cdx-list`/`.cdx-pick` |
+| └ **정체성 바** | 좌측 상단 **고정 패널** — 아바타·이름·능력치·**기본 특성 칩**(내재·상시) | `codex.ts` `baseTraitsBar` | `.cdx-idbar` |
+| └ **전직 트리 패널** | 좌측 하단 **스크롤 패널** — **차수 컬럼**(0차→1차→… 가로 진행). 컬럼=그 차수 **직업 노드**(분기 세로 스택, ⑂)+**부여 특성 카드**(✦, 분기 차별점) / 하단=그 차수 스킬. **전용기 풀=같은 차수 분기 공유**(GAME-DESIGN 4.7) | `codex.ts` `tierColumnsHtml` | `.cdx-tree-sec`/`.cdx-tier` · `.cdx-jobcard`/`.cdx-tcard` |
+| └ **스킬 카드(+강화 토글)** | 런에서 본 스킬=전투용 스펙(`skillCardBody` 재사용), 미발견='?'. 강화 스킬은 **차수 토글(T1/T2…)**로 한 카드에서 원본↔강화 스펙 전환(공간 절약·로컬 DOM) | `codex.ts` `skillCardEl` | `.cdx-skill`/`.cdx-upg`/`.cdx-tbtn` |
 | **전투 화면** | 전투 진행 전체(3열) | `render.ts` `renderApp` | `.battlelayout` |
 | **맵 화면** | 헥스 노드 경로 선택 | `runRender.ts` `mapScreen` | `.mapwrap` |
 | **상점 화면** | 골드 구매(강화권·범용기·아이템·회복) | `runRender.ts` `shopScreen` | `.shop` |
