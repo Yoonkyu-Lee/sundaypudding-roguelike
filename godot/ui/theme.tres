@@ -1,0 +1,100 @@
+; 게임 Theme — 웹 style.css 다크 팔레트 이식(= 우리 게임의 "CSS"). 프로젝트 전역(project.godot gui/theme/custom).
+; 색: bg#14161c panel#1d2029 panel2#252a36 line#333a48 txt#e6e9ef dim#8b93a7 accent#ffd166.
+; 미세 튜닝(간격·hover 느낌)은 에디터에서. StyleBox=웹의 background/border/radius 규칙.
+[gd_resource type="Theme" load_steps=6 format=3]
+
+[sub_resource type="StyleBoxFlat" id="btn_normal"]
+bg_color = Color(0.1451, 0.1647, 0.2118, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.2275, 0.2824, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="btn_hover"]
+bg_color = Color(0.18, 0.205, 0.255, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.8196, 0.4, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="btn_pressed"]
+bg_color = Color(0.1, 0.115, 0.15, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.8196, 0.4, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="btn_disabled"]
+bg_color = Color(0.1137, 0.1255, 0.1608, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.2275, 0.2824, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="panel_bg"]
+bg_color = Color(0.1137, 0.1255, 0.1608, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.2275, 0.2824, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+content_margin_left = 14.0
+content_margin_top = 12.0
+content_margin_right = 14.0
+content_margin_bottom = 12.0
+
+[resource]
+default_font_size = 16
+Button/colors/font_color = Color(0.902, 0.9137, 0.9373, 1)
+Button/colors/font_hover_color = Color(1, 0.8196, 0.4, 1)
+Button/colors/font_pressed_color = Color(1, 0.8196, 0.4, 1)
+Button/colors/font_focus_color = Color(0.902, 0.9137, 0.9373, 1)
+Button/colors/font_disabled_color = Color(0.5451, 0.5765, 0.6549, 1)
+Button/styles/normal = SubResource("btn_normal")
+Button/styles/hover = SubResource("btn_hover")
+Button/styles/pressed = SubResource("btn_pressed")
+Button/styles/disabled = SubResource("btn_disabled")
+Button/styles/focus = SubResource("btn_hover")
+Label/colors/font_color = Color(0.902, 0.9137, 0.9373, 1)
+Panel/styles/panel = SubResource("panel_bg")
+PanelContainer/styles/panel = SubResource("panel_bg")

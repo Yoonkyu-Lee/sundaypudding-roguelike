@@ -11,3 +11,11 @@ config/features=PackedStringArray("4.6")
 [autoload]
 
 GameDirector="*res://scripts/game_director.gd"
+
+[gui]
+
+theme/custom="res://ui/theme.tres"
+
+[rendering]
+
+environment/defaults/default_clear_color=Color(0.0784, 0.0863, 0.1098, 1)
