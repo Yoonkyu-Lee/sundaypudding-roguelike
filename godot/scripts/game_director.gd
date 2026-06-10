@@ -17,6 +17,8 @@ const CHARDEX := "res://scenes/chardex/chardex.tscn"
 const REWARD := "res://scenes/run/reward.tscn"
 const SHOP := "res://scenes/run/shop.tscn"
 const ENCOUNTER := "res://scenes/run/encounter.tscn"
+const CLASS_CHANGE := "res://scenes/run/class_change.tscn"
+const RESULT := "res://scenes/run/result.tscn"
 
 func _ready() -> void:
 	if ClassDB.class_exists("SprSession"):
@@ -50,6 +52,10 @@ func leave_shop() -> void:
 	if session != null: _set_view(session.leave_shop())
 func encounter(choice_id: String) -> void:
 	if session != null: _set_view(session.encounter(choice_id))
+func class_change(char_id: String, to_job_id: String) -> void:
+	if session != null: _set_view(session.class_change(char_id, to_job_id))
+func class_change_skip() -> void:
+	if session != null: _set_view(session.class_change_skip())
 
 ## 개발용 — 화면을 단독 실행/캡처할 때 빈 view면 기본 런 생성(라우팅 없이 view만 채움).
 func bootstrap_demo() -> void:
@@ -105,5 +111,6 @@ func _route() -> void:
 		"reward": goto(REWARD)
 		"shop": goto(SHOP)
 		"encounter": goto(ENCOUNTER)
-		"won", "lost": goto(HUB)
+		"classChange": goto(CLASS_CHANGE)
+		"won", "lost": goto(RESULT)
 		_: goto(RUN_MAP)
