@@ -1,13 +1,26 @@
-[gd_scene format=3]
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/run/reward.gd" id="1"]
 
 [node name="Reward" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+script = ExtResource("1")
 
-[node name="Label" type="Label" parent="."]
+[node name="Center" type="CenterContainer" parent="."]
 layout_mode = 1
-offset_left = 16.0
-offset_top = 16.0
-text = "🎁 보상 화면 (스캐폴드) — run_map이 오버레이로 띄움"
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBox" type="VBoxContainer" parent="Center"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Center/VBox"]
+layout_mode = 2
+text = "🎁 보상 선택"
+
+[node name="Options" type="VBoxContainer" parent="Center/VBox"]
+layout_mode = 2

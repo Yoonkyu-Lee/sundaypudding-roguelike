@@ -20,11 +20,14 @@ layout_mode = 2
 
 [node name="Title" type="Label" parent="Center/VBox"]
 layout_mode = 2
-text = "🗺 런 맵 (스캐폴드)"
+text = "🗺 런 맵"
 
-[node name="EnterBattleBtn" type="Button" parent="Center/VBox"]
+[node name="Floor" type="Label" parent="Center/VBox"]
 layout_mode = 2
-text = "⚔ 전투 노드 진입"
+text = "층 —"
+
+[node name="Nodes" type="VBoxContainer" parent="Center/VBox"]
+layout_mode = 2
 
 [node name="HubBtn" type="Button" parent="Center/VBox"]
 layout_mode = 2

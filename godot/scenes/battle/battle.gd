@@ -36,16 +36,16 @@ func _flat_quad(size: float, color: Color, y: float) -> MeshInstance3D:
 	return mi
 
 func _place_units() -> void:
-	# 아군 = 실제 런 데이터(없으면 폴백 데모)
-	var view: Variant = GameDirector.create_run(12345) if GameDirector.session != null else null
-	if view is Dictionary and view.has("party"):
-		for m in view["party"]:
+	# 아군 = 현재 RunView.party(런 흐름으로 진입 시 채워짐). 없으면 폴백 데모.
+	var party: Variant = GameDirector.view.get("party")
+	if party is Array:
+		for m in party:
 			var p: Dictionary = m.get("pos", {})
 			_add_unit(1, int(p.get("row", 1)), int(p.get("col", 0)), C_ALLY, str(m.get("name", "?")))
 	else:
 		_add_unit(1, 1, 0, C_ALLY, "아군 A")
 		_add_unit(1, 2, 0, C_ALLY, "아군 B")
-	# 적군 = 데모(전투 관측 연동 = R2)
+	# 적군 = 데모(실 적 배치는 battle_obs 연동 = 후속)
 	_add_unit(-1, 1, 0, C_ENEMY, "적 A")
 	_add_unit(-1, 2, 1, C_ENEMY, "적 B")
 

@@ -445,8 +445,10 @@ name = "spr-godot"
 version = "0.0.1"
 dependencies = [
  "godot",
+ "serde",
  "serde_json",
  "spr-core",
+ "spr-data",
  "spr-types",
 ]
 
