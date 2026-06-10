@@ -15,7 +15,7 @@ var director: BattleDirector
 func _ready() -> void:
 	director = BattleDirector.new(self)
 	_place_units()
-	$HUD/Root/BackBtn.pressed.connect(func() -> void: GameDirector.goto(GameDirector.RUN_MAP))
+	# HUD는 battle_hud 인스턴스(.tscn)가 자체 관리 — 백버튼·서열·스킬바.
 
 ## 슬롯 월드 좌표 — .tscn 셀과 동일 식. 행(0~3)=좌우(X, 4행 중앙정렬), 열(0~3)=진영 깊이(Z), col 0=전열(중앙).
 func _slot_pos(side: int, row: int, col: int) -> Vector3:

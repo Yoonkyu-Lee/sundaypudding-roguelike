@@ -1,0 +1,5 @@
+[gd_scene format=3]
+
+[node name="SkillButton" type="Button"]
+custom_minimum_size = Vector2(130, 46)
+text = "스킬"
