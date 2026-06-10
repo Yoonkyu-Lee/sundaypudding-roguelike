@@ -1,11 +1,156 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scenes/battle/battle.gd" id="1"]
+
+[sub_resource type="PlaneMesh" id="ground_mesh"]
+size = Vector2(16, 16)
+
+[sub_resource type="StandardMaterial3D" id="ground_mat"]
+shading_mode = 0
+albedo_color = Color(0.0784, 0.0863, 0.1098, 1)
+
+[sub_resource type="PlaneMesh" id="cell_mesh"]
+size = Vector2(1.15, 1.15)
+
+[sub_resource type="StandardMaterial3D" id="cell_mat"]
+shading_mode = 0
+albedo_color = Color(0.145, 0.165, 0.212, 1)
 
 [node name="Battle" type="Node3D"]
 script = ExtResource("1")
 
 [node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.385, -0.923, 0, 0.923, 0.385, 0, 12, 5)
+current = true
+fov = 50.0
+
+[node name="Ground" type="MeshInstance3D" parent="."]
+mesh = SubResource("ground_mesh")
+material_override = SubResource("ground_mat")
+
+[node name="Board" type="Node3D" parent="."]
+
+[node name="AllyR0C0" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.27, 0.01, 1.1)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="AllyR0C1" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.27, 0.01, 2.37)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="AllyR0C2" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.27, 0.01, 3.64)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="AllyR0C3" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.27, 0.01, 4.91)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="AllyR1C0" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 1.1)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="AllyR1C1" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 2.37)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="AllyR1C2" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 3.64)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="AllyR1C3" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 4.91)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="AllyR2C0" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.27, 0.01, 1.1)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="AllyR2C1" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.27, 0.01, 2.37)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="AllyR2C2" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.27, 0.01, 3.64)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="AllyR2C3" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.27, 0.01, 4.91)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="EnemyR0C0" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.27, 0.01, -1.1)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="EnemyR0C1" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.27, 0.01, -2.37)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="EnemyR0C2" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.27, 0.01, -3.64)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="EnemyR0C3" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.27, 0.01, -4.91)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="EnemyR1C0" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -1.1)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="EnemyR1C1" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -2.37)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="EnemyR1C2" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -3.64)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="EnemyR1C3" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -4.91)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="EnemyR2C0" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.27, 0.01, -1.1)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="EnemyR2C1" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.27, 0.01, -2.37)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="EnemyR2C2" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.27, 0.01, -3.64)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="EnemyR2C3" type="MeshInstance3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.27, 0.01, -4.91)
+mesh = SubResource("cell_mesh")
+material_override = SubResource("cell_mat")
+
+[node name="Units" type="Node3D" parent="."]
 
 [node name="HUD" type="CanvasLayer" parent="."]
 
@@ -22,7 +167,7 @@ offset_top = 16.0
 offset_right = 760.0
 offset_bottom = 80.0
 text = "⚔ 전투 (2.5D · 탑다운 보드)
-3D 바닥 그리드에 유닛 카드를 눕힘. 카메라·그리드는 battle.gd가 생성."
+정적 보드(바닥·셀·카메라)=씬에 박힘 · 유닛 카드=코드(데이터)."
 autowrap_mode = 3
 
 [node name="BackBtn" type="Button" parent="HUD/Root"]
