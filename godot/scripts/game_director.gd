@@ -51,6 +51,12 @@ func leave_shop() -> void:
 func encounter(choice_id: String) -> void:
 	if session != null: _set_view(session.encounter(choice_id))
 
+## 개발용 — 화면을 단독 실행/캡처할 때 빈 view면 기본 런 생성(라우팅 없이 view만 채움).
+func bootstrap_demo() -> void:
+	if session == null or not view.is_empty(): return
+	var v: Variant = JSON.parse_string(session.create_run(1234))
+	if v is Dictionary: view = v
+
 func _set_view(json: String) -> void:
 	var v: Variant = JSON.parse_string(json)
 	if v is Dictionary:

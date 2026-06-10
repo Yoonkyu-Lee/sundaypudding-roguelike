@@ -8,6 +8,7 @@ desktop/target/
 spr-godot/target/
 godot/.godot/
 godot/bin/
+godot/*_shot.png
 
 # Godot 에디터 바이너리(포터블 exe, 172MB) — 로컬 전용·머신별, 커밋 금지. godotengine.org에서 받아 여기 둠.
 tools/godot/
