@@ -1,8 +1,13 @@
-; Godot 4 프로젝트 — RENDER-MIGRATION R1 스파이크. spr-core를 GDExtension(spr.gdextension)으로 붙여 RunView 표시.
+; Godot 4 프로젝트 — Sunday Pudding 플레이어 클라이언트(게임 쉘). 데이터 에디터는 웹에 잔류.
+; 화면 구조 = SHELL-DESIGN.md / 현 web rustRun.ts 대응. 자세히: docs/RENDER-MIGRATION.md
 config_version=5
 
 [application]
 
-config/name="Sunday Pudding — R1 spike"
-run/main_scene="res://main.tscn"
+config/name="Sunday Pudding"
+run/main_scene="res://scenes/boot.tscn"
 config/features=PackedStringArray("4.6")
+
+[autoload]
+
+GameDirector="*res://scripts/game_director.gd"

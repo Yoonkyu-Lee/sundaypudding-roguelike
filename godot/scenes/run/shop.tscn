@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[node name="Shop" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 1
+offset_left = 16.0
+offset_top = 16.0
+text = "🏪 상점 화면 (스캐폴드) — run_map이 오버레이로 띄움"
