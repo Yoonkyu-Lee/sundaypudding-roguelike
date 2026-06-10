@@ -25,3 +25,6 @@ web/public/avatars/
 .claude/
 .githooks/
 CLAUDE.md
+
+# MCP 설정 — 머신별 절대경로(GODOT_PATH 등). 로컬 전용.
+.mcp.json
