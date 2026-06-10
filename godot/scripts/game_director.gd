@@ -57,6 +57,39 @@ func bootstrap_demo() -> void:
 	var v: Variant = JSON.parse_string(session.create_run(1234))
 	if v is Dictionary: view = v
 
+# ── 전투 ──
+## 현재 전투 관측(allies/enemies/order/legalActions/phase). 비전투면 {}.
+func battle_obs() -> Dictionary:
+	if session == null: return {}
+	var o: Variant = JSON.parse_string(session.battle_obs())
+	return o if o is Dictionary else {}
+
+## 자동 전투(스캐폴드) — 양측 AI로 종료까지 ai_step 루프. 끝나면 run view 갱신 + phase 라우팅.
+func auto_battle() -> void:
+	if session == null: return
+	var guard := 0
+	while guard < 300:
+		session.battle_ai_step()
+		guard += 1
+		var obs: Variant = JSON.parse_string(session.battle_obs())
+		if not (obs is Dictionary) or str(obs.get("phase", "")) != "inProgress": break
+	_set_view(session.view())  # 전투 종료 → 다음 phase로
+
+## 단독 실행/캡처용 — 런 생성 → 첫 도달가능 전투 노드 진입 + battle_init.
+func bootstrap_battle() -> void:
+	if session == null or str(view.get("phase", "")) == "battle": return
+	var v: Variant = JSON.parse_string(session.create_run(1234))
+	if not (v is Dictionary): return
+	view = v
+	for n in view.get("nodes", []):
+		var t := str(n.get("type", ""))
+		if str(n.get("status", "")) == "reachable" and t in ["battle", "elite", "boss"]:
+			var nv: Variant = JSON.parse_string(session.enter_node(str(n.get("id", ""))))
+			if nv is Dictionary: view = nv
+			break
+	if str(view.get("phase", "")) == "battle":
+		session.battle_init()
+
 func _set_view(json: String) -> void:
 	var v: Variant = JSON.parse_string(json)
 	if v is Dictionary:

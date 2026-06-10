@@ -14,8 +14,12 @@ var director: BattleDirector
 
 func _ready() -> void:
 	director = BattleDirector.new(self)
-	_place_units()
-	# HUD는 battle_hud 인스턴스(.tscn)가 자체 관리 — 백버튼·서열·스킬바.
+	if str(GameDirector.view.get("phase", "")) != "battle":
+		GameDirector.bootstrap_battle()  # 단독 실행/캡처용
+	var obs := GameDirector.battle_obs()
+	_place_units(obs)
+	var hud := get_node_or_null("BattleHUD")
+	if hud: hud.populate(obs)
 
 ## 슬롯 월드 좌표 — .tscn 셀과 동일 식. 행(0~3)=좌우(X, 4행 중앙정렬), 열(0~3)=진영 깊이(Z), col 0=전열(중앙).
 func _slot_pos(side: int, row: int, col: int) -> Vector3:
@@ -35,19 +39,23 @@ func _flat_quad(size: float, color: Color, y: float) -> MeshInstance3D:
 	mi.position.y = y
 	return mi
 
-func _place_units() -> void:
-	# 아군 = 현재 RunView.party(런 흐름으로 진입 시 채워짐). 없으면 폴백 데모.
-	var party: Variant = GameDirector.view.get("party")
-	if party is Array:
-		for m in party:
-			var p: Dictionary = m.get("pos", {})
-			_add_unit(1, int(p.get("row", 1)), int(p.get("col", 0)), C_ALLY, str(m.get("name", "?")))
+func _place_units(obs: Dictionary) -> void:
+	var allies: Variant = obs.get("allies")
+	if allies is Array and not allies.is_empty():
+		# 실 전투 관측 — 아군/적 실 배치·이름·HP
+		for u in allies: _place_obs_unit(1, u, C_ALLY)
+		for u in obs.get("enemies", []): _place_obs_unit(-1, u, C_ENEMY)
 	else:
+		# 폴백 데모(전투 phase 진입 실패 시)
 		_add_unit(1, 1, 0, C_ALLY, "아군 A")
 		_add_unit(1, 2, 0, C_ALLY, "아군 B")
-	# 적군 = 데모(실 적 배치는 battle_obs 연동 = 후속)
-	_add_unit(-1, 1, 0, C_ENEMY, "적 A")
-	_add_unit(-1, 2, 1, C_ENEMY, "적 B")
+		_add_unit(-1, 1, 0, C_ENEMY, "적 A")
+		_add_unit(-1, 2, 1, C_ENEMY, "적 B")
+
+func _place_obs_unit(side: int, u: Dictionary, color: Color) -> void:
+	var p: Dictionary = u.get("pos", {})
+	var label := "%s\n%d/%d" % [str(u.get("name", "?")), int(u.get("hp", 0)), int(u.get("hpMax", 0))]
+	_add_unit(side, int(p.get("row", 1)), int(p.get("col", 0)), color, label)
 
 ## 유닛 = 바닥에 눕힌 카드 + 위에 떠 있는 빌보드 이름표. $Units 밑에 둠.
 func _add_unit(side: int, row: int, col: int, color: Color, unit_name: String) -> void:
