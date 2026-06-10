@@ -26,19 +26,6 @@ func _slot_pos(side: int, row: int, col: int) -> Vector3:
 	var step := CELL + GAP
 	return Vector3((row - 1.5) * step, 0.0, side * (SIDE_GAP + col * step))
 
-## 바닥에 눕힌 정사각 평면(유닛 카드용). unshaded 평면색.
-func _flat_quad(size: float, color: Color, y: float) -> MeshInstance3D:
-	var mi := MeshInstance3D.new()
-	var pm := PlaneMesh.new()
-	pm.size = Vector2(size, size)
-	mi.mesh = pm
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = color
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mi.material_override = mat
-	mi.position.y = y
-	return mi
-
 func _place_units(obs: Dictionary) -> void:
 	var allies: Variant = obs.get("allies")
 	if allies is Array and not allies.is_empty():
@@ -57,19 +44,30 @@ func _place_obs_unit(side: int, u: Dictionary, color: Color) -> void:
 	var label := "%s\n%d/%d" % [str(u.get("name", "?")), int(u.get("hp", 0)), int(u.get("hpMax", 0))]
 	_add_unit(side, int(p.get("row", 1)), int(p.get("col", 0)), color, label)
 
-## 유닛 = 바닥에 눕힌 카드 + 위에 떠 있는 빌보드 이름표. $Units 밑에 둠.
+## 유닛 = 셀 위에 서 있는 빌보드 카드(항상 카메라 향함) + 이름·HP 라벨. $Units 밑에.
 func _add_unit(side: int, row: int, col: int, color: Color, unit_name: String) -> void:
 	var pos := _slot_pos(side, row, col)
-	var card := _flat_quad(CELL * 0.78, color, 0.03)
-	card.position = pos
+	# 서 있는 카드(빌보드 쿼드) — 바닥에서 세움
+	var card := MeshInstance3D.new()
+	var qm := QuadMesh.new()
+	qm.size = Vector2(1.0, 1.3)
+	card.mesh = qm
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	card.material_override = mat
+	card.position = pos + Vector3(0, 0.75, 0)
 	$Units.add_child(card)
+	# 이름·HP 라벨(카드 위, 깊이무시로 항상 보임)
 	var lbl := Label3D.new()
 	lbl.text = unit_name
-	lbl.font_size = 48
-	lbl.pixel_size = 0.006
+	lbl.font_size = 38
+	lbl.pixel_size = 0.0055
 	lbl.modulate = C_TXT
-	lbl.outline_size = 8
-	lbl.outline_modulate = Color(0, 0, 0, 0.9)
+	lbl.outline_size = 12
+	lbl.outline_modulate = Color(0, 0, 0, 1)
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lbl.position = pos + Vector3(0, 0.5, 0)
+	lbl.no_depth_test = true
+	lbl.position = pos + Vector3(0, 0.85, 0)
 	$Units.add_child(lbl)
