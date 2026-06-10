@@ -90,33 +90,75 @@ func _place_units(obs: Dictionary) -> void:
 
 func _place_obs_unit(side: int, u: Dictionary, color: Color) -> void:
 	var p: Dictionary = u.get("pos", {})
-	var label := "%s\n%d/%d" % [str(u.get("name", "?")), int(u.get("hp", 0)), int(u.get("hpMax", 0))]
-	_add_unit(side, int(p.get("row", 1)), int(p.get("col", 0)), color, label)
+	_add_unit(side, int(p.get("row", 1)), int(p.get("col", 0)), color, str(u.get("name", "?")),
+		int(u.get("hp", 0)), int(u.get("hpMax", 0)), int(u.get("shield", 0)), u.get("statuses", []))
 
-## 유닛 = 셀 위에 서 있는 빌보드 카드(항상 카메라 향함) + 이름·HP 라벨. $Units 밑에.
-func _add_unit(side: int, row: int, col: int, color: Color, unit_name: String) -> void:
+## 유닛 = 셀 위에 서 있는 빌보드 카드 + 이름 · HP바(쉴드) · 상태칩 라벨. $Units 밑에.
+## hpMax<=0이면 데모(바·상태 생략).
+func _add_unit(side: int, row: int, col: int, color: Color, unit_name: String,
+		hp: int = 0, hp_max: int = 0, shield: int = 0, statuses: Variant = []) -> void:
 	var pos := _slot_pos(side, row, col)
-	# 서 있는 카드(빌보드 쿼드) — 바닥에서 세움
+	# 서 있는 카드(빌보드 쿼드)
 	var card := MeshInstance3D.new()
 	var qm := QuadMesh.new()
 	qm.size = Vector2(1.0, 1.3)
 	card.mesh = qm
+	card.material_override = _unshaded_billboard(color)
+	card.position = pos + Vector3(0, 0.75, 0)
+	$Units.add_child(card)
+	# 이름표(카드 위)
+	_label3d(unit_name, pos + Vector3(0, 1.62, 0), C_TXT, 34)
+	# 상태칩(이름 위) — icon+stacks, 쉴드 먼저
+	var chips := ""
+	if shield > 0: chips += "🛡%d " % shield
+	if statuses is Array:
+		for s in statuses:
+			var ic := str(s.get("icon", ""))
+			if ic == "": continue
+			var st := int(s.get("stacks", 0))
+			chips += "%s%s " % [ic, str(st) if st > 1 else ""]
+	if chips != "":
+		_label3d(chips.strip_edges(), pos + Vector3(0, 1.86, 0), Color(1, 0.82, 0.4), 26)
+	# HP바(이름 아래) — hpMax 있을 때만
+	if hp_max > 0:
+		var pct := clampf(float(hp) / float(hp_max), 0.0, 1.0)
+		var left := pos + Vector3(-0.45, 1.42, 0.0)  # 바 좌측 끝(빌보드 원점)
+		_bar(left, 0.9, 0.12, Color(0.1, 0.11, 0.14), 1.0)         # 배경
+		_bar(left, 0.9, 0.12, _hp_color(pct), pct)                  # 채움
+		_label3d("%d/%d" % [hp, hp_max], pos + Vector3(0, 1.28, 0), C_TXT, 22)
+
+## 좌측 끝 앵커 빌보드 바(QuadMesh center_offset로 fill이 좌→우로 자람).
+func _bar(left_pos: Vector3, width: float, height: float, color: Color, pct: float) -> void:
+	var m := MeshInstance3D.new()
+	var q := QuadMesh.new()
+	q.size = Vector2(maxf(0.001, width * pct), height)
+	q.center_offset = Vector3(q.size.x / 2.0, 0, 0)  # 원점=좌측 끝
+	m.mesh = q
+	m.material_override = _unshaded_billboard(color)
+	m.position = left_pos
+	$Units.add_child(m)
+
+func _label3d(text: String, pos: Vector3, col: Color, size: int) -> void:
+	var lbl := Label3D.new()
+	lbl.text = text
+	lbl.font_size = size
+	lbl.pixel_size = 0.0055
+	lbl.modulate = col
+	lbl.outline_size = 10
+	lbl.outline_modulate = Color(0, 0, 0, 1)
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.no_depth_test = true
+	lbl.position = pos
+	$Units.add_child(lbl)
+
+func _unshaded_billboard(color: Color) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = color
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
-	card.material_override = mat
-	card.position = pos + Vector3(0, 0.75, 0)
-	$Units.add_child(card)
-	# 이름·HP 라벨(카드 위, 깊이무시로 항상 보임)
-	var lbl := Label3D.new()
-	lbl.text = unit_name
-	lbl.font_size = 38
-	lbl.pixel_size = 0.0055
-	lbl.modulate = C_TXT
-	lbl.outline_size = 12
-	lbl.outline_modulate = Color(0, 0, 0, 1)
-	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lbl.no_depth_test = true
-	lbl.position = pos + Vector3(0, 0.85, 0)
-	$Units.add_child(lbl)
+	return mat
+
+func _hp_color(pct: float) -> Color:
+	if pct > 0.5: return Color(0.314, 0.784, 0.471)   # 초록
+	if pct > 0.25: return Color(1.0, 0.82, 0.4)        # 노랑
+	return Color(0.902, 0.408, 0.353)                  # 빨강
