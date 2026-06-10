@@ -143,8 +143,11 @@ ROADMAP의 "엔진+도구=엔지니어 / 콘텐츠=디자이너" 원칙을 **데
 
 ### ⏳ 즉시 할일 (다음 작업, 우선순위)
 
-0. ✅ **dll 갱신** 완료(전체 명령 포함). ✅ **slice 1: 노드 맵 렌더링** — `run_map`이 `RunView.nodes(q,r 헥스)+edges`를 2D 그래프로(노드=버튼+아이콘+status색, 엣지=Line2D, web 모방). GameDirector에 `bootstrap_demo`(단독 캡처용). mcp 스크린샷 검증 ✅.
-1. **전투 화면 시각 개선**(스크린샷으로 본 것): 유닛 카드(파랑/빨강 쿼드)가 셀에 묻혀 안 보임 → 띄움/대비 · 양 진영 중앙 간격(`SIDE_GAP`) · 이름표 높이. + 노드맵 폴리시(간격·엣지).
+**✅ 게임 쉘 스캐폴딩 완료(에디터 제외, 2026-06)** — slice 0~4. 전 화면·런 루프 네비게이블, 핵심 실데이터. **완료 보고·폴리시 백로그 = [`GODOT-SCAFFOLD-REPORT.md`](GODOT-SCAFFOLD-REPORT.md).**
+- slice 0 dll+MCP · slice 1 노드맵(헥스) · slice 2 전투 실데이터+자동전투 · slice 3 전직·결과 · slice 4 도감. mcp 스크린샷 검증.
+
+**다음(폴리시·미완 — 상세는 SCAFFOLD-REPORT §3·5):**
+1. **전투 시각 개선**: 유닛 카드 안 보임(파랑/빨강 쿼드 묻힘)·HP바·상태칩·이름표·노드맵 간격.
 3. **전투 실데이터**: `battle_obs`/`battle_view` 연동 → HUD `populate(obs)`(적 배치·행동 서열·스킬·명중%). 지금 HUD·적은 데모.
 4. **전투 실전투 진행**: `battle_step`/`battle_ai_step` 루프(스킬 선택→타겟→실행→이벤트). **지금 전투 back버튼은 엔진 우회**(battle phase 미해소).
 5. **이벤트→애니메이션**: `BattleDirector.play_events` 실구현(이벤트별 연출 훅).

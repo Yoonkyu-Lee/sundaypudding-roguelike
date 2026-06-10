@@ -35,6 +35,7 @@
 | [`PORTING.md`](PORTING.md) | TS→Rust 마이그레이션 이력(완료) | Rust 엔진·아카이브(`archive/ts-core`) 참조 |
 | [`RENDER-MIGRATION.md`](RENDER-MIGRATION.md) | **렌더링 마이그레이션 설계(웹 DOM→Godot, 회의/진행 중).** PORTING의 후속 — Godot↔Rust 경계·디자이너 워크플로·단계 계획 | 렌더링 엔진 방향·Godot 전환 논의 |
 | [`GODOT-CONVENTIONS.md`](GODOT-CONVENTIONS.md) | **Godot 클라이언트 작업 규칙 SoT** — 씬=모듈·정적/동적 경계·엔진 링크·웹↔Godot 대응·자동화 범위 | `godot/`에서 씬·스크립트 만들 때 |
+| [`GODOT-SCAFFOLD-REPORT.md`](GODOT-SCAFFOLD-REPORT.md) | **게임 쉘 스캐폴딩 완료 보고** — 화면 인벤토리·폴리시 백로그(전투/시각/미완/인프라/에셋)·특이사항 | 다음 폴리시·미완 작업 정할 때 |
 | [`UI-GLOSSARY.md`](UI-GLOSSARY.md) | GUI 도메인 명칭 SoT(화면·패널 통일 이름) | GUI 만들거나 부를 때 |
 | [`../README.md`](../README.md) | 실행법·아키텍처 요약 | 돌려볼 때 |
 | [`../web/src/content/README.md`](../web/src/content/README.md) | 디자이너 콘텐츠 작성 가이드 | 콘텐츠 저작 |
