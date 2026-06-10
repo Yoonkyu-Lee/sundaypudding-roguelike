@@ -1,6 +1,6 @@
 # RENDER-MIGRATION — 렌더링 엔진 마이그레이션 설계 (웹 DOM → Godot)
 
-> **상태: 회의/설계 진행 중 (2026-06~).** [`PORTING.md`](PORTING.md)(TS→Rust)의 **후속**. PORTING이 "두뇌를 Rust로"였다면 이 문서는 "몸(렌더링)을 진짜 게임 엔진으로". 결정 미확정 — 열린 질문(§4)은 회의로 메운다.
+> **상태: 구현 진행 중 — R1 완료, R2(전투 씬) 착수 (2026-06~).** [`PORTING.md`](PORTING.md)(TS→Rust)의 **후속**. PORTING이 "두뇌를 Rust로"였다면 이 문서는 "몸(렌더링)을 진짜 게임 엔진으로". Godot 작업 규칙 = [`GODOT-CONVENTIONS.md`](GODOT-CONVENTIONS.md). **상세 진행현황·할일 = §5.**
 
 ## 0. 배경 · 원칙
 
@@ -94,7 +94,7 @@ ROADMAP의 "엔진+도구=엔지니어 / 콘텐츠=디자이너" 원칙을 **데
 |---|---|---|
 | **R0** 계약 동결 | 관측·이벤트 계약(화면에 있어야 할 정보 집합)을 명문화 — 두 프론트가 지킬 SoT. 현 RunView/BattleView/GameEvent 타입에서 추출 | 계약 문서 = WHAT의 단일 기준 |
 | **R1** gdext 스파이크 ✅ | `spr-godot`(top-level, 독립 워크스페이스) = `SprSession` GDExtension. `create_run`/`view`가 RunView JSON 반환. `godot/`(Godot 4.6.3 프로젝트)가 호출·표시 | **✅ 완료(2026-06)** — 헤드리스 검증: Godot이 익스텐션 로드→spr-core 호출→**2949자 RunView 수신·파싱**. gdext 0.2.4 ↔ Godot 4.6.3 호환. 경계+빌드 파이프라인 입증 |
-| **R2** 수직 슬라이스 1 = 전투 한 장면 | 전투 씬 하나를 Godot에서 끝까지: 전장+유닛+스킬 1종+이벤트 구동 디렉터. 디자이너가 씬/애니 저작, 당신이 디렉터 배선. **DOM 프론트는 병행 가동** | 이벤트→애니메이션 패턴 + 디자이너 워크플로 입증 |
+| **R2** 수직 슬라이스 1 = 전투 한 장면 ⏳ | 전투 씬 하나를 Godot에서 끝까지: 전장+유닛+스킬 1종+이벤트 구동 디렉터. 디자이너가 씬/애니 저작, 당신이 디렉터 배선. **DOM 프론트는 병행 가동** | **⏳ 착수**: 2.5D 보드·HUD 스캐폴드·런 루프 배선 완료. **남음**: battle_obs 실데이터·battle_step 실전투·이벤트→애니(디렉터). §5 |
 | **R3** 전투 완성 | 전투 GUI 전체(타겟팅·상태·서열·주사위·전 스킬 VFX·카메라) Godot로 | 전투 패리티 |
 | **R4** 런·비전투 화면 | 노드 맵·보상·상점·인카운터·도감·허브 — 모바일 게임 레이아웃 재설계 | 런 전체 패리티 |
 | **R5** 셸·세이브·배포 | 타이틀/일시정지/세이브-로드 · 플랫폼 익스포트(데스크톱→콘솔/모바일). **DOM 프론트+Tauri 셸 은퇴**(Godot 패리티 도달 후) | 플레이어 클라이언트 = Godot |
@@ -116,6 +116,50 @@ ROADMAP의 "엔진+도구=엔지니어 / 콘텐츠=디자이너" 원칙을 **데
 4. ~~착수 시점~~ **✅ 결정 = 지금 R1 스파이크.** `spr-core`는 추가 작업 불필요(사용자 확인) — 미지 영역은 종이 설계보다 "뷰 띄우고 거기서 생각"이 빠르다. **분업: 엔지니어가 코드/프로젝트 스캐폴딩 + Rust cdylib 빌드, 사용자가 Godot 에디터로 실행·확인**(GUI는 헤드리스 불가). 전제: Godot 4 설치.
 5. **웹 에디터 장기**: 웹 잔류(권장) vs 언젠가 Godot 에디터 플러그인으로 통합.
 6. **오디오·입력·세이브**: Godot 내장으로 흡수(현 manual DOM 대비 이득). 세이브 = 현 `run_save`/`run_load` JSON 그대로 `spr-godot` 통해.
+
+---
+
+## 5. 진행 현황 & 할일 (상세 기록, 2026-06)
+
+### ✅ 완료 — Godot 클라이언트 현재 상태
+
+**엔진 경계 (`spr-godot/` — top-level 독립 워크스페이스, gdext 0.2.4)**
+- `SprSession`(GDExtension) = 현 `desktop/main.rs` IPC 1:1. 모두 JSON 문자열 in/out.
+- 명령: `create_run`·`create_run_id`(번들 RunDef)·`create_run_roster`·`create_run_def` · `view` · `enter_node`·`choose_reward`·`buy`·`leave_shop`·`encounter`·`class_change`·`class_change_skip`·`set_active`·`move_party`·`equip`·`unequip` · `battle_init`·`battle_view`·`battle_obs`·`battle_step`·`battle_ai_step`·`battle_targeting` · `sheet_data`·`save`·`load` · 정적 `run_list`(캠페인 목록).
+- 빌드: `cargo build --manifest-path spr-godot/Cargo.toml` → dll → `godot/bin/` 복사(수동).
+
+**Godot 클라이언트 (`godot/`)**
+- `scripts/game_director.gd` (autoload = `rustRun.ts`): 영속 SprSession + 현재 `view` 보유 + 명령 호출 후 **phase 라우팅**(map/battle/reward/shop/encounter/won/lost). `run_list`/`start_run`/`enter_node`/`choose_reward`/`buy`/`leave_shop`/`encounter`.
+- `scripts/battle_director.gd` (= `rustBattle.ts`): 이벤트 로그→애니 디렉터 **스텁**.
+- 셸 씬: `boot`→`title`→`hub`(모드 메뉴)→`campaign_select`→`run_map`→`battle`/`reward`/`shop`/`encounter`/`chardex`/`overlays/pause`.
+- **Theme**(`ui/theme.tres`) = 웹 `style.css` 다크 팔레트 전역 적용 + 다크 배경.
+- **전투 2.5D 보드**(`scenes/battle/battle.tscn`): 정적 보드(바닥·4×4 양진영 셀·카메라)=씬에 박힘(에디터 편집), 유닛 카드·이름표=코드(`battle.gd`). 카메라=사용자 조정(틸트 탑다운, 아군 좌/적 우 마주봄). 진단색=아군 초록·적 보라.
+- **전투 HUD 스캐폴드**(`scenes/battle/hud/`): `battle_hud.tscn`(CanvasLayer — 행동서열 패널·스킬바·정보·뒤로) + 반복 원자 `skill_button.tscn`·`turn_chip.tscn` 인스턴스. battle.tscn에 인스턴스로 박힘.
+- **런 루프 실데이터 배선**: campaign_select=`run_list` 실런목록 · run_map=`RunView.nodes`(도달가능→`enter_node`) · reward/shop/encounter=`view`의 옵션→`choose_reward`/`buy`/`encounter` · battle=`view.party` 아군.
+
+**환경·도구**
+- Godot 4.6.3 포터블 = `tools/godot/`(gitignore). gdext 0.2.4 호환.
+- **MCP 연결됨** — `godot-mcp-enhanced`(`.mcp.json`, gitignore, `GODOT_PATH`=console exe). `mcp__godot__screenshot capture`로 **헤드리스 렌더→PNG**, AI가 PNG 읽어 **시각 검증**. + scene/script/game(런타임)/editor 30+ 도구.
+
+### ⏳ 즉시 할일 (다음 작업, 우선순위)
+
+1. **⚠️ dll 갱신** — 에디터 닫고 `cp spr-godot/target/debug/spr_godot.dll godot/bin/`. **새 명령(run_list 등)은 이거 전엔 런타임 미작동.** 런 루프 실행 전제.
+2. **전투 화면 시각 개선**(스크린샷으로 본 것): 유닛 카드(파랑/빨강 쿼드)가 셀에 묻혀 안 보임 → 띄움/대비 · 양 진영 중앙 간격(`SIDE_GAP`) · 이름표 높이.
+3. **전투 실데이터**: `battle_obs`/`battle_view` 연동 → HUD `populate(obs)`(적 배치·행동 서열·스킬·명중%). 지금 HUD·적은 데모.
+4. **전투 실전투 진행**: `battle_step`/`battle_ai_step` 루프(스킬 선택→타겟→실행→이벤트). **지금 전투 back버튼은 엔진 우회**(battle phase 미해소).
+5. **이벤트→애니메이션**: `BattleDirector.play_events` 실구현(이벤트별 연출 훅).
+6. **남은 화면 모방**: 허브 모드카드(현 단순 버튼) · 도감(charDex, 웹은 정교) · classChange 화면(없음) · won/lost 결과(현 허브로 우회).
+7. **run_map 헥스 시각배치**: 현재 노드 리스트(버튼) → q·r 좌표 헥스 맵.
+
+### 🔁 워크플로 (MCP로 바뀐 점)
+- **AI 자율 시각 루프**: 만들고 → `screenshot capture`(헤드리스) → PNG Read로 **내가 보고** → 고침. 스크린샷은 `D:\tmp`에(레포 청결).
+- 헤드리스 캡처 = `mcp__godot__screenshot`(GODOT_PATH로 씬 실행). 라이브 게임 조작·UI클릭 = `mcp__godot__game`(브리지, 에디터+플러그인 필요).
+- 여전히 사람: 미적/재미 판단, 실제 아트(스프라이트·파티클), 애니 키프레임.
+
+### 🛑 주의·함정
+- **dll 잠금**: Godot 에디터 열려 있으면 `cp ...dll` 실패(busy) → 에디터 닫고 갱신.
+- **co-edit 충돌**: `battle.tscn` 등은 에디터(사용자)+파일(AI) 양쪽 수정 가능 → 한쪽이 저장하면 덮어씀. 구조 변경은 파일, 시각 튜닝은 에디터로 역할 분리. 에디터가 uid·unique_id 추가/정규화함.
+- **규칙 SoT** = [`GODOT-CONVENTIONS.md`](GODOT-CONVENTIONS.md)(씬=모듈·정적/동적·엔진링크·자동화 범위).
 
 ---
 
