@@ -70,6 +70,10 @@ func battle_obs() -> Dictionary:
 	var o: Variant = JSON.parse_string(session.battle_obs())
 	return o if o is Dictionary else {}
 
+## 전투 종료 → run view 갱신 + phase 라우팅(수동 전투가 끝났을 때 호출).
+func battle_finish() -> void:
+	if session != null: _set_view(session.view())
+
 ## 자동 전투(스캐폴드) — 양측 AI로 종료까지 ai_step 루프. 끝나면 run view 갱신 + phase 라우팅.
 func auto_battle() -> void:
 	if session == null: return

@@ -16,7 +16,38 @@ func _ready() -> void:
 	director = BattleDirector.new(self)
 	if str(GameDirector.view.get("phase", "")) != "battle":
 		GameDirector.bootstrap_battle()  # 단독 실행/캡처용
-	var obs := GameDirector.battle_obs()
+	var hud := get_node_or_null("BattleHUD")
+	if hud: hud.action_chosen.connect(_act)
+	var obs := _advance_enemy_turns(GameDirector.battle_obs())
+	if _ended(obs): GameDirector.battle_finish(); return
+	_refresh(obs)
+
+## 플레이어 행동(legalAction.action) → battle_step → 적 턴 자동 진행 → 갱신/종료.
+func _act(action: Dictionary) -> void:
+	if GameDirector.session == null: return
+	GameDirector.session.battle_step(JSON.stringify(action))
+	var obs := _advance_enemy_turns(GameDirector.battle_obs())
+	if _ended(obs): GameDirector.battle_finish()
+	else: _refresh(obs)
+
+## 적 턴 자동(AI) — 아군 턴/종료까지 ai_step. 최종 obs.
+func _advance_enemy_turns(obs: Dictionary) -> Dictionary:
+	var guard := 0
+	while guard < 100 and not _ended(obs) and _cur_side(obs) == "enemy":
+		GameDirector.session.battle_ai_step()
+		obs = GameDirector.battle_obs()
+		guard += 1
+	return obs
+
+func _ended(obs: Dictionary) -> bool:
+	return str(obs.get("phase", "")) != "inProgress"
+
+func _cur_side(obs: Dictionary) -> String:
+	var c: Variant = obs.get("current")
+	return str(c.get("side", "")) if c is Dictionary else ""
+
+func _refresh(obs: Dictionary) -> void:
+	for c in $Units.get_children(): c.queue_free()
 	_place_units(obs)
 	var hud := get_node_or_null("BattleHUD")
 	if hud: hud.populate(obs)

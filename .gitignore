@@ -29,3 +29,8 @@ CLAUDE.md
 
 # MCP 설정 — 머신별 절대경로(GODOT_PATH 등). 로컬 전용.
 .mcp.json
+
+# godot-mcp-enhanced 애드온(머신별 도구) + MCP 스크린샷 스크래치 씬 — 커밋 금지
+godot/addons/
+godot/main.tscn
+godot/main.gd
