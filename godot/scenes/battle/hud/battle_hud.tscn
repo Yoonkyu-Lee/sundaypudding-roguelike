@@ -1,9 +1,12 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scenes/battle/hud/battle_hud.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/battle/hud/dice_roll.tscn" id="2"]
 
 [node name="BattleHUD" type="CanvasLayer"]
 script = ExtResource("1")
+
+[node name="DiceRoll" parent="." instance=ExtResource("2")]
 
 [node name="Info" type="Label" parent="."]
 offset_left = 16.0

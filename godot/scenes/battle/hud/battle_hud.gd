@@ -18,6 +18,18 @@ func populate(obs: Dictionary) -> void:
 	_render_order()
 	_render_skills()
 
+## 라운드 시작 SPD 주사위 연출 위임 — rs=roundStart 이벤트, obs로 이름/진영 매핑. 끝나면 on_done.
+func play_dice(rs: Dictionary, obs: Dictionary, on_done: Callable) -> void:
+	var names := {}
+	var sides := {}
+	for u in obs.get("allies", []):
+		names[str(u.get("uid", ""))] = str(u.get("name", "?")); sides[str(u.get("uid", ""))] = "ally"
+	for u in obs.get("enemies", []):
+		names[str(u.get("uid", ""))] = str(u.get("name", "?")); sides[str(u.get("uid", ""))] = "enemy"
+	var order_uids := []
+	for o in rs.get("order", []): order_uids.append(str(o.get("uid", "")))
+	$DiceRoll.play(int(rs.get("round", 1)), rs.get("rolls", []), order_uids, names, sides, on_done)
+
 # ── 행동 서열 ──
 func _render_order() -> void:
 	for c in $TurnOrder/V/Entries.get_children(): c.queue_free()

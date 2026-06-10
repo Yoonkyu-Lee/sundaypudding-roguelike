@@ -64,6 +64,12 @@ func bootstrap_demo() -> void:
 	if v is Dictionary: view = v
 
 # ── 전투 ──
+## 전투 진입 초기 델타 수집(createBattle + roundStart 주사위). {eventDelta,observation,view}. battle.gd가 1회 호출.
+func battle_init() -> Dictionary:
+	if session == null: return {}
+	var r: Variant = JSON.parse_string(session.battle_init())
+	return r if r is Dictionary else {}
+
 ## 현재 전투 관측(allies/enemies/order/legalActions/phase). 비전투면 {}.
 func battle_obs() -> Dictionary:
 	if session == null: return {}
@@ -97,8 +103,7 @@ func bootstrap_battle() -> void:
 			var nv: Variant = JSON.parse_string(session.enter_node(str(n.get("id", ""))))
 			if nv is Dictionary: view = nv
 			break
-	if str(view.get("phase", "")) == "battle":
-		session.battle_init()
+	# battle_init은 battle.gd가 호출(roundStart 델타를 주사위 연출에 써야 하므로 여기서 소비하지 않음)
 
 func _set_view(json: String) -> void:
 	var v: Variant = JSON.parse_string(json)

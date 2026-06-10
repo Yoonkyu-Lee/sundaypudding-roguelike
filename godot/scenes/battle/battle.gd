@@ -18,9 +18,27 @@ func _ready() -> void:
 		GameDirector.bootstrap_battle()  # 단독 실행/캡처용
 	var hud := get_node_or_null("BattleHUD")
 	if hud: hud.action_chosen.connect(_act)
+	# 전투 진입 델타 수집(roundStart 주사위 포함). 보드 먼저 → 주사위 연출 → 진행.
+	var init: Dictionary = GameDirector.battle_init()
+	var obs := GameDirector.battle_obs()
+	_place_units(obs)
+	var rs := _find_round_start(init.get("eventDelta", []))
+	if not rs.is_empty() and hud:
+		hud.play_dice(rs, obs, _after_dice)
+	else:
+		_after_dice()
+
+## 주사위 연출 후(또는 없을 때) — 적 턴 자동 진행 → 갱신/종료.
+func _after_dice() -> void:
 	var obs := _advance_enemy_turns(GameDirector.battle_obs())
-	if _ended(obs): GameDirector.battle_finish(); return
-	_refresh(obs)
+	if _ended(obs): GameDirector.battle_finish()
+	else: _refresh(obs)
+
+func _find_round_start(delta: Variant) -> Dictionary:
+	if not (delta is Array): return {}
+	for e in delta:
+		if e is Dictionary and str(e.get("t", "")) == "roundStart": return e
+	return {}
 
 ## 플레이어 행동(legalAction.action) → battle_step → 적 턴 자동 진행 → 갱신/종료.
 func _act(action: Dictionary) -> void:
