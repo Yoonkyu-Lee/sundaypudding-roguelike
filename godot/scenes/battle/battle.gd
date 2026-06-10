@@ -17,10 +17,10 @@ func _ready() -> void:
 	_place_units()
 	$HUD/Root/BackBtn.pressed.connect(func() -> void: GameDirector.goto(GameDirector.RUN_MAP))
 
-## 슬롯 월드 좌표 — .tscn 셀과 동일 식. 행=좌우(X), 열=진영 깊이(Z), col 0=전열(중앙).
+## 슬롯 월드 좌표 — .tscn 셀과 동일 식. 행(0~3)=좌우(X, 4행 중앙정렬), 열(0~3)=진영 깊이(Z), col 0=전열(중앙).
 func _slot_pos(side: int, row: int, col: int) -> Vector3:
 	var step := CELL + GAP
-	return Vector3((row - 1.0) * step, 0.0, side * (SIDE_GAP + col * step))
+	return Vector3((row - 1.5) * step, 0.0, side * (SIDE_GAP + col * step))
 
 ## 바닥에 눕힌 정사각 평면(유닛 카드용). unshaded 평면색.
 func _flat_quad(size: float, color: Color, y: float) -> MeshInstance3D:
