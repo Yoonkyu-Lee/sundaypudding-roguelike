@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scenes/battle/battle.gd" id="1"]
 
@@ -12,9 +12,13 @@ albedo_color = Color(0.0784, 0.0863, 0.1098, 1)
 [sub_resource type="PlaneMesh" id="cell_mesh"]
 size = Vector2(1.15, 1.15)
 
-[sub_resource type="StandardMaterial3D" id="cell_mat"]
+[sub_resource type="StandardMaterial3D" id="ally_mat"]
 shading_mode = 0
-albedo_color = Color(0.145, 0.165, 0.212, 1)
+albedo_color = Color(0.27, 0.62, 0.36, 1)
+
+[sub_resource type="StandardMaterial3D" id="enemy_mat"]
+shading_mode = 0
+albedo_color = Color(0.55, 0.34, 0.72, 1)
 
 [node name="Battle" type="Node3D"]
 script = ExtResource("1")
@@ -33,162 +37,162 @@ material_override = SubResource("ground_mat")
 [node name="AllyR0C0" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.905, 0.01, 1.1)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("ally_mat")
 
 [node name="AllyR0C1" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.905, 0.01, 2.37)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("ally_mat")
 
 [node name="AllyR0C2" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.905, 0.01, 3.64)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("ally_mat")
 
 [node name="AllyR0C3" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.905, 0.01, 4.91)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("ally_mat")
 
 [node name="AllyR1C0" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.635, 0.01, 1.1)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("ally_mat")
 
 [node name="AllyR1C1" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.635, 0.01, 2.37)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("ally_mat")
 
 [node name="AllyR1C2" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.635, 0.01, 3.64)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("ally_mat")
 
 [node name="AllyR1C3" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.635, 0.01, 4.91)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("ally_mat")
 
 [node name="AllyR2C0" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.635, 0.01, 1.1)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("ally_mat")
 
 [node name="AllyR2C1" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.635, 0.01, 2.37)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("ally_mat")
 
 [node name="AllyR2C2" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.635, 0.01, 3.64)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("ally_mat")
 
 [node name="AllyR2C3" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.635, 0.01, 4.91)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("ally_mat")
 
 [node name="AllyR3C0" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.905, 0.01, 1.1)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("ally_mat")
 
 [node name="AllyR3C1" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.905, 0.01, 2.37)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("ally_mat")
 
 [node name="AllyR3C2" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.905, 0.01, 3.64)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("ally_mat")
 
 [node name="AllyR3C3" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.905, 0.01, 4.91)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("ally_mat")
 
 [node name="EnemyR0C0" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.905, 0.01, -1.1)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("enemy_mat")
 
 [node name="EnemyR0C1" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.905, 0.01, -2.37)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("enemy_mat")
 
 [node name="EnemyR0C2" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.905, 0.01, -3.64)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("enemy_mat")
 
 [node name="EnemyR0C3" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.905, 0.01, -4.91)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("enemy_mat")
 
 [node name="EnemyR1C0" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.635, 0.01, -1.1)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("enemy_mat")
 
 [node name="EnemyR1C1" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.635, 0.01, -2.37)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("enemy_mat")
 
 [node name="EnemyR1C2" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.635, 0.01, -3.64)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("enemy_mat")
 
 [node name="EnemyR1C3" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.635, 0.01, -4.91)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("enemy_mat")
 
 [node name="EnemyR2C0" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.635, 0.01, -1.1)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("enemy_mat")
 
 [node name="EnemyR2C1" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.635, 0.01, -2.37)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("enemy_mat")
 
 [node name="EnemyR2C2" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.635, 0.01, -3.64)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("enemy_mat")
 
 [node name="EnemyR2C3" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.635, 0.01, -4.91)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("enemy_mat")
 
 [node name="EnemyR3C0" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.905, 0.01, -1.1)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("enemy_mat")
 
 [node name="EnemyR3C1" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.905, 0.01, -2.37)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("enemy_mat")
 
 [node name="EnemyR3C2" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.905, 0.01, -3.64)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("enemy_mat")
 
 [node name="EnemyR3C3" type="MeshInstance3D" parent="Board"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.905, 0.01, -4.91)
 mesh = SubResource("cell_mesh")
-material_override = SubResource("cell_mat")
+material_override = SubResource("enemy_mat")
 
 [node name="Units" type="Node3D" parent="."]
 
@@ -206,8 +210,8 @@ offset_left = 16.0
 offset_top = 16.0
 offset_right = 760.0
 offset_bottom = 80.0
-text = "⚔ 전투 (2.5D · 탑다운) — 양 진영 4×4(각 16칸).
-정적 보드=씬에 박힘 · 유닛 카드=코드(데이터)."
+text = "⚔ 전투 — 아군(초록)/적(보라) 4×4. col 0=전열(중앙 마주봄).
+방향 진단용 색칠."
 autowrap_mode = 3
 
 [node name="BackBtn" type="Button" parent="HUD/Root"]
