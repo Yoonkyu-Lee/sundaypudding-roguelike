@@ -18,12 +18,35 @@ const C_TXT := Color(0.95, 0.96, 0.98, 1)
 const C_DIM := Color(0.55, 0.58, 0.64, 1)
 
 const RAIL_RECT := Rect2(12, 12, 200, 464)   # 좌측 레일(기존 TurnOrder 위치)
-const SPIN_DT := 0.06
 const ROLL_W := 210         # 굴림 행 폭(중앙 패널)
 const ROLL_H := 30          # 굴림 행 높이(단일행)
 const ROLL_STEP := 46       # 굴림 행 간격(중앙 스택) — 현재 행이 두 줄로 커져도 겹침 최소
 const W_CUR := 176          # 라이브 현재 토큰 폭
 const W_NORM := 150         # 라이브 일반 토큰 폭
+
+# ── 애니메이션 타이밍(초) — 에디터 인스펙터에서 자유 조정(TurnOrder 노드 선택). 시퀀스 순서대로. ──
+@export_group("애니메이션 타이밍 (초)")
+@export var t_dim_fade_in := 0.2       # 굴림 시작 시 어두운 배경 페이드인
+@export var t_spin_interval := 0.06    # 주사위 숫자 순환 간격
+@export var t_settle_first := 0.6      # 첫 주사위 멈춤까지 대기
+@export var t_settle_each := 0.13      # 이후 주사위 차례 멈춤 간격
+@export var t_die_pop := 0.3           # 주사위 확정 pop(통통)
+@export var t_settle_hold := 0.25      # 전부 확정 후 재배치 전 대기
+@export var t_reorder_slide := 0.4     # ① 재배치: 행 y 슬라이드
+@export var t_reorder_hold := 0.45     # 재배치 후 대기
+@export var t_morph := 0.28            # ② 형태 전환: 박스/크기/줄 트랜지션
+@export var t_morph_die_fade := 0.18   # 형태 전환: 주사위/보정 페이드아웃
+@export var t_morph_appear_delay := 0.1 # 형태 전환: SPD/줄 등장 지연
+@export var t_morph_hold := 0.34       # 형태 전환 후 대기
+@export var t_predock_hold := 0.4      # 도킹 전 대기
+@export var t_dock_slide := 0.45       # ③ 도킹: 행별 레일 슬라이드
+@export var t_dock_stagger := 0.04     # 도킹: 행별 시작 지연(스태거)
+@export var t_dock_tail := 0.12        # 도킹: 슬라이드 후 여유
+@export var t_dock_fade := 0.3         # 도킹: 중앙 패널 페이드아웃
+@export var t_dock_dim_fade := 0.5     # 도킹: 어두운 배경 페이드아웃
+@export var t_grow := 0.28             # ④ 턴 잡을 때 토큰 grow(현재 강조)
+@export var t_shrink := 0.22           # 턴 끝날 때 토큰 shrink
+@export_group("")
 
 var _dim: ColorRect
 var _rail: ScrollContainer
@@ -65,7 +88,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _spin.is_empty(): return
 	_spin_acc += delta
-	if _spin_acc < SPIN_DT: return
+	if _spin_acc < t_spin_interval: return
 	_spin_acc = 0.0
 	for uid in _spin:
 		var s: Dictionary = _spin[uid]
@@ -179,15 +202,15 @@ func _row_to_live(row: Dictionary, info: Dictionary, animate: bool) -> void:
 	row.line2.visible = is_current
 	row.line2.modulate.a = 0.0
 	var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tw.tween_property(sb, "border_color", border, 0.28)
-	tw.tween_property(sb, "bg_color", bg, 0.28)
-	tw.tween_property(row.die, "modulate:a", 0.0, 0.18)
-	tw.tween_property(row.adj, "modulate:a", 0.0, 0.18)
+	tw.tween_property(sb, "border_color", border, t_morph)
+	tw.tween_property(sb, "bg_color", bg, t_morph)
+	tw.tween_property(row.die, "modulate:a", 0.0, t_morph_die_fade)
+	tw.tween_property(row.adj, "modulate:a", 0.0, t_morph_die_fade)
 	# 페이드 후 주사위/보정 숨김 — 안 숨기면 HBox에서 자리를 계속 차지해 이름이 잘림(버그).
-	tw.tween_callback(func() -> void: row.die.visible = false; row.adj.visible = false).set_delay(0.18)
-	if show_spd: tw.tween_property(row.spd, "modulate:a", 1.0, 0.28).set_delay(0.1)
-	if is_current: tw.tween_property(row.line2, "modulate:a", 1.0, 0.28).set_delay(0.1)
-	tw.tween_property(row.node, "custom_minimum_size", Vector2(target_w, 0), 0.28)
+	tw.tween_callback(func() -> void: row.die.visible = false; row.adj.visible = false).set_delay(t_morph_die_fade)
+	if show_spd: tw.tween_property(row.spd, "modulate:a", 1.0, t_morph).set_delay(t_morph_appear_delay)
+	if is_current: tw.tween_property(row.line2, "modulate:a", 1.0, t_morph).set_delay(t_morph_appear_delay)
+	tw.tween_property(row.node, "custom_minimum_size", Vector2(target_w, 0), t_morph)
 
 ## obs로부터 rank별 live 정보(현재/완료/사망/speed/kind/이름/진영) 산출.
 func _live_info(obs: Dictionary, uid: String, rank: int) -> Dictionary:
@@ -274,15 +297,15 @@ func _retarget_live(row: Dictionary, info: Dictionary) -> void:
 		row.spd.visible = false
 		row.line2.visible = true; row.line2.modulate.a = 0.0
 		var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tw.tween_property(row.node, "custom_minimum_size:x", float(target_w), 0.28)
-		tw.tween_property(row.line2, "modulate:a", 1.0, 0.28)
+		tw.tween_property(row.node, "custom_minimum_size:x", float(target_w), t_grow)
+		tw.tween_property(row.line2, "modulate:a", 1.0, t_grow)
 	else:
 		# 현재→일반: 줄이고 SPD 페이드인.
 		row.line2.visible = false
 		row.spd.visible = true; row.spd.modulate.a = 0.0
 		var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-		tw.tween_property(row.node, "custom_minimum_size:x", float(target_w), 0.22)
-		tw.tween_property(row.spd, "modulate:a", 1.0, 0.22)
+		tw.tween_property(row.node, "custom_minimum_size:x", float(target_w), t_shrink)
+		tw.tween_property(row.spd, "modulate:a", 1.0, t_shrink)
 
 # ── rolling: 중앙 굴림 → 확정 → 재배치 → 형태 전환 → 도킹 ──
 ## rolls=[{uid,speedMin,speedMax,roll,speedMod,speed}], order_uids=확정 서열, names/sides=표시, obs=라이브 정보원. on_done=라이브 전환(refresh).
@@ -293,7 +316,7 @@ func play_roll(round_no: int, rolls: Array, order_uids: Array, names: Dictionary
 	for c in _rail_box.get_children(): c.queue_free()
 	_dim.visible = true
 	_dim.modulate.a = 0.0
-	create_tween().tween_property(_dim, "modulate:a", 1.0, 0.2)
+	create_tween().tween_property(_dim, "modulate:a", 1.0, t_dim_fade_in)
 
 	var center := PanelContainer.new()
 	center.z_index = 51
@@ -328,7 +351,7 @@ func play_roll(round_no: int, rolls: Array, order_uids: Array, names: Dictionary
 
 	# Phase B: 차례차례 멈춰 roll 확정
 	for i in rolls.size():
-		await _wait(0.6 if i == 0 else 0.13)
+		await _wait(t_settle_first if i == 0 else t_settle_each)
 		var uid := str(rolls[i].get("uid", ""))
 		_spin.erase(uid)
 		row_by[uid].die.text = str(int(rolls[i].get("roll", 0)))
@@ -336,7 +359,7 @@ func play_roll(round_no: int, rolls: Array, order_uids: Array, names: Dictionary
 	_spin.clear()
 
 	# Phase C: 재배치 애니 — 각 행 y를 순위 위치로 슬라이드 + 순위 번호.
-	await _wait(0.25)
+	await _wait(t_settle_hold)
 	for rank in order_uids.size():
 		var uid := str(order_uids[rank])
 		if not row_by.has(uid): continue
@@ -345,8 +368,8 @@ func play_roll(round_no: int, rolls: Array, order_uids: Array, names: Dictionary
 		if _skipped:
 			(row_by[uid].node as Control).position.y = ty
 		else:
-			create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).tween_property(row_by[uid].node, "position:y", ty, 0.4)
-	if not _skipped: await _wait(0.45)
+			create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).tween_property(row_by[uid].node, "position:y", ty, t_reorder_slide)
+	if not _skipped: await _wait(t_reorder_hold)
 
 	# Phase C2: 형태 전환 애니 — 굴림형 → §I 토큰형(같은 노드, 제자리). **모두 일반 형태**(현재 강조·크기는 도킹 후 update가 애니로).
 	for rank in order_uids.size():
@@ -355,10 +378,10 @@ func play_roll(round_no: int, rolls: Array, order_uids: Array, names: Dictionary
 		var info := _live_info(obs, uid, rank)
 		info["current"] = false   # 형태 전환 단계에선 전부 일반 — 현재 토큰 grow/하이라이트는 도킹 후
 		_row_to_live(row_by[uid], info, not _skipped)
-	if not _skipped: await _wait(0.34)
+	if not _skipped: await _wait(t_morph_hold)
 
 	# Phase D: 도킹 — 토큰이 된 행이 레일로 슬라이드, 그대로 정착.
-	await _wait(0.4)
+	await _wait(t_predock_hold)
 	await _dock(center, order_uids, row_by, on_done)
 
 ## dock — 토큰형 행들의 레일 도착 위치를 측정 후 _fly에서 슬라이드, 도착하면 그 행을 레일에 정착(같은 노드).
@@ -388,11 +411,11 @@ func _dock(center: Control, order_uids: Array, row_by: Dictionary, on_done: Call
 		_fly.add_child(node)
 		node.global_position = gp_old.get(uid, gp_new[uid])
 		create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT) \
-			.tween_property(node, "global_position", gp_new[uid], 0.45).set_delay(rank * 0.04)
+			.tween_property(node, "global_position", gp_new[uid], t_dock_slide).set_delay(rank * t_dock_stagger)
 	var fade := create_tween().set_parallel(true)
-	fade.tween_property(center, "modulate:a", 0.0, 0.3)
-	fade.tween_property(_dim, "modulate:a", 0.0, 0.5)
-	await get_tree().create_timer(0.45 + order_uids.size() * 0.04 + 0.12).timeout
+	fade.tween_property(center, "modulate:a", 0.0, t_dock_fade)
+	fade.tween_property(_dim, "modulate:a", 0.0, t_dock_dim_fade)
+	await get_tree().create_timer(t_dock_slide + order_uids.size() * t_dock_stagger + t_dock_tail).timeout
 	# 4) 같은 행을 레일에 정착(VBox가 같은 위치로 배치 → 점프 없음).
 	for rank in order_uids.size():
 		var uid := str(order_uids[rank])
@@ -422,7 +445,7 @@ func _wait(t: float) -> void:
 func _pop(n: Control) -> void:
 	n.pivot_offset = n.size * 0.5
 	n.scale = Vector2(1.35, 1.35)
-	create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).tween_property(n, "scale", Vector2.ONE, 0.3)
+	create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).tween_property(n, "scale", Vector2.ONE, t_die_pop)
 
 # ── 헬퍼 ──
 func _lbl(text: String, size: int, col: Color) -> Label:
