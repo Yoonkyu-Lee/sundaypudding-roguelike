@@ -117,9 +117,14 @@ func _flat(color: Color) -> StandardMaterial3D:
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	return mat
 
+## remove_child로 즉시 트리에서 분리 후 queue_free — 지연삭제 중 잔류 렌더·이름충돌·누적 방지.
 func _clear_overlays() -> void:
-	for c in get_children(): c.queue_free()
+	for c in get_children():
+		remove_child(c)
+		c.queue_free()
 
 func _clear_preview() -> void:
 	for c in get_children():
-		if str(c.name).begins_with("prev_"): c.queue_free()
+		if str(c.name).begins_with("prev_"):
+			remove_child(c)
+			c.queue_free()
