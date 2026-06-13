@@ -14,11 +14,10 @@ const C_MINT := Color(0.45, 0.92, 0.78, 1)
 const C_MINT_FAINT := Color(0.45, 0.92, 0.78, 0.45)
 const C_TXT := Color(0.95, 0.96, 0.98, 1)
 const C_DIM := Color(0.55, 0.58, 0.64, 1)
-const C_HP := Color(0.314, 0.784, 0.471, 1)
 
 const RAIL_RECT := Rect2(12, 12, 196, 464)   # 좌측 레일(기존 TurnOrder 위치)
 const SPIN_DT := 0.06
-const ROW_W := 332          # 굴림 행 폭(이름+주사위+보정+speed)
+const ROW_W := 268          # 굴림 행 폭(이름+주사위+보정)
 const ROW_H := 30           # 굴림 행 높이
 const ROW_STEP := 38        # 행 간격(높이+gap) — 재정렬/dock 좌표 기준
 
@@ -165,7 +164,6 @@ func play_roll(round_no: int, rolls: Array, order_uids: Array, names: Dictionary
 		_spin.erase(uid)
 		var rb: Dictionary = row_by[uid]
 		rb.die.text = str(int(r.get("roll", 0)))
-		rb.spd.text = "= %d" % int(r.get("speed", 0))
 		_pop(rb.die)
 	_spin.clear()
 
@@ -187,7 +185,8 @@ func play_roll(round_no: int, rolls: Array, order_uids: Array, names: Dictionary
 	await _wait(0.55)
 	await _dock(center, order_uids, row_by, on_done)
 
-## 굴림 행 = HBox[순위 | 이름 | 주사위 | ±보정 | =speed]. 좌표 배치용 고정 폭/높이. {node,die,spd,mark} 반환.
+## 굴림 행 = HBox[순위 | 이름 | 주사위 | ±보정]. 좌표 배치용 고정 폭/높이. {node,die,mark} 반환.
+## (총합 speed 표기는 제거 — die=roll·adj=±mod만, 최종 SPD는 dock 후 라이브 레일 토큰에 표시)
 func _build_roll_row(r: Dictionary, nm_text: String, side: String) -> Dictionary:
 	var row := HBoxContainer.new()
 	row.size = Vector2(ROW_W, ROW_H)
@@ -198,7 +197,7 @@ func _build_roll_row(r: Dictionary, nm_text: String, side: String) -> Dictionary
 	mark.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	row.add_child(mark)
 	var nm := _lbl(nm_text, 14, C_ENEMY if side == "enemy" else C_ALLY)
-	nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL   # 슬랙 흡수 → 주사위/보정/speed 우측 정렬
+	nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL   # 슬랙 흡수 → 주사위/보정 우측 정렬
 	row.add_child(nm)
 	var die := _lbl("?", 22, C_ACCENT)
 	die.custom_minimum_size = Vector2(38, 0)
@@ -209,11 +208,7 @@ func _build_roll_row(r: Dictionary, nm_text: String, side: String) -> Dictionary
 	adj.custom_minimum_size = Vector2(30, 0)
 	adj.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	row.add_child(adj)
-	var spd := _lbl("", 14, C_HP)
-	spd.custom_minimum_size = Vector2(56, 0)
-	spd.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	row.add_child(spd)
-	return {"node": row, "die": die, "spd": spd, "mark": mark}
+	return {"node": row, "die": die, "mark": mark}
 
 ## dock(FLIP) — 라이브 레일을 빌드(숨김)해 실제 토큰 위치를 타겟으로 읽고, 굴림 행을 _fly로 reparent해 그 위치로 스태거 슬라이드.
 ## 도착하며 라이브 페이드인 + 굴림 행/패널 페이드아웃. = "행이 좌측 레일로 복귀"(웹 dock).
