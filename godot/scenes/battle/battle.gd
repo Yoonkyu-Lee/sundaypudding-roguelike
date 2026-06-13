@@ -6,18 +6,32 @@ extends Node3D
 const CELL := 1.15
 const GAP := 0.12
 const SIDE_GAP := 1.1
+const ROWS := 4
+const COLS := 4
 const C_TXT := Color(0.902, 0.9137, 0.9373)
 const C_ALLY := Color(0.353, 0.663, 0.902)
 const C_ENEMY := Color(0.902, 0.408, 0.353)
+const BoardTargeting := preload("res://scenes/battle/board_targeting.gd")
 
 var director: BattleDirector
+var _obs: Dictionary = {}        # 최신 관측(타겟팅이 legalActions/유닛 위치 조회)
+var _board: Node3D               # 보드 칸 타겟팅 오버레이
+var _target_skill: String = ""   # 타겟팅 중인 스킬명("" = 비타겟팅)
 
 func _ready() -> void:
 	director = BattleDirector.new(self)
 	if str(GameDirector.view.get("phase", "")) != "battle":
 		GameDirector.bootstrap_battle()  # 단독 실행/캡처용
+	_board = BoardTargeting.new()
+	add_child(_board)
+	_board.setup($Camera3D)
+	_board.cell_hovered.connect(_on_cell_hovered)
+	_board.cell_clicked.connect(_on_cell_clicked)
 	var hud := get_node_or_null("BattleHUD")
-	if hud: hud.action_chosen.connect(_act)
+	if hud:
+		hud.action_chosen.connect(_act)
+		hud.skill_selected.connect(_begin_targeting)
+		hud.targeting_cancelled.connect(_cancel_targeting)
 	# 전투 진입 델타 수집(roundStart 주사위 포함). 보드 먼저 → 주사위 연출 → 진행.
 	var init: Dictionary = GameDirector.battle_init()
 	var obs := GameDirector.battle_obs()
@@ -32,7 +46,20 @@ func _ready() -> void:
 func _after_dice() -> void:
 	var obs := _advance_enemy_turns(GameDirector.battle_obs())
 	if _ended(obs): GameDirector.battle_finish()
-	else: _refresh(obs)
+	else:
+		_refresh(obs)
+		if _DEBUG_AUTOTARGET: _debug_autotarget()
+
+# [임시 검증용] 첫 아군 스킬 자동선택 + 첫 칸 호버 — 스크린샷으로 타겟팅 오버레이 확인. 커밋 전 false.
+const _DEBUG_AUTOTARGET := false
+func _debug_autotarget() -> void:
+	for a in _obs.get("legalActions", []):
+		var sn := str(a.get("skillName", ""))
+		if sn != "":
+			_begin_targeting(sn)
+			var cell := _action_cell(a)
+			if not cell.is_empty(): _on_cell_hovered("%d,%d,%d" % [cell.row, cell.col, cell.side])
+			return
 
 func _find_round_start(delta: Variant) -> Dictionary:
 	if not (delta is Array): return {}
@@ -43,10 +70,134 @@ func _find_round_start(delta: Variant) -> Dictionary:
 ## 플레이어 행동(legalAction.action) → battle_step → 적 턴 자동 진행 → 갱신/종료.
 func _act(action: Dictionary) -> void:
 	if GameDirector.session == null: return
+	_cancel_targeting()
 	GameDirector.session.battle_step(JSON.stringify(action))
 	var obs := _advance_enemy_turns(GameDirector.battle_obs())
 	if _ended(obs): GameDirector.battle_finish()
 	else: _refresh(obs)
+
+# ── 보드 칸 타겟팅 (HUD 스킬 선택 → 보드 클릭) ──
+## 스킬 선택 시 — 그 스킬의 legalActions로 타겟가능 칸·명중%를 보드에 표시.
+func _begin_targeting(skill_name: String) -> void:
+	_target_skill = skill_name
+	var targets := []
+	var seen := {}
+	for a in _obs.get("legalActions", []):
+		if str(a.get("skillName", "")) != skill_name: continue
+		var cell := _action_cell(a)
+		if cell.is_empty(): continue
+		var key := "%d,%d,%d" % [cell.row, cell.col, cell.side]
+		if seen.has(key): continue
+		seen[key] = true
+		targets.append({"key": key, "pos": _slot_pos(cell.side, cell.row, cell.col), "hit": int(a.get("hitChance", -1))})
+	_board.show_targets(targets)
+
+## 호버 칸 — AoE 풋프린트 + battle_targeting로 HP 손실 예고(빨강).
+func _on_cell_hovered(key: String) -> void:
+	if key == "" or _target_skill == "": return
+	var parts := key.split(",")
+	if parts.size() < 3: return
+	var row := int(parts[0]); var col := int(parts[1]); var side := int(parts[2])
+	var skill_id := _skill_id_of(_target_skill)
+	var area := _skill_area(skill_id)
+	var anchor := _slot_pos(side, row, col)
+	var footprint := []
+	for c in _area_cells(row, col, area):
+		footprint.append(_slot_pos(side, c.x, c.y))
+	var tgt := GameDirector.battle_targeting(skill_id, row, col)
+	var losses := []
+	var loss_map: Variant = tgt.get("previewLoss", {})
+	if loss_map is Dictionary:
+		for uid in loss_map:
+			var u := _unit_by_uid(str(uid))
+			if u.is_empty(): continue
+			var p: Dictionary = u.get("pos", {})
+			var sd := 1 if str(u.get("side", "")) == "ally" else -1
+			var hl := int(loss_map[uid].get("hpLoss", 0))
+			losses.append({"pos": _slot_pos(sd, int(p.get("row", 0)), int(p.get("col", 0))), "text": "-%d" % hl})
+	_board.show_preview(anchor, footprint, losses)
+
+## 칸 클릭 — 그 칸의 legalAction을 찾아 실행.
+func _on_cell_clicked(key: String) -> void:
+	if _target_skill == "": return
+	for a in _obs.get("legalActions", []):
+		if str(a.get("skillName", "")) != _target_skill: continue
+		var cell := _action_cell(a)
+		if cell.is_empty(): continue
+		if key == "%d,%d,%d" % [cell.row, cell.col, cell.side]:
+			_act(a.get("action", {}))
+			return
+
+func _cancel_targeting() -> void:
+	_target_skill = ""
+	if _board: _board.stop()
+
+## legalAction → 타겟 칸 {row,col,side(1아군/-1적)}. targetUid 우선, 없으면 action.targetCell.
+func _action_cell(a: Dictionary) -> Dictionary:
+	var tuid := str(a.get("targetUid", ""))
+	if tuid != "":
+		var u := _unit_by_uid(tuid)
+		if not u.is_empty():
+			var p: Dictionary = u.get("pos", {})
+			return {"row": int(p.get("row", 0)), "col": int(p.get("col", 0)), "side": 1 if str(u.get("side", "")) == "ally" else -1}
+	var act: Dictionary = a.get("action", {})
+	var tc: Variant = act.get("targetCell")
+	if tc is Dictionary:
+		# 칸 타겟 스킬 — 진영은 현재 행동자 기준(self 대상이면 같은 편). MVP: 적 대상 가정 외엔 행동자 편.
+		var side := _target_side_for(_skill_id_of(_target_skill))
+		return {"row": int(tc.get("row", 0)), "col": int(tc.get("col", 0)), "side": side}
+	return {}
+
+# ── 조회 헬퍼 ──
+func _unit_by_uid(uid: String) -> Dictionary:
+	for u in _obs.get("allies", []) + _obs.get("enemies", []):
+		if u is Dictionary and str(u.get("uid", "")) == uid: return u
+	return {}
+
+func _skill_id_of(skill_name: String) -> String:
+	for a in _obs.get("legalActions", []):
+		if str(a.get("skillName", "")) == skill_name:
+			return str(a.get("action", {}).get("skillId", ""))
+	return ""
+
+func _skill_area(skill_id: String) -> Dictionary:
+	var sk: Dictionary = GameDirector.content("skills").get(skill_id, {})
+	var area: Variant = sk.get("area")
+	return area if area is Dictionary else {"kind": "single"}
+
+## 타겟팅 대상 진영(1아군/-1적) — 현재 행동자 + 스킬 target. enemy면 반대편.
+func _target_side_for(skill_id: String) -> int:
+	var sk: Dictionary = GameDirector.content("skills").get(skill_id, {})
+	var cur: Variant = _obs.get("current")
+	var actor_ally := cur is Dictionary and str(cur.get("side", "")) == "ally"
+	if str(sk.get("target", "enemy")) == "enemy": return -1 if actor_ally else 1
+	return 1 if actor_ally else -1
+
+## AreaShape 풋프린트(앵커 row,col 기준) → [Vector2(row,col)]. web areaGeo.computeAreaCells 1:1.
+func _area_cells(arow: int, acol: int, area: Dictionary) -> Array:
+	var cells := []
+	var push := func(r: int, c: int) -> void:
+		if r >= 0 and r < ROWS and c >= 0 and c < COLS: cells.append(Vector2(r, c))
+	match str(area.get("kind", "single")):
+		"single": push.call(arow, acol)
+		"row":
+			for c in COLS: push.call(arow, c)
+		"col":
+			for r in ROWS: push.call(r, acol)
+		"square":
+			var rad := int(area.get("radius", 1))
+			for dr in range(-rad, rad + 1):
+				for dc in range(-rad, rad + 1): push.call(arow + dr, acol + dc)
+		"cross":
+			var rad := int(area.get("radius", 1))
+			push.call(arow, acol)
+			for d in range(1, rad + 1):
+				push.call(arow + d, acol); push.call(arow - d, acol)
+				push.call(arow, acol + d); push.call(arow, acol - d)
+		"all":
+			for r in ROWS:
+				for c in COLS: push.call(r, c)
+	return cells
 
 ## 적 턴 자동(AI) — 아군 턴/종료까지 ai_step. 최종 obs.
 func _advance_enemy_turns(obs: Dictionary) -> Dictionary:
@@ -76,6 +227,7 @@ func _slot_pos(side: int, row: int, col: int) -> Vector3:
 	return Vector3((row - 1.5) * step, 0.0, side * (SIDE_GAP + col * step))
 
 func _place_units(obs: Dictionary) -> void:
+	_obs = obs
 	var allies: Variant = obs.get("allies")
 	if allies is Array and not allies.is_empty():
 		# 실 전투 관측 — 아군/적 실 배치·이름·HP

@@ -14,6 +14,7 @@
 - **slice D**(주사위): `battle_init` **roundStart 델타 → dice_roll 인스턴스** 연출(주사위 회전→차례로 확정·`= speed`→최종 순위)→라이브 서열. web `timelinePanel` rolling 모드 모방.
 - **slice E**(유닛 카드 데이터): 카드에 HP바(색=잔량)+쉴드·상태칩(icon·stacks)+HP텍스트 — UnitView 실데이터.
 - **slice F**(하단 HUD 리레이아웃): **사용자 스케치(`전투 하단 HUD.jpg`) 구현** — 좌 `unit_panel.tscn`(현재 유닛: 체력바+숫자·스탯 창(SPD범위/명중/회피/크리+포메이션)·장비 3슬롯·상태이상 가로 스크롤) + **툴팁 공간**(호버/클릭 상세 단일 표시, `tips.gd`) + 큰 스킬 슬롯(가로 균등) + **턴 넘기기** 버튼. 스탯·장비명·툴팁 = 신규 `content_section` 바인딩(번들 원본 JSON 섹션) + `sheet_data`(charId·equipped).
+- **slice G**(보드 칸 타겟팅): 타겟을 HUD 버튼 → **3D 보드 칸 클릭**. `board_targeting.gd`(Node3D, 코드 생성) = 카메라 레이캐스트(마우스→y평면 교차→타겟 칸 근접 매칭) + 오버레이(타겟가능 칸 accent·**머리위 🎯명중%**·호버 풋프린트·**빨강 HP 손실 예고**). HUD 스킬 클릭→`skill_selected` 시그널→`battle.gd`가 legalActions로 타겟 칸 빌드·`battle_targeting`로 호버 예고·클릭 칸의 legalAction 실행. AoE 풋프린트 기하 = web `areaGeo.computeAreaCells` GDScript 이식.
 
 ## 2. 화면 인벤토리
 
@@ -34,9 +35,8 @@
 ## 3. 폴리시 · 미완 백로그 (다듬을 부분)
 
 ### A. 전투 (실전투 인터랙션 — 코어 루프는 done, 연출·미리보기 남음)
-- **✅ 수동 전투 UI**(slice C): 스킬→타겟 2단계(명중%)+battle_step. **남은 것**:
-  - **타겟 칸 클릭(3D 보드 레이캐스트)**: 현재 HUD 버튼으로 타겟 선택. web식 칸 하이라이트(2.4)+호버 HP예고(`battle_targeting`)+area 미리보기는 보드 클릭/레이캐스트 필요(미구현).
-  - **눈금 화살표·머리위 명중%**(web 2.7): 시전자→타겟 화살표, 유닛 위 명중% 칩.
+- **✅ 수동 전투 UI**(slice C): 스킬→타겟 2단계(명중%)+battle_step.
+- **✅ 타겟 칸 클릭(3D 보드 레이캐스트)**(slice G): 칸 하이라이트(2.4)+호버 HP예고(`battle_targeting`)+AoE 풋프린트+머리위 🎯명중%(2.7). **남은 것**: 시전자→타겟 **눈금 화살표**(web 2.7), 칸 가시성(2.5D에서 서 있는 카드가 바닥 하이라이트 일부 가림 — 명중% 라벨이 주 어포던스).
 - **이벤트→애니메이션**: `BattleDirector`가 스텁. 데미지 팝업·공격 모션·피격 플래시·상태칩·카메라 흔들림 = 이벤트 로그 소비해 연주(R3, 디자이너 협업).
 - ✅ 상태칩·쉴드·HP바(slice E 카드 + slice F HUD 패널). **남은 것**: 스킬 쿨다운 표시(UnitView.cooldowns 미소비), 툴팁 풀 서술(web skillDesc/passiveDesc 수준 — 현재 한 줄 요약).
 

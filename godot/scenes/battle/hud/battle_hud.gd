@@ -3,6 +3,8 @@ extends CanvasLayer
 ## 2단계 수동 전투(스킬→타겟, legalActions·명중%) 유지 — 선택 시 action_chosen 시그널 → battle.gd가 battle_step.
 ## 호버/클릭 상세(스킬·상태·장비)는 전부 툴팁 공간(Label) 한 곳에 표시.
 signal action_chosen(action: Dictionary)
+signal skill_selected(skill_name: String)   # 스킬 선택 → battle.gd가 보드 칸 타겟팅 시작
+signal targeting_cancelled()
 
 const TURN_CHIP := preload("res://scenes/battle/hud/turn_chip.tscn")
 const Tips := preload("res://scenes/battle/hud/tips.gd")
@@ -95,26 +97,19 @@ func _render_skills() -> void:
 		btn.pressed.connect(_choose_skill.bind(sn))
 		$Hud/Right/Skills.add_child(btn)
 
-# ── 타겟(2단계) — 스킬 줄이 타겟 버튼으로 전환 ──
+# ── 타겟(2단계) — 보드 칸 클릭으로 선택. HUD는 안내 + 취소만. ──
 func _choose_skill(skill_name: String) -> void:
 	_clear_skills()
-	_tip("타겟 선택 — %s (보드 칸 클릭은 다음 업데이트, 지금은 버튼으로)" % skill_name)
-	var names := _names()
-	for a in _obs.get("legalActions", []):
-		if str(a.get("skillName", "")) != skill_name: continue
-		var tuid := str(a.get("targetUid", ""))
-		var tlabel: String = names.get(tuid, "") if tuid != "" else str(a.get("label", "대상"))
-		if tlabel == "": tlabel = str(a.get("label", "대상"))
-		var hit := int(a.get("hitChance", 0))
-		var btn := _slot_button("%s\n명중 %d%%" % [tlabel, hit])
-		btn.mouse_entered.connect(_tip.bind("%s에게 %s — 명중 %d%%" % [tlabel, skill_name, hit]))
-		btn.pressed.connect(_emit.bind(a.get("action", {})))
-		$Hud/Right/Skills.add_child(btn)
+	_tip("🎯 「%s」 대상 선택 — 보드의 빛나는 칸을 클릭하세요." % skill_name)
+	$Hud/Right/TopRow/SkipBtn.disabled = true
 	var cancel := _slot_button("← 취소")
-	cancel.custom_minimum_size = Vector2(90, 0)
-	cancel.size_flags_horizontal = 0
-	cancel.pressed.connect(func() -> void: _render_skills())
+	cancel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	cancel.custom_minimum_size = Vector2(160, 0)
+	cancel.pressed.connect(func() -> void:
+		targeting_cancelled.emit()
+		_render_skills())
 	$Hud/Right/Skills.add_child(cancel)
+	skill_selected.emit(skill_name)
 
 ## 큰 스킬 슬롯 버튼(스케치: 하단을 채우는 4분할) — 가로 균등 확장.
 func _slot_button(text: String) -> Button:

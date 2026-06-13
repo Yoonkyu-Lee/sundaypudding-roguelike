@@ -133,7 +133,7 @@ ROADMAP의 "엔진+도구=엔지니어 / 콘텐츠=디자이너" 원칙을 **데
 - `scripts/battle_director.gd` (= `rustBattle.ts`): 이벤트 로그→애니 디렉터 **스텁**.
 - 셸 씬: `boot`→`title`→`hub`(모드 메뉴)→`campaign_select`→`run_map`→`battle`/`reward`/`shop`/`encounter`/`chardex`/`overlays/pause`.
 - **Theme**(`ui/theme.tres`) = 웹 `style.css` 다크 팔레트 전역 적용 + 다크 배경.
-- **전투 2.5D 보드**(`scenes/battle/battle.tscn`): 정적 보드(바닥·4×4 양진영 셀·카메라)=씬에 박힘(에디터 편집), 유닛 카드·이름표=코드(`battle.gd`). 카메라=사용자 조정(틸트 탑다운, 아군 좌/적 우 마주봄). 진단색=아군 초록·적 보라.
+- **전투 2.5D 보드**(`scenes/battle/battle.tscn`): 정적 보드(바닥·4×4 양진영 셀·카메라)=씬에 박힘(에디터 편집), 유닛 카드·이름표=코드(`battle.gd`). 카메라=사용자 조정(틸트 탑다운, 아군 좌/적 우 마주봄). 진단색=아군 초록·적 보라. **칸 타겟팅**=`board_targeting.gd`(코드 생성 Node3D, 카메라 레이캐스트로 마우스→칸 + 하이라이트/명중%/예고 오버레이, `battle.gd`가 legalAction·좌표 소유).
 - **전투 HUD**(`scenes/battle/hud/`): `battle_hud.tscn`(CanvasLayer) = 사용자 스케치(`전투 하단 HUD.jpg`) 레이아웃 — 하단 풀폭 바: 좌 `unit_panel.tscn`(현재 유닛 체력바+숫자·스탯 창·장비 3슬롯·상태이상 가로 스크롤) + 우(툴팁 공간 띠 + 큰 스킬 슬롯 + 턴 넘기기). 호버/클릭 상세 = `tips.gd`(스킬·상태·장비 한 줄 요약) → 툴팁 공간 단일 표시. 반복 원자 `turn_chip.tscn`·`dice_roll.tscn` 인스턴스.
 - **런 루프 실데이터 배선**: campaign_select=`run_list` 실런목록 · run_map=`RunView.nodes`(도달가능→`enter_node`) · reward/shop/encounter=`view`의 옵션→`choose_reward`/`buy`/`encounter` · battle=`view.party` 아군.
 
@@ -146,13 +146,12 @@ ROADMAP의 "엔진+도구=엔지니어 / 콘텐츠=디자이너" 원칙을 **데
 **✅ 게임 쉘 스캐폴딩 완료(에디터 제외, 2026-06)** — slice 0~4. 전 화면·런 루프 네비게이블, 핵심 실데이터. **완료 보고·폴리시 백로그 = [`GODOT-SCAFFOLD-REPORT.md`](GODOT-SCAFFOLD-REPORT.md).**
 - slice 0 dll+MCP · slice 1 노드맵(헥스) · slice 2 전투 실데이터+자동전투 · slice 3 전직·결과 · slice 4 도감. mcp 스크린샷 검증.
 
-**✅ 전투/맵 시각·인터랙션 슬라이스 완료(slice A~F, 2026-06):**
-- **A** 유닛 카드 가시화(서 있는 빌보드) · **B** 노드 맵 육각 타일 벌집+벽 · **C** 수동 전투 UI(스킬→타겟 2단계·명중%·battle_step) · **D** SPD 주사위 연출(roundStart→dice_roll 인스턴스) · **E** 유닛 카드 HP바·상태칩 · **F** 하단 HUD 리레이아웃(스케치 기반 unit_panel·툴팁 공간·`content_section`). mcp 스크린샷 검증.
+**✅ 전투/맵 시각·인터랙션 슬라이스 완료(slice A~G, 2026-06):**
+- **A** 유닛 카드 가시화(서 있는 빌보드) · **B** 노드 맵 육각 타일 벌집+벽 · **C** 수동 전투 UI(스킬→타겟 2단계·명중%·battle_step) · **D** SPD 주사위 연출(roundStart→dice_roll 인스턴스) · **E** 유닛 카드 HP바·상태칩 · **F** 하단 HUD 리레이아웃(스케치 기반 unit_panel·툴팁 공간·`content_section`) · **G** 보드 칸 타겟팅(`board_targeting.gd` — 카메라 레이캐스트로 마우스→칸, 타겟가능 칸 하이라이트·머리위 명중%·호버 HP예고(`battle_targeting`)·AoE 풋프린트; HUD 스킬선택→`skill_selected` 시그널→보드 클릭). mcp 스크린샷 검증.
 
 **다음(폴리시·미완 — 상세는 SCAFFOLD-REPORT §3·5):**
 1. **이벤트→애니메이션**: `BattleDirector.play_events` 실구현(데미지 팝업·피격 플래시·상태칩·HP바·카메라). 게임 알맹이, R3.
-2. **타겟 칸 클릭(3D 레이캐스트)** + 칸 하이라이트·호버 HP예고(`battle_targeting`)·area 미리보기·머리위 명중% — web 전투 어포던스 패리티.
-3. **남은 화면 정교화**: chardex 전체 도감(char_list+meta) · 파티 시트/장착 · 허브 모드카드 · 일시정지(Esc) · 세이브·이어하기.
+2. **남은 화면 정교화**: chardex 전체 도감(`content_section`로 가능) · 파티 시트/장착 · 허브 모드카드 · 일시정지(Esc) · 세이브·이어하기.
 4. **노드 맵 카메라**: 줌/팬(web `camera.ts`) + reachable 펄스 애니메이션.
 
 ### 🔁 워크플로 (MCP로 바뀐 점)

@@ -91,6 +91,12 @@ func battle_obs() -> Dictionary:
 	var o: Variant = JSON.parse_string(session.battle_obs())
 	return o if o is Dictionary else {}
 
+## 타겟팅 미리보기(앵커 칸) — {previewLoss:{uid:{hpLoss,shieldConsumed}}, ghosts:[name]}. 비전투면 {}.
+func battle_targeting(skill_id: String, row: int, col: int) -> Dictionary:
+	if session == null: return {}
+	var v: Variant = JSON.parse_string(session.battle_targeting(skill_id, row, col))
+	return v if v is Dictionary else {}
+
 ## 전투 종료 → run view 갱신 + phase 라우팅(수동 전투가 끝났을 때 호출).
 func battle_finish() -> void:
 	if session != null: _set_view(session.view())
