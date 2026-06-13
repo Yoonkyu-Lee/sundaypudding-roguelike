@@ -8,6 +8,13 @@ config/name="Sunday Pudding"
 run/main_scene="res://scenes/boot.tscn"
 config/features=PackedStringArray("4.6")
 
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
 [autoload]
 
 GameDirector="*res://scripts/game_director.gd"
