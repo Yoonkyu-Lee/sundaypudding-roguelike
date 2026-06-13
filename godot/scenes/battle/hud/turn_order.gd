@@ -23,6 +23,7 @@ const ROLL_H := 30          # 굴림 행 높이(단일행)
 const ROLL_STEP := 46       # 굴림 행 간격(중앙 스택) — 현재 행이 두 줄로 커져도 겹침 최소
 const W_CUR := 176          # 라이브 현재 토큰 폭
 const W_NORM := 150         # 라이브 일반 토큰 폭
+const L2H := 17             # 현재 토큰 2번째 줄("SPD·현재 턴") 높이 — 0↔L2H 트윈으로 두께(높이) 애니
 
 # ── 애니메이션 타이밍(초) — 에디터 인스펙터에서 자유 조정(TurnOrder 노드 선택). 시퀀스 순서대로. ──
 @export_group("애니메이션 타이밍 (초)")
@@ -31,21 +32,21 @@ const W_NORM := 150         # 라이브 일반 토큰 폭
 @export var t_settle_first := 0.6      # 첫 주사위 멈춤까지 대기
 @export var t_settle_each := 0.13      # 이후 주사위 차례 멈춤 간격
 @export var t_die_pop := 0.3           # 주사위 확정 pop(통통)
-@export var t_settle_hold := 0.25      # 전부 확정 후 재배치 전 대기
-@export var t_reorder_slide := 0.4     # ① 재배치: 행 y 슬라이드
-@export var t_reorder_hold := 0.45     # 재배치 후 대기
-@export var t_morph := 0.28            # ② 형태 전환: 박스/크기/줄 트랜지션
+@export var t_settle_hold := 0.5      # 전부 확정 후 재배치 전 대기
+@export var t_reorder_slide := 0.25     # ① 재배치: 행 y 슬라이드
+@export var t_reorder_hold := 0.5     # 재배치 후 대기
+@export var t_morph := 0.5            # ② 형태 전환: 박스/크기/줄 트랜지션
 @export var t_morph_die_fade := 0.18   # 형태 전환: 주사위/보정 페이드아웃
-@export var t_morph_appear_delay := 0.1 # 형태 전환: SPD/줄 등장 지연
-@export var t_morph_hold := 0.34       # 형태 전환 후 대기
-@export var t_predock_hold := 0.4      # 도킹 전 대기
-@export var t_dock_slide := 0.45       # ③ 도킹: 행별 레일 슬라이드
+@export var t_morph_appear_delay := 0.3 # 형태 전환: SPD/줄 등장 지연
+@export var t_morph_hold := 0.5       # 형태 전환 후 대기
+@export var t_predock_hold := 0.5      # 도킹 전 대기
+@export var t_dock_slide := 0.5       # ③ 도킹: 행별 레일 슬라이드
 @export var t_dock_stagger := 0.04     # 도킹: 행별 시작 지연(스태거)
 @export var t_dock_tail := 0.12        # 도킹: 슬라이드 후 여유
 @export var t_dock_fade := 0.3         # 도킹: 중앙 패널 페이드아웃
 @export var t_dock_dim_fade := 0.5     # 도킹: 어두운 배경 페이드아웃
-@export var t_grow := 0.28             # ④ 턴 잡을 때 토큰 grow(현재 강조)
-@export var t_shrink := 0.22           # 턴 끝날 때 토큰 shrink
+@export var t_grow := 0.5             # ④ 턴 잡을 때 토큰 grow(현재 강조)
+@export var t_shrink := 0.5           # 턴 끝날 때 토큰 shrink
 @export_group("")
 
 var _dim: ColorRect
@@ -134,10 +135,18 @@ func _make_row() -> Dictionary:
 	spd.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	spd.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	line1.add_child(spd)
+	# 2번째 줄 = 높이 래퍼(clip) 안에 — 래퍼 높이(custom_minimum_size.y) 0↔L2H 트윈으로 행 두께를 연속 변화(VBox가 아래 행을 부드럽게 밀어냄).
+	var line2_box := Control.new()
+	line2_box.clip_contents = true
+	line2_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	line2_box.custom_minimum_size = Vector2(0, 0)
+	box.add_child(line2_box)
 	var line2 := _lbl("", 12, C_ACCENT)
+	line2.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	line2.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	line2.visible = false
-	box.add_child(line2)
-	return {"node": p, "mark": mark, "name": nm, "die": die, "adj": adj, "spd": spd, "line2": line2}
+	line2_box.add_child(line2)
+	return {"node": p, "mark": mark, "name": nm, "die": die, "adj": adj, "spd": spd, "line2": line2, "line2_box": line2_box}
 
 ## 굴림 외형: 투명 패널, 주사위·±보정 표시, SPD/2번째 줄 숨김, 진영색 이름.
 func _row_to_rolling(row: Dictionary, nm_text: String, side: String, mod: int) -> void:
@@ -155,6 +164,7 @@ func _row_to_rolling(row: Dictionary, nm_text: String, side: String, mod: int) -
 	row.adj.text = ("+%d" % mod) if mod > 0 else (str(mod) if mod < 0 else "")
 	row.spd.visible = false
 	row.line2.visible = false
+	row.line2_box.custom_minimum_size.y = 0
 
 ## live 콘텐츠/스타일 적용(§I). animate=true면 굴림형→토큰형을 트랜지션(주사위 페이드아웃·박스/SPD/두 줄 페이드인·크기 보간). false면 즉시(update용).
 func _row_to_live(row: Dictionary, info: Dictionary, animate: bool) -> void:
@@ -193,8 +203,11 @@ func _row_to_live(row: Dictionary, info: Dictionary, animate: bool) -> void:
 		row.adj.visible = false
 		row.spd.visible = show_spd
 		row.line2.visible = is_current
+		row.line2.modulate.a = 1.0
+		row.line2_box.custom_minimum_size.y = L2H if is_current else 0
 		return
 	# 애니메이션: 박스(테두리/배경 알파 0→1) + 주사위/보정 페이드아웃 + spd/line2 페이드인 + 크기 보간.
+	row.line2_box.custom_minimum_size.y = L2H if is_current else 0
 	var sb := _box(Color(bg, 0.0), Color(border, 0.0), 2.0 if is_current else 1.0, 0, 10, 6)
 	row.node.add_theme_stylebox_override("panel", sb)
 	row.spd.visible = show_spd
@@ -290,22 +303,25 @@ func _retarget_live(row: Dictionary, info: Dictionary) -> void:
 	if was == is_current:
 		row.spd.visible = not is_current; row.spd.modulate.a = 1.0
 		row.line2.visible = is_current; row.line2.modulate.a = 1.0
+		row.line2_box.custom_minimum_size.y = L2H if is_current else 0
 		row.node.custom_minimum_size = Vector2(target_w, 0)
 		return
 	if is_current:
-		# 일반→현재: BACK ease로 살짝 통통 튀게 키우고 "현재 턴" 줄 페이드인.
+		# 일반→현재: 너비 + **두께(line2_box 높이 0→L2H)** 연속 트윈 → 아래 토큰들이 부드럽게 밀려남. "현재 턴" 줄 페이드인.
 		row.spd.visible = false
 		row.line2.visible = true; row.line2.modulate.a = 0.0
 		var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		tw.tween_property(row.node, "custom_minimum_size:x", float(target_w), t_grow)
+		tw.tween_property(row.line2_box, "custom_minimum_size:y", float(L2H), t_grow)
 		tw.tween_property(row.line2, "modulate:a", 1.0, t_grow)
 	else:
-		# 현재→일반: 줄이고 SPD 페이드인.
-		row.line2.visible = false
+		# 현재→일반: 너비 + 두께(L2H→0) 줄이며 아래 토큰들이 당겨짐. SPD 페이드인, 줄 페이드아웃.
 		row.spd.visible = true; row.spd.modulate.a = 0.0
 		var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 		tw.tween_property(row.node, "custom_minimum_size:x", float(target_w), t_shrink)
-		tw.tween_property(row.spd, "modulate:a", 1.0, t_shrink)
+		tw.tween_property(row.line2_box, "custom_minimum_size:y", 0.0, t_shrink)
+		tw.tween_property(row.line2, "modulate:a", 0.0, t_shrink)
+		tw.chain().tween_callback(func() -> void: row.line2.visible = false)
 
 # ── rolling: 중앙 굴림 → 확정 → 재배치 → 형태 전환 → 도킹 ──
 ## rolls=[{uid,speedMin,speedMax,roll,speedMod,speed}], order_uids=확정 서열, names/sides=표시, obs=라이브 정보원. on_done=라이브 전환(refresh).
