@@ -13,16 +13,21 @@ const C_ALLY := Color(0.353, 0.663, 0.902)
 const C_ENEMY := Color(0.902, 0.408, 0.353)
 const BoardTargeting := preload("res://scenes/battle/board_targeting.gd")
 const UNIT_TOKEN := preload("res://scenes/battle/unit_token.gd")
+const OVERHEAD := preload("res://scenes/battle/overhead_label.gd")
 
 var director: BattleDirector
 var _obs: Dictionary = {}        # 최신 관측(타겟팅이 legalActions/유닛 위치 조회)
 var _board: Node3D               # 보드 칸 타겟팅 오버레이
 var _target_skill: String = ""   # 타겟팅 중인 스킬명("" = 비타겟팅)
+var _overhead_layer: CanvasLayer # 머리위 2D UI 레이어(해법 B)
+var _overheads: Array = []       # [{anchor: 토큰, ui: overhead_label}] — _process가 투영 갱신
 
 func _ready() -> void:
 	director = BattleDirector.new(self)
 	if str(GameDirector.view.get("phase", "")) != "battle":
 		GameDirector.bootstrap_battle()  # 단독 실행/캡처용
+	_overhead_layer = CanvasLayer.new()  # HUD(layer 1) 아래
+	add_child(_overhead_layer)
 	_board = BoardTargeting.new()
 	add_child(_board)
 	_board.setup($Camera3D)
@@ -221,6 +226,7 @@ func _cur_side(obs: Dictionary) -> String:
 
 func _refresh(obs: Dictionary) -> void:
 	for c in $Units.get_children(): c.queue_free()
+	_clear_overheads()
 	_place_units(obs)
 	var hud := get_node_or_null("BattleHUD")
 	if hud: hud.populate(obs)
@@ -250,10 +256,35 @@ func _place_obs_unit(side: int, u: Dictionary, color: Color) -> void:
 	_spawn_token(side, int(p.get("row", 1)), int(p.get("col", 0)), color, str(u.get("name", "?")),
 		int(u.get("hp", 0)), int(u.get("hpMax", 0)), int(u.get("shield", 0)), u.get("statuses", []))
 
-## 칸 중앙에 유닛 토큰(모듈) 1개 배치 — 카드·머리위 정보는 unit_token이 소유.
+## 칸 중앙에 유닛 토큰(3D 카드) + 머리위 2D 오버레이(이름·HP·상태) 1쌍 배치. _process가 오버레이를 투영 갱신(해법 B).
 func _spawn_token(side: int, row: int, col: int, color: Color, unit_name: String,
 		hp: int = 0, hp_max: int = 0, shield: int = 0, statuses: Variant = []) -> void:
 	var t = UNIT_TOKEN.new()
 	t.position = _slot_pos(side, row, col)
 	$Units.add_child(t)
-	t.setup(unit_name, color, hp, hp_max, shield, statuses, $Camera3D)
+	t.setup(color, $Camera3D)
+	var ui = OVERHEAD.new()
+	_overhead_layer.add_child(ui)
+	ui.setup(unit_name, "ally" if side == 1 else "enemy", hp, hp_max, shield, statuses)
+	_overheads.append({"anchor": t, "ui": ui})
+
+## 매 프레임 — 각 유닛 머리 월드좌표를 화면으로 투영해 2D 오버레이를 카드 위 중심에 배치.
+func _process(_dt: float) -> void:
+	if _overheads.is_empty(): return
+	var cam: Camera3D = $Camera3D
+	for o in _overheads:
+		var anchor = o["anchor"]
+		var ui = o["ui"]
+		if not is_instance_valid(anchor) or not is_instance_valid(ui): continue
+		var wp: Vector3 = anchor.head_world_pos()
+		if cam.is_position_behind(wp):
+			ui.visible = false
+			continue
+		ui.visible = true
+		var sp := cam.unproject_position(wp)
+		ui.position = sp - Vector2(ui.size.x * 0.5, ui.size.y)  # 하단 중앙=머리 위
+
+func _clear_overheads() -> void:
+	for o in _overheads:
+		if is_instance_valid(o["ui"]): o["ui"].queue_free()
+	_overheads.clear()
