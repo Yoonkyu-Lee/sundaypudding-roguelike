@@ -8,6 +8,7 @@ const GAP := 0.12
 const SIDE_GAP := 1.1
 const ROWS := 4
 const COLS := 4
+const FRONT_SHIFT := 0.3   # 칸 기준: 발을 칸의 카메라쪽(앞) 가장자리로 일정량 이동 → 뒤 유닛이 앞 유닛에 덜 가림
 const C_TXT := Color(0.902, 0.9137, 0.9373)
 const C_ALLY := Color(0.353, 0.663, 0.902)
 const C_ENEMY := Color(0.902, 0.408, 0.353)
@@ -231,6 +232,14 @@ func _refresh(obs: Dictionary) -> void:
 	var hud := get_node_or_null("BattleHUD")
 	if hud: hud.populate(obs)
 
+## 칸 기준 앞쪽(카메라 방향) 오프셋 — 카메라 지면-방향(basis.z 투영)으로 모든 칸 동일량. 카메라 점으로 당기는 게 아님(일관).
+func _front_shift() -> Vector3:
+	var cam: Camera3D = $Camera3D
+	var toward_cam := cam.global_transform.basis.z   # 카메라 look(-z)의 반대 = 카메라 쪽
+	var ground := Vector3(toward_cam.x, 0, toward_cam.z)
+	if ground.length() < 0.01: return Vector3.ZERO
+	return ground.normalized() * FRONT_SHIFT
+
 ## 슬롯 월드 좌표 — .tscn 셀과 동일 식. 행(0~3)=좌우(X, 4행 중앙정렬), 열(0~3)=진영 깊이(Z), col 0=전열(중앙).
 func _slot_pos(side: int, row: int, col: int) -> Vector3:
 	var step := CELL + GAP
@@ -260,7 +269,7 @@ func _place_obs_unit(side: int, u: Dictionary, color: Color) -> void:
 func _spawn_token(side: int, row: int, col: int, color: Color, unit_name: String,
 		hp: int = 0, hp_max: int = 0, shield: int = 0, statuses: Variant = []) -> void:
 	var t = UNIT_TOKEN.new()
-	t.position = _slot_pos(side, row, col)
+	t.position = _slot_pos(side, row, col) + _front_shift()
 	$Units.add_child(t)
 	t.setup(color)
 	var ui = OVERHEAD.new()
