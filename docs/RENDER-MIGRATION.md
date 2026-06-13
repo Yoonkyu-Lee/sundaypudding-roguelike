@@ -133,8 +133,9 @@ ROADMAP의 "엔진+도구=엔지니어 / 콘텐츠=디자이너" 원칙을 **데
 - `scripts/battle_director.gd` (= `rustBattle.ts`): 이벤트 로그→애니 디렉터 **스텁**.
 - 셸 씬: `boot`→`title`→`hub`(모드 메뉴)→`campaign_select`→`run_map`→`battle`/`reward`/`shop`/`encounter`/`chardex`/`overlays/pause`.
 - **Theme**(`ui/theme.tres`) = 웹 `style.css` 다크 팔레트 전역 적용 + 다크 배경.
-- **전투 2.5D 보드**(`scenes/battle/battle.tscn`): 정적 보드(바닥·4×4 양진영 셀·카메라)=씬에 박힘(에디터 편집), 유닛 카드·이름표=코드(`battle.gd`). 카메라=사용자 조정(틸트 탑다운, 아군 좌/적 우 마주봄). 진단색=아군 초록·적 보라. **칸 타겟팅**=`board_targeting.gd`(코드 생성 Node3D, 카메라 레이캐스트로 마우스→칸 + 하이라이트/명중%/예고 오버레이, `battle.gd`가 legalAction·좌표 소유).
-- **전투 HUD**(`scenes/battle/hud/`): `battle_hud.tscn`(CanvasLayer) = 사용자 스케치(`전투 하단 HUD.jpg`) 레이아웃 — 하단 풀폭 바: 좌 `unit_panel.tscn`(현재 유닛 체력바+숫자·스탯 창·장비 3슬롯·상태이상 가로 스크롤) + 우(툴팁 공간 띠 + 큰 스킬 슬롯 + 턴 넘기기). 호버/클릭 상세 = `tips.gd`(스킬·상태·장비 한 줄 요약) → 툴팁 공간 단일 표시. 반복 원자 `turn_chip.tscn`·`dice_roll.tscn` 인스턴스.
+- **전투 2.5D 보드**(`scenes/battle/battle.tscn`): 정적 보드(바닥·4×4 양진영 셀·카메라)=씬에 박힘(에디터 편집). 바닥=풀밭 텍스처(`assets/grass.png`, NEAREST). 카메라=사용자 조정(틸트 탑다운). 보드 유닛 표현은 모듈로 분리:
+  - `unit_token.gd`(3D 카드=스프라이트 플레이스홀더, 발-피벗 빌보드, 칸 깊이-분수 배치) · `overhead_label.gd`(2D 머리위 이름/HP/상태, 월드→화면 투영 = 해법 B) · `board_targeting.gd`(칸 레이캐스트 + 하이라이트/명중%/예고). 상세 = [`BATTLE-SCREEN-DESIGN.md`](BATTLE-SCREEN-DESIGN.md) §C′.
+- **전투 HUD**(`scenes/battle/hud/`): `battle_hud.tscn`(CanvasLayer) = Figma 1번 레이아웃 이식 — 좌상단 행동서열 토큰(코드 생성)·좌하단 `unit_panel.tscn`(초상화+얇은 HP/실드·2×2 스탯·특수효과 칩)·중앙 툴팁+스킬 카드(코드 생성)·우 accent 턴넘김. 호버 상세=`tips.gd`. 반복 원자 `dice_roll.tscn`(주사위)·`scenes/ui/chamfer_panel.gd`(대각선 컷 위젯).
 - **런 루프 실데이터 배선**: campaign_select=`run_list` 실런목록 · run_map=`RunView.nodes`(도달가능→`enter_node`) · reward/shop/encounter=`view`의 옵션→`choose_reward`/`buy`/`encounter` · battle=`view.party` 아군.
 
 **환경·도구**

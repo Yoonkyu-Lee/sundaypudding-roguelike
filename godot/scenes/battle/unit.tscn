@@ -1,6 +1,0 @@
-[gd_scene format=3]
-
-[node name="Unit" type="Node3D"]
-
-[node name="Sprite3D" type="Sprite3D" parent="."]
-billboard = 1

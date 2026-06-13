@@ -1,6 +1,0 @@
-[gd_scene format=3]
-
-[node name="TurnChip" type="PanelContainer"]
-
-[node name="Label" type="Label" parent="."]
-text = "유닛"
