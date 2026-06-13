@@ -11,8 +11,6 @@ const C_PANEL := Color(0.1137, 0.1254, 0.1568, 1)
 const C_PANEL2 := Color(0.145, 0.165, 0.212, 1)
 const C_LINE := Color(0.2, 0.2274, 0.2823, 1)
 const C_ACCENT := Color(1, 0.8196, 0.4, 1)
-const C_MINT := Color(0.45, 0.92, 0.78, 1)         # 끼어들기 턴 하이라이트
-const C_MINT_FAINT := Color(0.45, 0.92, 0.78, 0.45) # 끼어들기 잔상(턴 끝나도 남는 옅은 테두리)
 const C_TXT := Color(0.95, 0.96, 0.98, 1)
 
 var _obs: Dictionary = {}
@@ -21,7 +19,7 @@ var _obs: Dictionary = {}
 @onready var _tooltip: Label = $Tooltip/Label
 @onready var _skip_btn: Button = $EndTurn
 @onready var _skills: HBoxContainer = $Skills/Box
-@onready var _tokens: VBoxContainer = $TurnOrder/Tokens
+@onready var _turn_order := $TurnOrder   # 행동서열+주사위 통합 컴포넌트(turn_order.gd)
 
 func _ready() -> void:
 	$BackBtn.pressed.connect(func() -> void: GameDirector.goto(GameDirector.RUN_MAP))
@@ -38,10 +36,10 @@ func populate(obs: Dictionary) -> void:
 	_obs = obs
 	_tip(TIP_IDLE)
 	_render_unit_panel()
-	_render_order()
+	_turn_order.update(obs)
 	_render_skills()
 
-## 라운드 시작 SPD 주사위 연출 위임.
+## 라운드 시작 SPD 주사위 연출 위임(통합 turn_order: 중앙 굴림 → 좌측 레일 dock).
 func play_dice(rs: Dictionary, obs: Dictionary, on_done: Callable) -> void:
 	var names := {}
 	var sides := {}
@@ -51,7 +49,7 @@ func play_dice(rs: Dictionary, obs: Dictionary, on_done: Callable) -> void:
 		names[str(u.get("uid", ""))] = str(u.get("name", "?")); sides[str(u.get("uid", ""))] = "enemy"
 	var order_uids := []
 	for o in rs.get("order", []): order_uids.append(str(o.get("uid", "")))
-	$DiceRoll.play(int(rs.get("round", 1)), rs.get("rolls", []), order_uids, names, sides, on_done)
+	_turn_order.play_roll(int(rs.get("round", 1)), rs.get("rolls", []), order_uids, names, sides, on_done)
 
 func _tip(text: String) -> void:
 	_tooltip.text = text
@@ -75,40 +73,6 @@ func _current_unit() -> Dictionary:
 	for u in _obs.get("allies", []) + _obs.get("enemies", []):
 		if u is Dictionary and str(u.get("uid", "")) == uid: return u
 	return {}
-
-# ── 행동서열 토큰 스트립(좌상단, 세로) — 현재 턴 토큰만 크게+accent ──
-## 현재 턴 = cursorIndex(인덱스)로 판정. uid 매칭 금지 — 끼어들기/정규가 같은 uid라 둘 다 켜지던 버그.
-func _render_order() -> void:
-	for c in _tokens.get_children(): c.queue_free()
-	var names := _names()
-	var cursor := int(_obs.get("cursorIndex", -1))
-	var order: Array = _obs.get("order", [])
-	for i in order.size():
-		var o: Dictionary = order[i]
-		var uid := str(o.get("uid", ""))
-		_tokens.add_child(_make_token(names.get(uid, "?"), int(o.get("speed", 0)), i == cursor, str(o.get("kind", "normal"))))
-
-## 토큰 = PanelContainer(테두리·여백) + 라벨. 현재=크게+accent, 나머지=작게.
-## kind=="interrupt" → 민트 하이라이트(현재) / 옅은 민트 잔상 테두리(대기·종료). 정규=accent(현재)/회색(그외).
-func _make_token(nm: String, spd: int, is_current: bool, kind: String) -> Control:
-	var interrupt := kind == "interrupt"
-	var accent := C_MINT if interrupt else C_ACCENT
-	var border := accent if is_current else (C_MINT_FAINT if interrupt else C_LINE)
-	var p := PanelContainer.new()
-	p.add_theme_stylebox_override("panel", _box(C_PANEL2 if is_current else C_PANEL, border, 2.0 if is_current else 1.0))
-	p.custom_minimum_size = Vector2(176 if is_current else 150, 0)
-	p.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 2)
-	p.add_child(box)
-	if is_current:
-		box.add_child(_lbl("▶ " + nm, 16, C_TXT))
-		box.add_child(_lbl("끼어들기!" if interrupt else "SPD %d · 현재 턴" % spd, 12, accent))
-	elif interrupt:
-		box.add_child(_lbl("%s · 끼어들기" % nm, 14, C_MINT))
-	else:
-		box.add_child(_lbl("%s · SPD %d" % [nm, spd], 14, Color(0.72, 0.74, 0.79)))
-	return p
 
 # ── 스킬 카드(중앙 하단, 아이콘+이름) — 1단계 ──
 func _render_skills() -> void:
@@ -196,9 +160,3 @@ func _emit(action: Dictionary) -> void:
 
 func _clear_skills() -> void:
 	for c in _skills.get_children(): c.queue_free()
-
-func _names() -> Dictionary:
-	var m := {}
-	for u in _obs.get("allies", []): m[str(u.get("uid", ""))] = str(u.get("name", "?"))
-	for u in _obs.get("enemies", []): m[str(u.get("uid", ""))] = str(u.get("name", "?"))
-	return m

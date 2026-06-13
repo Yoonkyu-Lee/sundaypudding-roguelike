@@ -22,6 +22,7 @@ var _board: Node3D               # 보드 칸 타겟팅 오버레이
 var _target_skill: String = ""   # 타겟팅 중인 스킬명("" = 비타겟팅)
 var _overhead_layer: CanvasLayer # 머리위 2D UI 레이어(해법 B)
 var _overheads: Array = []       # [{anchor: 토큰, ui: overhead_label}] — _process가 투영 갱신
+var _last_diced_round := 0       # 주사위 연출을 마친 라운드(라운드마다 1회만 — roundStart 재감지 가드)
 
 func _ready() -> void:
 	director = BattleDirector.new(self)
@@ -46,6 +47,7 @@ func _ready() -> void:
 	_place_units(obs)
 	var rs := _find_round_start(init.get("eventDelta", []))
 	if not rs.is_empty() and hud:
+		_last_diced_round = int(rs.get("round", 1))
 		hud.play_dice(rs, obs, _after_dice)
 	else:
 		_after_dice()
@@ -63,12 +65,13 @@ func _setup_grass_ground() -> void:
 	mat.uv1_scale = Vector3(1, 1, 1)   # 타일링 없이 — 텍스처 1회로 바닥 전체
 	ground.material_override = mat
 
-## 주사위 연출 후(또는 없을 때) — 적 턴 자동 진행 → 갱신/종료.
+## 주사위 연출 후(또는 없을 때) — 적 턴 자동 진행 → (새 라운드면 주사위) → 갱신/종료.
 func _after_dice() -> void:
-	var obs := _advance_enemy_turns(GameDirector.battle_obs())
+	var deltas := []
+	var obs := _advance_enemy_turns(GameDirector.battle_obs(), deltas)
 	if _ended(obs): GameDirector.battle_finish()
 	else:
-		_refresh(obs)
+		_maybe_dice_then_refresh(obs, deltas)
 		if _DEBUG_AUTOTARGET: _debug_autotarget()
 
 # [임시 검증용] 첫 아군 스킬 자동선택 + 첫 칸 호버 — 스크린샷으로 타겟팅 오버레이 확인. 커밋 전 false.
@@ -88,14 +91,34 @@ func _find_round_start(delta: Variant) -> Dictionary:
 		if e is Dictionary and str(e.get("t", "")) == "roundStart": return e
 	return {}
 
-## 플레이어 행동(legalAction.action) → battle_step → 적 턴 자동 진행 → 갱신/종료.
+## 누적 델타에서 **마지막** roundStart(가장 최근 라운드). 한 번에 여러 라운드가 지나도 새 라운드 하나만 연출.
+func _find_last_round_start(delta: Variant) -> Dictionary:
+	if not (delta is Array): return {}
+	var found := {}
+	for e in delta:
+		if e is Dictionary and str(e.get("t", "")) == "roundStart": found = e
+	return found
+
+## 플레이어 행동(legalAction.action) → battle_step → 적 턴 자동 진행 → (새 라운드면 주사위) → 갱신/종료.
 func _act(action: Dictionary) -> void:
 	if GameDirector.session == null: return
 	_cancel_targeting()
-	GameDirector.session.battle_step(JSON.stringify(action))
-	var obs := _advance_enemy_turns(GameDirector.battle_obs())
+	var deltas := []
+	var r: Variant = JSON.parse_string(GameDirector.session.battle_step(JSON.stringify(action)))
+	if r is Dictionary: deltas.append_array(r.get("eventDelta", []))
+	var obs := _advance_enemy_turns(GameDirector.battle_obs(), deltas)
 	if _ended(obs): GameDirector.battle_finish()
-	else: _refresh(obs)
+	else: _maybe_dice_then_refresh(obs, deltas)
+
+## 누적 델타에서 새 라운드(roundStart) 감지 시 주사위 연출 후 갱신, 아니면 즉시 갱신.
+func _maybe_dice_then_refresh(obs: Dictionary, deltas: Array) -> void:
+	var rs := _find_last_round_start(deltas)
+	var hud := get_node_or_null("BattleHUD")
+	if not rs.is_empty() and hud and int(rs.get("round", 0)) > _last_diced_round:
+		_last_diced_round = int(rs.get("round", 0))
+		hud.play_dice(rs, obs, func() -> void: _refresh(obs))
+	else:
+		_refresh(obs)
 
 # ── 보드 칸 타겟팅 (HUD 스킬 선택 → 보드 클릭) ──
 ## 스킬 선택 시 — 그 스킬의 legalActions로 타겟가능 칸(보드 하이라이트) + 타겟 유닛 머리위 명중%(오버레이).
@@ -244,11 +267,12 @@ func _area_cells(arow: int, acol: int, area: Dictionary) -> Array:
 				for c in COLS: push.call(r, c)
 	return cells
 
-## 적 턴 자동(AI) — 아군 턴/종료까지 ai_step. 최종 obs.
-func _advance_enemy_turns(obs: Dictionary) -> Dictionary:
+## 적 턴 자동(AI) — 아군 턴/종료까지 ai_step. 이벤트 델타를 deltas에 누적(라운드 감지용). 최종 obs.
+func _advance_enemy_turns(obs: Dictionary, deltas: Array) -> Dictionary:
 	var guard := 0
 	while guard < 100 and not _ended(obs) and _cur_side(obs) == "enemy":
-		GameDirector.session.battle_ai_step()
+		var r: Variant = JSON.parse_string(GameDirector.session.battle_ai_step())
+		if r is Dictionary: deltas.append_array(r.get("eventDelta", []))
 		obs = GameDirector.battle_obs()
 		guard += 1
 	return obs
