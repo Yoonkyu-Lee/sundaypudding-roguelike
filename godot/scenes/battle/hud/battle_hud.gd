@@ -49,7 +49,7 @@ func play_dice(rs: Dictionary, obs: Dictionary, on_done: Callable) -> void:
 		names[str(u.get("uid", ""))] = str(u.get("name", "?")); sides[str(u.get("uid", ""))] = "enemy"
 	var order_uids := []
 	for o in rs.get("order", []): order_uids.append(str(o.get("uid", "")))
-	_turn_order.play_roll(int(rs.get("round", 1)), rs.get("rolls", []), order_uids, names, sides, on_done)
+	_turn_order.play_roll(int(rs.get("round", 1)), rs.get("rolls", []), order_uids, names, sides, obs, on_done)
 
 func _tip(text: String) -> void:
 	_tooltip.text = text
