@@ -157,14 +157,12 @@ func _hp_color(pct: float) -> Color:
 	if pct > 0.25: return Color(1.0, 0.82, 0.4)
 	return Color(0.902, 0.408, 0.353)
 
-# ── 빨강 깜빡(ploss segment + 분자) — 웹 .ploss blink .55s steps(2) 패리티 ──
+# ── 빨강 맥동(ploss segment + 분자) — 알파를 사인 ease로 연속 보간(계단식 깜빡 대신 부드럽게) ──
 func _start_blink() -> void:
 	_stop_blink()
-	_blink = create_tween().set_loops()
-	_blink.tween_callback(_set_blink.bind(0.25))
-	_blink.tween_interval(0.27)
-	_blink.tween_callback(_set_blink.bind(1.0))
-	_blink.tween_interval(0.27)
+	_blink = create_tween().set_loops().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_blink.tween_method(_set_blink, 1.0, 0.3, 0.5)
+	_blink.tween_method(_set_blink, 0.3, 1.0, 0.5)
 
 func _stop_blink() -> void:
 	if _blink and _blink.is_valid(): _blink.kill()
