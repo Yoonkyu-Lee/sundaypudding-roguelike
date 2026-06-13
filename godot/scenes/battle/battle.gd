@@ -256,4 +256,4 @@ func _spawn_token(side: int, row: int, col: int, color: Color, unit_name: String
 	var t = UNIT_TOKEN.new()
 	t.position = _slot_pos(side, row, col)
 	$Units.add_child(t)
-	t.setup(unit_name, color, hp, hp_max, shield, statuses)
+	t.setup(unit_name, color, hp, hp_max, shield, statuses, $Camera3D)
