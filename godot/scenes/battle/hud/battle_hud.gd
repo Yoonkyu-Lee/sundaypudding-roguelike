@@ -11,6 +11,8 @@ const C_PANEL := Color(0.1137, 0.1254, 0.1568, 1)
 const C_PANEL2 := Color(0.145, 0.165, 0.212, 1)
 const C_LINE := Color(0.2, 0.2274, 0.2823, 1)
 const C_ACCENT := Color(1, 0.8196, 0.4, 1)
+const C_MINT := Color(0.45, 0.92, 0.78, 1)         # 끼어들기 턴 하이라이트
+const C_MINT_FAINT := Color(0.45, 0.92, 0.78, 0.45) # 끼어들기 잔상(턴 끝나도 남는 옅은 테두리)
 const C_TXT := Color(0.95, 0.96, 0.98, 1)
 
 var _obs: Dictionary = {}
@@ -75,19 +77,25 @@ func _current_unit() -> Dictionary:
 	return {}
 
 # ── 행동서열 토큰 스트립(좌상단, 세로) — 현재 턴 토큰만 크게+accent ──
+## 현재 턴 = cursorIndex(인덱스)로 판정. uid 매칭 금지 — 끼어들기/정규가 같은 uid라 둘 다 켜지던 버그.
 func _render_order() -> void:
 	for c in _tokens.get_children(): c.queue_free()
 	var names := _names()
-	var cur: Variant = _obs.get("current")
-	var cur_uid: String = str(cur.get("uid", "")) if cur is Dictionary else ""
-	for o in _obs.get("order", []):
+	var cursor := int(_obs.get("cursorIndex", -1))
+	var order: Array = _obs.get("order", [])
+	for i in order.size():
+		var o: Dictionary = order[i]
 		var uid := str(o.get("uid", ""))
-		_tokens.add_child(_make_token(names.get(uid, "?"), int(o.get("speed", 0)), uid == cur_uid))
+		_tokens.add_child(_make_token(names.get(uid, "?"), int(o.get("speed", 0)), i == cursor, str(o.get("kind", "normal"))))
 
-## 토큰 = PanelContainer(테두리·여백) + 라벨. 현재=크게(이름16+SPD/현재 턴 accent), 나머지=작게(1줄).
-func _make_token(nm: String, spd: int, is_current: bool) -> Control:
+## 토큰 = PanelContainer(테두리·여백) + 라벨. 현재=크게+accent, 나머지=작게.
+## kind=="interrupt" → 민트 하이라이트(현재) / 옅은 민트 잔상 테두리(대기·종료). 정규=accent(현재)/회색(그외).
+func _make_token(nm: String, spd: int, is_current: bool, kind: String) -> Control:
+	var interrupt := kind == "interrupt"
+	var accent := C_MINT if interrupt else C_ACCENT
+	var border := accent if is_current else (C_MINT_FAINT if interrupt else C_LINE)
 	var p := PanelContainer.new()
-	p.add_theme_stylebox_override("panel", _box(C_PANEL2 if is_current else C_PANEL, C_ACCENT if is_current else C_LINE, 2.0 if is_current else 1.0))
+	p.add_theme_stylebox_override("panel", _box(C_PANEL2 if is_current else C_PANEL, border, 2.0 if is_current else 1.0))
 	p.custom_minimum_size = Vector2(176 if is_current else 150, 0)
 	p.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	var box := VBoxContainer.new()
@@ -95,7 +103,9 @@ func _make_token(nm: String, spd: int, is_current: bool) -> Control:
 	p.add_child(box)
 	if is_current:
 		box.add_child(_lbl("▶ " + nm, 16, C_TXT))
-		box.add_child(_lbl("SPD %d · 현재 턴" % spd, 12, C_ACCENT))
+		box.add_child(_lbl("끼어들기!" if interrupt else "SPD %d · 현재 턴" % spd, 12, accent))
+	elif interrupt:
+		box.add_child(_lbl("%s · 끼어들기" % nm, 14, C_MINT))
 	else:
 		box.add_child(_lbl("%s · SPD %d" % [nm, spd], 14, Color(0.72, 0.74, 0.79)))
 	return p
