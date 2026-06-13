@@ -33,7 +33,7 @@ var _mode := "live"
 var _spin: Dictionary = {}   # uid → {label,min,max,cur}
 var _spin_acc := 0.0
 var _skipped := false
-var _just_docked := false    # dock가 레일을 정확히 채움 → 직후 update 1회 재구성 생략(같은 노드 유지)
+var _live_rows: Array = []   # 현재 레일 행들(uid·kind·cur 추적). update가 재사용해 턴 전환(현재↔일반)을 애니메이션.
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -143,6 +143,7 @@ func _row_to_live(row: Dictionary, info: Dictionary, animate: bool) -> void:
 	var border := accent if is_current else (C_MINT_FAINT if interrupt else C_LINE)
 	var bg := C_MINT_BG if interrupt else (C_PANEL2 if is_current else C_PANEL)
 	var target_w := W_CUR if is_current else W_NORM
+	row["cur"] = is_current   # 현재 상태 추적(턴 전환 애니 판정)
 	# 마크·이름·투명도(즉시)
 	row.mark.text = "⚡" if interrupt else ("▶" if is_current else ("†" if dead else ("✓" if done else "")))
 	row.mark.add_theme_color_override("font_color", accent if (is_current or interrupt) else C_DIM)
@@ -206,19 +207,82 @@ func _live_info(obs: Dictionary, uid: String, rank: int) -> Dictionary:
 			break
 	return {"name": nm, "side": side, "spd": spd, "kind": kind, "current": rank == cursor, "done": rank >= 0 and rank < cursor, "dead": not live}
 
-# ── live: 좌측 레일 행동서열(같은 행 위젯으로 재구성) ──
+# ── live: 좌측 레일 행동서열(행 위젯 재사용 — 턴 전환 애니) ──
+## 기존 행을 인덱스(uid·kind 일치)로 재사용해 _retarget_live로 상태 변화 애니(현재↔일반 grow/shrink). 불일치/신규만 새로 생성.
 func update(obs: Dictionary) -> void:
 	if _mode == "rolling": return
-	if _just_docked:
-		_just_docked = false   # dock가 방금 레일을 정확히 채움 → 같은 노드 유지(1회 재구성 생략)
-		return
-	for c in _rail_box.get_children(): c.queue_free()
 	var order: Array = obs.get("order", [])
+	var prev := _live_rows
+	var new_rows := []
+	var reused := {}
 	for i in order.size():
 		var uid := str(order[i].get("uid", ""))
-		var row := _make_row()
-		_row_to_live(row, _live_info(obs, uid, i), false)
-		_rail_box.add_child(row.node)
+		var kind := str(order[i].get("kind", "normal"))
+		var info := _live_info(obs, uid, i)
+		var row: Dictionary
+		if i < prev.size() and str(prev[i].get("uid", "")) == uid and str(prev[i].get("kind", "")) == kind and is_instance_valid(prev[i].node):
+			row = prev[i]
+			reused[row.node] = true
+			_retarget_live(row, info)   # 재사용 — 턴 전환(현재↔일반) 애니
+		else:
+			row = _make_row()
+			_row_to_live(row, info, false)
+			_rail_box.add_child(row.node)
+		row["uid"] = uid; row["kind"] = kind
+		_rail_box.move_child(row.node, i)
+		new_rows.append(row)
+	for old in prev:
+		if not reused.has(old.node) and is_instance_valid(old.node): old.node.queue_free()
+	_live_rows = new_rows
+
+## 기존 live 행을 새 상태로 — 마크/이름/박스는 즉시, 현재↔일반 변화 시 크기·SPD/두 줄을 애니메이션(턴 잡을 때 grow+하이라이트).
+func _retarget_live(row: Dictionary, info: Dictionary) -> void:
+	var is_current: bool = info.current
+	var interrupt: bool = info.kind == "interrupt"
+	var accent := C_MINT if interrupt else C_ACCENT
+	var border := accent if is_current else (C_MINT_FAINT if interrupt else C_LINE)
+	var bg := C_MINT_BG if interrupt else (C_PANEL2 if is_current else C_PANEL)
+	var target_w := W_CUR if is_current else W_NORM
+	row.mark.text = "⚡" if interrupt else ("▶" if is_current else ("†" if info.dead else ("✓" if info.done else "")))
+	row.mark.add_theme_color_override("font_color", accent if (is_current or interrupt) else C_DIM)
+	row.name.text = info.name
+	row.name.add_theme_font_size_override("font_size", 16 if is_current else 14)
+	if is_current:
+		row.name.add_theme_color_override("font_color", C_MINT if interrupt else C_TXT)
+	else:
+		var base := C_ENEMY if str(info.side) == "enemy" else C_ALLY
+		var ncol := C_MINT if interrupt else base
+		if (info.done or info.dead) and not interrupt: ncol = C_DIM
+		row.name.add_theme_color_override("font_color", ncol)
+	row.node.modulate.a = 0.4 if info.dead else (0.55 if info.done else 1.0)
+	row.node.add_theme_stylebox_override("panel", _box(bg, border, 2.0 if is_current else 1.0, 0, 10, 6))
+	row.die.visible = false
+	row.adj.visible = false
+	row.spd.text = "끼어들기" if interrupt else ("" if is_current else "SPD %d" % int(info.spd))
+	row.spd.add_theme_color_override("font_color", accent if interrupt else C_DIM)
+	row.line2.text = ("끼어들기!" if interrupt else "SPD %d · 현재 턴" % int(info.spd)) if is_current else ""
+	row.line2.add_theme_color_override("font_color", accent)
+	var was := bool(row.get("cur", false))
+	row["cur"] = is_current
+	if was == is_current:
+		row.spd.visible = not is_current; row.spd.modulate.a = 1.0
+		row.line2.visible = is_current; row.line2.modulate.a = 1.0
+		row.node.custom_minimum_size = Vector2(target_w, 0)
+		return
+	if is_current:
+		# 일반→현재: BACK ease로 살짝 통통 튀게 키우고 "현재 턴" 줄 페이드인.
+		row.spd.visible = false
+		row.line2.visible = true; row.line2.modulate.a = 0.0
+		var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(row.node, "custom_minimum_size:x", float(target_w), 0.28)
+		tw.tween_property(row.line2, "modulate:a", 1.0, 0.28)
+	else:
+		# 현재→일반: 줄이고 SPD 페이드인.
+		row.line2.visible = false
+		row.spd.visible = true; row.spd.modulate.a = 0.0
+		var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		tw.tween_property(row.node, "custom_minimum_size:x", float(target_w), 0.22)
+		tw.tween_property(row.spd, "modulate:a", 1.0, 0.22)
 
 # ── rolling: 중앙 굴림 → 확정 → 재배치 → 형태 전환 → 도킹 ──
 ## rolls=[{uid,speedMin,speedMax,roll,speedMod,speed}], order_uids=확정 서열, names/sides=표시, obs=라이브 정보원. on_done=라이브 전환(refresh).
@@ -284,10 +348,13 @@ func play_roll(round_no: int, rolls: Array, order_uids: Array, names: Dictionary
 			create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).tween_property(row_by[uid].node, "position:y", ty, 0.4)
 	if not _skipped: await _wait(0.45)
 
-	# Phase C2: 형태 전환 애니 — 굴림형 → §I 토큰형(같은 노드, 제자리).
+	# Phase C2: 형태 전환 애니 — 굴림형 → §I 토큰형(같은 노드, 제자리). **모두 일반 형태**(현재 강조·크기는 도킹 후 update가 애니로).
 	for rank in order_uids.size():
 		var uid := str(order_uids[rank])
-		if row_by.has(uid): _row_to_live(row_by[uid], _live_info(obs, uid, rank), not _skipped)
+		if not row_by.has(uid): continue
+		var info := _live_info(obs, uid, rank)
+		info["current"] = false   # 형태 전환 단계에선 전부 일반 — 현재 토큰 grow/하이라이트는 도킹 후
+		_row_to_live(row_by[uid], info, not _skipped)
 	if not _skipped: await _wait(0.34)
 
 	# Phase D: 도킹 — 토큰이 된 행이 레일로 슬라이드, 그대로 정착.
@@ -335,8 +402,16 @@ func _dock(center: Control, order_uids: Array, row_by: Dictionary, on_done: Call
 		_rail_box.add_child(node)
 	_rail.modulate.a = 1.0
 	_mode = "live"
-	_just_docked = true
-	on_done.call()              # 보드/HUD 갱신 — update는 _just_docked로 레일 1회 재구성 생략(같은 노드 유지)
+	# 도킹된 행들(모두 일반 형태)을 _live_rows로 등록 → 직후 update가 재사용해 현재 토큰만 grow/하이라이트 애니.
+	_live_rows = []
+	for rank in order_uids.size():
+		var uid := str(order_uids[rank])
+		if not row_by.has(uid): continue
+		row_by[uid]["uid"] = uid
+		row_by[uid]["kind"] = "normal"
+		row_by[uid]["cur"] = false
+		_live_rows.append(row_by[uid])
+	on_done.call()              # 보드/HUD 갱신 — update가 _live_rows 재사용 → 현재 토큰 grow 애니
 	center.queue_free()
 	_dim.visible = false
 
