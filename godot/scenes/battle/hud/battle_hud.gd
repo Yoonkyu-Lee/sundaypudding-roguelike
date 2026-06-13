@@ -12,10 +12,10 @@ const TIP_IDLE := "아이콘·스킬·장비에 마우스를 올리면 자세한
 
 var _obs: Dictionary = {}
 
-@onready var _unit_panel := $Bar/Cols/UnitPanel
-@onready var _tooltip: Label = $Bar/Cols/Center/TopRow/Tooltip
-@onready var _skip_btn: Button = $Bar/Cols/Center/TopRow/SkipBtn
-@onready var _skills: HBoxContainer = $Bar/Cols/Center/Skills
+@onready var _unit_panel := $UnitPanel
+@onready var _tooltip: Label = $Tooltip/Label
+@onready var _skip_btn: Button = $EndTurn
+@onready var _skills: HBoxContainer = $Skills/Box
 
 func _ready() -> void:
 	$BackBtn.pressed.connect(func() -> void: GameDirector.goto(GameDirector.RUN_MAP))

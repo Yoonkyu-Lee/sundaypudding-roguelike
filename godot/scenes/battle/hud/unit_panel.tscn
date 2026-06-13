@@ -4,11 +4,13 @@
 
 [node name="UnitPanel" type="MarginContainer"]
 custom_minimum_size = Vector2(400, 0)
-theme_override_constants/margin_left = 14
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 14
-theme_override_constants/margin_bottom = 12
 script = ExtResource("1")
+fill_color = Color(0.145, 0.1647, 0.2117, 1)
+border_color = Color(0.2, 0.2274, 0.2823, 1)
+border_width = 1.5
+chamfer = 24.0
+cut_tr = true
+pad = 14
 
 [node name="V" type="VBoxContainer" parent="."]
 

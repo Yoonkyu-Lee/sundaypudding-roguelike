@@ -1,5 +1,7 @@
-extends MarginContainer
-## 현재 유닛 패널(전투 하단 HUD 좌측) — 스케치: 체력바(숫자)·스탯 창·장비 3슬롯·상태이상 가로 스크롤.
+@tool
+extends "res://scenes/ui/chamfer_panel.gd"
+## 현재 유닛 패널(전투 하단 HUD) — chamfer 패널 상속(오른쪽 상단 대각선 컷). @tool=에디터에서 외형 보임.
+## 독립 앵커 패널(바 종속 X) — 위치·외형은 에디터에서 자유 배치. 코드는 populate로 내용만 채움(런타임). — 스케치: 체력바(숫자)·스탯 창·장비 3슬롯·상태이상 가로 스크롤.
 ## 데이터: obs 유닛(hp/shield/statuses) + sheet_data(charId/equipped) + 콘텐츠(기본 스탯·정의).
 ## 호버/클릭 상세는 tip 시그널로 올림 — battle_hud의 툴팁 공간이 받아 표시.
 signal tip(text: String)
@@ -10,6 +12,7 @@ const C_ALLY := Color(0.353, 0.663, 0.902)
 const C_ENEMY := Color(0.902, 0.408, 0.353)
 
 func _ready() -> void:
+	super._ready()
 	for slot in ["Weapon", "Armor", "Held"]:
 		var b: Button = get_node("V/H/Equip/" + slot)
 		b.mouse_entered.connect(_equip_tip.bind(slot.to_lower()))
