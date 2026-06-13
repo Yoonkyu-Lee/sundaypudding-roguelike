@@ -1,4 +1,4 @@
-extends PanelContainer
+extends MarginContainer
 ## 현재 유닛 패널(전투 하단 HUD 좌측) — 스케치: 체력바(숫자)·스탯 창·장비 3슬롯·상태이상 가로 스크롤.
 ## 데이터: obs 유닛(hp/shield/statuses) + sheet_data(charId/equipped) + 콘텐츠(기본 스탯·정의).
 ## 호버/클릭 상세는 tip 시그널로 올림 — battle_hud의 툴팁 공간이 받아 표시.

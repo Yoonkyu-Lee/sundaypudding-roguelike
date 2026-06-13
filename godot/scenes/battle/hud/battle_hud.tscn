@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scenes/battle/hud/battle_hud.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/battle/hud/dice_roll.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/battle/hud/unit_panel.tscn" id="3"]
+[ext_resource type="Script" path="res://scenes/ui/chamfer_panel.gd" id="4"]
 
 [node name="BattleHUD" type="CanvasLayer"]
 script = ExtResource("1")
@@ -39,46 +40,64 @@ text = "행동 서열"
 
 [node name="Entries" type="VBoxContainer" parent="TurnOrder/V"]
 
-[node name="Hud" type="HBoxContainer" parent="."]
+[node name="Bar" type="MarginContainer" parent="."]
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 8.0
-offset_top = -236.0
-offset_right = -8.0
-offset_bottom = -8.0
+offset_top = -240.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_constants/separation = 8
+script = ExtResource("4")
+fill_color = Color(0.1137, 0.1254, 0.1568, 1)
+border_color = Color(0.2, 0.2274, 0.2823, 1)
+border_width = 2.0
+chamfer = 30.0
+cut_tl = true
+cut_tr = true
+pad = 8
 
-[node name="UnitPanel" parent="Hud" instance=ExtResource("3")]
+[node name="Cols" type="HBoxContainer" parent="Bar"]
+theme_override_constants/separation = 0
+
+[node name="UnitPanel" parent="Bar/Cols" instance=ExtResource("3")]
 layout_mode = 2
 
-[node name="Right" type="VBoxContainer" parent="Hud"]
+[node name="Div1" type="ColorRect" parent="Bar/Cols"]
+custom_minimum_size = Vector2(2, 0)
+color = Color(0.2, 0.2274, 0.2823, 1)
+
+[node name="Center" type="VBoxContainer" parent="Bar/Cols"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 6
+theme_override_constants/separation = 0
 
-[node name="TopRow" type="HBoxContainer" parent="Hud/Right"]
+[node name="TopRow" type="HBoxContainer" parent="Bar/Cols/Center"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 0
 
-[node name="Tooltip" type="PanelContainer" parent="Hud/Right/TopRow"]
-custom_minimum_size = Vector2(0, 58)
+[node name="Tooltip" type="Label" parent="Bar/Cols/Center/TopRow"]
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-
-[node name="Label" type="Label" parent="Hud/Right/TopRow/Tooltip"]
-layout_mode = 2
+theme_override_constants/line_spacing = 2
+vertical_alignment = 1
 autowrap_mode = 2
 text = ""
 
-[node name="SkipBtn" type="Button" parent="Hud/Right/TopRow"]
-custom_minimum_size = Vector2(140, 0)
+[node name="Div2" type="ColorRect" parent="Bar/Cols/Center/TopRow"]
+custom_minimum_size = Vector2(2, 0)
+color = Color(0.2, 0.2274, 0.2823, 1)
+
+[node name="SkipBtn" type="Button" parent="Bar/Cols/Center/TopRow"]
+custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 text = "턴 넘기기 ⏭"
 
-[node name="Skills" type="HBoxContainer" parent="Hud/Right"]
+[node name="HDiv" type="ColorRect" parent="Bar/Cols/Center"]
+custom_minimum_size = Vector2(0, 2)
+color = Color(0.2, 0.2274, 0.2823, 1)
+
+[node name="Skills" type="HBoxContainer" parent="Bar/Cols/Center"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 8
+theme_override_constants/separation = 0
