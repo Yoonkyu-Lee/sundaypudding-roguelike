@@ -18,10 +18,14 @@ const C_HP := Color(0.314, 0.784, 0.471, 1)
 
 const RAIL_RECT := Rect2(12, 12, 196, 464)   # 좌측 레일(기존 TurnOrder 위치)
 const SPIN_DT := 0.06
+const ROW_W := 332          # 굴림 행 폭(이름+주사위+보정+speed)
+const ROW_H := 30           # 굴림 행 높이
+const ROW_STEP := 38        # 행 간격(높이+gap) — 재정렬/dock 좌표 기준
 
 var _dim: ColorRect
 var _rail: ScrollContainer
 var _rail_box: VBoxContainer
+var _fly: Control            # dock 비행 레이어(reparent해 자유 좌표로 슬라이드)
 var _mode := "live"
 var _spin: Dictionary = {}   # uid → {label,min,max,cur}
 var _spin_acc := 0.0
@@ -48,6 +52,11 @@ func _ready() -> void:
 	_rail_box = VBoxContainer.new()
 	_rail_box.add_theme_constant_override("separation", 8)
 	_rail.add_child(_rail_box)
+	_fly = Control.new()   # dock 시 굴림 행을 여기로 reparent → 화면 절대좌표로 레일까지 슬라이드
+	_fly.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_fly.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_fly.z_index = 52
+	add_child(_fly)
 
 ## 회전 중인 주사위만 SPIN_DT마다 순환(min..max). 확정되면 _spin에서 제거됨.
 func _process(delta: float) -> void:
@@ -128,14 +137,17 @@ func play_roll(round_no: int, rolls: Array, order_uids: Array, names: Dictionary
 	var title := _lbl("⚄ ROUND %d · 행동 서열 결정" % round_no, 18, C_ACCENT)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(title)
-	var rows := VBoxContainer.new()
-	rows.add_theme_constant_override("separation", 8)
-	v.add_child(rows)
+	# 행 = 좌표 직접 배치(VBox 아님) — 재정렬/dock에서 position을 자유 Tween하기 위함.
+	var holder := Control.new()
+	holder.custom_minimum_size = Vector2(ROW_W, rolls.size() * ROW_STEP - (ROW_STEP - ROW_H))
+	v.add_child(holder)
 	var row_by := {}
-	for r in rolls:
+	for i in rolls.size():
+		var r: Dictionary = rolls[i]
 		var uid := str(r.get("uid", ""))
 		var row := _build_roll_row(r, str(names.get(uid, uid)), str(sides.get(uid, "ally")))
-		rows.add_child(row.node)
+		(row.node as Control).position = Vector2(0, i * ROW_STEP)
+		holder.add_child(row.node)
 		row_by[uid] = row
 		_spin[uid] = {"label": row.die, "min": int(r.get("speedMin", 1)), "max": int(r.get("speedMax", 6)), "cur": int(r.get("speedMin", 1))}
 	var skip := _lbl("클릭하면 건너뛰기", 11, C_DIM)
@@ -157,29 +169,36 @@ func play_roll(round_no: int, rolls: Array, order_uids: Array, names: Dictionary
 		_pop(rb.die)
 	_spin.clear()
 
-	# Phase C: 최종 서열로 재배치 + 순위 번호
+	# Phase C: 최종 서열로 재정렬 — 각 행 y를 순위 위치로 슬라이드(스왑 애니), 순위 번호.
 	await _wait(0.25)
 	for rank in order_uids.size():
 		var uid := str(order_uids[rank])
 		if not row_by.has(uid): continue
 		var rb: Dictionary = row_by[uid]
 		rb.mark.text = "%d" % (rank + 1)
-		rows.move_child(rb.node, rank)
+		var ty := rank * ROW_STEP
+		if _skipped:
+			(rb.node as Control).position.y = ty
+		else:
+			create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT).tween_property(rb.node, "position:y", ty, 0.4)
+	if not _skipped: await _wait(0.45)
 
 	# Phase D: 잠깐 보여주고 dock → 라이브 레일로
-	await _wait(0.7)
-	await _dock(center, on_done)
+	await _wait(0.55)
+	await _dock(center, order_uids, row_by, on_done)
 
-## 굴림 행 = HBox[순위 | 이름 | 주사위 | ±보정 | =speed]. {node,die,spd,mark} 반환.
+## 굴림 행 = HBox[순위 | 이름 | 주사위 | ±보정 | =speed]. 좌표 배치용 고정 폭/높이. {node,die,spd,mark} 반환.
 func _build_roll_row(r: Dictionary, nm_text: String, side: String) -> Dictionary:
 	var row := HBoxContainer.new()
+	row.size = Vector2(ROW_W, ROW_H)
+	row.custom_minimum_size = Vector2(ROW_W, ROW_H)
 	row.add_theme_constant_override("separation", 10)
 	var mark := _lbl("", 14, C_ACCENT)
 	mark.custom_minimum_size = Vector2(18, 0)
 	mark.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	row.add_child(mark)
 	var nm := _lbl(nm_text, 14, C_ENEMY if side == "enemy" else C_ALLY)
-	nm.custom_minimum_size = Vector2(120, 0)
+	nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL   # 슬랙 흡수 → 주사위/보정/speed 우측 정렬
 	row.add_child(nm)
 	var die := _lbl("?", 22, C_ACCENT)
 	die.custom_minimum_size = Vector2(38, 0)
@@ -196,18 +215,34 @@ func _build_roll_row(r: Dictionary, nm_text: String, side: String) -> Dictionary
 	row.add_child(spd)
 	return {"node": row, "die": die, "spd": spd, "mark": mark}
 
-## dock — 중앙 패널이 레일로 슬라이드·축소·페이드 + 동시에 라이브 레일 페이드인. 연속적 변신(별개 오버레이 X).
-func _dock(center: Control, on_done: Callable) -> void:
+## dock(FLIP) — 라이브 레일을 빌드(숨김)해 실제 토큰 위치를 타겟으로 읽고, 굴림 행을 _fly로 reparent해 그 위치로 스태거 슬라이드.
+## 도착하며 라이브 페이드인 + 굴림 행/패널 페이드아웃. = "행이 좌측 레일로 복귀"(웹 dock).
+func _dock(center: Control, order_uids: Array, row_by: Dictionary, on_done: Callable) -> void:
 	_mode = "live"
 	_rail.modulate.a = 0.0
-	on_done.call()   # refresh→update: 라이브 레일 토큰 빌드
-	var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tw.tween_property(center, "position", RAIL_RECT.position, 0.5)
-	tw.tween_property(center, "scale", Vector2(0.5, 0.5), 0.5)
-	tw.tween_property(center, "modulate:a", 0.0, 0.5)
-	tw.tween_property(_rail, "modulate:a", 1.0, 0.5)
-	tw.tween_property(_dim, "modulate:a", 0.0, 0.5)
-	await tw.finished
+	on_done.call()                       # refresh→update: 라이브 레일 토큰 빌드(숨김 상태)
+	await get_tree().process_frame       # 레일 레이아웃 반영 → 토큰 global_position 유효
+	# 굴림 행을 _fly로 옮겨(절대좌표 보존) 레일 토큰 위치로 슬라이드. 스태거로 차례차례.
+	var flying := []
+	for rank in order_uids.size():
+		var uid := str(order_uids[rank])
+		if not row_by.has(uid) or rank >= _rail_box.get_child_count(): continue
+		var row: Control = row_by[uid].node
+		var gp := row.global_position
+		row.get_parent().remove_child(row)
+		_fly.add_child(row)
+		row.global_position = gp
+		flying.append(row)
+		var target: Vector2 = (_rail_box.get_child(rank) as Control).global_position
+		create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT) \
+			.tween_property(row, "global_position", target, 0.45).set_delay(rank * 0.05)
+	# 도착에 맞춰 라이브 페이드인 + 중앙 패널/dim 페이드아웃
+	var fade := create_tween().set_parallel(true)
+	fade.tween_property(_rail, "modulate:a", 1.0, 0.45).set_delay(0.18)
+	fade.tween_property(center, "modulate:a", 0.0, 0.4)
+	fade.tween_property(_dim, "modulate:a", 0.0, 0.5)
+	await _wait(0.45 + order_uids.size() * 0.05 + 0.12)
+	for row in flying: row.queue_free()
 	center.queue_free()
 	_dim.visible = false
 	_rail.modulate.a = 1.0
