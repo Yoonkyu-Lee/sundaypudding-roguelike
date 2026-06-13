@@ -34,10 +34,12 @@ func show_targets(targets: Array) -> void:
 			_add_label("🎯%d%%" % hit, t.get("pos", Vector3.ZERO) + Vector3(0, 2.35, 0), C_TXT, "hit_" + key)
 
 ## 호버 미리보기 — footprint = [Vector3](영향 칸), losses = [{pos:Vector3, text:String}](유닛 머리 위 빨강 예고).
+## 앵커(호버) 칸 = 진노랑(C_HOVER), 그 외 AoE로 퍼지는 영향 칸만 주황(C_FOOT). 단일 타겟이면 풋프린트=앵커뿐이라 주황 없음.
 func show_preview(anchor_pos: Vector3, footprint: Array, losses: Array) -> void:
 	_clear_preview()
 	_add_tile(anchor_pos, C_HOVER, "prev_hover")
 	for i in footprint.size():
+		if (footprint[i] as Vector3).distance_to(anchor_pos) < 0.05: continue  # 앵커 칸은 진노랑 유지(주황 겹침 방지)
 		_add_tile(footprint[i], C_FOOT, "prev_foot_%d" % i)
 	for i in losses.size():
 		var l: Dictionary = losses[i]
