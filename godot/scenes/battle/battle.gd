@@ -8,7 +8,7 @@ const GAP := 0.12
 const SIDE_GAP := 1.1
 const ROWS := 4
 const COLS := 4
-const FRONT_SHIFT := 0.3   # 칸 기준: 발을 칸의 카메라쪽(앞) 가장자리로 일정량 이동 → 뒤 유닛이 앞 유닛에 덜 가림
+const CELL_DEPTH := 1.15   # 칸 깊이(타일 크기) — 발을 칸 안에서 깊이-분수로 배치하는 기준
 const C_TXT := Color(0.902, 0.9137, 0.9373)
 const C_ALLY := Color(0.353, 0.663, 0.902)
 const C_ENEMY := Color(0.902, 0.408, 0.353)
@@ -232,13 +232,16 @@ func _refresh(obs: Dictionary) -> void:
 	var hud := get_node_or_null("BattleHUD")
 	if hud: hud.populate(obs)
 
-## 칸 기준 앞쪽(카메라 방향) 오프셋 — 카메라 지면-방향(basis.z 투영)으로 모든 칸 동일량. 카메라 점으로 당기는 게 아님(일관).
-func _front_shift() -> Vector3:
+## 깊이-분수 배치(실험): 칸 깊이 8등분, 카메라 최근접 줄(row3)=1/8 앞, 최원거리(row0)=7/8 뒤.
+## 가까운 칸 스프라이트는 칸 앞쪽, 먼 칸은 칸 뒤쪽 → 깊이 간격 벌려 가림 최소화. 카메라 지면방향(basis.z) 기준.
+func _depth_shift(row: int) -> Vector3:
+	var rank := (ROWS - 1) - row              # row3=카메라 최근접=rank0
+	var f := (2.0 * rank + 1.0) / 8.0         # 1/8, 3/8, 5/8, 7/8 (앞 가장자리에서의 비율)
+	var toward := (0.5 - f) * CELL_DEPTH      # +면 카메라 쪽(앞), -면 뒤
 	var cam: Camera3D = $Camera3D
-	var toward_cam := cam.global_transform.basis.z   # 카메라 look(-z)의 반대 = 카메라 쪽
-	var ground := Vector3(toward_cam.x, 0, toward_cam.z)
-	if ground.length() < 0.01: return Vector3.ZERO
-	return ground.normalized() * FRONT_SHIFT
+	var g := Vector3(cam.global_transform.basis.z.x, 0, cam.global_transform.basis.z.z)
+	if g.length() < 0.01: return Vector3.ZERO
+	return g.normalized() * toward
 
 ## 슬롯 월드 좌표 — .tscn 셀과 동일 식. 행(0~3)=좌우(X, 4행 중앙정렬), 열(0~3)=진영 깊이(Z), col 0=전열(중앙).
 func _slot_pos(side: int, row: int, col: int) -> Vector3:
@@ -269,7 +272,7 @@ func _place_obs_unit(side: int, u: Dictionary, color: Color) -> void:
 func _spawn_token(side: int, row: int, col: int, color: Color, unit_name: String,
 		hp: int = 0, hp_max: int = 0, shield: int = 0, statuses: Variant = []) -> void:
 	var t = UNIT_TOKEN.new()
-	t.position = _slot_pos(side, row, col) + _front_shift()
+	t.position = _slot_pos(side, row, col) + _depth_shift(row)
 	$Units.add_child(t)
 	t.setup(color)
 	var ui = OVERHEAD.new()
