@@ -12,6 +12,8 @@
 - **slice B**(노드 맵): 직사각 버튼 → **육각 타일 벌집**(어두운 몸체 + status색 테두리, web `.mnode/.mhex` 2겹) + **벽**(막힌 길 `#b0413b`) + 발광 도달가능. 연결선 폐기(web 동일 — reachable 발광으로 길 표현).
 - **slice C**(수동 전투): **스킬→타겟 2단계 UI** — `legalActions`로 스킬 버튼→타겟 버튼(명중%)→`battle_step`. 적 턴 자동 진행(`_advance_enemy_turns`). `action_chosen` 시그널로 HUD↔씬 분리.
 - **slice D**(주사위): `battle_init` **roundStart 델타 → dice_roll 인스턴스** 연출(주사위 회전→차례로 확정·`= speed`→최종 순위)→라이브 서열. web `timelinePanel` rolling 모드 모방.
+- **slice E**(유닛 카드 데이터): 카드에 HP바(색=잔량)+쉴드·상태칩(icon·stacks)+HP텍스트 — UnitView 실데이터.
+- **slice F**(하단 HUD 리레이아웃): **사용자 스케치(`전투 하단 HUD.jpg`) 구현** — 좌 `unit_panel.tscn`(현재 유닛: 체력바+숫자·스탯 창(SPD범위/명중/회피/크리+포메이션)·장비 3슬롯·상태이상 가로 스크롤) + **툴팁 공간**(호버/클릭 상세 단일 표시, `tips.gd`) + 큰 스킬 슬롯(가로 균등) + **턴 넘기기** 버튼. 스탯·장비명·툴팁 = 신규 `content_section` 바인딩(번들 원본 JSON 섹션) + `sheet_data`(charId·equipped).
 
 ## 2. 화면 인벤토리
 
@@ -36,7 +38,7 @@
   - **타겟 칸 클릭(3D 보드 레이캐스트)**: 현재 HUD 버튼으로 타겟 선택. web식 칸 하이라이트(2.4)+호버 HP예고(`battle_targeting`)+area 미리보기는 보드 클릭/레이캐스트 필요(미구현).
   - **눈금 화살표·머리위 명중%**(web 2.7): 시전자→타겟 화살표, 유닛 위 명중% 칩.
 - **이벤트→애니메이션**: `BattleDirector`가 스텁. 데미지 팝업·공격 모션·피격 플래시·상태칩·카메라 흔들림 = 이벤트 로그 소비해 연주(R3, 디자이너 협업).
-- 상태칩·쉴드·쿨다운·HP바(현 텍스트 HP) 시각 표현.
+- ✅ 상태칩·쉴드·HP바(slice E 카드 + slice F HUD 패널). **남은 것**: 스킬 쿨다운 표시(UnitView.cooldowns 미소비), 툴팁 풀 서술(web skillDesc/passiveDesc 수준 — 현재 한 줄 요약).
 
 ### B. 시각 (스크린샷으로 확인된 것)
 - **✅ 유닛 카드 가시화**(slice A): 서 있는 빌보드 카드. **남은 것**: 카드에 초상화 스프라이트(현 단색 쿼드), HP바(현 텍스트), 양 진영 카드 대비.
@@ -68,6 +70,8 @@
 - **경계 = JSON 문자열**이 desktop IPC와 1:1로 깔끔 — 전 명령 무리 없이 노출.
 - 헥스 렌더 = web `hexgeo` 공식(pointy-top axial `x=√3·s·(q+r/2)`, `y=1.5·s·r`) 그대로.
 - **dll 잠금**: Godot 에디터 열려 있으면 `cp ...dll` 실패(busy). **co-edit**: `.tscn`을 에디터가 저장하면 uid·unique_id 정규화 → 파일/에디터 양쪽 수정 시 충돌 주의(구조=파일, 시각=에디터 분리).
+- **`class_name`은 헤드리스에서 미등록**(전역 클래스 캐시는 에디터 임포트가 생성) → 새 헬퍼 스크립트는 `class_name` 의존 금지, **`preload` const로 참조**(tips.gd 사례). 스크립트 에러는 헤드리스 직접 실행(`--headless --quit-after`)으로 즉시 확인 가능.
+- **`cargo build | tail` 파이프는 실패를 숨김**(exit code = tail) → `PIPESTATUS` 확인 필수. 콘텐츠 타입(spr-types)은 `Deserialize` 전용이라 재직렬화 불가 — 콘텐츠 노출은 **번들 원본 `data_value()` 섹션**으로(`content_section`).
 - Godot 슬라이스 검증 = **스크린샷**(npm/cargo 게이트는 웹·엔진 무변이라 무관).
 
 ## 5. 다음 권장 순서

@@ -6,6 +6,7 @@ extends Node
 var session: Object = null     # SprSession (spr-godot GDExtension)
 var view: Dictionary = {}      # 현재 RunView(파싱본). 화면들이 읽어 렌더.
 var _seed: int = 1234
+var _content: Dictionary = {}  # 콘텐츠 캐시(chars/items/skills/statuses) — 표시 전용, 1회 로드
 
 # 화면 경로 (셸 맵 — SHELL-DESIGN)
 const TITLE := "res://scenes/title.tscn"
@@ -69,6 +70,20 @@ func battle_init() -> Dictionary:
 	if session == null: return {}
 	var r: Variant = JSON.parse_string(session.battle_init())
 	return r if r is Dictionary else {}
+
+## 콘텐츠 조회(표시 전용) — 번들 섹션명(characters|items|skills|statuses…) → id→def 딕셔너리. 1회 로드 후 캐시.
+func content(section: String) -> Dictionary:
+	if session == null: return {}
+	if not _content.has(section):
+		var v: Variant = JSON.parse_string(session.content_section(section))
+		_content[section] = v if v is Dictionary else {}
+	return _content[section]
+
+## 시트 번들(파티 장착·전투유닛 charId/equipped). HUD 유닛 패널이 소비.
+func sheet_data() -> Dictionary:
+	if session == null: return {}
+	var v: Variant = JSON.parse_string(session.sheet_data())
+	return v if v is Dictionary else {}
 
 ## 현재 전투 관측(allies/enemies/order/legalActions/phase). 비전투면 {}.
 func battle_obs() -> Dictionary:

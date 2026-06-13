@@ -1,20 +1,25 @@
 extends CanvasLayer
-## 전투 HUD — 현 web renderBattle(timelinePanel + actions/skillsel) 대응.
-## 행동 서열(order)·2단계 수동 전투(스킬→타겟, legalActions·명중%). 선택 시 action_chosen 시그널 → battle.gd가 battle_step.
-## 빈 obs면 데모. 자동전투 버튼=스캐폴드(양측 AI 완주).
+## 전투 하단 HUD — 스케치 레이아웃: 좌=현재 유닛 패널(unit_panel) · 우=툴팁 공간+턴 넘기기+큰 스킬 슬롯.
+## 2단계 수동 전투(스킬→타겟, legalActions·명중%) 유지 — 선택 시 action_chosen 시그널 → battle.gd가 battle_step.
+## 호버/클릭 상세(스킬·상태·장비)는 전부 툴팁 공간(Label) 한 곳에 표시.
 signal action_chosen(action: Dictionary)
 
 const TURN_CHIP := preload("res://scenes/battle/hud/turn_chip.tscn")
-const SKILL_BUTTON := preload("res://scenes/battle/hud/skill_button.tscn")
+const Tips := preload("res://scenes/battle/hud/tips.gd")
+const TIP_IDLE := "아이콘·스킬·장비에 마우스를 올리면 자세한 정보가 표시됩니다."
 
 var _obs: Dictionary = {}
 
 func _ready() -> void:
 	$BackBtn.pressed.connect(func() -> void: GameDirector.goto(GameDirector.RUN_MAP))
 	$AutoBtn.pressed.connect(func() -> void: GameDirector.auto_battle())
+	$Hud/Right/TopRow/SkipBtn.pressed.connect(_emit.bind({"type": "skip"}))
+	$Hud/UnitPanel.tip.connect(_tip)
 
 func populate(obs: Dictionary) -> void:
 	_obs = obs
+	_tip(TIP_IDLE)
+	_render_unit_panel()
 	_render_order()
 	_render_skills()
 
@@ -30,14 +35,33 @@ func play_dice(rs: Dictionary, obs: Dictionary, on_done: Callable) -> void:
 	for o in rs.get("order", []): order_uids.append(str(o.get("uid", "")))
 	$DiceRoll.play(int(rs.get("round", 1)), rs.get("rolls", []), order_uids, names, sides, on_done)
 
-# ── 행동 서열 ──
+func _tip(text: String) -> void:
+	$Hud/Right/TopRow/Tooltip/Label.text = text
+
+# ── 현재 유닛 패널(좌측) ──
+func _render_unit_panel() -> void:
+	var cur := _current_unit()
+	if cur.is_empty(): return
+	var uid := str(cur.get("uid", ""))
+	var sheet_unit := {}
+	for su in GameDirector.sheet_data().get("battleUnits", []):
+		if su is Dictionary and str(su.get("uid", "")) == uid:
+			sheet_unit = su
+			break
+	$Hud/UnitPanel.populate(cur, sheet_unit)
+
+## obs.current.uid → allies/enemies에서 UnitView 검색.
+func _current_unit() -> Dictionary:
+	var c: Variant = _obs.get("current")
+	if not (c is Dictionary): return {}
+	var uid := str(c.get("uid", ""))
+	for u in _obs.get("allies", []) + _obs.get("enemies", []):
+		if u is Dictionary and str(u.get("uid", "")) == uid: return u
+	return {}
+
+# ── 행동 서열(우상단) ──
 func _render_order() -> void:
 	for c in $TurnOrder/V/Entries.get_children(): c.queue_free()
-	if _obs.is_empty():
-		for nm in ["김두한", "상하이 조", "신영균", "조병옥", "깡패"]:
-			var ch := TURN_CHIP.instantiate(); ch.get_node("Label").text = nm
-			$TurnOrder/V/Entries.add_child(ch)
-		return
 	var names := _names()
 	var cur: Variant = _obs.get("current")
 	var cur_uid: String = str(cur.get("uid", "")) if cur is Dictionary else ""
@@ -47,57 +71,65 @@ func _render_order() -> void:
 		chip.get_node("Label").text = "%s%s · SPD %d" % ["▶ " if uid == cur_uid else "", names.get(uid, "?"), int(o.get("speed", 0))]
 		$TurnOrder/V/Entries.add_child(chip)
 
-# ── 스킬(1단계) ──
+# ── 스킬 슬롯(1단계) — 큰 버튼, 호버=툴팁 공간에 스킬 상세 ──
 func _render_skills() -> void:
 	_clear_skills()
-	if _obs.is_empty():
-		$SkillBar/V/Title.text = "스킬 선택"
-		for sk in ["종로의 주먹", "이단 발차기", "오야붕의 위엄", "4달러"]:
-			var b := SKILL_BUTTON.instantiate(); b.text = sk
-			$SkillBar/V/Skills.add_child(b)
-		return
 	var cur: Variant = _obs.get("current")
-	if not (cur is Dictionary) or str(cur.get("side", "")) != "ally":
-		$SkillBar/V/Title.text = "적 턴 — 자동 진행"
-		var l := Label.new(); l.text = "(상단 ⚔ 자동 전투로 진행)"
-		$SkillBar/V/Skills.add_child(l)
+	var my_turn: bool = cur is Dictionary and str(cur.get("side", "")) == "ally"
+	$Hud/Right/TopRow/SkipBtn.disabled = not my_turn
+	if not my_turn:
+		_tip("적 턴 — 자동 진행 중…")
 		return
-	$SkillBar/V/Title.text = "스킬 선택 — %s의 턴" % str(cur.get("name", "?"))
+	_tip("%s의 턴 — 스킬을 선택하세요." % str(cur.get("name", "?")))
+	var skills: Dictionary = GameDirector.content("skills")
+	var statuses: Dictionary = GameDirector.content("statuses")
 	var seen := {}
 	for a in _obs.get("legalActions", []):
 		var sn := str(a.get("skillName", ""))
 		if sn == "" or seen.has(sn): continue
 		seen[sn] = true
-		var btn := SKILL_BUTTON.instantiate(); btn.text = sn
+		var sid := str(a.get("action", {}).get("skillId", ""))
+		var btn := _slot_button(sn)
+		var t: String = Tips.skill(skills.get(sid, {}), statuses)
+		btn.mouse_entered.connect(_tip.bind(t if t != "" else sn))
 		btn.pressed.connect(_choose_skill.bind(sn))
-		$SkillBar/V/Skills.add_child(btn)
-	var skip := SKILL_BUTTON.instantiate(); skip.text = "⏭ 대기"
-	skip.pressed.connect(_emit.bind({"type": "skip"}))
-	$SkillBar/V/Skills.add_child(skip)
+		$Hud/Right/Skills.add_child(btn)
 
-# ── 타겟(2단계) ──
+# ── 타겟(2단계) — 스킬 줄이 타겟 버튼으로 전환 ──
 func _choose_skill(skill_name: String) -> void:
 	_clear_skills()
-	$SkillBar/V/Title.text = "타겟 선택 — %s" % skill_name
+	_tip("타겟 선택 — %s (보드 칸 클릭은 다음 업데이트, 지금은 버튼으로)" % skill_name)
 	var names := _names()
 	for a in _obs.get("legalActions", []):
 		if str(a.get("skillName", "")) != skill_name: continue
 		var tuid := str(a.get("targetUid", ""))
 		var tlabel: String = names.get(tuid, "") if tuid != "" else str(a.get("label", "대상"))
 		if tlabel == "": tlabel = str(a.get("label", "대상"))
-		var btn := SKILL_BUTTON.instantiate()
-		btn.text = "%s (%d%%)" % [tlabel, int(a.get("hitChance", 0))]
+		var hit := int(a.get("hitChance", 0))
+		var btn := _slot_button("%s\n명중 %d%%" % [tlabel, hit])
+		btn.mouse_entered.connect(_tip.bind("%s에게 %s — 명중 %d%%" % [tlabel, skill_name, hit]))
 		btn.pressed.connect(_emit.bind(a.get("action", {})))
-		$SkillBar/V/Skills.add_child(btn)
-	var cancel := SKILL_BUTTON.instantiate(); cancel.text = "← 취소"
-	cancel.pressed.connect(_render_skills)
-	$SkillBar/V/Skills.add_child(cancel)
+		$Hud/Right/Skills.add_child(btn)
+	var cancel := _slot_button("← 취소")
+	cancel.custom_minimum_size = Vector2(90, 0)
+	cancel.size_flags_horizontal = 0
+	cancel.pressed.connect(func() -> void: _render_skills())
+	$Hud/Right/Skills.add_child(cancel)
+
+## 큰 스킬 슬롯 버튼(스케치: 하단을 채우는 4분할) — 가로 균등 확장.
+func _slot_button(text: String) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	b.add_theme_font_size_override("font_size", 22)
+	return b
 
 func _emit(action: Dictionary) -> void:
 	action_chosen.emit(action)
 
 func _clear_skills() -> void:
-	for c in $SkillBar/V/Skills.get_children(): c.queue_free()
+	for c in $Hud/Right/Skills.get_children(): c.queue_free()
 
 func _names() -> Dictionary:
 	var m := {}

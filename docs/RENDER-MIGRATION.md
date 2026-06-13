@@ -125,7 +125,7 @@ ROADMAP의 "엔진+도구=엔지니어 / 콘텐츠=디자이너" 원칙을 **데
 
 **엔진 경계 (`spr-godot/` — top-level 독립 워크스페이스, gdext 0.2.4)**
 - `SprSession`(GDExtension) = 현 `desktop/main.rs` IPC 1:1. 모두 JSON 문자열 in/out.
-- 명령: `create_run`·`create_run_id`(번들 RunDef)·`create_run_roster`·`create_run_def` · `view` · `enter_node`·`choose_reward`·`buy`·`leave_shop`·`encounter`·`class_change`·`class_change_skip`·`set_active`·`move_party`·`equip`·`unequip` · `battle_init`·`battle_view`·`battle_obs`·`battle_step`·`battle_ai_step`·`battle_targeting` · `sheet_data`·`save`·`load` · 정적 `run_list`(캠페인 목록).
+- 명령: `create_run`·`create_run_id`(번들 RunDef)·`create_run_roster`·`create_run_def` · `view` · `enter_node`·`choose_reward`·`buy`·`leave_shop`·`encounter`·`class_change`·`class_change_skip`·`set_active`·`move_party`·`equip`·`unequip` · `battle_init`·`battle_view`·`battle_obs`·`battle_step`·`battle_ai_step`·`battle_targeting` · `sheet_data`·`save`·`load` · 정적 `run_list`(캠페인 목록)·`content_section`(번들 섹션 원본 JSON — HUD 표시 전용 콘텐츠 조회).
 - 빌드: `cargo build --manifest-path spr-godot/Cargo.toml` → dll → `godot/bin/` 복사(수동).
 
 **Godot 클라이언트 (`godot/`)**
@@ -134,7 +134,7 @@ ROADMAP의 "엔진+도구=엔지니어 / 콘텐츠=디자이너" 원칙을 **데
 - 셸 씬: `boot`→`title`→`hub`(모드 메뉴)→`campaign_select`→`run_map`→`battle`/`reward`/`shop`/`encounter`/`chardex`/`overlays/pause`.
 - **Theme**(`ui/theme.tres`) = 웹 `style.css` 다크 팔레트 전역 적용 + 다크 배경.
 - **전투 2.5D 보드**(`scenes/battle/battle.tscn`): 정적 보드(바닥·4×4 양진영 셀·카메라)=씬에 박힘(에디터 편집), 유닛 카드·이름표=코드(`battle.gd`). 카메라=사용자 조정(틸트 탑다운, 아군 좌/적 우 마주봄). 진단색=아군 초록·적 보라.
-- **전투 HUD 스캐폴드**(`scenes/battle/hud/`): `battle_hud.tscn`(CanvasLayer — 행동서열 패널·스킬바·정보·뒤로) + 반복 원자 `skill_button.tscn`·`turn_chip.tscn` 인스턴스. battle.tscn에 인스턴스로 박힘.
+- **전투 HUD**(`scenes/battle/hud/`): `battle_hud.tscn`(CanvasLayer) = 사용자 스케치(`전투 하단 HUD.jpg`) 레이아웃 — 하단 풀폭 바: 좌 `unit_panel.tscn`(현재 유닛 체력바+숫자·스탯 창·장비 3슬롯·상태이상 가로 스크롤) + 우(툴팁 공간 띠 + 큰 스킬 슬롯 + 턴 넘기기). 호버/클릭 상세 = `tips.gd`(스킬·상태·장비 한 줄 요약) → 툴팁 공간 단일 표시. 반복 원자 `turn_chip.tscn`·`dice_roll.tscn` 인스턴스.
 - **런 루프 실데이터 배선**: campaign_select=`run_list` 실런목록 · run_map=`RunView.nodes`(도달가능→`enter_node`) · reward/shop/encounter=`view`의 옵션→`choose_reward`/`buy`/`encounter` · battle=`view.party` 아군.
 
 **환경·도구**
@@ -146,8 +146,8 @@ ROADMAP의 "엔진+도구=엔지니어 / 콘텐츠=디자이너" 원칙을 **데
 **✅ 게임 쉘 스캐폴딩 완료(에디터 제외, 2026-06)** — slice 0~4. 전 화면·런 루프 네비게이블, 핵심 실데이터. **완료 보고·폴리시 백로그 = [`GODOT-SCAFFOLD-REPORT.md`](GODOT-SCAFFOLD-REPORT.md).**
 - slice 0 dll+MCP · slice 1 노드맵(헥스) · slice 2 전투 실데이터+자동전투 · slice 3 전직·결과 · slice 4 도감. mcp 스크린샷 검증.
 
-**✅ 전투/맵 시각·인터랙션 슬라이스 완료(slice A~D, 2026-06):**
-- **A** 유닛 카드 가시화(서 있는 빌보드) · **B** 노드 맵 육각 타일 벌집+벽 · **C** 수동 전투 UI(스킬→타겟 2단계·명중%·battle_step) · **D** SPD 주사위 연출(roundStart→dice_roll 인스턴스). mcp 스크린샷 검증.
+**✅ 전투/맵 시각·인터랙션 슬라이스 완료(slice A~F, 2026-06):**
+- **A** 유닛 카드 가시화(서 있는 빌보드) · **B** 노드 맵 육각 타일 벌집+벽 · **C** 수동 전투 UI(스킬→타겟 2단계·명중%·battle_step) · **D** SPD 주사위 연출(roundStart→dice_roll 인스턴스) · **E** 유닛 카드 HP바·상태칩 · **F** 하단 HUD 리레이아웃(스케치 기반 unit_panel·툴팁 공간·`content_section`). mcp 스크린샷 검증.
 
 **다음(폴리시·미완 — 상세는 SCAFFOLD-REPORT §3·5):**
 1. **이벤트→애니메이션**: `BattleDirector.play_events` 실구현(데미지 팝업·피격 플래시·상태칩·HP바·카메라). 게임 알맹이, R3.

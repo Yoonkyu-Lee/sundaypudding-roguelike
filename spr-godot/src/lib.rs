@@ -166,6 +166,14 @@ impl SprSession {
         }
     }
 
+    // ── 정적: 콘텐츠 조회 (임베드 번들 원본 JSON) — HUD 표시 전용(스탯·장비명·툴팁). 로직 없음 ──
+    /// 번들 섹션 원본 JSON(characters|items|skills|statuses …) — id→def 오브젝트. 없는 섹션 "null".
+    #[func]
+    fn content_section(name: GString) -> GString {
+        let v = spr_data::data_value();
+        js(v.get(name.to_string().as_str()).unwrap_or(&serde_json::Value::Null))
+    }
+
     // ── 정적: 캠페인 런 목록 (콘텐츠 번들에서) ──
     /// [{id,name,mode}] JSON — id 정렬. campaign_select가 소비.
     #[func]
