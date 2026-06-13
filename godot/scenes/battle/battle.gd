@@ -29,6 +29,7 @@ func _ready() -> void:
 		GameDirector.bootstrap_battle()  # 단독 실행/캡처용
 	_overhead_layer = CanvasLayer.new()  # HUD(layer 1) 아래
 	add_child(_overhead_layer)
+	_setup_grass_ground()
 	_board = BoardTargeting.new()
 	add_child(_board)
 	_board.setup($Camera3D)
@@ -48,6 +49,19 @@ func _ready() -> void:
 		hud.play_dice(rs, obs, _after_dice)
 	else:
 		_after_dice()
+
+## 전장 바닥을 풀밭 텍스처로(남색 단색 대체). 타일 반복. 텍스처는 assets/grass.png.
+func _setup_grass_ground() -> void:
+	var ground := get_node_or_null("Ground")
+	if ground == null: return
+	var tex := load("res://assets/grass.png")
+	if tex == null: return
+	var mat := StandardMaterial3D.new()
+	mat.albedo_texture = tex
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	mat.uv1_scale = Vector3(4, 4, 1)   # 16×16 바닥에 4회 반복
+	ground.material_override = mat
 
 ## 주사위 연출 후(또는 없을 때) — 적 턴 자동 진행 → 갱신/종료.
 func _after_dice() -> void:
