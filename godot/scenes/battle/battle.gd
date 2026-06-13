@@ -262,7 +262,7 @@ func _spawn_token(side: int, row: int, col: int, color: Color, unit_name: String
 	var t = UNIT_TOKEN.new()
 	t.position = _slot_pos(side, row, col)
 	$Units.add_child(t)
-	t.setup(color, $Camera3D)
+	t.setup(color)
 	var ui = OVERHEAD.new()
 	_overhead_layer.add_child(ui)
 	ui.setup(unit_name, "ally" if side == 1 else "enemy", hp, hp_max, shield, statuses)
