@@ -125,6 +125,8 @@ func _maybe_dice_then_refresh(obs: Dictionary, deltas: Array) -> void:
 func _begin_targeting(skill_name: String) -> void:
 	_target_skill = skill_name
 	_clear_hit_previews()
+	var hud0 := get_node_or_null("BattleHUD")
+	if hud0: hud0.show_interrupt_preview([])   # 호버 전 — 예고 초기화
 	var targets := []
 	var seen := {}
 	for a in _obs.get("legalActions", []):
@@ -147,8 +149,10 @@ func _begin_targeting(skill_name: String) -> void:
 func _on_cell_hovered(key: String) -> void:
 	if _target_skill == "": return
 	_clear_loss_previews()  # 직전 호버 까임 예고 제거(타겟가능 칸·명중%는 유지)
-	if key == "":           # 타겟 칸 밖으로 나감 → 밝은 호버 프리뷰 제거
+	var hud := get_node_or_null("BattleHUD")
+	if key == "":           # 타겟 칸 밖으로 나감 → 밝은 호버 프리뷰·끼어들기 예고 제거
 		_board.clear_preview()
+		if hud: hud.show_interrupt_preview([])
 		return
 	var parts := key.split(",")
 	if parts.size() < 3: return
@@ -167,6 +171,7 @@ func _on_cell_hovered(key: String) -> void:
 			if hl <= 0: continue
 			var oh = _overhead_for_uid(str(uid))
 			if oh: oh.show_loss(hl)
+	if hud: hud.show_interrupt_preview(tgt.get("ghosts", []))   # 끼어들기 삽입 예고(행동서열 고스트 행)
 	_board.show_preview(anchor, footprint)
 
 ## 칸 클릭 — 그 칸의 legalAction을 찾아 실행.
@@ -184,6 +189,8 @@ func _cancel_targeting() -> void:
 	_target_skill = ""
 	_clear_hit_previews()
 	_clear_loss_previews()
+	var hud := get_node_or_null("BattleHUD")
+	if hud: hud.show_interrupt_preview([])   # 끼어들기 예고 제거
 	if _board: _board.stop()
 
 ## uid → 머리위 오버레이(없으면 null). 명중%·까임 예고 구동에 사용.

@@ -24,6 +24,7 @@ const ROLL_STEP := 46       # 굴림 행 간격(중앙 스택) — 현재 행이
 const W_CUR := 176          # 라이브 현재 토큰 폭
 const W_NORM := 150         # 라이브 일반 토큰 폭
 const L2H := 17             # 현재 토큰 2번째 줄("SPD·현재 턴") 높이 — 0↔L2H 트윈으로 두께(높이) 애니
+const GHOST_H := 28         # 끼어들기 예고(고스트) 행 높이 — 0→GHOST_H로 삽입 예고 애니
 
 # ── 애니메이션 타이밍(초) — 에디터 인스펙터에서 자유 조정(TurnOrder 노드 선택). 시퀀스 순서대로. ──
 @export_group("애니메이션 타이밍 (초)")
@@ -35,18 +36,18 @@ const L2H := 17             # 현재 토큰 2번째 줄("SPD·현재 턴") 높�
 @export var t_settle_hold := 0.5      # 전부 확정 후 재배치 전 대기
 @export var t_reorder_slide := 0.25     # ① 재배치: 행 y 슬라이드
 @export var t_reorder_hold := 0.5     # 재배치 후 대기
-@export var t_morph := 0.5            # ② 형태 전환: 박스/크기/줄 트랜지션
+@export var t_morph := 0.3            # ② 형태 전환: 박스/크기/줄 트랜지션
 @export var t_morph_die_fade := 0.18   # 형태 전환: 주사위/보정 페이드아웃
 @export var t_morph_appear_delay := 0.3 # 형태 전환: SPD/줄 등장 지연
-@export var t_morph_hold := 0.5       # 형태 전환 후 대기
-@export var t_predock_hold := 0.5      # 도킹 전 대기
+@export var t_morph_hold := 0.2       # 형태 전환 후 대기
+@export var t_predock_hold := 0.1      # 도킹 전 대기
 @export var t_dock_slide := 0.5       # ③ 도킹: 행별 레일 슬라이드
 @export var t_dock_stagger := 0.04     # 도킹: 행별 시작 지연(스태거)
 @export var t_dock_tail := 0.12        # 도킹: 슬라이드 후 여유
 @export var t_dock_fade := 0.3         # 도킹: 중앙 패널 페이드아웃
 @export var t_dock_dim_fade := 0.5     # 도킹: 어두운 배경 페이드아웃
-@export var t_grow := 0.5             # ④ 턴 잡을 때 토큰 grow(현재 강조)
-@export var t_shrink := 0.5           # 턴 끝날 때 토큰 shrink
+@export var t_grow := 0.35             # ④ 턴 잡을 때 토큰 grow(현재 강조)
+@export var t_shrink := 0.2           # 턴 끝날 때 토큰 shrink
 @export_group("")
 
 var _dim: ColorRect
@@ -58,6 +59,8 @@ var _spin: Dictionary = {}   # uid → {label,min,max,cur}
 var _spin_acc := 0.0
 var _skipped := false
 var _live_rows: Array = []   # 현재 레일 행들(uid·kind·cur 추적). update가 재사용해 턴 전환(현재↔일반)을 애니메이션.
+var _ghost_rows: Array = []  # 끼어들기 예고(고스트) 행들 — 타겟팅 중 현재 토큰 뒤에 삽입 미리보기(transient).
+var _ghost_names: Array = [] # 현재 표시 중인 고스트 이름들(동일하면 재구성 안 함 — 깜빡임 방지).
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -247,6 +250,7 @@ func _live_info(obs: Dictionary, uid: String, rank: int) -> Dictionary:
 ## 기존 행을 인덱스(uid·kind 일치)로 재사용해 _retarget_live로 상태 변화 애니(현재↔일반 grow/shrink). 불일치/신규만 새로 생성.
 func update(obs: Dictionary) -> void:
 	if _mode == "rolling": return
+	clear_ghosts()   # 레일 재구성 — 끼어들기 예고는 transient, 다음 호버에 다시 추가
 	var order: Array = obs.get("order", [])
 	var prev := _live_rows
 	var new_rows := []
@@ -322,6 +326,66 @@ func _retarget_live(row: Dictionary, info: Dictionary) -> void:
 		tw.tween_property(row.line2_box, "custom_minimum_size:y", 0.0, t_shrink)
 		tw.tween_property(row.line2, "modulate:a", 0.0, t_shrink)
 		tw.chain().tween_callback(func() -> void: row.line2.visible = false)
+
+# ── 끼어들기 삽입 예고(고스트) — 타겟팅 중 현재 토큰 뒤에 점선 민트 행을 높이 0→full로 밀어내며 삽입(웹 .trow.ghost) ──
+## names = battle_targeting.ghosts(예고 주체 이름). battle.gd가 호버마다 호출, 빈 배열이면 제거.
+func show_ghosts(names: Array) -> void:
+	if _mode != "live": return
+	if names == _ghost_names: return   # 동일 예고 — 재구성 안 함(호버 이동 시 깜빡임 방지)
+	clear_ghosts()
+	_ghost_names = names.duplicate()
+	if names.is_empty(): return
+	# 현재 토큰 바로 뒤 위치
+	var at := _rail_box.get_child_count()
+	for r in _live_rows:
+		if bool(r.get("cur", false)) and is_instance_valid(r.node):
+			at = (r.node as Control).get_index() + 1
+			break
+	for i in names.size():
+		var g := _make_ghost(str(names[i]))
+		_rail_box.add_child(g.box)
+		_rail_box.move_child(g.box, at + i)
+		_ghost_rows.append(g)
+		# 입장: 높이 0→GHOST_H(아래 토큰 밀어내며 삽입 예고)
+		g.box.custom_minimum_size.y = 0
+		create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT).tween_property(g.box, "custom_minimum_size:y", float(GHOST_H), t_grow)
+		# 펄스(웹 ghostin)
+		var pulse := create_tween().set_loops().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		pulse.tween_property(g.panel, "modulate:a", 0.4, 0.6)
+		pulse.tween_property(g.panel, "modulate:a", 0.95, 0.6)
+		g["pulse"] = pulse
+
+func clear_ghosts() -> void:
+	for g in _ghost_rows:
+		if g.has("pulse") and g.pulse != null and g.pulse.is_valid(): g.pulse.kill()
+		if is_instance_valid(g.box): g.box.queue_free()
+	_ghost_rows.clear()
+	_ghost_names = []
+
+## 고스트 행 = 높이 클립 래퍼(box) + 점선 느낌 민트 토큰(panel: 투명 민트 bg + 옅은 민트 테두리 + ⚡이름).
+func _make_ghost(nm_text: String) -> Dictionary:
+	var box := Control.new()
+	box.clip_contents = true
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	box.custom_minimum_size = Vector2(W_NORM, 0)
+	var p := PanelContainer.new()
+	p.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	p.add_theme_stylebox_override("panel", _box(Color(C_MINT.r, C_MINT.g, C_MINT.b, 0.07), C_MINT_FAINT, 1, 0, 10, 5))
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var hb := HBoxContainer.new()
+	hb.add_theme_constant_override("separation", 7)
+	p.add_child(hb)
+	var mark := _lbl("⚡", 14, C_MINT)
+	mark.custom_minimum_size = Vector2(15, 0)
+	mark.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hb.add_child(mark)
+	var nm := _lbl("%s · 끼어들기 예고" % nm_text, 12, C_MINT)
+	nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	nm.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	hb.add_child(nm)
+	box.add_child(p)
+	return {"box": box, "panel": p}
 
 # ── rolling: 중앙 굴림 → 확정 → 재배치 → 형태 전환 → 도킹 ──
 ## rolls=[{uid,speedMin,speedMax,roll,speedMod,speed}], order_uids=확정 서열, names/sides=표시, obs=라이브 정보원. on_done=라이브 전환(refresh).

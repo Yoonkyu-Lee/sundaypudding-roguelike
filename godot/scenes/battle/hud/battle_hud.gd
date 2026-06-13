@@ -51,6 +51,10 @@ func play_dice(rs: Dictionary, obs: Dictionary, on_done: Callable) -> void:
 	for o in rs.get("order", []): order_uids.append(str(o.get("uid", "")))
 	_turn_order.play_roll(int(rs.get("round", 1)), rs.get("rolls", []), order_uids, names, sides, obs, on_done)
 
+## 끼어들기 삽입 예고(고스트) 행 — 타겟팅 중 battle.gd가 battle_targeting.ghosts로 구동.
+func show_interrupt_preview(names: Array) -> void:
+	_turn_order.show_ghosts(names)
+
 func _tip(text: String) -> void:
 	_tooltip.text = text
 
