@@ -60,7 +60,7 @@ func _setup_grass_ground() -> void:
 	mat.albedo_texture = tex
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	mat.uv1_scale = Vector3(4, 4, 1)   # 16×16 바닥에 4회 반복
+	mat.uv1_scale = Vector3(1, 1, 1)   # 타일링 없이 — 텍스처 1회로 바닥 전체
 	ground.material_override = mat
 
 ## 주사위 연출 후(또는 없을 때) — 적 턴 자동 진행 → 갱신/종료.
