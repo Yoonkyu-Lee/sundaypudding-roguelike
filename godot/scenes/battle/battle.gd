@@ -12,6 +12,7 @@ const C_TXT := Color(0.902, 0.9137, 0.9373)
 const C_ALLY := Color(0.353, 0.663, 0.902)
 const C_ENEMY := Color(0.902, 0.408, 0.353)
 const BoardTargeting := preload("res://scenes/battle/board_targeting.gd")
+const UNIT_TOKEN := preload("res://scenes/battle/unit_token.gd")
 
 var director: BattleDirector
 var _obs: Dictionary = {}        # 최신 관측(타겟팅이 legalActions/유닛 위치 조회)
@@ -238,91 +239,21 @@ func _place_units(obs: Dictionary) -> void:
 		for u in obs.get("enemies", []): _place_obs_unit(-1, u, C_ENEMY)
 	else:
 		# 폴백 데모(전투 phase 진입 실패 시)
-		_add_unit(1, 1, 0, C_ALLY, "아군 A")
-		_add_unit(1, 2, 0, C_ALLY, "아군 B")
-		_add_unit(-1, 1, 0, C_ENEMY, "적 A")
-		_add_unit(-1, 2, 1, C_ENEMY, "적 B")
+		_spawn_token(1, 1, 0, C_ALLY, "아군 A")
+		_spawn_token(1, 2, 0, C_ALLY, "아군 B")
+		_spawn_token(-1, 1, 0, C_ENEMY, "적 A")
+		_spawn_token(-1, 2, 1, C_ENEMY, "적 B")
 
 func _place_obs_unit(side: int, u: Dictionary, color: Color) -> void:
 	if not bool(u.get("alive", true)): return  # 죽은 유닛은 전장에서 제거(사망 페이드 연출은 H3)
 	var p: Dictionary = u.get("pos", {})
-	_add_unit(side, int(p.get("row", 1)), int(p.get("col", 0)), color, str(u.get("name", "?")),
+	_spawn_token(side, int(p.get("row", 1)), int(p.get("col", 0)), color, str(u.get("name", "?")),
 		int(u.get("hp", 0)), int(u.get("hpMax", 0)), int(u.get("shield", 0)), u.get("statuses", []))
 
-## 유닛 = 셀 위에 서 있는 빌보드 카드 + 이름 · HP바(쉴드) · 상태칩 라벨. $Units 밑에.
-## hpMax<=0이면 데모(바·상태 생략).
-func _add_unit(side: int, row: int, col: int, color: Color, unit_name: String,
+## 칸 중앙에 유닛 토큰(모듈) 1개 배치 — 카드·머리위 정보는 unit_token이 소유.
+func _spawn_token(side: int, row: int, col: int, color: Color, unit_name: String,
 		hp: int = 0, hp_max: int = 0, shield: int = 0, statuses: Variant = []) -> void:
-	var pos := _slot_pos(side, row, col)
-	# 서 있는 카드(빌보드 쿼드)
-	var card := MeshInstance3D.new()
-	var qm := QuadMesh.new()
-	qm.size = Vector2(1.0, 1.3)
-	card.mesh = qm
-	card.material_override = _unshaded_billboard(color)
-	card.position = pos + Vector3(0, 0.75, 0)
-	$Units.add_child(card)
-	# 이름표(카드 위)
-	_label3d(unit_name, pos + Vector3(0, 1.62, 0), C_TXT, 34)
-	# 상태칩(이름 위) — icon+stacks, 쉴드 먼저
-	var chips := ""
-	if shield > 0: chips += "🛡%d " % shield
-	if statuses is Array:
-		for s in statuses:
-			var ic := str(s.get("icon", ""))
-			if ic == "": continue
-			var st := int(s.get("stacks", 0))
-			chips += "%s%s " % [ic, str(st) if st > 1 else ""]
-	if chips != "":
-		_label3d(chips.strip_edges(), pos + Vector3(0, 1.86, 0), Color(1, 0.82, 0.4), 26)
-	# HP바(이름 아래) — hpMax 있을 때만
-	if hp_max > 0:
-		var pct := clampf(float(hp) / float(hp_max), 0.0, 1.0)
-		var left := pos + Vector3(-0.45, 1.42, 0.0)  # 바 좌측 끝(빌보드 원점)
-		_bar(left, 0.9, 0.12, Color(0.1, 0.11, 0.14), 1.0, 0)      # 배경(뒤)
-		_bar(left, 0.9, 0.12, _hp_color(pct), pct, 1)               # 채움(앞 — render_priority로 z-fight 방지)
-		_label3d("%d/%d" % [hp, hp_max], pos + Vector3(0, 1.28, 0), C_TXT, 22)
-
-## 좌측 끝 앵커 빌보드 바(QuadMesh center_offset로 fill이 좌→우로 자람).
-## bg/fill이 코플래너 빌보드라 z-fight → no_depth_test + render_priority(채움>배경)로 채움을 항상 앞에.
-func _bar(left_pos: Vector3, width: float, height: float, color: Color, pct: float, priority: int) -> void:
-	var m := MeshInstance3D.new()
-	var q := QuadMesh.new()
-	q.size = Vector2(maxf(0.001, width * pct), height)
-	q.center_offset = Vector3(q.size.x / 2.0, 0, 0)  # 원점=좌측 끝
-	m.mesh = q
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = color
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
-	mat.no_depth_test = true
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA  # render_priority가 먹도록(투명 패스)
-	mat.render_priority = priority
-	m.material_override = mat
-	m.position = left_pos
-	$Units.add_child(m)
-
-func _label3d(text: String, pos: Vector3, col: Color, size: int) -> void:
-	var lbl := Label3D.new()
-	lbl.text = text
-	lbl.font_size = size
-	lbl.pixel_size = 0.0055
-	lbl.modulate = col
-	lbl.outline_size = 10
-	lbl.outline_modulate = Color(0, 0, 0, 1)
-	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lbl.no_depth_test = true
-	lbl.position = pos
-	$Units.add_child(lbl)
-
-func _unshaded_billboard(color: Color) -> StandardMaterial3D:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = color
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
-	return mat
-
-func _hp_color(pct: float) -> Color:
-	if pct > 0.5: return Color(0.314, 0.784, 0.471)   # 초록
-	if pct > 0.25: return Color(1.0, 0.82, 0.4)        # 노랑
-	return Color(0.902, 0.408, 0.353)                  # 빨강
+	var t = UNIT_TOKEN.new()
+	t.position = _slot_pos(side, row, col)
+	$Units.add_child(t)
+	t.setup(unit_name, color, hp, hp_max, shield, statuses)
