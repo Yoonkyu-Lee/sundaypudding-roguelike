@@ -1,9 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://c2kxr6spxtiqe"]
+[gd_scene load_steps=4 format=3 uid="uid://c2kxr6spxtiqe"]
 
 [ext_resource type="Script" uid="uid://lclfpa8l5abx" path="res://scenes/battle/hud/battle_hud.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/battle/hud/dice_roll.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/battle/hud/unit_panel.tscn" id="3"]
-[ext_resource type="Script" uid="uid://baoijbqt6w448" path="res://scenes/ui/chamfer_panel.gd" id="4"]
 
 [node name="BattleHUD" type="CanvasLayer"]
 script = ExtResource("1")
@@ -11,34 +10,36 @@ script = ExtResource("1")
 [node name="DiceRoll" parent="." instance=ExtResource("2")]
 
 [node name="BackBtn" type="Button" parent="."]
-offset_left = 16.0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -310.0
 offset_top = 12.0
-offset_right = 150.0
-offset_bottom = 46.0
+offset_right = -176.0
+offset_bottom = 44.0
+grow_horizontal = 0
 text = "← 런 맵"
 
 [node name="AutoBtn" type="Button" parent="."]
-offset_left = 158.0
-offset_top = 12.0
-offset_right = 320.0
-offset_bottom = 46.0
-text = "⚔ 자동 전투"
-
-[node name="TurnOrder" type="PanelContainer" parent="."]
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -236.0
+offset_left = -168.0
 offset_top = 12.0
-offset_right = -16.0
-offset_bottom = 340.0
+offset_right = -12.0
+offset_bottom = 44.0
 grow_horizontal = 0
+text = "⚔ 자동 전투"
 
-[node name="V" type="VBoxContainer" parent="TurnOrder"]
+[node name="TurnOrder" type="ScrollContainer" parent="."]
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 208.0
+offset_bottom = 476.0
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 1
 
-[node name="Title" type="Label" parent="TurnOrder/V"]
-text = "행동 서열"
-
-[node name="Entries" type="VBoxContainer" parent="TurnOrder/V"]
+[node name="Tokens" type="VBoxContainer" parent="TurnOrder"]
+layout_mode = 2
+theme_override_constants/separation = 8
 
 [node name="UnitPanel" parent="." instance=ExtResource("3")]
 anchor_top = 1.0
@@ -49,52 +50,49 @@ offset_right = 412.0
 offset_bottom = -12.0
 grow_vertical = 0
 
-[node name="Tooltip" type="MarginContainer" parent="."]
+[node name="Tooltip" type="Control" parent="."]
 anchor_top = 1.0
-anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 424.0
+offset_left = 420.0
 offset_top = -232.0
-offset_right = -172.0
-offset_bottom = -150.0
+offset_right = 910.0
+offset_bottom = -184.0
 grow_vertical = 0
-script = ExtResource("4")
-fill_color = Color(0.1137, 0.1254, 0.1568, 1)
-chamfer = 18.0
-cut_tl = true
-pad = 12
 
 [node name="Label" type="Label" parent="Tooltip"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.78, 0.8, 0.84, 1)
+theme_override_font_sizes/font_size = 14
+text = ""
 autowrap_mode = 2
 vertical_alignment = 1
+
+[node name="Skills" type="Control" parent="."]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 420.0
+offset_top = -138.0
+offset_right = 910.0
+offset_bottom = -12.0
+grow_vertical = 0
+
+[node name="Box" type="HBoxContainer" parent="Skills"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 14
 
 [node name="EndTurn" type="Button" parent="."]
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -160.0
-offset_top = -232.0
-offset_right = -12.0
-offset_bottom = -150.0
-grow_horizontal = 0
-grow_vertical = 0
-text = "턴 넘기기 ⏭"
-
-[node name="Skills" type="MarginContainer" parent="."]
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 424.0
+offset_left = -162.0
 offset_top = -138.0
 offset_right = -12.0
 offset_bottom = -12.0
+grow_horizontal = 0
 grow_vertical = 0
-script = ExtResource("4")
-fill_color = Color(0.1137, 0.1254, 0.1568, 1)
-chamfer = 18.0
-cut_tr = true
-pad = 8
-
-[node name="Box" type="HBoxContainer" parent="Skills"]
-theme_override_constants/separation = 0
+text = "턴 넘기기"
