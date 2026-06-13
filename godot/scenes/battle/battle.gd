@@ -285,7 +285,7 @@ func _process(_dt: float) -> void:
 		var anchor = o["anchor"]
 		var ui = o["ui"]
 		if not is_instance_valid(anchor) or not is_instance_valid(ui): continue
-		var wp: Vector3 = anchor.head_world_pos()
+		var wp: Vector3 = anchor.head_world_pos(cam)
 		if cam.is_position_behind(wp):
 			ui.visible = false
 			continue
