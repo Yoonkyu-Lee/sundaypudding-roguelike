@@ -43,6 +43,10 @@ func show_preview(anchor_pos: Vector3, footprint: Array, losses: Array) -> void:
 		var l: Dictionary = losses[i]
 		_add_label(str(l.get("text", "")), l.get("pos", Vector3.ZERO) + Vector3(0.4, 1.95, 0), C_FOOT, "prev_loss_%d" % i)
 
+## 호버 프리뷰만 제거(타겟가능 칸·명중% 하이라이트는 유지). 마우스가 칸 밖으로 나갈 때.
+func clear_preview() -> void:
+	_clear_preview()
+
 func stop() -> void:
 	_active = false
 	_targets.clear()

@@ -94,7 +94,10 @@ func _begin_targeting(skill_name: String) -> void:
 
 ## 호버 칸 — AoE 풋프린트 + battle_targeting로 HP 손실 예고(빨강).
 func _on_cell_hovered(key: String) -> void:
-	if key == "" or _target_skill == "": return
+	if _target_skill == "": return
+	if key == "":  # 타겟 칸 밖으로 나감 → 밝은 호버 프리뷰 제거(타겟가능 칸·명중%는 유지)
+		_board.clear_preview()
+		return
 	var parts := key.split(",")
 	if parts.size() < 3: return
 	var row := int(parts[0]); var col := int(parts[1]); var side := int(parts[2])
