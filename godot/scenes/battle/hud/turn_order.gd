@@ -95,7 +95,6 @@ func _make_row() -> Dictionary:
 	var nm := _lbl("", 14, C_TXT)
 	nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	nm.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	nm.clip_text = true
 	line1.add_child(nm)
 	var die := _lbl("?", 20, C_ACCENT)
 	die.custom_minimum_size = Vector2(32, 0)
@@ -183,6 +182,8 @@ func _row_to_live(row: Dictionary, info: Dictionary, animate: bool) -> void:
 	tw.tween_property(sb, "bg_color", bg, 0.28)
 	tw.tween_property(row.die, "modulate:a", 0.0, 0.18)
 	tw.tween_property(row.adj, "modulate:a", 0.0, 0.18)
+	# 페이드 후 주사위/보정 숨김 — 안 숨기면 HBox에서 자리를 계속 차지해 이름이 잘림(버그).
+	tw.tween_callback(func() -> void: row.die.visible = false; row.adj.visible = false).set_delay(0.18)
 	if show_spd: tw.tween_property(row.spd, "modulate:a", 1.0, 0.28).set_delay(0.1)
 	if is_current: tw.tween_property(row.line2, "modulate:a", 1.0, 0.28).set_delay(0.1)
 	tw.tween_property(row.node, "custom_minimum_size", Vector2(target_w, 0), 0.28)
