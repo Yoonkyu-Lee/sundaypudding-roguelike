@@ -98,9 +98,10 @@ func _act(action: Dictionary) -> void:
 	else: _refresh(obs)
 
 # ── 보드 칸 타겟팅 (HUD 스킬 선택 → 보드 클릭) ──
-## 스킬 선택 시 — 그 스킬의 legalActions로 타겟가능 칸·명중%를 보드에 표시.
+## 스킬 선택 시 — 그 스킬의 legalActions로 타겟가능 칸(보드 하이라이트) + 타겟 유닛 머리위 명중%(오버레이).
 func _begin_targeting(skill_name: String) -> void:
 	_target_skill = skill_name
+	_clear_hit_previews()
 	var targets := []
 	var seen := {}
 	for a in _obs.get("legalActions", []):
@@ -110,13 +111,20 @@ func _begin_targeting(skill_name: String) -> void:
 		var key := "%d,%d,%d" % [cell.row, cell.col, cell.side]
 		if seen.has(key): continue
 		seen[key] = true
-		targets.append({"key": key, "pos": _slot_pos(cell.side, cell.row, cell.col), "hit": int(a.get("hitChance", -1))})
+		targets.append({"key": key, "pos": _slot_pos(cell.side, cell.row, cell.col)})
+		# 명중% → 타겟 유닛 머리위 오버레이(상태이상 위, 2D 투영 정렬)
+		var tuid := str(a.get("targetUid", ""))
+		var hit := int(a.get("hitChance", -1))
+		if tuid != "" and hit >= 0:
+			var oh = _overhead_for_uid(tuid)
+			if oh: oh.show_hit(hit)
 	_board.show_targets(targets)
 
-## 호버 칸 — AoE 풋프린트 + battle_targeting로 HP 손실 예고(빨강).
+## 호버 칸 — AoE 풋프린트 + battle_targeting로 영향 유닛 머리위 HP 까임 예고(overhead show_loss).
 func _on_cell_hovered(key: String) -> void:
 	if _target_skill == "": return
-	if key == "":  # 타겟 칸 밖으로 나감 → 밝은 호버 프리뷰 제거(타겟가능 칸·명중%는 유지)
+	_clear_loss_previews()  # 직전 호버 까임 예고 제거(타겟가능 칸·명중%는 유지)
+	if key == "":           # 타겟 칸 밖으로 나감 → 밝은 호버 프리뷰 제거
 		_board.clear_preview()
 		return
 	var parts := key.split(",")
@@ -129,17 +137,14 @@ func _on_cell_hovered(key: String) -> void:
 	for c in _area_cells(row, col, area):
 		footprint.append(_slot_pos(side, c.x, c.y))
 	var tgt := GameDirector.battle_targeting(skill_id, row, col)
-	var losses := []
 	var loss_map: Variant = tgt.get("previewLoss", {})
 	if loss_map is Dictionary:
 		for uid in loss_map:
-			var u := _unit_by_uid(str(uid))
-			if u.is_empty(): continue
-			var p: Dictionary = u.get("pos", {})
-			var sd := 1 if str(u.get("side", "")) == "ally" else -1
 			var hl := int(loss_map[uid].get("hpLoss", 0))
-			losses.append({"pos": _slot_pos(sd, int(p.get("row", 0)), int(p.get("col", 0))), "text": "-%d" % hl})
-	_board.show_preview(anchor, footprint, losses)
+			if hl <= 0: continue
+			var oh = _overhead_for_uid(str(uid))
+			if oh: oh.show_loss(hl)
+	_board.show_preview(anchor, footprint)
 
 ## 칸 클릭 — 그 칸의 legalAction을 찾아 실행.
 func _on_cell_clicked(key: String) -> void:
@@ -154,7 +159,23 @@ func _on_cell_clicked(key: String) -> void:
 
 func _cancel_targeting() -> void:
 	_target_skill = ""
+	_clear_hit_previews()
+	_clear_loss_previews()
 	if _board: _board.stop()
+
+## uid → 머리위 오버레이(없으면 null). 명중%·까임 예고 구동에 사용.
+func _overhead_for_uid(uid: String) -> Variant:
+	for o in _overheads:
+		if str(o.get("uid", "")) == uid and is_instance_valid(o["ui"]): return o["ui"]
+	return null
+
+func _clear_hit_previews() -> void:
+	for o in _overheads:
+		if is_instance_valid(o["ui"]): o["ui"].clear_hit()
+
+func _clear_loss_previews() -> void:
+	for o in _overheads:
+		if is_instance_valid(o["ui"]): o["ui"].clear_loss()
 
 ## legalAction → 타겟 칸 {row,col,side(1아군/-1적)}. targetUid 우선, 없으면 action.targetCell.
 func _action_cell(a: Dictionary) -> Dictionary:
@@ -279,11 +300,11 @@ func _place_units(obs: Dictionary) -> void:
 func _place_obs_unit(side: int, u: Dictionary, color: Color) -> void:
 	if not bool(u.get("alive", true)): return  # 죽은 유닛은 전장에서 제거(사망 페이드 연출은 H3)
 	var p: Dictionary = u.get("pos", {})
-	_spawn_token(side, int(p.get("row", 1)), int(p.get("col", 0)), color, str(u.get("name", "?")),
+	_spawn_token(side, int(p.get("row", 1)), int(p.get("col", 0)), color, str(u.get("name", "?")), str(u.get("uid", "")),
 		int(u.get("hp", 0)), int(u.get("hpMax", 0)), int(u.get("shield", 0)), u.get("statuses", []))
 
 ## 칸 중앙에 유닛 토큰(3D 카드) + 머리위 2D 오버레이(이름·HP·상태) 1쌍 배치. _process가 오버레이를 투영 갱신(해법 B).
-func _spawn_token(side: int, row: int, col: int, color: Color, unit_name: String,
+func _spawn_token(side: int, row: int, col: int, color: Color, unit_name: String, uid: String = "",
 		hp: int = 0, hp_max: int = 0, shield: int = 0, statuses: Variant = []) -> void:
 	var t = UNIT_TOKEN.new()
 	t.position = _slot_pos(side, row, col) + _depth_shift(row)
@@ -292,7 +313,7 @@ func _spawn_token(side: int, row: int, col: int, color: Color, unit_name: String
 	var ui = OVERHEAD.new()
 	_overhead_layer.add_child(ui)
 	ui.setup(unit_name, "ally" if side == 1 else "enemy", hp, hp_max, shield, statuses)
-	_overheads.append({"anchor": t, "ui": ui})
+	_overheads.append({"anchor": t, "ui": ui, "uid": uid})
 
 ## 매 프레임 — 각 유닛 머리 월드좌표를 화면으로 투영해 2D 오버레이를 카드 위 중심에 배치.
 func _process(_dt: float) -> void:
