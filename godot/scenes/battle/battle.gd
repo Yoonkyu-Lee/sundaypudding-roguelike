@@ -241,6 +241,7 @@ func _place_units(obs: Dictionary) -> void:
 		_add_unit(-1, 2, 1, C_ENEMY, "적 B")
 
 func _place_obs_unit(side: int, u: Dictionary, color: Color) -> void:
+	if not bool(u.get("alive", true)): return  # 죽은 유닛은 전장에서 제거(사망 페이드 연출은 H3)
 	var p: Dictionary = u.get("pos", {})
 	_add_unit(side, int(p.get("row", 1)), int(p.get("col", 0)), color, str(u.get("name", "?")),
 		int(u.get("hp", 0)), int(u.get("hpMax", 0)), int(u.get("shield", 0)), u.get("statuses", []))
@@ -275,18 +276,26 @@ func _add_unit(side: int, row: int, col: int, color: Color, unit_name: String,
 	if hp_max > 0:
 		var pct := clampf(float(hp) / float(hp_max), 0.0, 1.0)
 		var left := pos + Vector3(-0.45, 1.42, 0.0)  # 바 좌측 끝(빌보드 원점)
-		_bar(left, 0.9, 0.12, Color(0.1, 0.11, 0.14), 1.0)         # 배경
-		_bar(left, 0.9, 0.12, _hp_color(pct), pct)                  # 채움
+		_bar(left, 0.9, 0.12, Color(0.1, 0.11, 0.14), 1.0, 0)      # 배경(뒤)
+		_bar(left, 0.9, 0.12, _hp_color(pct), pct, 1)               # 채움(앞 — render_priority로 z-fight 방지)
 		_label3d("%d/%d" % [hp, hp_max], pos + Vector3(0, 1.28, 0), C_TXT, 22)
 
 ## 좌측 끝 앵커 빌보드 바(QuadMesh center_offset로 fill이 좌→우로 자람).
-func _bar(left_pos: Vector3, width: float, height: float, color: Color, pct: float) -> void:
+## bg/fill이 코플래너 빌보드라 z-fight → no_depth_test + render_priority(채움>배경)로 채움을 항상 앞에.
+func _bar(left_pos: Vector3, width: float, height: float, color: Color, pct: float, priority: int) -> void:
 	var m := MeshInstance3D.new()
 	var q := QuadMesh.new()
 	q.size = Vector2(maxf(0.001, width * pct), height)
 	q.center_offset = Vector3(q.size.x / 2.0, 0, 0)  # 원점=좌측 끝
 	m.mesh = q
-	m.material_override = _unshaded_billboard(color)
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	mat.no_depth_test = true
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA  # render_priority가 먹도록(투명 패스)
+	mat.render_priority = priority
+	m.material_override = mat
 	m.position = left_pos
 	$Units.add_child(m)
 
